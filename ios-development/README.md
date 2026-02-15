@@ -40,10 +40,10 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
   --repo n0rvyn/cookit \
   --path ios-development/skills/testing-guide \
-  --path ios-development/skills/swiftdata-patterns \
-  --path ios-development/skills/localization-setup \
-  --path ios-development/skills/validate-design-tokens \
-  --path ios-development/skills/generate-design-system
+  ios-development/skills/swiftdata-patterns \
+  ios-development/skills/localization-setup \
+  ios-development/skills/validate-design-tokens \
+  ios-development/skills/generate-design-system
 ```
 
 OpenCode install examples:
@@ -58,10 +58,10 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
   --repo n0rvyn/cookit \
   --path ios-development/skills/testing-guide \
-  --path ios-development/skills/swiftdata-patterns \
-  --path ios-development/skills/localization-setup \
-  --path ios-development/skills/validate-design-tokens \
-  --path ios-development/skills/generate-design-system
+  ios-development/skills/swiftdata-patterns \
+  ios-development/skills/localization-setup \
+  ios-development/skills/validate-design-tokens \
+  ios-development/skills/generate-design-system
 ```
 
 ## Usage

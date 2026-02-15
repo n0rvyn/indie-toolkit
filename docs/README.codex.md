@@ -18,10 +18,10 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
   --repo n0rvyn/cookit \
   --path ios-development/skills/testing-guide \
-  --path ios-development/skills/swiftdata-patterns \
-  --path ios-development/skills/localization-setup \
-  --path ios-development/skills/validate-design-tokens \
-  --path ios-development/skills/generate-design-system
+  ios-development/skills/swiftdata-patterns \
+  ios-development/skills/localization-setup \
+  ios-development/skills/validate-design-tokens \
+  ios-development/skills/generate-design-system
 ```
 
 ## Install All mactools Skills
@@ -30,15 +30,15 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
   --repo n0rvyn/cookit \
   --path mactools/skills/calendar \
-  --path mactools/skills/contacts \
-  --path mactools/skills/mail \
-  --path mactools/skills/notes \
-  --path mactools/skills/ocr \
-  --path mactools/skills/omnifocus \
-  --path mactools/skills/photos \
-  --path mactools/skills/reminders \
-  --path mactools/skills/safari \
-  --path mactools/skills/spotlight
+  mactools/skills/contacts \
+  mactools/skills/mail \
+  mactools/skills/notes \
+  mactools/skills/ocr \
+  mactools/skills/omnifocus \
+  mactools/skills/photos \
+  mactools/skills/reminders \
+  mactools/skills/safari \
+  mactools/skills/spotlight
 ```
 
 ## Verify

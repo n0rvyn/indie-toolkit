@@ -26,15 +26,15 @@ Install all `mactools` skills:
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
   --repo n0rvyn/cookit \
   --path mactools/skills/calendar \
-  --path mactools/skills/contacts \
-  --path mactools/skills/mail \
-  --path mactools/skills/notes \
-  --path mactools/skills/ocr \
-  --path mactools/skills/omnifocus \
-  --path mactools/skills/photos \
-  --path mactools/skills/reminders \
-  --path mactools/skills/safari \
-  --path mactools/skills/spotlight
+  mactools/skills/contacts \
+  mactools/skills/mail \
+  mactools/skills/notes \
+  mactools/skills/ocr \
+  mactools/skills/omnifocus \
+  mactools/skills/photos \
+  mactools/skills/reminders \
+  mactools/skills/safari \
+  mactools/skills/spotlight
 ```
 
 After install, restart Codex so new skills are loaded.
@@ -55,15 +55,15 @@ Install all `mactools` skills:
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
   --repo n0rvyn/cookit \
   --path mactools/skills/calendar \
-  --path mactools/skills/contacts \
-  --path mactools/skills/mail \
-  --path mactools/skills/notes \
-  --path mactools/skills/ocr \
-  --path mactools/skills/omnifocus \
-  --path mactools/skills/photos \
-  --path mactools/skills/reminders \
-  --path mactools/skills/safari \
-  --path mactools/skills/spotlight
+  mactools/skills/contacts \
+  mactools/skills/mail \
+  mactools/skills/notes \
+  mactools/skills/ocr \
+  mactools/skills/omnifocus \
+  mactools/skills/photos \
+  mactools/skills/reminders \
+  mactools/skills/safari \
+  mactools/skills/spotlight
 ```
 
 After install, restart OpenCode so new skills are loaded.

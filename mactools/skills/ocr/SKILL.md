@@ -14,7 +14,7 @@ allowed-tools: Bash(*skills/ocr/scripts/*)
 ### OCR 脚本（解释执行）
 
 ```bash
-swift ${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr.swift <file_path> [options]
+swift ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/ocr.swift <file_path> [options]
 ```
 
 ### OCR 二进制（编译后，更快）
@@ -22,13 +22,13 @@ swift ${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr.swift <file_path> [options]
 首次使用前需编译：
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/build_ocr.sh
+bash ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/build_ocr.sh
 ```
 
 编译后使用：
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr <file_path> [options]
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/ocr <file_path> [options]
 ```
 
 优先使用编译后的二进制。如果二进制不存在，先运行 build_ocr.sh 编译，再执行。
@@ -69,29 +69,29 @@ ${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr <file_path> [options]
 ### 识别截图文字
 
 ```bash
-swift ${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr.swift ~/Desktop/screenshot.png
+swift ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/ocr.swift ~/Desktop/screenshot.png
 ```
 
 ### 识别扫描件 PDF
 
 ```bash
-swift ${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr.swift ~/Documents/scanned.pdf
+swift ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/ocr.swift ~/Documents/scanned.pdf
 ```
 
 ### 指定识别语言
 
 ```bash
 # 仅英文
-swift ${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr.swift image.png --lang en-US
+swift ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/ocr.swift image.png --lang en-US
 
 # 中日英混合
-swift ${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr.swift image.png --lang zh-Hans,en-US,ja
+swift ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/ocr.swift image.png --lang zh-Hans,en-US,ja
 ```
 
 ### 限制 PDF 处理页数
 
 ```bash
-swift ${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr.swift large.pdf --max-pages 5
+swift ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/ocr.swift large.pdf --max-pages 5
 ```
 
 ## 工作流程
@@ -105,19 +105,19 @@ swift ${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr.swift large.pdf --max-pages 5
 优先使用编译后的二进制（更快）。如果不存在，先编译：
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/build_ocr.sh
+bash ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/build_ocr.sh
 ```
 
 ### Step 3: 执行 OCR
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr <file_path>
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/ocr <file_path>
 ```
 
 如果二进制不可用，回退到解释执行：
 
 ```bash
-swift ${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr.swift <file_path>
+swift ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/ocr.swift <file_path>
 ```
 
 ### Step 4: 返回结果
@@ -130,20 +130,20 @@ Spotlight 搜索找到图片文件后，用 OCR 提取图中文字：
 
 ```bash
 # 1. 用 Spotlight 找到图片文件
-${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh search -t image "会议"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/spotlight.sh search -t image "会议"
 
 # 2. 对搜索到的图片执行 OCR
-${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr /path/to/found_image.png
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/ocr /path/to/found_image.png
 ```
 
 也可以对 Spotlight 搜出的扫描件 PDF 执行 OCR（spotlight extract_text.py 无法处理扫描件，OCR 可以）：
 
 ```bash
 # 1. Spotlight 搜索 PDF
-${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh search -t pdf "合同"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/spotlight.sh search -t pdf "合同"
 
 # 2. 如果 extract_text.py 提示 "no extractable text"，用 OCR
-${CLAUDE_PLUGIN_ROOT}/skills/ocr/scripts/ocr /path/to/scanned.pdf
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/ocr/scripts/ocr /path/to/scanned.pdf
 ```
 
 ## 注意事项

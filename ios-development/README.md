@@ -2,6 +2,8 @@
 
 Complete iOS/macOS/iPadOS development workflow plugin for Claude Code.
 
+For Codex, install individual skills from `ios-development/skills/*` using the skill installer script.
+
 ## Features
 
 - **Design Token System**: Generate Apple HIG-compliant Design System code
@@ -24,6 +26,24 @@ Complete iOS/macOS/iPadOS development workflow plugin for Claude Code.
 
 ```bash
 claude plugin install ios-development
+```
+
+Codex install examples:
+
+```bash
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+  --repo n0rvyn/cookit \
+  --path ios-development/skills/testing-guide
+```
+
+```bash
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+  --repo n0rvyn/cookit \
+  --path ios-development/skills/testing-guide \
+  --path ios-development/skills/swiftdata-patterns \
+  --path ios-development/skills/localization-setup \
+  --path ios-development/skills/validate-design-tokens \
+  --path ios-development/skills/generate-design-system
 ```
 
 ## Usage

@@ -14,13 +14,13 @@ allowed-tools: Bash(*skills/spotlight/scripts/*)
 ### 1. 搜索工具
 
 ```
-${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/spotlight.sh
 ```
 
 ### 2. 文本提取工具
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/extract_text.py <file_path> [--max-chars N]
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/extract_text.py <file_path> [--max-chars N]
 ```
 
 支持提取的格式：
@@ -42,30 +42,30 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/extract_text.py <file_pat
 ### 内容搜索（默认）
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh search "关键词"
-${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh search -d ~/Documents "关键词"
-${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh search -t md "关键词"
-${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh search -t pdf -d ~/Downloads "机器学习"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/spotlight.sh search "关键词"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/spotlight.sh search -d ~/Documents "关键词"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/spotlight.sh search -t md "关键词"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/spotlight.sh search -t pdf -d ~/Downloads "机器学习"
 ```
 
 ### 文件名搜索
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh search -name "README"
-${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh search -name -d ~/Code -t swift "ViewModel"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/spotlight.sh search -name "README"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/spotlight.sh search -name -d ~/Code -t swift "ViewModel"
 ```
 
 ### 最近修改的文件
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh recent 7
-${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh recent -d ~/Code -t md 3
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/spotlight.sh recent 7
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/spotlight.sh recent -d ~/Code -t md 3
 ```
 
 ### 文件元数据
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh meta /path/to/file
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/spotlight.sh meta /path/to/file
 ```
 
 ## 搜索参数
@@ -130,10 +130,10 @@ ${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/spotlight.sh meta /path/to/file
 **提取命令**：
 ```bash
 # 提取单个文件
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/extract_text.py "/path/to/file.xlsx"
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/extract_text.py "/path/to/file.xlsx"
 
 # 限制提取长度（大文件时使用）
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/spotlight/scripts/extract_text.py "/path/to/large.docx" --max-chars 20000
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/spotlight/scripts/extract_text.py "/path/to/large.docx" --max-chars 20000
 ```
 
 **对于纯文本格式**（txt/md/code 等），也可以直接用 Read 工具读取。extract_text.py 的优势在于处理二进制文档格式（Office/PDF）。

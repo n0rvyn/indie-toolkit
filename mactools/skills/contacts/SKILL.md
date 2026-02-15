@@ -12,7 +12,7 @@ allowed-tools: Bash(*skills/contacts/scripts/*)
 ## 工具
 
 ```
-${CLAUDE_PLUGIN_ROOT}/skills/contacts/scripts/contacts.sh
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/contacts/scripts/contacts.sh
 ```
 
 ## 命令
@@ -22,8 +22,8 @@ ${CLAUDE_PLUGIN_ROOT}/skills/contacts/scripts/contacts.sh
 按名称模糊搜索，返回匹配的联系人及其电话、邮箱摘要。
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/contacts/scripts/contacts.sh search "张三"
-${CLAUDE_PLUGIN_ROOT}/skills/contacts/scripts/contacts.sh search -n 10 "Zhang"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/contacts/scripts/contacts.sh search "张三"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/contacts/scripts/contacts.sh search -n 10 "Zhang"
 ```
 
 ### 查看联系人详情
@@ -31,7 +31,7 @@ ${CLAUDE_PLUGIN_ROOT}/skills/contacts/scripts/contacts.sh search -n 10 "Zhang"
 显示完整联系人信息：电话、邮箱、地址、公司、职位、生日、备注。
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/contacts/scripts/contacts.sh show "张三"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/contacts/scripts/contacts.sh show "张三"
 ```
 
 ### 列出所有联系人
@@ -39,21 +39,21 @@ ${CLAUDE_PLUGIN_ROOT}/skills/contacts/scripts/contacts.sh show "张三"
 仅显示姓名列表。
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/contacts/scripts/contacts.sh list
-${CLAUDE_PLUGIN_ROOT}/skills/contacts/scripts/contacts.sh list -n 50
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/contacts/scripts/contacts.sh list
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/contacts/scripts/contacts.sh list -n 50
 ```
 
 ### 列出所有群组
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/contacts/scripts/contacts.sh groups
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/contacts/scripts/contacts.sh groups
 ```
 
 ### 查看群组成员
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/contacts/scripts/contacts.sh group "同事"
-${CLAUDE_PLUGIN_ROOT}/skills/contacts/scripts/contacts.sh group -n 50 "家人"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/contacts/scripts/contacts.sh group "同事"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/contacts/scripts/contacts.sh group -n 50 "家人"
 ```
 
 ## 参数

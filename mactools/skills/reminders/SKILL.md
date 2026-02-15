@@ -17,7 +17,7 @@ allowed-tools: Bash(*skills/reminders/scripts/*)
 ## 工具
 
 ```
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh
 ```
 
 ## 命令
@@ -25,7 +25,7 @@ ${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh
 ### 列出所有提醒列表
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh lists
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh lists
 ```
 
 输出每个列表的名称和未完成提醒数量。
@@ -34,48 +34,48 @@ ${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh lists
 
 ```bash
 # 列出所有列表中的未完成提醒（默认最多 20 条）
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh list
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh list
 
 # 列出指定列表中的未完成提醒
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh list "Work"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh list "Work"
 
 # 限制结果数量
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh list -n 10
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh list "Work" -n 5
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh list -n 10
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh list "Work" -n 5
 ```
 
 ### 今日到期
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh today
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh today -n 10
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh today
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh today -n 10
 ```
 
 ### 即将到期
 
 ```bash
 # 未来 7 天（默认）
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh upcoming
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh upcoming
 
 # 未来 14 天
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh upcoming 14
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh upcoming 14
 
 # 未来 3 天，最多 5 条
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh upcoming 3 -n 5
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh upcoming 3 -n 5
 ```
 
 ### 已过期未完成
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh overdue
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh overdue -n 10
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh overdue
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh overdue -n 10
 ```
 
 ### 搜索提醒
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh search "keyword"
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh search "keyword" -n 10
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh search "keyword"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh search "keyword" -n 10
 ```
 
 搜索范围：提醒名称和备注内容，不区分大小写。
@@ -84,36 +84,36 @@ ${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh search "keyword" -n 
 
 ```bash
 # 基本创建（添加到默认列表）
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh create "Buy milk"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh create "Buy milk"
 
 # 指定列表和到期日
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh create "Submit report" --list "Work" --due "2026-02-15"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh create "Submit report" --list "Work" --due "2026-02-15"
 
 # 带时间的到期日 + 提醒时间
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh create "Meeting" --list "Work" --due "2026-02-12 14:00" --remind "2026-02-12 13:50"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh create "Meeting" --list "Work" --due "2026-02-12 14:00" --remind "2026-02-12 13:50"
 
 # 完整选项
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh create "Release v1.1" --list "Work" --due "2026-02-20" --notes "Includes new features" --priority 1
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh create "Release v1.1" --list "Work" --due "2026-02-20" --notes "Includes new features" --priority 1
 ```
 
 ### 标记完成
 
 ```bash
 # 在所有列表中查找并完成
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh complete "Buy milk"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh complete "Buy milk"
 
 # 在指定列表中完成
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh complete "Submit report" --list "Work"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh complete "Submit report" --list "Work"
 ```
 
 ### 删除提醒
 
 ```bash
 # 在所有列表中查找并删除
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh delete "Expired reminder"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh delete "Expired reminder"
 
 # 在指定列表中删除
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh delete "Expired reminder" --list "Work"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh delete "Expired reminder" --list "Work"
 ```
 
 ## 参数
@@ -160,23 +160,23 @@ ${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh delete "Expired remi
 
 ```bash
 # 查看过期未完成
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh overdue
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh overdue
 
 # 查看今日到期
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh today
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh today
 
 # 查看本周待办
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh upcoming 7
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh upcoming 7
 ```
 
 ### 快速创建和完成
 
 ```bash
 # 创建
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh create "Reply to email" --list "Work" --due "2026-02-10 17:00"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh create "Reply to email" --list "Work" --due "2026-02-10 17:00"
 
 # 完成
-${CLAUDE_PLUGIN_ROOT}/skills/reminders/scripts/reminders.sh complete "Reply to email" --list "Work"
+${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/reminders/scripts/reminders.sh complete "Reply to email" --list "Work"
 ```
 
 ## 错误处理

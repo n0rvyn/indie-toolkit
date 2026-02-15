@@ -18,7 +18,7 @@ allowed-tools: Bash(*skills/photos/scripts/*)
 ## 工具
 
 ```
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/photos/scripts/photos.py
 ```
 
 ## 命令
@@ -26,8 +26,8 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py
 ### 搜索照片
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py search "关键词"
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py search "关键词" -n 10
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/photos/scripts/photos.py search "关键词"
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/photos/scripts/photos.py search "关键词" -n 10
 ```
 
 按文件名、标题匹配搜索照片。
@@ -36,23 +36,23 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py search "关键词"
 
 ```bash
 # 最近 7 天（默认）
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py recent
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/photos/scripts/photos.py recent
 
 # 最近 30 天，最多 50 条
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py recent 30 -n 50
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/photos/scripts/photos.py recent 30 -n 50
 ```
 
 ### 列出所有相册
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py albums
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/photos/scripts/photos.py albums
 ```
 
 ### 查看相册内照片
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py album "相册名称"
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py album "相册名称" -n 50
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/photos/scripts/photos.py album "相册名称"
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/photos/scripts/photos.py album "相册名称" -n 50
 ```
 
 支持精确匹配和模糊匹配。
@@ -61,10 +61,10 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py album "相册名�
 
 ```bash
 # 按 UUID
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py info "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/photos/scripts/photos.py info "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 
 # 按文件名
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py info "IMG_1234.HEIC"
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/photos/scripts/photos.py info "IMG_1234.HEIC"
 ```
 
 显示：日期、尺寸、GPS 坐标、相机型号、镜头、焦距、文件大小等。
@@ -73,10 +73,10 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py info "IMG_1234.HEI
 
 ```bash
 # 导出到指定路径
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py export "UUID" "/tmp/output.heic"
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/photos/scripts/photos.py export "UUID" "/tmp/output.heic"
 
 # 导出到目录（自动使用原文件名）
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/photos/scripts/photos.py export "UUID" "/tmp/"
+python3 ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/photos/scripts/photos.py export "UUID" "/tmp/"
 ```
 
 ## 输出格式

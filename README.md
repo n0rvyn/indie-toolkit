@@ -1,81 +1,41 @@
-# Cookit Marketplace for Claude Code
+# Cookit
 
-Curated Claude Code plugin marketplace with two plugins:
+Skills and plugins for:
 
-- `ios-development`: iOS/macOS/iPadOS development workflow
-- `mactools`: macOS productivity and automation tools
+- iOS/macOS development (`ios-development`)
+- macOS automation (`mactools`)
 
-## Installation
+## Claude Code
 
-Add this marketplace in Claude Code:
+Add marketplace:
 
 ```bash
 /plugin marketplace add n0rvyn/cookit
 ```
 
-Then install a plugin from this marketplace:
+Install plugin:
 
 ```bash
 /plugin install ios-development@cookit-marketplace
 /plugin install mactools@cookit-marketplace
 ```
 
-## Available Plugins
+## Codex
 
-### ios-development
-
-Complete iOS/macOS/iPadOS workflow plugin for Claude Code.
-
-What you get:
-
-- Project kickoff and implementation review commands
-- Design system generation workflow
-- SwiftData, testing, localization guidance
-- App Store Connect and CI/CD support
-
-Install:
-
-```bash
-/plugin install ios-development@cookit-marketplace
-```
-
-### mactools
-
-macOS automation toolkit plugin for Apple apps and local workflows.
-
-What you get:
-
-- Calendar, Reminders, Notes, Contacts, Mail, Safari operations
-- Spotlight-based local file search and extraction
-- OCR for images and scanned PDFs
-- OmniFocus task workflows
-
-Install:
-
-```bash
-/plugin install mactools@cookit-marketplace
-```
-
-## Repository Structure
+Tell Codex:
 
 ```text
-cookit/
-├── .claude-plugin/
-│   └── marketplace.json
-├── ios-development/
-│   ├── .claude-plugin/plugin.json
-│   ├── commands/
-│   ├── skills/
-│   ├── references/
-│   └── templates/
-├── mactools/
-│   ├── .claude-plugin/plugin.json
-│   └── skills/
-└── README.md
+Fetch and follow instructions from https://raw.githubusercontent.com/n0rvyn/cookit/main/docs/README.codex.md
 ```
 
-## Metadata
+Detailed docs: `docs/README.codex.md`
 
-- Marketplace name: `cookit-marketplace`
-- Version: `1.0.0`
-- Owner: `Norvyn`
+## OpenCode
+
+Tell OpenCode:
+
+```text
+Fetch and follow instructions from https://raw.githubusercontent.com/n0rvyn/cookit/main/docs/README.opencode.md
+```
+
+Detailed docs: `docs/README.opencode.md`

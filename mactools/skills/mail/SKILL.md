@@ -14,10 +14,18 @@ allowed-tools: Bash(*skills/mail/scripts/*)
 - Mail.app 必须已打开并运行
 - 需要 macOS 辅助功能/自动化权限
 
+## Path Setup
+
+```bash
+BASE="${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}"
+SKILLS_ROOT="$BASE/skills"
+[ -d "$SKILLS_ROOT/mail/scripts" ] || SKILLS_ROOT="$BASE/cookit/mactools/skills"
+```
+
 ## 工具
 
 ```
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh
+${SKILLS_ROOT}/mail/scripts/mail.sh
 ```
 
 ## 命令
@@ -25,31 +33,31 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh
 ### 列出邮件账户
 
 ```bash
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh accounts
+${SKILLS_ROOT}/mail/scripts/mail.sh accounts
 ```
 
 ### 列出邮箱
 
 ```bash
 # 列出所有账户的邮箱
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh mailboxes
+${SKILLS_ROOT}/mail/scripts/mail.sh mailboxes
 
 # 列出指定账户的邮箱
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh mailboxes "iCloud"
+${SKILLS_ROOT}/mail/scripts/mail.sh mailboxes "iCloud"
 ```
 
 ### 查看收件箱
 
 ```bash
 # 查看所有账户的收件箱（默认 20 条）
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh inbox
+${SKILLS_ROOT}/mail/scripts/mail.sh inbox
 
 # 查看指定账户的收件箱
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh inbox "iCloud"
+${SKILLS_ROOT}/mail/scripts/mail.sh inbox "iCloud"
 
 # 指定数量
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh inbox "iCloud" -n 50
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh inbox -n 10
+${SKILLS_ROOT}/mail/scripts/mail.sh inbox "iCloud" -n 50
+${SKILLS_ROOT}/mail/scripts/mail.sh inbox -n 10
 ```
 
 输出格式：
@@ -63,7 +71,7 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh i
 ### 读取邮件全文
 
 ```bash
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh read "iCloud" "INBOX" 1
+${SKILLS_ROOT}/mail/scripts/mail.sh read "iCloud" "INBOX" 1
 ```
 
 输出包含：Subject、From、To、CC、Date、Status（read/unread, flagged）、正文。
@@ -72,13 +80,13 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh r
 
 ```bash
 # 所有账户的未读邮件
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh unread
+${SKILLS_ROOT}/mail/scripts/mail.sh unread
 
 # 指定账户
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh unread "iCloud"
+${SKILLS_ROOT}/mail/scripts/mail.sh unread "iCloud"
 
 # 指定数量
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh unread "iCloud" -n 50
+${SKILLS_ROOT}/mail/scripts/mail.sh unread "iCloud" -n 50
 ```
 
 输出中包含 `(index N)` 标注该邮件在邮箱中的实际索引，用于后续 read/flag/trash 等操作。
@@ -87,13 +95,13 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh u
 
 ```bash
 # 在所有账户中搜索
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh search "发票"
+${SKILLS_ROOT}/mail/scripts/mail.sh search "发票"
 
 # 在指定账户中搜索
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh search "发票" "iCloud"
+${SKILLS_ROOT}/mail/scripts/mail.sh search "发票" "iCloud"
 
 # 限制结果数
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh search "发票" -n 10
+${SKILLS_ROOT}/mail/scripts/mail.sh search "发票" -n 10
 ```
 
 搜索范围：主题、发件人、正文内容。输出中包含 `(index N)` 用于后续操作。
@@ -101,7 +109,7 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh s
 ### 标记/取消标记邮件
 
 ```bash
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh flag "iCloud" "INBOX" 3
+${SKILLS_ROOT}/mail/scripts/mail.sh flag "iCloud" "INBOX" 3
 ```
 
 切换邮件的旗标状态（已标记 -> 取消标记，未标记 -> 标记）。
@@ -109,13 +117,13 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh f
 ### 标记为已读
 
 ```bash
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh mark-read "iCloud" "INBOX" 3
+${SKILLS_ROOT}/mail/scripts/mail.sh mark-read "iCloud" "INBOX" 3
 ```
 
 ### 移动邮件
 
 ```bash
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh move "iCloud" "INBOX" 3 "Archive"
+${SKILLS_ROOT}/mail/scripts/mail.sh move "iCloud" "INBOX" 3 "Archive"
 ```
 
 将邮件从一个邮箱移到同账户的另一个邮箱。目标邮箱名称需与 `mailboxes` 命令输出中的名称一致。
@@ -123,7 +131,7 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh m
 ### 移到废纸篓（单条）
 
 ```bash
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh trash "iCloud" "INBOX" 5
+${SKILLS_ROOT}/mail/scripts/mail.sh trash "iCloud" "INBOX" 5
 ```
 
 **trash = 移到废纸篓，可恢复。不会永久删除。**
@@ -131,7 +139,7 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh t
 ### 批量移到废纸篓
 
 ```bash
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh batch-trash "iCloud" "INBOX" 10 20
+${SKILLS_ROOT}/mail/scripts/mail.sh batch-trash "iCloud" "INBOX" 10 20
 ```
 
 将索引 10 到 20 的邮件全部移到废纸篓。内部从高索引向低索引处理，避免索引偏移。
@@ -153,10 +161,10 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh b
 
 ```bash
 # 先看有多少未读
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh unread "账户名"
+${SKILLS_ROOT}/mail/scripts/mail.sh unread "账户名"
 
 # 或查看全部收件箱
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh inbox "账户名" -n 50
+${SKILLS_ROOT}/mail/scripts/mail.sh inbox "账户名" -n 50
 ```
 
 ### Step 2: 逐条阅读和分类
@@ -182,9 +190,9 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh i
 将已处理的无用邮件批量移到废纸篓：
 
 ```bash
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh trash "账户名" "INBOX" <index>
+${SKILLS_ROOT}/mail/scripts/mail.sh trash "账户名" "INBOX" <index>
 # 或批量
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/mail/scripts/mail.sh batch-trash "账户名" "INBOX" <start> <end>
+${SKILLS_ROOT}/mail/scripts/mail.sh batch-trash "账户名" "INBOX" <start> <end>
 ```
 
 ## 注意事项

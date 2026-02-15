@@ -14,10 +14,18 @@ allowed-tools: Bash(*skills/calendar/scripts/*)
 - macOS Calendar 必须可用
 - 首次运行需授权终端访问 Calendar（System Settings > Privacy & Security > Calendars）
 
+## Path Setup
+
+```bash
+BASE="${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}"
+SKILLS_ROOT="$BASE/skills"
+[ -d "$SKILLS_ROOT/calendar/scripts" ] || SKILLS_ROOT="$BASE/cookit/mactools/skills"
+```
+
 ## 工具
 
 ```
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh
+${SKILLS_ROOT}/calendar/scripts/calendar.sh
 ```
 
 ## Core Commands
@@ -25,28 +33,28 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calen
 ### Today's Events
 
 ```bash
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh today
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh today -n 10
+${SKILLS_ROOT}/calendar/scripts/calendar.sh today
+${SKILLS_ROOT}/calendar/scripts/calendar.sh today -n 10
 ```
 
 ### Upcoming Events
 
 ```bash
 # Next 7 days (default)
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh upcoming
+${SKILLS_ROOT}/calendar/scripts/calendar.sh upcoming
 
 # Next 14 days
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh upcoming 14
+${SKILLS_ROOT}/calendar/scripts/calendar.sh upcoming 14
 
 # Next 3 days, max 5 results
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh upcoming 3 -n 5
+${SKILLS_ROOT}/calendar/scripts/calendar.sh upcoming 3 -n 5
 ```
 
 ### Search Events
 
 ```bash
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh search "Team Meeting"
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh search "Standup" -n 5
+${SKILLS_ROOT}/calendar/scripts/calendar.sh search "Team Meeting"
+${SKILLS_ROOT}/calendar/scripts/calendar.sh search "Standup" -n 5
 ```
 
 Search scope: event title, location, and notes within 1 year back to 1 year ahead. Case-insensitive.
@@ -54,29 +62,29 @@ Search scope: event title, location, and notes within 1 year back to 1 year ahea
 ### List Calendars
 
 ```bash
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh calendars
+${SKILLS_ROOT}/calendar/scripts/calendar.sh calendars
 ```
 
 ### Create Event
 
 ```bash
 # Timed event
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh create "Team Meeting" "2026-02-10 09:00" "2026-02-10 10:00"
+${SKILLS_ROOT}/calendar/scripts/calendar.sh create "Team Meeting" "2026-02-10 09:00" "2026-02-10 10:00"
 
 # Timed event with options
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh create "Lunch" "2026-02-10 12:00" "2026-02-10 13:00" --calendar "Personal" --location "Restaurant" --notes "Bring gift"
+${SKILLS_ROOT}/calendar/scripts/calendar.sh create "Lunch" "2026-02-10 12:00" "2026-02-10 13:00" --calendar "Personal" --location "Restaurant" --notes "Bring gift"
 
 # All-day event
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh create "Vacation" "2026-02-15" "2026-02-16"
+${SKILLS_ROOT}/calendar/scripts/calendar.sh create "Vacation" "2026-02-15" "2026-02-16"
 
 # All-day event on specific calendar
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh create "Conference" "2026-03-01" "2026-03-03" --calendar "Work"
+${SKILLS_ROOT}/calendar/scripts/calendar.sh create "Conference" "2026-03-01" "2026-03-03" --calendar "Work"
 ```
 
 ### Delete Event
 
 ```bash
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh delete "Team Meeting" "2026-02-10"
+${SKILLS_ROOT}/calendar/scripts/calendar.sh delete "Team Meeting" "2026-02-10"
 ```
 
 ## Parameters
@@ -115,30 +123,30 @@ Events are displayed as:
 
 ```bash
 # What's on today?
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh today
+${SKILLS_ROOT}/calendar/scripts/calendar.sh today
 
 # What's coming this week?
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh upcoming 7
+${SKILLS_ROOT}/calendar/scripts/calendar.sh upcoming 7
 ```
 
 ### Schedule a Meeting
 
 ```bash
 # First check available calendars
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh calendars
+${SKILLS_ROOT}/calendar/scripts/calendar.sh calendars
 
 # Create the event
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh create "Project Review" "2026-02-12 14:00" "2026-02-12 15:00" --calendar "Work" --location "Conference Room B" --notes "Q1 progress review"
+${SKILLS_ROOT}/calendar/scripts/calendar.sh create "Project Review" "2026-02-12 14:00" "2026-02-12 15:00" --calendar "Work" --location "Conference Room B" --notes "Q1 progress review"
 ```
 
 ### Find and Remove an Event
 
 ```bash
 # Search for the event
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh search "Project Review"
+${SKILLS_ROOT}/calendar/scripts/calendar.sh search "Project Review"
 
 # Delete it
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/calendar/scripts/calendar.sh delete "Project Review" "2026-02-12"
+${SKILLS_ROOT}/calendar/scripts/calendar.sh delete "Project Review" "2026-02-12"
 ```
 
 ## Troubleshooting

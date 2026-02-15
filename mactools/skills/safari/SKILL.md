@@ -14,10 +14,18 @@ Query Safari browsing history, bookmarks, and reading list. All operations are r
 - macOS with Safari
 - Full Disk Access granted to the terminal app running Claude Code (System Settings > Privacy & Security > Full Disk Access). Without this, sqlite3 and plistlib cannot read Safari's data files.
 
+## Path Setup
+
+```bash
+BASE="${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}"
+SKILLS_ROOT="$BASE/skills"
+[ -d "$SKILLS_ROOT/safari/scripts" ] || SKILLS_ROOT="$BASE/cookit/mactools/skills"
+```
+
 ## Tool
 
 ```
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh
+${SKILLS_ROOT}/safari/scripts/safari.sh
 ```
 
 ## Subcommands
@@ -26,60 +34,60 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.
 
 ```bash
 # Recent history (default: 7 days, 20 results)
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh history
+${SKILLS_ROOT}/safari/scripts/safari.sh history
 
 # History from last 30 days
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh history 30
+${SKILLS_ROOT}/safari/scripts/safari.sh history 30
 
 # History from last 3 days, max 10 results
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh history 3 -n 10
+${SKILLS_ROOT}/safari/scripts/safari.sh history 3 -n 10
 ```
 
 ### Search History
 
 ```bash
 # Search by URL or title
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh search "apple developer"
+${SKILLS_ROOT}/safari/scripts/safari.sh search "apple developer"
 
 # Search with result limit
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh search "swift" -n 50
+${SKILLS_ROOT}/safari/scripts/safari.sh search "swift" -n 50
 ```
 
 ### Most Visited Sites
 
 ```bash
 # Top 20 most visited sites
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh top
+${SKILLS_ROOT}/safari/scripts/safari.sh top
 
 # Top 10
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh top -n 10
+${SKILLS_ROOT}/safari/scripts/safari.sh top -n 10
 ```
 
 ### List Bookmarks
 
 ```bash
 # List bookmarks (title, URL, folder)
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh bookmarks
+${SKILLS_ROOT}/safari/scripts/safari.sh bookmarks
 
 # Limit results
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh bookmarks -n 50
+${SKILLS_ROOT}/safari/scripts/safari.sh bookmarks -n 50
 ```
 
 ### Search Bookmarks
 
 ```bash
 # Search bookmarks by title or URL
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh search-bookmarks "github"
+${SKILLS_ROOT}/safari/scripts/safari.sh search-bookmarks "github"
 ```
 
 ### Reading List
 
 ```bash
 # Show reading list items
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh reading-list
+${SKILLS_ROOT}/safari/scripts/safari.sh reading-list
 
 # Limit results
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh reading-list -n 10
+${SKILLS_ROOT}/safari/scripts/safari.sh reading-list -n 10
 ```
 
 ## Output Format
@@ -129,30 +137,30 @@ ${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.
 
 ```bash
 # What did I browse in the last 3 days?
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh history 3
+${SKILLS_ROOT}/safari/scripts/safari.sh history 3
 
 # Search for a specific topic
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh search "SwiftUI"
+${SKILLS_ROOT}/safari/scripts/safari.sh search "SwiftUI"
 ```
 
 ### Find saved resources
 
 ```bash
 # List all bookmarks
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh bookmarks -n 100
+${SKILLS_ROOT}/safari/scripts/safari.sh bookmarks -n 100
 
 # Search bookmarks for a keyword
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh search-bookmarks "reference"
+${SKILLS_ROOT}/safari/scripts/safari.sh search-bookmarks "reference"
 
 # Check reading list
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh reading-list
+${SKILLS_ROOT}/safari/scripts/safari.sh reading-list
 ```
 
 ### Browsing analytics
 
 ```bash
 # Which sites do I visit most?
-${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}/skills/safari/scripts/safari.sh top -n 20
+${SKILLS_ROOT}/safari/scripts/safari.sh top -n 20
 ```
 
 ## Troubleshooting

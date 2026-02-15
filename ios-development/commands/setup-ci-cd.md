@@ -1,3 +1,7 @@
+---
+description: 配置 Fastlane 与 GitHub Actions，实现自动化构建和 TestFlight 上传。
+---
+
 # Setup CI/CD
 
 配置 Fastlane + GitHub Actions，实现打 tag 自动上传 TestFlight。

@@ -1,3 +1,7 @@
+---
+description: iOS/SwiftUI 的 UI 与交互规范审查，用于模块完成后的质量检查。
+---
+
 # UI Review
 
 iOS/SwiftUI 代码的 UI + UX 专项审查。在功能模块完成后手动触发。

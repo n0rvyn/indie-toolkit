@@ -1,3 +1,7 @@
+---
+description: App Store Connect 上架材料逐项检查与填写指导。
+---
+
 # App Store Connect 上架填写指南
 
 逐项指导 App Store Connect 中 iOS App 上架需要填写的内容。

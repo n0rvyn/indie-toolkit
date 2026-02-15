@@ -1,0 +1,53 @@
+name: Release to TestFlight
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v3
+        with:
+          path: Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      - name: Install dependencies
+        run: |
+          if [ -f "Podfile" ]; then
+            pod install
+          fi
+
+      - name: Release to TestFlight
+        env:
+          FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
+          FASTLANE_PASSWORD: ${{ secrets.FASTLANE_PASSWORD }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+        run: fastlane release
+
+      - name: Upload build artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-logs
+          path: |
+            ~/Library/Logs/gym
+            fastlane/report.xml

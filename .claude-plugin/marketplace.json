@@ -1,0 +1,41 @@
+{
+  "name": "cookit-marketplace",
+  "owner": {
+    "name": "Norvyn"
+  },
+  "metadata": {
+    "description": "Cookit plugin marketplace with iOS development and macOS tooling plugins",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "ios-development",
+      "source": "./ios-development",
+      "description": "Complete iOS/macOS/iPadOS development workflow plugin for Claude Code",
+      "version": "1.0.0",
+      "category": "development",
+      "tags": [
+        "ios",
+        "swift",
+        "swiftdata",
+        "testing",
+        "ci-cd"
+      ],
+      "strict": true
+    },
+    {
+      "name": "mactools",
+      "source": "./mactools",
+      "description": "macOS automation toolkit plugin with Notes, Calendar, Mail, Safari, Spotlight, and more",
+      "version": "1.0.0",
+      "category": "productivity",
+      "tags": [
+        "macos",
+        "automation",
+        "apple-apps",
+        "local-tools"
+      ],
+      "strict": true
+    }
+  ]
+}

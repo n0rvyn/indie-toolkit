@@ -1,0 +1,48 @@
+# Fastlane configuration for iOS app release
+# 用于自动化 TestFlight 上传
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Release to TestFlight"
+  desc "自动构建并上传到 TestFlight"
+  lane :release do
+    # 设置 CI 环境
+    setup_ci
+
+    # 获取签名证书（使用 match）
+    match(
+      type: "appstore",
+      readonly: true
+    )
+
+    # 构建 App
+    build_app(
+      scheme: "SCHEME_NAME_PLACEHOLDER",  # 替换为你的 Scheme 名称
+      export_method: "app-store"
+    )
+
+    # 上传到 TestFlight
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Build only (no upload)"
+  desc "仅构建，不上传"
+  lane :build_only do
+    build_app(
+      scheme: "SCHEME_NAME_PLACEHOLDER",
+      export_method: "app-store"
+    )
+  end
+
+  desc "Run tests"
+  desc "运行测试"
+  lane :test do
+    run_tests(
+      scheme: "SCHEME_NAME_PLACEHOLDER",
+      devices: ["iPhone 15 Pro"]
+    )
+  end
+end

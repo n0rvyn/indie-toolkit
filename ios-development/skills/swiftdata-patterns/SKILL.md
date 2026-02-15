@@ -1,0 +1,77 @@
+---
+name: swiftdata-patterns
+description: Provide SwiftData best practices and patterns guidance
+---
+
+# SwiftData Patterns Skill
+
+Provide interactive guidance on SwiftData best practices based on `references/swiftdata-guide.md`.
+
+## When to Use
+
+- User asks about SwiftData usage
+- Designing data models
+- Questions about relationships, queries, or migrations
+- Concurrency issues with SwiftData
+
+## Process
+
+### 1. Identify User's Need
+
+Determine what aspect of SwiftData the user needs help with:
+- @Model definition
+- Relationships (one-to-many, many-to-many)
+- Querying with @Query
+- Data migration
+- Concurrency safety
+
+### 2. Read Reference Guide
+
+Read `references/swiftdata-guide.md` section corresponding to the user's need.
+
+### 3. Provide Contextual Guidance
+
+Based on user's specific scenario:
+
+**For @Model definition**:
+- Show basic pattern from guide Section 1
+- Discuss optional vs required properties
+- Explain @Transient and @Attribute modifiers
+
+**For Relationships**:
+- Show relationship patterns from guide Section 2
+- Explain delete rules (.cascade, .nullify, .deny)
+- Demonstrate inverse relationships
+
+**For Querying**:
+- Show @Query patterns from guide Section 3
+- Demonstrate predicates for filtering
+- Show sort descriptors
+- Explain dynamic query initialization
+
+**For Migration**:
+- Explain versioned schemas from guide Section 4
+- Show migration plan setup
+- Discuss lightweight vs custom migrations
+
+**For Concurrency**:
+- Explain @MainActor usage from guide Section 5
+- Show ModelContext thread safety
+- Demonstrate background task patterns
+
+### 4. Provide Code Examples
+
+Extract relevant code examples from the guide and adapt to user's context.
+
+### 5. Highlight Common Pitfalls
+
+- Cross-thread ModelContext usage
+- Forgetting to call save()
+- Overusing relationships (performance)
+- Not handling migration for schema changes
+
+## Success Criteria
+
+- User understands the SwiftData pattern for their scenario
+- Code example is directly applicable
+- Common mistakes are avoided

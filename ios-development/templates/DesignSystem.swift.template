@@ -1,0 +1,116 @@
+import SwiftUI
+
+// MARK: - Spacing
+
+/// 8pt grid spacing system
+/// 基于 Apple HIG 标准的间距系统
+enum AppSpacing {
+    /// 2pt - 极细微调整
+    static let _4xs: CGFloat = 2
+    /// 4pt - 图标与标签间距
+    static let _3xs: CGFloat = 4
+    /// 8pt - 同组元素间距
+    static let _2xs: CGFloat = 8
+    /// 12pt - 列表项间距、卡片内元素间距
+    static let xs: CGFloat = 12
+    /// 16pt - 页面水平边距、卡片内边距
+    static let sm: CGFloat = 16
+    /// 24pt - 区块间距、卡片之间间距
+    static let md: CGFloat = 24
+    /// 32pt - 大分组间距
+    static let lg: CGFloat = 32
+    /// 48pt - 页面板块间距
+    static let xl: CGFloat = 48
+    /// 64pt - 页面级大留白
+    static let _2xl: CGFloat = 64
+}
+
+// MARK: - Corner Radius
+
+/// 圆角半径标准
+enum AppCornerRadius {
+    /// 8pt - 徽章、小元素
+    static let small: CGFloat = 8
+    /// 12pt - 内层卡片、按钮
+    static let medium: CGFloat = 12
+    /// 16pt - 外层卡片、容器
+    static let large: CGFloat = 16
+}
+
+// MARK: - Shadow
+
+/// 阴影样式（符合 Apple HIG 标准 opacity ≤ 0.08）
+enum AppShadow {
+    /// 细微阴影 - 用于轻微分层
+    static let subtle = ShadowStyle(color: .black.opacity(0.04), radius: 2, y: 1)
+    /// 中等阴影 - 用于卡片、浮动元素
+    static let medium = ShadowStyle(color: .black.opacity(0.08), radius: 4, y: 2)
+}
+
+struct ShadowStyle {
+    let color: Color
+    let radius: CGFloat
+    let y: CGFloat
+}
+
+extension View {
+    /// 应用 Design System 阴影
+    func appShadow(_ style: ShadowStyle) -> some View {
+        self.shadow(color: style.color, radius: style.radius, y: style.y)
+    }
+}
+
+// MARK: - Platform-Specific Values
+
+#if os(iOS)
+/// iOS 触摸目标最小尺寸
+enum AppTouchTarget {
+    static let minimum: CGFloat = 44
+}
+#elseif os(macOS)
+/// macOS 点击目标最小尺寸
+enum AppTouchTarget {
+    static let minimum: CGFloat = 28
+}
+#endif
+
+// MARK: - Animation
+
+/// 动画时长标准
+enum AppAnimation {
+    /// 快速动画 - 200ms - 状态切换
+    static let fast: Double = 0.2
+    /// 标准动画 - 300ms - 大部分交互
+    static let standard: Double = 0.3
+    /// 慢速动画 - 500ms - 页面过渡
+    static let slow: Double = 0.5
+
+    /// Spring 动画参数
+    static let springResponse: Double = 0.3
+    static let springDamping: Double = 0.7
+}
+
+// MARK: - Usage Examples
+
+/*
+ 使用示例：
+
+ // 间距
+ VStack(spacing: AppSpacing.md) {
+     Text("Title")
+         .padding(.horizontal, AppSpacing.sm)
+ }
+
+ // 圆角
+ RoundedRectangle(cornerRadius: AppCornerRadius.medium)
+
+ // 阴影
+ CardView()
+     .appShadow(.medium)
+
+ // 动画
+ withAnimation(.spring(response: AppAnimation.springResponse,
+                       dampingFraction: AppAnimation.springDamping)) {
+     // 状态变化
+ }
+ */

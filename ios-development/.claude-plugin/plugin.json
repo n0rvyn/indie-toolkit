@@ -1,0 +1,8 @@
+{
+  "name": "ios-development",
+  "version": "1.0.0",
+  "description": "Complete iOS/macOS/iPadOS development workflow plugin for Claude Code",
+  "author": {
+    "name": "Norvyn"
+  }
+}

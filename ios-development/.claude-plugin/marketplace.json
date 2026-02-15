@@ -1,0 +1,23 @@
+{
+  "name": "ios-development",
+  "owner": {
+    "name": "norvyn"
+  },
+  "metadata": {
+    "description": "Complete iOS/macOS/iPadOS development workflow with Apple HIG Design Token system",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "ios-development",
+      "source": "./",
+      "description": "iOS/macOS/iPadOS development workflow with Design Tokens, SwiftData, Testing, Localization, and CI/CD automation",
+      "version": "1.0.0",
+      "author": {
+        "name": "norvyn"
+      },
+      "category": "productivity",
+      "keywords": ["ios", "macos", "swift", "swiftui", "design-tokens", "swiftdata", "testing", "localization", "cicd"]
+    }
+  ]
+}

@@ -19,12 +19,14 @@ else
 fi
 ```
 
-2. Create skill source links:
+2. Create skill and command source links:
 
 ```bash
 mkdir -p ~/.agents/skills
+mkdir -p ~/.agents/commands
 ln -sfn ~/.codex/cookit/ios-development/skills ~/.agents/skills/cookit-ios-development
 ln -sfn ~/.codex/cookit/mactools/skills ~/.agents/skills/cookit-mactools
+ln -sfn ~/.codex/cookit/ios-development/commands ~/.agents/commands/cookit-ios-development
 ```
 
 3. Restart Codex.
@@ -34,6 +36,7 @@ ln -sfn ~/.codex/cookit/mactools/skills ~/.agents/skills/cookit-mactools
 ```bash
 ls -la ~/.agents/skills/cookit-ios-development
 ls -la ~/.agents/skills/cookit-mactools
+ls -la ~/.agents/commands/cookit-ios-development
 ```
 
 ## Updating
@@ -42,11 +45,12 @@ ls -la ~/.agents/skills/cookit-mactools
 git -C ~/.codex/cookit pull --ff-only
 ```
 
-If new skills were added in the repo, re-run the symlink commands once.
+If new skills or commands were added in the repo, re-run the symlink commands once.
 
 ## Uninstall
 
 ```bash
 rm ~/.agents/skills/cookit-ios-development
 rm ~/.agents/skills/cookit-mactools
+rm ~/.agents/commands/cookit-ios-development
 ```

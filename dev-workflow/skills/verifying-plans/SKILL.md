@@ -6,7 +6,7 @@ description: "Use when a plan has been written and is about to be executed, or t
 ## 触发时机
 
 - Plan mode 下计划写完后，执行前
-- superpowers:writing-plans 完成后，执行前
+- dev-workflow:writing-plans 完成后，执行前
 - 用户说"验证一下计划"、"check the plan"、"verify plan"
 - Claude Code `/plan` mode 批准后，执行前
 

@@ -27,14 +27,32 @@ If input is incomplete, ask for:
    - Identify the exact location where the error occurs
    - Note any relevant context (user action, data state)
 
-3. **Form hypothesis**
-   - Based on error type, make an educated guess
-   - Common categories: constraint conflict, nil value, boundary condition, race condition, state inconsistency
+3. **BV: Generate falsifiable assertions**
 
-4. **Verify hypothesis**
-   - Find evidence to support or refute the hypothesis
-   - Read relevant code to understand the flow
-   - If hypothesis is wrong, form a new one based on findings
+   Based on error symptoms and code context, generate 3-5 specific, falsifiable assertions.
+   Each assertion must include: hypothesis + file location + verification method + expected outcome for both cases.
+
+   ```
+   [Bug Assertion 1] {specific hypothesis}
+   Location: {file:line}
+   Verify: read {file:line}; if correct, expect {X}; if wrong, expect {Y}
+   ```
+
+   Assertions must cover different dimensions (pick the 3-5 most suspicious):
+   - **Value domain error** — type/range/format mismatch
+   - **State timing error** — race condition, wrong lifecycle stage
+   - **Path routing error** — data reaching wrong handler
+   - **Missing guard** — null/empty/boundary unhandled
+   - **Stale code interference** — replaced component still active
+
+   Principle: backward verification (testing specific assertions) is significantly more accurate than forward generation (guessing a single cause). Even if all assertions are falsified, the verification process exposes reasoning paths that reveal the root cause.
+
+4. **Verify assertions systematically**
+   - Test each assertion from Step 3, one at a time
+   - Record result: confirmed / falsified / inconclusive
+   - If an assertion is confirmed: proceed to fix
+   - If all falsified: the verification traces usually reveal the actual cause; form a new assertion based on what you learned
+   - Do not test multiple assertions at once
 
 5. **Trace value domain** (trigger: bug symptom is an incorrect value in display/log/data transfer)
    - Reverse-trace from bug location to data source (record each variable rename)
@@ -68,3 +86,42 @@ If input is incomplete, ask for:
    - Build the project
    - Reproduce the original bug scenario - confirm it's fixed
    - Test related scenarios to catch regressions
+
+## Escalation Rules
+
+### 3-Strike Rule
+
+If you have attempted 3+ fixes and none resolved the issue:
+
+**Stop fixing. Question the architecture.**
+
+Signals of an architectural problem:
+- Each fix reveals new coupling or shared state in a different place
+- Fixes require "massive refactoring" to implement
+- Each fix creates new symptoms elsewhere
+
+Action: Discuss with the user before attempting more fixes. This is not a failed hypothesis; this is likely a wrong architecture.
+
+### Diagnostic Layering (multi-component systems)
+
+When the bug spans multiple components (e.g., CI -> build -> signing, API -> service -> database):
+
+**Before proposing any fix**, add diagnostic instrumentation at each component boundary:
+
+```
+For EACH component boundary:
+  - Log what data enters the component
+  - Log what data exits the component
+  - Verify environment/config propagation
+  - Check state at each layer
+```
+
+Run once to gather evidence showing WHERE the break occurs. Then narrow investigation to the specific failing component. Do not guess which layer is broken.
+
+### Pattern Analysis
+
+When the root cause isn't obvious from assertions alone:
+
+1. **Find a working example** — locate similar working code in the same codebase
+2. **Compare systematically** — list every difference between working and broken, however small
+3. **Don't assume irrelevance** — "that can't matter" is how bugs hide

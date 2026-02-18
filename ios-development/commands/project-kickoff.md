@@ -261,6 +261,21 @@ xcodebuild build -scheme [项目名] -destination 'platform=iOS Simulator,name=i
 3. 架构级变更 -> 创建 ADR 到 `docs/03-decisions/`
 4. 同样的坑可能再踩 -> 写入 `docs/09-lessons-learned/`
 
+## 计划执行规则
+
+当执行的计划 task 包含以下字段时：
+
+| 字段 | 动作 |
+|------|------|
+| `Design ref:` | 实现前读取引用的设计文档段落 |
+| `Expected values:` | 实现后逐个验证值是否匹配 |
+| `Replaces:` | 实现后 Grep 旧代码引用，确认已处理 |
+| `Data flow:` | 实现后端到端追踪路径，确认连通 |
+| `Quality markers:` | 实现时使用指定的算法/数据结构，不简化 |
+| `Verify after:` | 实现后逐项执行检查 |
+
+遇到计划未覆盖的灰色地带：**问用户，不自行发挥**。
+
 ### 完成功能后留档
 
 **触发条件**：
@@ -312,21 +327,6 @@ xcodebuild build -scheme [项目名] -destination 'platform=iOS Simulator,name=i
 2. 查 `docs/03-decisions/` - 可能已有决策
 3. 查 `docs/05-features/` - 功能的预期行为和关键代码位置
 4. 查 `docs/09-lessons-learned/` - 可能是已知坑
-
-## Plan Execution with Design References
-
-When executing a plan task that contains design anchor fields:
-
-| Field | Action |
-|-------|--------|
-| `Design ref:` | Read the referenced design doc sections before implementing |
-| `Expected values:` | After implementing, verify each value matches |
-| `Replaces:` | After implementing, Grep for old code references, confirm handled |
-| `Data flow:` | After implementing, trace path end-to-end, confirm connectivity |
-| `Quality markers:` | During implementation, use specified approach, do not simplify |
-| `Verify after:` | After implementing, execute each checklist item |
-
-Gray areas not covered by the plan: ask the user, do not improvise.
 ```
 
 #### 8.2.1 平台 API 规则生成

@@ -3,280 +3,276 @@ name: verifying-plans
 description: "Use when a plan has been written and is about to be executed, or the user says 'verify plan'. Applies Verification-First method with falsifiable error candidates, failure reverse reasoning, optional Design Token consistency checks, Design Faithfulness anchoring, and Architecture Review."
 ---
 
-## Trigger
+## 触发时机
 
-- Plan mode: plan written, about to execute
-- User says "verify plan", "check the plan", "验证一下计划"
-- After Claude Code `/plan` mode approval
-- After `superpowers:writing-plans` completion
+- Plan mode 下计划写完后，执行前
+- superpowers:writing-plans 完成后，执行前
+- 用户说"验证一下计划"、"check the plan"、"verify plan"
+- Claude Code `/plan` mode 批准后，执行前
 
-## Principle
+## 原理
 
-Verification (backward reasoning) has lower cognitive load than generation (forward reasoning), and produces information complementary to forward reasoning. Criticizing external input activates critical thinking more than self-review. Therefore: **make concrete falsifiable assertions, not abstract checklists.**
+验证（反向推理）比生成（正向推理）认知负担低，且产出的信息与正向推理互补。批评外部输入比自我审查更能激活批判性思维。因此：**不做抽象检查，做具体断言验证。**
 
-## Process
+## 流程
 
-### 1. Plan Classification
+### 1. 计划分类
 
-Read the current plan, classify (may overlap):
+读取当前计划，判断类型（可重叠）：
 
-| Type | Signal | Strategies |
-|------|--------|------------|
-| Architecture change | New Service/Agent/Tool, data flow change, new entry point, component replacement | S1 + S2 + AR |
-| Feature development | New/modified feature, changed existing behavior | S1 |
-| UI development | New/modified View, component styling, layout | S1 + U1 |
-| Multi-step execution | Steps >= 5 with compile/runtime dependencies | S2 |
-| Design-backed plan | Plan references a design document | DF |
+| 类型 | 识别信号 | 适用策略 |
+|------|---------|---------|
+| 架构变更 | 新增 Service/Agent/Tool、改数据流、新增事件入口、替代组件 | S1 + S2 + AR |
+| 功能开发 | 新增/修改功能、改已有代码行为 | S1 |
+| UI 开发 | 新建/修改 View、组件样式、布局 | S1 + U1 |
+| 多步骤执行 | 步骤 >= 5 且有编译/运行时依赖 | S2 |
+| 有设计文档的计划 | 计划引用了设计文档 | DF |
 
-### 2. Execute Applicable Strategies
-
----
-
-#### S1. Specific Error Candidate Verification
-
-**Purpose:** Trigger backward reasoning by verifying specific error assertions.
-
-Steps:
-1. Based on plan content and codebase state, **generate 3-5 specific, falsifiable error assertions**
-2. Each assertion must include: specific step number + specific file/function + specific failure consequence
-3. Verify each by reading code, citing file:line
-
-**Assertion generation rules:**
-- Must be specific enough to prove/disprove by reading code ("might have edge case issues" = too abstract, forbidden)
-- Cover these dimensions (pick the weakest 3-5):
-  - Integration break: Does step X's output get correctly referenced by step Y's consumer?
-  - Implicit dependency: Does step X assume a precondition the plan doesn't establish?
-  - Old code impact: In files the plan modifies, do unmentioned functions get affected?
-  - State reachability: Do existing switch/if statements cover new state values the plan introduces?
-  - Deletion omission: Plan says "replace X" but doesn't list all reference sites of X?
-
-**Output:**
-
-```
-[Assertion 1] Step {N}: {specific error, e.g. "FeynmanStudentAgent not registered in LearningOrchestrator.registerAgents(), so it won't be invoked in Feynman mode"}
-Verification: Read {file:line}
-Result: ✅ assertion disproved ({evidence}) / ❌ assertion confirmed → plan needs: {specific revision}
-
-[Assertion 2] ...
-```
-
-**Key:** Even if all assertions are disproved, the verification process itself produced reasoning paths not covered by forward planning. If disproving an assertion reveals a **different problem**, record it.
+### 2. 执行适用策略
 
 ---
 
-#### S2. Failure Reverse Reasoning
+#### S1. 具体候选错误验证
 
-**Purpose:** Reason backward from execution results to plan defects, catching step dependencies and ordering issues.
+**目的**：通过验证具体的错误断言，触发反向推理路径。
 
-Steps:
-1. Assume plan executed but build fails — what is the most likely compile error? (cite specific steps and files)
-2. Assume build passes but runtime regression occurs — what is the most likely regression? (cite specific user action paths)
-3. For each inferred failure, check if plan already covers it
+步骤：
+1. 基于计划内容和代码库现状，**生成 3-5 条具体的、可证伪的错误断言**
+2. 每条断言必须包含：具体步骤编号 + 具体文件/函数 + 具体的错误后果
+3. 逐条验证，引用代码库中的文件:行号
 
-**Output:**
+**断言生成规则**：
+- 必须足够具体以至于可以通过读代码证实或证伪（"可能有边界值问题" = 太抽象，禁止）
+- 覆盖以下维度（不必全覆盖，选计划最薄弱的 3-5 条）：
+  - 集成断裂：步骤 X 创建的东西在步骤 Y 的消费者中是否被正确引用？
+  - 隐式依赖：步骤 X 是否假设了某个前置条件但计划未显式建立？
+  - 旧代码影响：计划修改的文件中，未被计划提及的其他函数是否会受影响？
+  - 状态可达性：计划引入的新状态值，现有的 switch/if 是否全部覆盖？
+  - 删除遗漏：计划说"替代 X"但未列出 X 的所有引用位置？
+
+**输出格式**：
 
 ```
-[Build Failure Reasoning]
-Hypothetical failure: {specific error, e.g. "Step 3's new Protocol requires Step 5's class to conform, but Step 5 modifies that class after Step 3"}
-Plan coverage: ✅ Step {N} handles this / ❌ not covered → plan needs: {specific revision}
+[断言 1] 步骤 {N}：{具体错误描述，如 "FeynmanStudentAgent 在 LearningOrchestrator.registerAgents() 中未注册，导致 Feynman 模式下该 Agent 不会被调用"}
+验证：读取 {file:line}
+结果：✅ 断言不成立（{证据}） / ❌ 断言成立 → 计划需补充：{具体修订}
 
-[Runtime Regression Reasoning]
-Hypothetical regression: {specific scenario, e.g. "User taps Ask in Feynman mode, but new guard check returns early when session.state == .paused, making button unresponsive"}
-Action path: {user action} → {code entry file:line} → {failure point file:line}
-Plan coverage: ✅ / ❌ → plan needs: {specific revision}
+[断言 2] ...
+```
+
+**关键**：即使所有断言都不成立，验证过程本身已经产出了正向规划未覆盖的推理路径。如果验证过程中发现断言不成立但暴露了**另一个问题**，必须记录。
+
+---
+
+#### S2. 失败反向推理
+
+**目的**：从执行结果反推计划缺陷，捕获步骤间依赖和顺序问题。
+
+步骤：
+1. 假设计划已执行完毕但 build 失败，推理最可能的编译错误是什么（引用具体步骤和文件）
+2. 假设 build 通过但运行时出现 regression，推理最可能的 regression 是什么（引用具体用户操作路径）
+3. 对每个推理出的失败，检查计划是否已覆盖
+
+**输出格式**：
+
+```
+[编译失败推理]
+假设失败：{具体错误，如 "步骤 3 新增的 Protocol 要求步骤 5 的类 conform，但步骤 5 在步骤 3 之后才修改该类"}
+计划覆盖：✅ 步骤 {N} 已处理 / ❌ 未覆盖 → 计划需补充：{具体修订}
+
+[运行时 Regression 推理]
+假设 regression：{具体场景，如 "用户在 Feynman 模式下点击提问，但新增的 guard 检查在 session.state == .paused 时提前 return，导致提问按钮无响应"}
+操作路径：{用户动作} → {代码入口 file:line} → {失败点 file:line}
+计划覆盖：✅ / ❌ → 计划需补充：{具体修订}
 ```
 
 ---
 
-#### U1. Design Token Consistency Verification (UI plans)
+#### U1. Design Token 一致性验证（UI 计划专用）
 
-**Purpose:** Verify all visual values in UI plans have token backing.
+**目的**：验证 UI 计划中的所有视觉值有 token 支撑。
 
-Steps:
-1. Read `DesignTokens.swift` (or project's design system file)
-2. Extract all UI-related steps from plan, list each step's sizes/spacing/colors/font sizes
-3. Look up each value in the design token system
+步骤：
+1. 读取 `DesignTokens.swift`（或项目中的设计系统文件）
+2. 从计划中提取所有涉及 UI 的步骤，列出每个步骤会用到的尺寸/间距/颜色/字号
+3. 对每个值在 DesignTokens 中查找对应 token
 
-**Output:**
+**输出格式**：
 
 ```
-[Token Check]
-| Step | UI Value | Token | Status |
-|------|----------|-------|--------|
-| Step 3 | Card corner radius | CardStyle.cornerRadius | ✅ |
-| Step 3 | Card padding | — | ⚠️ missing |
-| Step 5 | Title font | .headline | ✅ |
+[Token 检查]
+| 步骤 | UI 值 | Token | 状态 |
+|------|-------|-------|------|
+| 步骤 3 | 卡片圆角 | CardStyle.cornerRadius | ✅ |
+| 步骤 3 | 卡片内边距 | — | ⚠️ 缺失 |
+| 步骤 5 | 标题字号 | .headline | ✅ |
 
-Missing items:
-- Card padding: plan must specify — new token or reuse from Spacing?
+缺失项处理：
+- 卡片内边距：计划需明确是新增 token 还是复用 Spacing.md？
 ```
 
-Supplementary check (when existing Views of the same type exist in the directory):
-- Read existing peer components, extract their spacing/color/corner radius patterns
-- Verify plan's new component follows the same patterns
-- Inconsistency: intentional deviation / omission
+补充检查（当计划涉及的目录下已有同类 View 时）：
+- 读取已有同类组件，提取其间距/颜色/圆角模式
+- 验证计划中新组件是否遵循相同模式
+- 不一致处标注：有意偏离 / 遗漏
 
 ---
 
-#### DF. Design Faithfulness Verification (design-backed plans)
+#### DF. 设计忠实度验证（有设计文档的计划）
 
-**Purpose:** Ensure the plan faithfully represents the design doc. Catch gaps A-E before execution begins.
+**目的**：验证计划完整且忠实地覆盖设计文档的所有要求，在执行前捕获 Gap A-E。
 
-**Prerequisite:** Read the referenced design document in full.
+**前置条件**：计划头部引用了设计文档路径。如果无设计文档引用，跳过本策略。完整读取设计文档。
 
-Steps:
+步骤：
 
-**Step 1: Bidirectional Mapping**
+**步骤 1：双向映射检查**
 
-Build two lists:
-- Forward: Every requirement in the design doc → which plan task covers it
-- Backward: Every plan task → which design requirement it implements
-
-```
-[DF Mapping]
-Design requirements: N
-Mapped to plan tasks: M
-Unmapped (Gap D candidates): {list with design_file:line}
-
-Plan tasks: P
-Mapped to design requirements: Q
-Unmapped (outside design scope): {list — verify intentional}
-```
-
-**Step 2: Design Anchors**
-
-For each plan task mapped to a design requirement, verify or generate these anchor fields:
-
-| Anchor | What to check |
-|--------|--------------|
-| `Design ref:` | Does the plan task cite the specific design doc section? If not, add it |
-| `Expected values:` | Does the design specify concrete values (parameters, schemas, enums) for this task? If yes, are they in the plan? |
-| `Replaces:` | Does this task supersede old code? If yes, does the plan list the old code locations? |
-| `Data flow:` | Does the design specify upstream→component→downstream? If yes, is it in the plan? |
-| `Quality markers:` | Does the design specify an algorithm, data structure, or approach? If yes, is it in the plan? |
-| `Verify after:` | What concrete checks should the implementer run after this task? |
-
-**Output per task:**
+构建两个映射：
+- 正向：设计文档每个要求 → 哪个计划 task 覆盖它
+- 反向：计划每个 task → 映射到设计的哪个要求
 
 ```
-[DF Anchors] Task {N}: {task title}
-Design ref: {design_file:line-range} — ✅ cited / ⚠️ missing, should be: {ref}
-Expected values: {value list} — ✅ in plan / ⚠️ missing: {values}
-Replaces: {old code} — ✅ listed / ⚠️ missing: {locations found by Grep}
-Data flow: {path} — ✅ specified / ⚠️ missing: {path from design}
-Quality markers: {approach} — ✅ specified / ⚠️ missing: {approach from design}
-Verify after: {checks} — ✅ present / ⚠️ suggest: {checks}
+[DF-1] 设计要求 → 计划映射
+  - {design:L100-105 "事件队列...由感知部拉取"} → ✅ Task 2 / ❌ 无对应 task
+  - {design:L258 "CEO maxTurns: 50"} → ✅ Task 8 / ❌ 无对应 task
+  无对应 task 的设计要求 = Gap D 候选
+
+[DF-2] 计划 task → 设计映射
+  - Task 1 "Fix session resume" → ✅ design:L249 (resume + sessionId)
+  - Task 12 "Add logging" → ⚠️ 设计未提及，需确认是否必要
+  无对应设计要求的 task = 计划杜撰候选，需确认是否为必要补充
 ```
 
-**Step 3: Gap Scan**
+**步骤 2：设计锚点检查**
 
-Specifically check for each gap type:
-- **Gap A (wrong values):** Any design value not mentioned in the plan
-- **Gap B (not wired):** Any component in the plan without explicit data flow path
-- **Gap C (old code):** Any "replace/delete" in the design without a corresponding plan task listing removal targets
-- **Gap D (not built):** Any design requirement without a plan task (from Step 1)
-- **Gap E (degraded):** Any design algorithm/approach where the plan's task description is vague enough to allow simplification
+对每个映射到设计要求的计划 task，检查并补充以下锚点字段：
+
+| 锚点 | 检查内容 |
+|------|---------|
+| `Design ref:` | 计划 task 是否引用了设计文档的具体段落？未引用则补充 |
+| `Expected values:` | 设计是否为此 task 指定了具体值（参数、schema、枚举）？指定了但计划中没有则标注 |
+| `Replaces:` | 此 task 是否替代旧代码？是的话计划是否列出了旧代码位置？ |
+| `Data flow:` | 设计是否指定了上游→组件→下游路径？是的话计划中是否包含？ |
+| `Quality markers:` | 设计是否指定了算法、数据结构或实现方式？是的话计划中是否包含？ |
+| `Verify after:` | 实现此 task 后应执行哪些具体检查？ |
+
+```
+[DF-3] 缺失设计锚点
+  - Task 5: 无 Expected values → 补充：schema 应含 assessment, recommendation(enum), confidence(0-1), reasoning
+  - Task 7: 无 Quality markers → 补充：必须用 SDK 原生 outputFormat，不是 system prompt 指令返回 JSON
+  - Task 3: 无 Replaces → 补充：替代 {file:line} 的 {旧实现}（通过 Grep 确认）
+```
+
+**步骤 3：Gap 扫描**
+
+逐类检查：
+- **Gap A（值错误）**：设计中的具体值是否全部出现在计划中
+- **Gap B（未接入）**：计划中的新组件是否都有明确的数据流路径
+- **Gap C（旧代码）**：设计中的"替代/删除 X"是否都有对应的计划 task 列出删除目标
+- **Gap D（未建设）**：设计要求是否全部有对应的计划 task（来自步骤 1 的正向映射）
+- **Gap E（退化）**：设计中描述了具体算法/方式的功能，计划的 task 描述是否模糊到允许简化实现
 
 ---
 
-#### AR. Architecture Review (architectural changes)
+#### AR. 架构审查（架构变更时）
 
-**Purpose:** Detect parallel paths, incomplete replacements, and dead fallbacks. Absorbed from `reviewing-architecture` skill.
+**目的**：检测并行路径、不完整替代、死保底。从 `reviewing-architecture` skill 吸收。
 
-**AR.1 Entry Point Uniqueness Check**
+**AR.1 入口唯一性检查**
 
-For each new entry point (trigger, scheduler, observer, event handler) in the plan:
-- Identify the core function this entry point ultimately calls
-- Grep for all existing callers of that core function AND its key sub-functions
+对计划中每个新增的入口（trigger、scheduler、observer、event handler）：
+- 找出该入口最终调用的核心函数
+- Grep 该核心函数及其关键子函数的所有现有调用者
 
 ```
-[Entry Point Check] Plan adds: {new entry point}
-Target core function: {function name}
-Existing callers:
+[入口检查] 计划新增入口: {new entry point}
+目标核心函数: {function name}
+现有调用者:
 - {file:line} — {caller description}
 - {file:line} — {caller description}
-Conclusion: ✅ no parallel paths / ⚠️ {N} existing paths — need merge or coexistence justification
+结论: ✅ 无并行路径 / ⚠️ 已存在 {N} 条路径，需合并或说明共存理由
 ```
 
-If existing callers found on different upstream paths and plan doesn't address it → stop, report conflict.
+现有调用者走不同上游路径且计划未说明 → 停止，报告冲突。
 
-**AR.2 Replacement Completeness Check**
+**AR.2 替代完整性检查**
 
-For each "replace/deprecate/supersede" in the plan or referenced ADRs:
-- List concrete items to delete/modify:
+对计划或相关 ADR 中每个"替代/淘汰/取代"：
+- 列出需要删除/修改的具体项：
 
 ```
-[Replacement Checklist] {old component} → {new component}
-Delete:
-- [ ] {file}: {method/config} — {purpose}
-- [ ] {file}: {registration/import} — {purpose}
-Modify:
+[替代清单] {old component} → {new component}
+需删除:
+- [ ] {file}: {method/config} — {用途}
+- [ ] {file}: {registration/import} — {用途}
+需修改:
 - [ ] {file:line}: {old reference} → {new reference}
 ```
 
-If the plan lacks this checklist → flag as incomplete, build the checklist by Grep.
+计划或 ADR 缺少此清单 → 标记为不完整，通过 Grep 构建清单。
 
-**AR.3 Data Flow Tracing**
+**AR.3 数据流追踪**
 
-For the primary data being modified:
-- Trace from source to sink:
-
-```
-[Data Flow] {data name}
-Produced: {file:line} ({how})
-Processed: {file:line} → {file:line} ({transformations})
-Persisted: {file:line} ({storage})
-Displayed: {file:line} ({UI})
-```
-
-At each node, search for other upstream callers (= parallel paths). Parallel path without coordination = architectural conflict.
-
-**AR.4 Fallback Validation**
-
-For any "keep as fallback" in the plan or existing code:
+对计划修改的主要数据：
+- 从源头到终点追踪：
 
 ```
-[Fallback Three Questions] {component kept as fallback}
-1. Coordination: Who decides which path? — {specific code location / "none"}
-2. Trigger: What condition activates the old path? — {evaluable boolean / "none"}
-3. Removal: When to delete? — {verifiable milestone / "none"}
-Conclusion: ✅ all three answered / ❌ {N} unanswered → recommend user decide whether to delete old implementation
+[数据流] {data name}
+生产: {file:line} ({how it's created})
+处理: {file:line} → {file:line} ({transformations})
+持久化: {file:line} ({storage})
+展示: {file:line} ({UI display})
 ```
 
-"Runtime decides" / "when new path fails" / "after testing passes" = descriptive answer = no answer.
+每个处理节点搜索其他上游调用者（= 并行路径）。并行路径无协调机制 = 架构冲突。
+
+**AR.4 保底验证**
+
+对计划或现有代码中任何"保留作为保底/fallback"：
+
+```
+[保底三问] {component kept as fallback}
+1. 协调机制: {谁决定走哪条路径? — 具体代码位置 / "无"}
+2. 触发条件: {什么条件走旧路径? — 可求值的布尔表达式 / "无"}
+3. 移除条件: {何时删除? — 可验证的里程碑 / "无"}
+结论: ✅ 三问均有具体答案 / ❌ {N}问无答案 → 建议用户决定是否删除旧实现
+```
+
+"运行时决定" / "新路径失败时" / "测试通过后" = 描述性回答 = 无答案。
 
 ---
 
-### 3. Summary and Plan Revision Recommendations
+### 3. 汇总与计划修订建议
 
 ```
 ## Plan Verification Summary
 
-### Strategies Executed
-- S1 Specific error candidates: generated {N}, confirmed {M}
-- S2 Failure reverse reasoning: build failures {N}, runtime regressions {N}
-- U1 Token consistency: checked {N}, missing {M}
-- DF Design Faithfulness: requirements mapped {N}/{total}, anchors missing {M}
-- AR Architecture Review: entry point conflicts {N}, replacement checklists {complete/incomplete}
+### 策略执行
+- S1 具体候选错误：生成 {N} 条，成立 {M} 条
+- S2 失败反向推理：编译失败 {N} 条，运行时 regression {N} 条
+- U1 Token 一致性：检查 {N} 项，缺失 {M} 项
+- DF 设计忠实度：设计要求映射 {N}/{total}，缺失锚点 {M} 个
+- AR 架构审查：入口冲突 {N}，替代清单 {完整/不完整}
 
-### Must Revise (verification-confirmed issues)
-1. [Step X] {specific revision}
-   Basis: {which S1/S2/U1/DF/AR check}
+### 必须修订（验证发现的确实问题）
+1. [步骤 X] {具体修订内容}
+   依据：{S1/S2/U1/DF/AR 的哪条验证}
 
-### Recommended Additions (risks exposed during verification)
-1. [Step X] {addition}
-   Basis: {information discovered during verification}
+### 建议补充（验证过程中暴露的风险）
+1. [步骤 X] {补充内容}
+   依据：{验证过程中发现的额外信息}
 
-### No Revision Needed (verification-passed items)
-- {list key assertions that passed, proving the plan is adequate in these areas}
+### 无需修订（验证通过的部分）
+- {列出验证通过的关键断言，证明计划在这些方面是充分的}
 ```
 
 ---
 
-## Principles
+## 原则
 
-1. **Specific > Abstract:** Every assertion must be provable/disprovable by reading code. "Might have issues" = invalid assertion
-2. **Code-anchored:** All verification results must cite file:line, never speculation
-3. **Wrong is still useful:** Disproved assertions are not failures; the reasoning paths they produce are the value
-4. **Does not replace other reviews:** This verifies plan completeness and correctness only, not code quality, UI compliance, or architecture (those are `/code-review`, `/ui-review`, and the `implementation-reviewer` agent's jobs)
-5. **Recommend, don't execute:** Output revision recommendations only. User confirms before updating the plan
+1. **具体 > 抽象**：每条断言必须具体到可以通过读代码证实/证伪。"可能有问题"= 无效断言
+2. **代码锚定**：所有验证结果必须引用 file:line，不凭推测
+3. **错了也有用**：断言被证伪不是失败；验证过程本身产出的推理路径是价值所在
+4. **不替代其他 review**：本命令只验证计划完整性和正确性，不做代码质量、UI 合规、架构审查（那些是 `/code-review`、`/ui-review`、`implementation-reviewer` agent 的职责）
+5. **修订不执行**：本命令只输出修订建议，不直接修改计划。用户确认后再更新

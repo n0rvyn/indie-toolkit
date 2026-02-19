@@ -1,4 +1,5 @@
 ---
+name: write-plan
 description: Write a structured implementation plan for a multi-step task
 disable-model-invocation: true
 ---

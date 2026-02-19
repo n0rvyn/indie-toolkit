@@ -1,4 +1,5 @@
 ---
+name: run-phase
 description: Run the plan-execute-review cycle for the next development phase
 disable-model-invocation: true
 ---

@@ -1,4 +1,5 @@
 ---
+name: execute-plan
 description: Execute a written implementation plan with batch checkpoints
 disable-model-invocation: true
 ---

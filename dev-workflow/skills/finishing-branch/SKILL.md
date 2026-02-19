@@ -15,6 +15,21 @@ Run the project's test suite:
 - If tests fail: **Stop.** Cannot proceed until tests pass.
 - If tests pass: Continue to Step 2.
 
+### Step 1.5: Check Documentation
+
+Before presenting integration options, check if project docs need updates:
+
+```bash
+ls docs/05-features/ docs/07-changelog/ docs/03-decisions/ 2>/dev/null
+```
+
+If these directories exist, remind the user:
+- New features completed → update `docs/05-features/`
+- Architectural decisions made → update `docs/03-decisions/`
+- Changes worth logging → update `docs/07-changelog/`
+
+This is a reminder, not a gate. Do not block on documentation.
+
 ### Step 2: Determine Base Branch
 
 ```bash

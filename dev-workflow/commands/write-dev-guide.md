@@ -1,4 +1,5 @@
 ---
+name: write-dev-guide
 description: Write a phased development guide for the project (cornerstone document)
 disable-model-invocation: true
 ---

@@ -62,6 +62,8 @@ Write the approved design to:
 docs/06-plans/YYYY-MM-DD-<topic>-design.md
 ```
 
+If the design is primarily architectural (data model, service layer, component boundaries), also save or symlink to `docs/02-architecture/` so it's discoverable alongside other architecture docs.
+
 ### 6. Next Steps
 
 After design is approved, inform the user:

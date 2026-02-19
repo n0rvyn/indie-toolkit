@@ -1,4 +1,5 @@
 ---
+name: brainstorm
 description: Start a brainstorming session to explore and design before implementing
 disable-model-invocation: true
 ---

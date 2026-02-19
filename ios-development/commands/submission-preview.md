@@ -1,6 +1,7 @@
 ---
 name: submission-preview
-description: 提交前检查 App 是否符合 App Review Guidelines，预防 reject。
+description: 提交前检查 App 是否符合 App Review Guidelines，预防 reject
+disable-model-invocation: true
 ---
 
 # Submission Preview

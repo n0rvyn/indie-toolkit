@@ -3,6 +3,16 @@ name: writing-plans
 description: "Use when you have a spec or requirements for a multi-step task, before touching code. Creates comprehensive implementation plans with bite-size tasks."
 ---
 
+## When to Use
+
+- Cross-session features that need a persistent plan document (for `dev-workflow:handing-off` or future sessions)
+- Plan is a deliverable itself (sharing with collaborators, archiving decisions)
+- Need design anchor fields (`Design ref`, `Expected values`, `Replaces`) to ensure design fidelity during execution
+
+## For Most Cases
+
+Use Claude's built-in `/plan` mode instead. It's faster and sufficient for single-session, single-phase work. In the main development flow (`/write-dev-guide` → `/run-phase`), each Phase uses `/plan` directly — this skill is not part of that loop.
+
 ## Core Principle
 
 Write plans assuming the implementing engineer has zero context. Document everything: files to touch, code snippets, commands, expected output.

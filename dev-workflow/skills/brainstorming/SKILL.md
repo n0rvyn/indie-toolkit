@@ -59,7 +59,7 @@ After the user picks a direction:
 Write the approved design to:
 
 ```
-docs/plans/YYYY-MM-DD-<topic>-design.md
+docs/06-plans/YYYY-MM-DD-<topic>-design.md
 ```
 
 ### 6. Next Steps

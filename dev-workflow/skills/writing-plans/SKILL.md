@@ -9,7 +9,7 @@ Write plans assuming the implementing engineer has zero context. Document everyt
 
 ## Plan Document Format
 
-Save to: `docs/plans/YYYY-MM-DD-<feature-name>.md`
+Save to: `docs/06-plans/YYYY-MM-DD-<feature-name>.md`
 
 ### Required Header
 

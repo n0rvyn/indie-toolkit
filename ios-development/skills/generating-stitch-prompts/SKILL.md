@@ -30,7 +30,7 @@ disable-model-invocation: true
 | 优先级 | 来源 | 提取内容 |
 |--------|------|----------|
 | 1 | `CLAUDE.md` / `docs/00-AI-CONTEXT.md` / `README.md` | 产品定位、目标用户、核心功能、技术栈 |
-| 2 | 设计文档（`docs/plans/`、`docs/design/`） | 布局结构、页面层级、交互流程、信息架构 |
+| 2 | 设计文档（`docs/06-plans/`、`docs/design/`） | 布局结构、页面层级、交互流程、信息架构 |
 | 3 | UI 组件代码（`src/components/`、`src/pages/`、`src/views/`、`app/`） | 所有页面/组件列表、组件层级关系、props/state |
 | 4 | 类型定义（`src/types/`、`src/models/`、`src/interfaces/`） | UI 中展示的数据结构、枚举值、状态类型 |
 | 5 | 样式/主题（`src/styles/`、`src/design/`、`tailwind.config.*`） | 当前配色、字体、间距体系（仅作参考，Stitch 会重新设计） |

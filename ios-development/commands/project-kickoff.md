@@ -207,7 +207,7 @@ description: 新项目启动开题流程，完成需求澄清、范围收敛和�
 #### 8.1 创建 docs 目录结构
 
 ```bash
-mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-features,07-changelog,09-lessons-learned,10-app-store-connect}
+mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-features,06-plans,07-changelog,09-lessons-learned,10-app-store-connect}
 ```
 
 目录说明：
@@ -219,6 +219,7 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 | 03-decisions/ | 架构决策记录 (ADR) |
 | 04-implementation/ | 实现细节、文件结构 |
 | 05-features/ | 功能预期行为、关键代码位置 |
+| 06-plans/ | 开发指南、设计文档、实施计划 |
 | 07-changelog/ | 变更历史 |
 | 09-lessons-learned/ | 踩坑记录 |
 | 10-app-store-connect/ | ASC 提交文档（隐私政策、用户协议、支持页、营销文案） |
@@ -244,6 +245,7 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 | 决策原因 | `docs/03-decisions/` |
 | 实现细节 | `docs/04-implementation/` |
 | 功能行为 | `docs/05-features/` |
+| 开发指南/计划 | `docs/06-plans/` |
 | 变更历史 | `docs/07-changelog/` |
 | 踩坑记录 | `docs/09-lessons-learned/` |
 
@@ -411,6 +413,7 @@ xcodebuild build -scheme [项目名] -destination 'platform=iOS Simulator,name=i
 
 - 项目调研：`docs/01-discovery/project-brief.md`
 - 架构设计：`docs/02-architecture/`
+- 开发指南/计划：`docs/06-plans/`
 - 功能行为：`docs/05-features/`
 ```
 

@@ -8,7 +8,7 @@ description: "Use when the user says 'run phase', 'start phase N', 'next phase',
 This skill orchestrates one iteration of the development cycle:
 
 ```
-Locate Phase → /plan → [user approves] → execute → review → fix gaps → Phase done
+Locate Phase → /plan → [user approves] → execute → Document Features → review → fix gaps → Phase done
 ```
 
 It does not do the work itself. It coordinates the sequence and ensures nothing is skipped.
@@ -44,7 +44,17 @@ Wait for the user to approve the plan and for Claude to execute it.
 
 When execution is complete (user confirms or the plan's tasks are done), proceed to Step 3.
 
-### Step 3: Run Reviews
+### Step 3: Document Features
+
+Before running reviews, generate feature specs for completed user journeys in this Phase.
+
+1. Check the Phase scope for feature completions (user journeys, not individual components)
+2. For each completed feature: run `/write-feature-spec`
+3. Infrastructure-only Phase (no user journeys): skip this step
+
+This ensures `/feature-review` in Step 4 has a spec to work with.
+
+### Step 4: Run Reviews
 
 Based on the Phase's Review checklist, run reviews in sequence:
 
@@ -61,7 +71,7 @@ For each review:
 
 After all reviews complete, present a consolidated summary of all findings.
 
-### Step 4: Fix Gaps
+### Step 5: Fix Gaps
 
 If any review found issues:
 
@@ -70,11 +80,10 @@ If any review found issues:
 3. If fixing: address the gaps, then re-run only the reviews that had failures
 4. If skipping: note the known issues and proceed
 
-### Step 5: Phase Completion
+### Step 6: Phase Completion
 
 1. Update the dev-guide: check off this Phase's acceptance criteria
 2. Remind the user to update project docs:
-   - `docs/05-features/` — document completed features
    - `docs/07-changelog/` — record changes
    - `docs/03-decisions/` — if architectural decisions were made
 3. Report:
@@ -84,7 +93,7 @@ If any review found issues:
 
 ## Rules
 
-- **Never skip Step 3.** Reviews are not optional.
+- **Never skip Step 4.** Reviews are not optional.
 - **Never auto-approve the plan.** Step 2 requires explicit user action.
 - **Phase order matters.** Don't start Phase N+1 if Phase N has unchecked acceptance criteria (unless user explicitly overrides).
 - **Consolidate review output.** Don't dump 4 separate reports — merge into one summary with sections.

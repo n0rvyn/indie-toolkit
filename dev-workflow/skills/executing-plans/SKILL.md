@@ -62,3 +62,13 @@ When all tasks are done:
 - Plan step is ambiguous or contradictory
 - Verification fails repeatedly (2+ times on same step)
 - Discovered dependency the plan didn't account for
+
+## State Integration
+
+When running within a phase orchestrated by `running-phase`:
+
+If `.claude/dev-workflow-state.yml` exists and `phase_step` is `execute`:
+- After each batch checkpoint (Step 3), update the state file:
+  - `batch_progress`: `"{completed}/{total}"` (e.g., `"2/4"`)
+  - `last_updated`: current timestamp
+- This enables cross-session resume if the session ends mid-execution

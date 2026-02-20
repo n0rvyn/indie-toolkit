@@ -4,84 +4,54 @@ description: "Use when you have a spec or requirements for a multi-step task, be
 user-invocable: false
 ---
 
-## When to Use
+## Overview
 
-- Cross-session features that need a persistent plan document (for `dev-workflow:handing-off` or future sessions)
-- Plan is a deliverable itself (sharing with collaborators, archiving decisions)
-- Need design anchor fields (`Design ref`, `Expected values`, `Replaces`) to ensure design fidelity during execution
+This skill dispatches the `plan-writer` agent to generate an implementation plan in a separate context, keeping the main conversation lean.
 
-## Core Principle
+## Process
 
-Write plans assuming the implementing engineer has zero context. Document everything: files to touch, code snippets, commands, expected output.
+### Step 1: Gather Context
 
-## Plan Document Format
+Collect the following before dispatching:
 
-Save to: `docs/06-plans/YYYY-MM-DD-<feature-name>.md`
+1. **Goal** — one sentence describing what the plan achieves (from user request, dev-guide Phase, or conversation context)
+2. **Scope items** — list of features/components to implement
+3. **Acceptance criteria** — verifiable completion conditions (from dev-guide Phase or user)
+4. **Design doc reference** — path to design doc if one exists (search `docs/06-plans/*-design.md`)
+5. **Project root** — current working directory
 
-### Required Header
+If any of these are unclear, ask the user before dispatching.
 
-```markdown
-# [Feature Name] Implementation Plan
+### Step 2: Dispatch Agent
 
-**Goal:** [One sentence]
+Use the Task tool to launch the `plan-writer` agent with all gathered context. Structure the task prompt as:
 
-**Architecture:** [2-3 sentences on approach and key decisions]
+```
+Write an implementation plan with the following inputs:
 
-**Tech Stack:** [Key technologies and frameworks]
+Goal: {goal}
+Scope:
+- {item 1}
+- {item 2}
 
-**Design doc:** [path to design doc, if one exists — links to verifying-plans DF strategy]
+Acceptance criteria:
+- {criterion 1}
+- {criterion 2}
 
----
+Design doc: {path or "none"}
+Project root: {path}
+
+Additional context:
+{any relevant details from the conversation}
 ```
 
-### Task Structure
+### Step 3: Present Results
 
-Each task should be a coherent unit of work. Don't force artificial granularity — a task can be small or substantial as long as it's self-contained and verifiable.
+When the agent completes:
 
-```markdown
-### Task N: [Component/Feature Name]
-
-**Files:**
-- Create: `exact/path/to/file.ext`
-- Modify: `exact/path/to/existing.ext:line-range`
-- Test: `tests/exact/path/to/test.ext`
-
-**Steps:**
-1. [Clear instruction with code snippet if needed]
-2. [Next step]
-3. [Verification step with exact command and expected output]
-
-**Verify:**
-Run: `<exact command>`
-Expected: <what success looks like>
-```
-
-### Optional Design Anchor Fields
-
-When a task implements part of a design document, add these fields to help execution stay faithful:
-
-```markdown
-**Design ref:** [design-doc.md § Section Name]
-**Expected values:** [key concrete values from design that must appear in code]
-**Replaces:** [what existing code/pattern this replaces, if any]
-**Data flow:** [source → transform → destination]
-**Quality markers:** [specific acceptance criteria beyond "it works"]
-**Verify after:** [verification specific to design faithfulness]
-```
-
-These fields are optional per-task. Use them when the task has design-critical details that could drift during implementation.
-
-## Writing Guidelines
-
-1. **Complete file paths** — always absolute from project root
-2. **Actual code** — not pseudocode, not "implement X here"
-3. **Exact commands** — copy-pasteable verification commands with expected output
-4. **Dependencies explicit** — if Task 3 depends on Task 1, say so
-5. **No forced TDD** — write tests where they add value; don't mandate test-first for every step
-6. **Reasonable task size** — self-contained and independently verifiable; not artificially split
-
-## After Writing the Plan
-
-Inform the user of execution options:
-- `dev-workflow:executing-plans` — batch execution with checkpoints and review
-- Claude `/plan` mode — plan-mode execution with approval gates
+1. Read the plan file the agent created
+2. Present a summary to the user:
+   - Plan file path
+   - Number of tasks
+   - Key files to be created/modified
+3. Suggest next step: `dev-workflow:verifying-plans` to validate the plan before execution

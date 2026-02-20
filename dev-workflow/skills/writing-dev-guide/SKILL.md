@@ -4,11 +4,9 @@ description: "Use when starting a new project's development after design is appr
 user-invocable: false
 ---
 
-## When to Use
+## Overview
 
-- After `project-kickoff` and `brainstorming` are done
-- User says "write dev guide", "development roadmap", "plan the project"
-- A project has a design doc and needs a phased implementation strategy
+This skill dispatches the `dev-guide-writer` agent to create a phased development guide in a separate context, keeping the main conversation lean.
 
 ## Not This Skill
 
@@ -18,100 +16,44 @@ user-invocable: false
 
 ## Process
 
-### Step 1: Collect Inputs
+### Step 1: Gather Context
 
-Read these documents (if they exist):
-- `docs/01-discovery/project-brief.md` (from project-kickoff)
-- `docs/06-plans/*-design.md` (from brainstorming)
-- `docs/02-architecture/` (architecture docs)
-- Project `CLAUDE.md` (tech stack, constraints)
+Collect the following before dispatching:
 
-If no project-brief or design doc exists, inform the user and suggest running the corresponding workflow first. Do not proceed without understanding the full scope.
+1. **Project root** — current working directory
+2. **Design doc path** — search `docs/06-plans/*-design.md`
+3. **Project brief path** — check `docs/01-discovery/project-brief.md`
+4. **Architecture docs path** — check `docs/02-architecture/`
 
-### Step 2: Phase Planning
+If no project-brief or design doc exists, inform the user and suggest running the corresponding workflow first. Do not dispatch without these inputs.
 
-Based on the feature list and architecture, split the full development into ordered Phases.
+### Step 2: Dispatch Agent
 
-**Phase splitting principles:**
-- Each Phase has an independently verifiable deliverable (can build and see results)
-- Phases have explicit dependencies (Phase 2 builds on Phase 1's infrastructure)
-- Early Phases: infrastructure (data model, core Services, Design System)
-- Middle Phases: main features
-- Late Phases: secondary features, polish, submission prep
-- No MVP splits — each Phase builds a part of the complete product, not a "minimum viable" version
+Use the Task tool to launch the `dev-guide-writer` agent with all gathered context. Structure the task prompt as:
 
-Present the Phase outline to the user. **Wait for confirmation before writing the full document.** The user may want to reorder, merge, or split Phases.
+```
+Create a phased development guide with the following inputs:
 
-### Step 3: Write the Development Guide
-
-Save to: `docs/06-plans/YYYY-MM-DD-<project>-dev-guide.md`
-
-**Document format:**
-
-```markdown
-# [Project Name] Development Guide
-
-**Project brief:** docs/01-discovery/project-brief.md
-**Design doc:** docs/06-plans/YYYY-MM-DD-<topic>-design.md
-**Architecture:** docs/02-architecture/README.md
-
-## Global Constraints
-
-- Tech stack: [from CLAUDE.md]
-- Coding standards: [from CLAUDE.md]
-- Project-specific constraints: [from CLAUDE.md]
-
----
-
-## Phase 1: [Name]
-
-**Goal:** One sentence describing the state after this Phase completes.
-**Depends on:** None / Phase N
-**Scope:**
-- Feature A
-- Feature B
-
-**Architecture decisions:** Key technical decisions this Phase needs to make (list decision points, don't pre-decide — leave to /plan stage).
-
-**Acceptance criteria:**
-- [ ] Specific verifiable condition 1
-- [ ] Specific verifiable condition 2
-
-**Review checklist:**
-- [ ] /execution-review
-- [ ] /ui-review (if Phase has UI)
-- [ ] /design-review (if Phase has new pages)
-- [ ] /feature-review (if Phase completes a full user journey)
-
----
-
-## Phase 2: [Name]
-...
-
----
-
-## Phase N: Submission Prep
-
-**Goal:** App Store submission ready.
-**Scope:**
-- Performance optimization
-- Accessibility audit
-- Privacy compliance
-- ASC materials
-
-**Review checklist:**
-- [ ] /submission-preview
-- [ ] /appstoreconnect-review
+Project root: {path}
+Design doc: {path}
+Project brief: {path or "none"}
+Architecture docs: {path or "none"}
 ```
 
-**Writing guidelines:**
-- Acceptance criteria must be concrete and testable (not "works well")
-- Architecture decisions are listed as questions, not answers — the answers come during /plan
-- Review checklist is per-Phase, tailored to what that Phase produces
-- Each Phase's scope references specific features from the project brief / design doc
+### Step 3: Present Results and Confirm
+
+When the agent completes:
+
+1. Read the dev-guide file the agent created
+2. Extract the Phase outline (Phase names, goals, scope summaries)
+3. Present the outline to the user for confirmation
+4. **Wait for user approval** before considering the guide complete
+5. If the user requests changes (reorder, merge, split Phases):
+   - Re-dispatch the agent with revision instructions appended to the original prompt
+   - Repeat until user approves
 
 ### Step 4: Next Steps
 
-After saving, inform the user:
+After user confirms:
 
 > Development guide saved. Use `/run-phase` to start the Phase 1 development cycle (plan → execute → review).

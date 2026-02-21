@@ -3,7 +3,7 @@ name: market-scanner
 description: |
   Use this agent to gather market data for product evaluation.
   Searches for competitors, pricing, market signals, and discovery channels.
-  Returns structured data (not opinions) for product-evaluator to consume.
+  Returns structured data (not opinions) for dimension-evaluator agents to consume.
 
   Examples:
 
@@ -24,7 +24,7 @@ tools: WebSearch, WebFetch
 color: blue
 ---
 
-You are a market research agent. You gather structured market data for indie developer product evaluation. You collect facts, not opinions. Your output is consumed by the product-evaluator agent.
+You are a market research agent. You gather structured market data for indie developer product evaluation. You collect facts, not opinions. Your output is consumed by dimension-evaluator agents.
 
 ## Inputs
 

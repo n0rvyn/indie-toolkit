@@ -30,15 +30,14 @@ If the target is a local project, read its README (or equivalent top-level docs)
 - If app name is well-known, infer (but confirm if uncertain)
 - Otherwise, ask
 
-**If iOS detected:** set platform overlay to the plugin's `references/ios-overlay.md`.
-
 ### Step 3: Resolve Reference Paths
 
-Locate the plugin's reference files by searching for `**/product-lens/references/frameworks.md`. Resolve absolute paths for:
-- `frameworks.md` (always needed)
-- `ios-overlay.md` (if iOS platform detected in Step 2)
+Locate the plugin's reference files by searching for `**/product-lens/references/_calibration.md`. From the same parent directory, resolve absolute paths to:
 
-These absolute paths will be passed to agents in subsequent steps.
+- `_calibration.md` (always)
+- `_scoring.md` (always)
+- `dimensions/01-demand-authenticity.md` through `dimensions/06-execution-quality.md` (all 6)
+- `modules/kill-criteria.md`, `modules/feature-audit.md`, `modules/elevator-pitch.md`, `modules/pivot-directions.md` (all 4)
 
 ### Step 4: Gather Market Context
 
@@ -48,24 +47,138 @@ Dispatch the `market-scanner` agent with:
 - Known competitors (if user mentioned any)
 - Platform (from Step 2)
 
-**Wait for market-scanner to complete before proceeding.** The evaluator needs this data.
+**Wait for market-scanner to complete before proceeding.** The dimension evaluators need this data.
 
-### Step 5: Dispatch Evaluation
+### Step 5: Pre-merge Sub-Questions
 
-Dispatch the `product-evaluator` agent with:
-- Product name and one-sentence description
-- Evaluation type: `local` or `external`
-- Project root path (if local)
-- Frameworks reference path: absolute path resolved in Step 3
-- Platform overlay path: absolute path resolved in Step 3, or "none"
-- Market data: output from market-scanner (Step 4)
-- Scope: `full`
+Read `_calibration.md` once — this will be injected as preamble into every dimension-evaluator prompt.
 
-### Step 6: Present Results
+Determine the platform variant to use:
+- iOS detected → extract `### iOS` sections from each dimension file
+- Otherwise → extract `### Default` sections
 
-Display the full evaluation report from product-evaluator.
+For each of the 6 dimension files, read the file and extract:
+1. **Core question** (the line after `**Core question:**`)
+2. **Universal sub-questions** (the numbered list under `## Universal Sub-Questions`)
+3. **Platform-specific sub-questions** (the numbered list under the correct `### [Platform]` section within `## Platform-Specific Sub-Questions`). If iOS, also extract the iOS core question variant (the blockquote under the `### iOS` heading).
+4. **Scoring anchors** (the table under `## Scoring Anchors`)
+5. **Evidence sources** (the content under `## Evidence Sources`)
+
+For each dimension, merge the universal + platform-specific sub-questions into a single numbered list (universal questions first, then platform-specific, numbered sequentially).
+
+Result: 6 self-contained dimension payloads.
+
+Also prepare market data excerpts per dimension from the market-scanner output:
+- **Demand Authenticity:** full market data
+- **Journey Completeness:** "none" (code analysis dimension)
+- **Market Space:** Direct Competitors + Market Signals + Pricing Landscape sections
+- **Business Viability:** Pricing Landscape + Discovery Channels sections
+- **Moat:** Risk Signals + Direct Competitors sections
+- **Execution Quality:** "none" (code analysis dimension)
+
+### Step 6: Dispatch 6x dimension-evaluator (parallel)
+
+Dispatch all 6 `dimension-evaluator` agents **in a single message** (parallel execution). Each agent receives:
+
+- **Calibration context:** full content of `_calibration.md`
+- **Dimension name** (English + Chinese) and core question
+- **Sub-questions:** the merged numbered list from Step 5
+- **Scoring anchors:** the table from Step 5
+- **Evidence source hints:** from Step 5
+- **Product info:** name, one-sentence description, evaluation type (local/external), project root path
+- **Market data excerpt:** the dimension-relevant excerpt from Step 5
+- **Depth mode:** `standard`
+
+Wait for all 6 to complete.
+
+### Step 7: Collect and Validate Dimension Results
+
+For each of the 6 returned results, verify:
+
+1. Section header `## [Dimension Name` exists
+2. Score line contains star characters (★/☆), not X/10 or other scales
+3. Count of `### Q` sub-sections matches the expected sub-question count for that dimension
+4. Each sub-section contains `**Evidence:**` and `**Assessment:**` fields
+5. `**Anchor match:**` field exists in the Dimension Score section
+
+**If any dimension fails validation:**
+- Re-dispatch that single dimension-evaluator with a correction note prepended to the original prompt: "Your previous output had these issues: [list specific failures]. Produce the corrected output following the template exactly."
+- Maximum 1 retry per dimension
+- If still non-compliant after retry: include with warning annotation `> ⚠️ This dimension's output did not fully comply with the evaluation template.`
+
+Extract from each valid result:
+- Dimension star score (for the overview table and extras-generator)
+- One-sentence justification (for the overview table)
+
+### Step 8: Dispatch extras-generator
+
+Read the 4 module files from `references/modules/`. For each module file that has a `## Platform Additions` or `## Platform Constraints` section:
+- If iOS: extract the `### iOS` section and append it to the module's base instructions
+- Otherwise: use the base instructions only
+
+Dispatch the `extras-generator` agent with:
+- **Product info:** name, description, evaluation type, project root path, platform
+- **Dimension scores:** all 6 dimension names with their star scores and one-sentence justifications
+- **Weak dimensions:** list of dimensions scored <=2
+- **Module instructions:** the 4 module files' content (pre-merged with platform additions)
+- **Market data excerpt:** full market-scanner output (for Pivot Directions context)
+
+Wait for completion.
+
+### Step 9: Assemble Final Report
+
+Read `_scoring.md`. Compute the weighted total from the 6 dimension scores using default equal weights (or a user-specified preset if requested).
+
+Assemble the final report by combining dimension results and extras output:
+
+```markdown
+# Product Lens: [Product Name]
+
+> [One-sentence product description]
+
+## Elevator Pitch Test
+[from extras-generator output — the Elevator Pitch Test section]
+
+## Evaluation Overview
+
+| Dimension | Score | Justification |
+|-----------|-------|---------------|
+| Demand Authenticity (需求真伪) | [stars] | [justification from dimension result] |
+| Journey Completeness (逻辑闭环) | [stars] | [justification] |
+| Market Space (市场空间) | [stars] | [justification] |
+| Business Viability (商业可行) | [stars] | [justification] |
+| Moat (护城河) | [stars] | [justification] |
+| Execution Quality (执行质量) | [stars] | [justification] |
+| **Weighted Total** | **X.X** | |
+
+## Dimension Details
+
+[All 6 dimension evaluation results in order, each preserving its internal structure
+ (## heading, ### QN sections, ### Dimension Score)]
+
+## Feature Necessity Audit
+[from extras-generator output]
+
+## Kill Criteria
+[from extras-generator output]
+
+## Pivot Directions
+[from extras-generator output]
+```
+
+Validate extras output:
+- `## Elevator Pitch Test` section exists with `**Verdict:**` field
+- `## Kill Criteria` section exists with >=3 numbered items
+- `## Feature Necessity Audit` section exists (content or skip notice)
+- `## Pivot Directions` section exists with >=2 named directions
+
+If validation fails: re-dispatch extras-generator once with a correction note. If still non-compliant, include with warning annotation.
+
+### Step 10: Present Results
+
+Display the assembled report.
 
 Post-processing:
 1. **Highlight the Elevator Pitch result** — if "Cannot articulate", call it out prominently at the top
-2. **Flag weak dimensions** — any dimension scored ≤2 stars gets an explicit warning
+2. **Flag weak dimensions** — any dimension scored <=2 stars gets an explicit warning
 3. **Summarize actionable next steps** — based on the evaluation, what should the developer do first?

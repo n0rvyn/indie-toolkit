@@ -10,14 +10,14 @@ user-invocable: false
 
 Accept the dimension argument in both Chinese and English. Mapping:
 
-| English | Chinese | Dimension |
-|---------|---------|-----------|
-| demand | 需求真伪 | Demand Authenticity |
-| journey | 逻辑闭环 | Journey Completeness |
-| market | 市场空间 | Market Space |
-| business | 商业可行 | Business Viability |
-| moat | 护城河 | Moat |
-| execution | 执行质量 | Execution Quality |
+| English | Chinese | Dimension | File |
+|---------|---------|-----------|------|
+| demand | 需求真伪 | Demand Authenticity | `01-demand-authenticity.md` |
+| journey | 逻辑闭环 | Journey Completeness | `02-journey-completeness.md` |
+| market | 市场空间 | Market Space | `03-market-space.md` |
+| business | 商业可行 | Business Viability | `04-business-viability.md` |
+| moat | 护城河 | Moat | `05-moat.md` |
+| execution | 执行质量 | Execution Quality | `06-execution-quality.md` |
 
 Also accept partial matches and common aliases:
 - `need` / `needs` / `demand` / `jtbd` → Demand Authenticity
@@ -36,73 +36,60 @@ Same logic as evaluate skill:
 - Name/URL argument → external app
 - No argument → current working directory
 
-### Step 3: Detect Platform, Resolve Paths, and Load Framework
+### Step 3: Detect Platform and Resolve Paths
 
 1. Detect platform (iOS / Web / etc.)
-2. Locate reference files by searching for `**/product-lens/references/frameworks.md`. Resolve absolute paths.
-3. If iOS: load the specified dimension from both `references/frameworks.md` (universal questions) and `references/ios-overlay.md` (platform-specific replacement questions)
-4. Otherwise: load the specified dimension from `references/frameworks.md` (both universal and default platform-specific)
+2. Locate reference files by searching for `**/product-lens/references/_calibration.md`. From the same parent directory, resolve the path to:
+   - `_calibration.md`
+   - The single dimension file matching the target dimension (from the mapping in Step 1)
 
-### Step 4: Gather Market Context (if applicable)
+### Step 4: Pre-merge Sub-Questions
 
-For dimensions that benefit from market data (Market Space, Business Viability, Moat):
+Read `_calibration.md` (preamble for the evaluator).
+
+Read the target dimension file. Extract:
+1. Core question
+2. Universal sub-questions
+3. Platform-specific sub-questions (from `### iOS` if iOS detected, otherwise `### Default`)
+4. Scoring anchors
+5. Evidence sources
+
+If iOS detected and the dimension has an iOS core question variant (blockquote under `### iOS`), note it for the evaluator.
+
+Merge universal + platform-specific into a single numbered list.
+
+### Step 5: Gather Market Context (if applicable)
+
+For dimensions that benefit from market data (**Market Space**, **Business Viability**, **Moat**):
 - Dispatch `market-scanner` agent with product info
-- Use the market data to enrich the analysis
+- Wait for completion
 
-For other dimensions (Demand Authenticity, Journey Completeness, Execution Quality):
+For other dimensions (**Demand Authenticity**, **Journey Completeness**, **Execution Quality**):
 - Skip market-scanner; these are primarily code/product analysis
 
-### Step 5: Deep Evaluation
+### Step 6: Deep Evaluation
 
-Dispatch `product-evaluator` agent with:
-- Product info
-- Evaluation type (local/external)
-- Project root (if local)
-- Frameworks reference path (absolute, from Step 3)
-- Platform overlay path (absolute, from Step 3; if iOS)
-- Market data (if gathered in Step 4)
-- **Scope: single dimension name only**
+Dispatch a single `dimension-evaluator` agent with:
+- **Calibration context:** full content of `_calibration.md`
+- **Dimension name** (English + Chinese) and core question
+- **Sub-questions:** the merged numbered list from Step 4
+- **Scoring anchors** from Step 4
+- **Evidence source hints** from Step 4
+- **Product info:** name, description, type, project root
+- **Market data:** from Step 5 (or "none")
+- **Depth mode:** `deep`
 
-The evaluator will go deeper on this single dimension than in a full evaluation because it can dedicate full attention to it.
+Wait for completion.
 
-### Step 6: Present Results
+### Step 7: Present Results
 
-Output a focused deep-dive report:
+Display the deep-dive report from the dimension-evaluator. The deep mode output includes:
+- Per-sub-question analysis with sub-scores
+- Evidence summary table
+- Dimension score with anchor match
+- Prioritized recommendations
+- Related dimensions observations
 
-```markdown
-# Teardown: [Dimension Name] — [Product Name]
-
-## Overall Score: [★★★☆☆]
-
-[One-paragraph summary of this dimension's assessment]
-
-## Sub-Question Analysis
-
-### [Sub-question 1]
-[Detailed analysis with evidence]
-**Sub-score:** [★★★★☆]
-
-### [Sub-question 2]
-[Detailed analysis with evidence]
-**Sub-score:** [★★★☆☆]
-
-[... repeat for all sub-questions]
-
-## Evidence Summary
-
-| Evidence | Source | Implication |
-|----------|--------|-------------|
-| [finding] | [file:line or URL] | [what it means] |
-
-## Actionable Recommendations
-
-1. **[Priority 1]:** [Specific action to improve this dimension]
-2. **[Priority 2]:** [Specific action]
-3. **[Priority 3]:** [Specific action]
-
-## Related Dimensions
-
-This teardown surfaced signals relevant to other dimensions:
-- [Dimension X]: [observation that affects it]
-- [Dimension Y]: [observation that affects it]
-```
+Post-processing:
+- If the dimension scored <=2, highlight this prominently
+- If Related Dimensions section identifies signals for other dimensions, suggest running `/evaluate` for the full picture or `/teardown [other dimension]` for a focused follow-up

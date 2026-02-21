@@ -22,29 +22,60 @@ Confirm the target list with the user before proceeding: "I'll evaluate these N 
 
 ### Step 2: Resolve Reference Paths
 
-Locate the plugin's reference files by searching for `**/product-lens/references/frameworks.md`. Resolve absolute paths for:
-- `frameworks.md` (always needed)
-- `ios-overlay.md` (if any target is iOS)
+Locate the plugin's reference files by searching for `**/product-lens/references/_calibration.md`. From the same parent directory, resolve absolute paths to:
 
-### Step 3: Parallel Evaluation
+- `_calibration.md` (always)
+- `_scoring.md` (always)
+- `dimensions/01-demand-authenticity.md` through `dimensions/06-execution-quality.md` (all 6)
+- `modules/kill-criteria.md`, `modules/feature-audit.md`, `modules/elevator-pitch.md`, `modules/pivot-directions.md` (all 4)
 
-For each target, dispatch the full evaluation flow:
+### Step 3: Parallel Evaluation Pipeline
 
-1. Dispatch `market-scanner` for each target (in parallel where possible). Wait for all to complete.
-2. Dispatch `product-evaluator` for each target (in parallel where possible), passing:
-   - Product info
-   - Evaluation type
-   - Project root (if local)
-   - Frameworks reference path (from Step 2)
-   - Platform overlay path (from Step 2, if iOS)
-   - Market data from its market-scanner run
-   - Scope: `full`
+Read `_calibration.md` once (shared across all evaluations).
 
-Collect all evaluation reports.
+**Stage 1: Market scanning (parallel)**
+
+Dispatch `market-scanner` for each target in parallel. Wait for all to complete.
+
+**Stage 2: Pre-merge sub-questions**
+
+For each target product, determine its platform variant (iOS or Default). For each of the 6 dimension files, extract and merge sub-questions using the same logic as evaluate skill Step 5. Prepare market data excerpts per dimension per product.
+
+**Stage 3: Dimension evaluation (parallel)**
+
+Dispatch `dimension-evaluator` agents for all targets in parallel — N products x 6 dimensions = 6N calls in a single message. Each receives:
+- Calibration context (from `_calibration.md`)
+- Its dimension payload (pre-merged sub-questions, scoring anchors, evidence sources)
+- Its product info (name, description, type, project root)
+- Its market data excerpt
+- Depth: `standard`
+
+Wait for all to complete.
+
+**Stage 4: Validation**
+
+For each dimension result across all products, apply the same validation checks as evaluate skill Step 7 (section headers, star format, sub-question count, evidence fields, anchor match). Re-dispatch any failing dimensions once.
+
+**Stage 5: Extras generation (parallel)**
+
+Read and pre-merge the 4 module files (same as evaluate skill Step 8).
+
+Dispatch `extras-generator` for each target in parallel — N calls. Each receives:
+- Its product info
+- Its 6 dimension scores and justifications
+- Its weak dimensions list
+- Module instructions (pre-merged with platform additions)
+- Its market data
+
+Wait for all to complete. Validate extras output (same checks as evaluate skill Step 9).
+
+**Stage 6: Assembly**
+
+For each product, assemble its individual report (same format as evaluate skill Step 9). Read `_scoring.md` and compute weighted totals.
 
 ### Step 4: Build Comparison Matrix
 
-Extract scores from each evaluation report and build the matrix:
+Extract scores from each product's evaluation and build the matrix:
 
 ```markdown
 ## Scoring Matrix
@@ -64,7 +95,7 @@ Ask the user if they want custom weights or a weight preset (validation/growth/m
 
 Rank by weighted total score (highest first).
 
-Apply significance threshold: if two products' weighted totals differ by ≤ 0.5, mark as "difference not significant — compare individual dimensions."
+Apply significance threshold: if two products' weighted totals differ by <= 0.5, mark as "difference not significant — compare individual dimensions."
 
 ### Step 5: Development Maturity Signals
 
@@ -107,7 +138,7 @@ Output the full comparison report:
 **Maintain:** [App] — [conditional reason]
 **Stop:** [App] — [reason: lowest score or kill criteria triggered]
 
-(If any pair of products has a score difference ≤ 0.5, note that the ranking
+(If any pair of products has a score difference <= 0.5, note that the ranking
 between them is not significant and the recommendation is based on dimension-level
 analysis, not total score.)
 
@@ -122,9 +153,12 @@ Across all evaluated projects:
 
 ## Individual Reports
 
-[Link or expand each full evaluation report below]
+[For each product, include the full evaluation report from Stage 6 assembly:
+ Elevator Pitch Test, Evaluation Overview table, Dimension Details
+ (all 6 dimension results preserving internal structure),
+ Feature Necessity Audit, Kill Criteria, Pivot Directions]
 ```
 
 Post-processing:
-- Flag any project where 2+ dimensions scored ≤2 stars (strong stop signal)
+- Flag any project where 2+ dimensions scored <=2 stars (strong stop signal)
 - If all projects score poorly, say so directly — "none of these are strong candidates" is a valid conclusion

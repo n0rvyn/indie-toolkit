@@ -20,15 +20,22 @@ Do not deep-dive into code. This is a surface-level scan.
 
 ### Step 2: Detect Platform and Load Framework
 
-Same logic as evaluate skill:
+Same platform detection logic as evaluate skill:
 - Check for `.xcodeproj` / `Package.swift` → iOS
 - Check for `package.json` → Web
 - Otherwise ask or infer
 
-Locate reference files by searching for `**/product-lens/references/frameworks.md`. Read the Demand Authenticity dimension section.
+Locate reference files by searching for `**/product-lens/references/dimensions/01-demand-authenticity.md`.
 
-If iOS: also read the Demand Authenticity section from `references/ios-overlay.md` (replace platform-specific sub-questions, keep universal).
-Otherwise: use the default platform-specific questions from `frameworks.md`.
+Read:
+1. `dimensions/01-demand-authenticity.md` — extract:
+   - Universal sub-questions
+   - Platform-specific sub-questions (from `### iOS` if iOS detected, otherwise `### Default`)
+   - Scoring anchors
+2. `modules/elevator-pitch.md` — extract:
+   - Default constraints
+   - Platform-specific constraints (from `### iOS` under `## Platform Constraints` if iOS detected)
+   - Judgment criteria
 
 ### Step 3: Demand Dimension Assessment
 
@@ -42,7 +49,7 @@ Score 1-5 stars with one-sentence justification.
 ### Step 4: Elevator Pitch Test
 
 Attempt to write:
-- Tagline (≤30 chars) or equivalent short tagline
+- Tagline (<=30 chars) — apply platform-specific constraints if iOS
 - First description sentence
 
 Judge: Clear / Vague / Cannot articulate
@@ -62,9 +69,9 @@ Output one of three verdicts:
 
 | Verdict | Criteria | Meaning |
 |---------|----------|---------|
-| **Pass** | Demand ≥3★ AND Pitch not "Cannot articulate" AND alternatives are beatable | Green light: proceed to full evaluation or building |
+| **Pass** | Demand >=3★ AND Pitch not "Cannot articulate" AND alternatives are beatable | Green light: proceed to full evaluation or building |
 | **Caution** | Demand 3★ with Pitch "Cannot articulate", OR Demand 2★ with Pitch "Clear", OR dominant alternative exists but has clear gaps | Investigate further: run full `/evaluate` before committing |
-| **Fail** | Demand ≤2★ AND no differentiation angle, OR Pitch "Cannot articulate" AND problem already solved well by free tools | Reconsider: this idea needs significant rethinking |
+| **Fail** | Demand <=2★ AND no differentiation angle, OR Pitch "Cannot articulate" AND problem already solved well by free tools | Reconsider: this idea needs significant rethinking |
 
 ## Output Format
 
@@ -72,7 +79,7 @@ Output one of three verdicts:
 # Demand Check: [Product Name]
 
 ## Elevator Pitch
-> **Tagline:** [≤30 chars]
+> **Tagline:** [<=30 chars]
 > **Description:** [first sentence]
 > **Verdict:** [Clear / Vague / Cannot articulate] — [reasoning]
 

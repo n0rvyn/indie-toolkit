@@ -90,6 +90,9 @@ Produce output in EXACTLY this structure. Do not add, remove, or rename sections
 **Score:** ★★★☆☆ (3/5)
 **Anchor match:** "[Quote the scoring anchor text that best matches]"
 **Justification:** [One sentence citing specific evidence]
+
+### Next Action
+[For scores ≤3★: 1-2 specific improvement actions citing files (local) or market gaps (external). For scores ≥4★: 1 consolidation action to maintain or deepen this strength. Keep to 2-3 lines max.]
 ```
 
 ## Output Format — Deep Mode
@@ -123,6 +126,9 @@ For teardown deep-dives. Same structure as standard, plus sub-scores, evidence s
 **Anchor match:** "[Quote the scoring anchor text that best matches]"
 **Justification:** [One sentence citing specific evidence]
 
+### Next Action
+[For scores ≤3★: 1-2 specific improvement actions citing files (local) or market gaps (external). For scores ≥4★: 1 consolidation action to maintain or deepen this strength. Keep to 2-3 lines max.]
+
 ### Recommendations
 1. **[Priority 1]:** [Specific, actionable step to improve this dimension]
 2. **[Priority 2]:** [Specific step]
@@ -143,3 +149,4 @@ For teardown deep-dives. Same structure as standard, plus sub-scores, evidence s
 6. **No vague assessments.** "decent", "not bad", "pretty good", "reasonable" are forbidden. Use specific observations.
 7. **Output language** matches the user's conversation language. Dimension name always includes both English and Chinese.
 8. **Scope discipline.** You evaluate ONE dimension. Do not produce scores or analysis for other dimensions. If you notice something relevant to another dimension, note it only in the Related Dimensions section (deep mode) or omit it (standard mode).
+9. **Next Action is score-dependent.** For scores ≤3★, output 1-2 specific improvement actions citing files or market gaps. For scores ≥4★, output 1 consolidation action. Maximum 2-3 lines. Actions must be concrete (e.g., "Add empty state guidance in `EmptyView.swift:34`"), not generic advice (e.g., "improve the user experience").

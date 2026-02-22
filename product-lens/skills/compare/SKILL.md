@@ -27,7 +27,7 @@ Locate the plugin's reference files by searching for `**/product-lens/references
 - `_calibration.md` (always)
 - `_scoring.md` (always)
 - `dimensions/01-demand-authenticity.md` through `dimensions/06-execution-quality.md` (all 6)
-- `modules/kill-criteria.md`, `modules/feature-audit.md`, `modules/elevator-pitch.md`, `modules/pivot-directions.md` (all 4)
+- `modules/kill-criteria.md`, `modules/feature-audit.md`, `modules/elevator-pitch.md`, `modules/pivot-directions.md`, `modules/validation-playbook.md` (all 5)
 
 ### Step 3: Parallel Evaluation Pipeline
 
@@ -58,12 +58,12 @@ For each dimension result across all products, apply the same validation checks 
 
 **Stage 5: Extras generation (parallel)**
 
-Read and pre-merge the 4 module files (same as evaluate skill Step 8).
+Read and pre-merge the 5 module files (same as evaluate skill Step 8).
 
 Dispatch `extras-generator` for each target in parallel — N calls. Each receives:
 - Its product info
 - Its 6 dimension scores and justifications
-- Its weak dimensions list
+- Its weak dimensions list (scored <=2 for Kill Criteria; scored <=3 with Next Action text for Validation Playbook)
 - Module instructions (pre-merged with platform additions)
 - Its market data
 
@@ -154,9 +154,9 @@ Across all evaluated projects:
 ## Individual Reports
 
 [For each product, include the full evaluation report from Stage 6 assembly:
- Elevator Pitch Test, Evaluation Overview table, Dimension Details
- (all 6 dimension results preserving internal structure),
- Feature Necessity Audit, Kill Criteria, Pivot Directions]
+ Elevator Pitch Test, Evaluation Overview table, Priority Actions,
+ Dimension Details (all 6 dimension results preserving internal structure),
+ Feature Necessity Audit, Kill Criteria, Pivot Directions, Validation Playbook]
 ```
 
 Post-processing:

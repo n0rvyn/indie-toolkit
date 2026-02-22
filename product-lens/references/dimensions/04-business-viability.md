@@ -13,7 +13,13 @@
 ### Default
 
 4. **Unit economics at indie scale:** Not LTV/CAC ratios -- can you reach $5K+/month with realistic conversion rates and zero marketing budget?
-5. **Discovery channels:** How do users find this product? Is there at least one organic channel (SEO, ASO, word-of-mouth, community)?
+5. **Indie growth channels:** Which growth engines are viable for this product? Classify:
+   - ASO long-tail (specific search terms, low competition)
+   - Vertical community (Reddit/Discord/forum with target users)
+   - Content SEO (tutorials, guides in the product's domain)
+   - Product-as-distribution (output naturally shareable -- exports with watermark, share cards)
+   - AI discoverability (when users ask AI assistants "recommend a tool for X", does this category appear?)
+   Is there at least one channel that doesn't require ongoing paid spend?
 
 ### iOS
 

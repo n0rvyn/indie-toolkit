@@ -12,22 +12,23 @@
    - Low-frequency + low-pain = nice-to-have (dangerous for indie)
 3. **Sean Ellis test proxy:** If this product disappears tomorrow, do users scramble for alternatives or shrug?
 4. **Code signal check:** Is 80% of code serving the core value proposition, or is the value buried under feature bloat? (local projects only)
+5. **User value accumulation:** Does using this product accumulate user-specific value over time (data, skills, habits, content) that grows switching costs?
 
 ## Platform-Specific Sub-Questions
 
 ### Default
 
-5. **Switching cost from alternatives:** What do users give up by not switching to this product? What do they give up by switching?
+6. **Switching cost from alternatives:** What do users give up by not switching to this product? What do they give up by switching?
 
 ### iOS
 
 > iOS core question variant: Are iOS users willing to pay for this from an unknown indie developer, given higher quality expectations on the platform?
 
-5. **iOS willingness-to-pay:** iOS users have higher payment intent than Android, but also higher quality bars. Is this product's polish level sufficient for iOS expectations?
-6. **System capability overlap:** Can Shortcuts, Widgets, Focus Modes, or built-in system features solve this problem? What is the app's incremental value beyond what iOS provides for free?
-7. **Platform-native job:** Is this a job that users specifically want to do on iPhone/iPad? Or is it better suited to web/desktop?
-8. **App Store review signals:** What do negative reviews of competitors say? What jobs are underserved?
-9. **Pain frequency on mobile:** Is this a problem users encounter while using their phone, or do they have to go out of their way to open this app?
+6. **iOS willingness-to-pay:** iOS users have higher payment intent than Android, but also higher quality bars. Is this product's polish level sufficient for iOS expectations?
+7. **AI & system capability overlap:** Can ChatGPT, Claude, Apple Intelligence, Shortcuts, Widgets, or built-in system features solve this problem? What is the app's incremental value beyond what AI tools and iOS provide for free?
+8. **Platform-native job:** Is this a job that users specifically want to do on iPhone/iPad? Or is it better suited to web/desktop?
+9. **App Store review signals:** What do negative reviews of competitors say? What jobs are underserved?
+10. **Pain frequency on mobile:** Is this a problem users encounter while using their phone, or do they have to go out of their way to open this app?
 
 ## Evidence Sources
 

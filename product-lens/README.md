@@ -31,6 +31,7 @@ Each dimension's sub-questions are split into **universal** (always apply) and *
 - **Feature Necessity Audit** — must-keep / simplify / cut analysis (local projects only)
 - **Elevator Pitch Test** — can you describe value in a tagline + one sentence?
 - **Pivot Directions** — adjacent opportunities based on existing code assets and domain knowledge
+- **Validation Playbook** — lowest-cost experiments to validate uncertain signals (indie-specific methods)
 
 ## Feature Assessment
 
@@ -73,7 +74,7 @@ Each dimension is evaluated by a separate agent call that receives **only** its 
 | Agent | Model | Purpose |
 |-------|-------|---------|
 | `dimension-evaluator` | Opus | Evaluates one dimension; receives pre-merged sub-questions and strict output template |
-| `extras-generator` | Sonnet | Generates Kill Criteria, Feature Audit, Elevator Pitch, Pivot Directions |
+| `extras-generator` | Sonnet | Generates Kill Criteria, Feature Audit, Elevator Pitch, Pivot Directions, Validation Playbook |
 | `market-scanner` | Sonnet | Market research; gathers competitor data, pricing, and market signals |
 | `app-context-scanner` | Sonnet | Scans local codebase; produces structured app context summary |
 | `feature-dimension-evaluator` | Opus | Evaluates one feature dimension; signal + confidence format |
@@ -107,6 +108,7 @@ references/
     feature-audit.md            # Methodology + output format
     elevator-pitch.md           # Constraints + iOS App Store variant
     pivot-directions.md         # Methodology + output format
+    validation-playbook.md     # Indie-specific validation experiments + selection logic
   feature-assess/
     _calibration.md              # Feature-level evaluation framing + signal format
     _verdict.md                  # Verdict computation rules (GO/DEFER/KILL)

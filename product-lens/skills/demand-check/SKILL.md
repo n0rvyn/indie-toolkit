@@ -73,6 +73,25 @@ Output one of three verdicts:
 | **Caution** | Demand 3★ with Pitch "Cannot articulate", OR Demand 2★ with Pitch "Clear", OR dominant alternative exists but has clear gaps | Investigate further: run full `/evaluate` before committing |
 | **Fail** | Demand <=2★ AND no differentiation angle, OR Pitch "Cannot articulate" AND problem already solved well by free tools | Reconsider: this idea needs significant rethinking |
 
+### Validation Playbook (Caution verdict only)
+
+When the verdict is **Caution**, append a `## Validation Playbook` section to the output. Select 2-3 methods from the list below based on what is uncertain:
+
+- **If demand unclear:** "AI-analyze 200+ competitor 1★-3★ App Store reviews to extract unmet needs. Success: >=3 recurring complaint themes that this product addresses."
+- **If differentiation unclear:** "Post pain-point description (not product pitch) in target community (Reddit/Discord). Success: >=20 upvotes or >=5 'I have this problem' replies within 48 hours."
+- **If willingness-to-pay unclear:** "Soft-launch in a small market (e.g., New Zealand) at target price for 2 weeks. Success: >=3 paid conversions without promotion."
+- **If dogfooding viable:** "Use your own product daily for 2 weeks, logging every friction point. Success: friction log has <=5 entries AND you genuinely miss the product when you stop."
+- **If AI replacement risk unclear:** "Ask ChatGPT, Claude, and Perplexity to recommend tools for this product's core job. Success: AI tools recommend the category but can't fully replace it."
+
+Each selected method must include: method description, success criteria, failure criteria, and timeline (all <=2 weeks).
+
+### Step 7: Save Report
+
+If the evaluation target is a local project:
+1. Check if `docs/08-product-evaluation/` directory exists. If not, create it.
+2. Save the report to `docs/08-product-evaluation/{YYYY-MM-DD}-demand-check.md`
+3. Check for previous demand-check reports in the same directory. If found, note score changes in the verdict section.
+
 ## Output Format
 
 ```markdown
@@ -96,4 +115,11 @@ Output one of three verdicts:
 ## Verdict: [Pass / Caution / Fail]
 
 [One paragraph explaining the verdict and suggested next steps]
+
+## Validation Playbook
+(Only present when verdict is Caution)
+
+Before committing to build, validate these uncertainties:
+1. **[Uncertainty]:** [Method] — Success: [criteria] / Fail: [criteria] — Timeline: [<=2 weeks]
+2. **[Uncertainty]:** [Method] — Success: [criteria] / Fail: [criteria] — Timeline: [<=2 weeks]
 ```

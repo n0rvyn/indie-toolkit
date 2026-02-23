@@ -17,6 +17,14 @@ If input is incomplete, ask for:
 
 ## Process
 
+0. **Retrieve historical context**
+   - Extract 3-5 keywords from the bug description (error type, component name, API name, symptom)
+   - Call `search(query="<keywords from bug description>", source_type=["error","lesson"], project_root="<current working directory>")`
+   - If results are returned: present them as "Related historical records:" before proceeding
+   - If the index returns no results, or the search tool is unavailable: skip this step silently and proceed to Step 1
+   - Do not block investigation if the search tool is slow or unresponsive
+   - Note: Phase 1 searches project-level index only. Cross-scope search (project + global) will be added in Phase 2.
+
 1. **Reproduce first**
    - Confirm the bug can be reproduced
    - If cannot reproduce: ask for more context, do not guess
@@ -81,6 +89,7 @@ If input is incomplete, ask for:
    - Address the actual cause, not just the symptom
    - Consider edge cases and related scenarios
    - Ensure the fix doesn't introduce new issues
+   - After the fix is complete, suggest: "Consider running `/collect-lesson` to record this bug pattern for future retrieval."
 
 8. **Verify the fix**
    - Build the project

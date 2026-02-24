@@ -1,7 +1,6 @@
 ---
 name: collect-lesson
 description: "Use after resolving a bug, completing a task with notable pitfalls, or discovering an important architecture constraint. Extracts a structured lesson entry from the session and saves it to the knowledge base."
-user-invocable: false
 ---
 
 ## Overview

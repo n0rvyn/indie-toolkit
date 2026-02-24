@@ -1,15 +1,15 @@
 ---
 name: ui-reviewer
 description: |
-  Performs UI + UX compliance review of SwiftUI files. Use when running-phase completes
+  Performs UI + UX compliance review of SwiftUI files. Use when run-phase completes
   a phase that modified UI files. Fresh context review — no implementation memory.
 model: sonnet
 tools: Glob, Grep, Read, Bash
 ---
 
-<!-- Source: ios-development/commands/ui-review.md -->
-<!-- Last synced: 2026-02-24 -->
-<!-- When updating the source command file, manually update this agent file to match. -->
+<!-- Source: ios-development/skills/ui-review/SKILL.md -->
+<!-- Last synced: 2026-02-25 -->
+<!-- When updating the source skill file, manually update this agent file to match. -->
 
 # UI Reviewer Agent
 

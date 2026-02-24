@@ -19,14 +19,12 @@ else
 fi
 ```
 
-2. Create skill and command source links:
+2. Create skill source links:
 
 ```bash
 mkdir -p ~/.config/opencode/skills
-mkdir -p ~/.config/opencode/commands
 ln -sfn ~/.config/opencode/cookit/ios-development/skills ~/.config/opencode/skills/cookit-ios-development
 ln -sfn ~/.config/opencode/cookit/mactools/skills ~/.config/opencode/skills/cookit-mactools
-ln -sfn ~/.config/opencode/cookit/ios-development/commands ~/.config/opencode/commands/cookit-ios-development
 ```
 
 3. Restart OpenCode.
@@ -36,7 +34,6 @@ ln -sfn ~/.config/opencode/cookit/ios-development/commands ~/.config/opencode/co
 ```bash
 ls -la ~/.config/opencode/skills/cookit-ios-development
 ls -la ~/.config/opencode/skills/cookit-mactools
-ls -la ~/.config/opencode/commands/cookit-ios-development
 ```
 
 ## Updating
@@ -45,12 +42,11 @@ ls -la ~/.config/opencode/commands/cookit-ios-development
 git -C ~/.config/opencode/cookit pull --ff-only
 ```
 
-If new skills or commands were added in the repo, re-run the symlink commands once.
+If new skills were added in the repo, re-run the symlink commands once.
 
 ## Uninstall
 
 ```bash
 rm ~/.config/opencode/skills/cookit-ios-development
 rm ~/.config/opencode/skills/cookit-mactools
-rm ~/.config/opencode/commands/cookit-ios-development
 ```

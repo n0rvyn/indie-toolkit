@@ -1,6 +1,7 @@
 ---
 name: generate-design-system
 description: Generate Apple HIG-compliant SwiftUI Design System code from token specifications
+disable-model-invocation: true
 ---
 
 # Generate Design System Skill

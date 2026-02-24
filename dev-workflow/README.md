@@ -4,13 +4,13 @@ Cross-stack development workflow plugin for Claude Code. Provides a full plan-ex
 
 ## Architecture
 
-Heavy document-generation and analysis tasks run as **agents** (separate context windows) dispatched via the Task tool. Interactive tasks that need user input or write code stay as **skills** in the main context. The `running-phase` orchestrator dispatches agents and coordinates the sequence.
+Heavy document-generation and analysis tasks run as **agents** (separate context windows) dispatched via the Task tool. Interactive tasks that need user input or write code stay as **skills** in the main context. The `run-phase` orchestrator dispatches agents and coordinates the sequence.
 
 ```
-running-phase (orchestrator, main context)
+run-phase (orchestrator, main context)
   → plan-writer agent (sonnet)        → plan file on disk
   → plan-verifier agent (opus)        → verification report
-  → executing-plans skill             → code changes (main context)
+  → execute-plan skill                → code changes (main context)
   → feature-spec-writer agent (sonnet) → spec file
   → review agents (parallel)          → consolidated findings
   → fix gaps                          → Phase done
@@ -31,21 +31,23 @@ running-phase (orchestrator, main context)
 
 | Skill | Type | Description |
 |-------|------|-------------|
-| running-phase | orchestrator | Phase lifecycle: dispatch agents, coordinate sequence, manage state |
-| executing-plans | interactive | Batch code execution with checkpoint approval |
-| brainstorming | interactive | Design exploration before implementation |
-| making-design-decisions | interactive | Trade-off analysis with essential/accidental complexity |
-| fixing-bugs | interactive | Systematic diagnosis with value domain tracing |
-| finishing-branch | interactive | Test, document, merge/PR/discard |
+| run-phase | orchestrator | Phase lifecycle: dispatch agents, coordinate sequence, manage state |
+| execute-plan | interactive | Batch code execution with checkpoint approval |
+| brainstorm | interactive | Design exploration before implementation |
+| design-decision | interactive | Trade-off analysis with essential/accidental complexity |
+| fix-bug | interactive | Systematic diagnosis with value domain tracing |
+| finish-branch | interactive | Test, document, merge/PR/discard |
 | parallel-agents | guide | Pattern for concurrent agent dispatch |
-| using-worktrees | guide | Git worktree setup and safety |
-| committing-changes | fork (haiku) | Conventional commit analysis and execution |
-| handing-off | fork (haiku) | Cold-start prompt generation for session transfer |
-| writing-plans | dispatcher | Gathers context, dispatches plan-writer agent |
-| verifying-plans | dispatcher | Gathers context, dispatches plan-verifier agent |
-| writing-dev-guide | dispatcher | Gathers context, dispatches dev-guide-writer agent |
-| writing-feature-spec | dispatcher | Gathers context, dispatches feature-spec-writer agent |
+| use-worktree | guide | Git worktree setup and safety |
+| commit | fork (haiku) | Conventional commit analysis and execution |
+| handoff | fork (haiku) | Cold-start prompt generation for session transfer |
+| write-plan | dispatcher | Gathers context, dispatches plan-writer agent |
+| verify-plan | dispatcher | Gathers context, dispatches plan-verifier agent |
+| write-dev-guide | dispatcher | Gathers context, dispatches dev-guide-writer agent |
+| write-feature-spec | dispatcher | Gathers context, dispatches feature-spec-writer agent |
 | reviewing-rules | dispatcher | Gathers context, dispatches rules-auditor agent |
+| collect-lesson | interactive | Capture development lessons learned |
+| docs-rag | interactive | Documentation search and retrieval |
 
 ## Hooks
 
@@ -55,7 +57,7 @@ running-phase (orchestrator, main context)
 
 ## Workflow State
 
-`running-phase` persists progress to `.claude/dev-workflow-state.yml`, enabling cross-session resume. The SessionStart hook detects this file and prompts the user to continue.
+`run-phase` persists progress to `.claude/dev-workflow-state.yml`, enabling cross-session resume. The SessionStart hook detects this file and prompts the user to continue.
 
 ## Design Principles
 

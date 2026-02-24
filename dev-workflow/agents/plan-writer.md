@@ -63,7 +63,7 @@ Save to: `docs/06-plans/YYYY-MM-DD-<feature-name>.md`
 
 **Tech Stack:** [Key technologies and frameworks]
 
-**Design doc:** [path to design doc, if one exists — links to verifying-plans DF strategy]
+**Design doc:** [path to design doc, if one exists — links to verify-plan DF strategy]
 
 ---
 ```

@@ -13,7 +13,7 @@ description: |
   </example>
 
   <example>
-  Context: User completed brainstorming and wants to start structured development.
+  Context: User completed brainstorm and wants to start structured development.
   user: "Create a phased development plan"
   assistant: "I'll use the dev-guide-writer agent to write the development guide."
   </example>
@@ -51,7 +51,7 @@ The dispatcher will present the Phase outline to the user for confirmation. If r
 
 Read these documents (if they exist):
 - `docs/01-discovery/project-brief.md` (from project-kickoff)
-- `docs/06-plans/*-design.md` (from brainstorming)
+- `docs/06-plans/*-design.md` (from brainstorm)
 - `docs/02-architecture/` (architecture docs)
 - Project `CLAUDE.md` (tech stack, constraints)
 

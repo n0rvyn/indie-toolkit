@@ -85,9 +85,11 @@ If input is incomplete, ask for:
      ```
    - Parallel paths without coordination = architectural issue; flag as "⚠️ needs architectural fix" and inform user; do not fix only one path
 
-7. **Plan the fix**
+7. **Plan the fix — MANDATORY GATE**
 
-   Before writing any code, classify fix complexity:
+   ⛔ **DO NOT write any fix code until this step is completed and the user has approved the plan.**
+
+   Classify fix complexity:
 
    **Simple** — ALL must be true:
    - Fix is confined to ≤2 file locations
@@ -101,8 +103,12 @@ If input is incomplete, ask for:
    - Step 6 flagged parallel paths without coordination
    - Fix requires architectural changes
 
-   → If **Simple**: use Claude Code's built-in `/plan` to outline the fix before implementing
-   → If **Complex**: invoke `dev-workflow:write-plan` to create a structured plan
+   **Required actions:**
+
+   → If **Simple**: call `EnterPlanMode` to design the fix. Present the plan to the user and wait for approval before proceeding.
+   → If **Complex**: invoke `/write-plan` to create a structured implementation plan. Wait for plan approval before proceeding.
+
+   **Proceeding to Step 8 without a user-approved plan is a violation of this skill's protocol.**
 
 8. **Fix the root cause**
    - Address the actual cause, not just the symptom

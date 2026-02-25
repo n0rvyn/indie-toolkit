@@ -82,6 +82,46 @@ For deep reviews after major phases, read the plugin's `references/swift-coding-
 - Are brand/custom colors in Asset Catalog or unified Color extension?
 - Are there scattered `Color(hex:)` hardcodes? Should be in Design System.
 
+## Performance Check
+
+Check for code patterns that cause UI stuttering, memory issues, or excessive resource usage.
+
+**MainActor blocking**:
+- `@MainActor` class/function containing file I/O (`FileManager`, `Data(contentsOf:)`, `JSONDecoder().decode`)
+- Synchronous network calls or heavy computation in `@MainActor` scope
+- Flag: move to `nonisolated` function or `.task {}` with background priority
+
+**View body computation**:
+- `DateFormatter` / `NumberFormatter` / `RelativeDateTimeFormatter` created inside `var body`
+- Array `.sorted()` / `.filter()` / `.map()` inside `var body` (should be computed property or cached @State)
+- String interpolation with heavy formatting inside `var body`
+- Flag: body should only describe layout, not compute data
+
+**Image loading**:
+- `UIImage(data:)` / `UIImage(contentsOfFile:)` without `preparingThumbnail(of:)` or size constraint
+- `AsyncImage` without `.resizable()` + explicit frame on large remote images
+- Loading full-resolution photos from PhotoKit without `targetSize`
+- Flag: unconstrained image decoding causes memory spikes and main thread stalls
+
+**Unnecessary re-renders**:
+- `@ObservedObject` where `@StateObject` should be used (parent redraws recreate the object)
+- `@State` initialized with expensive computation (runs on every struct init)
+- `.onChange(of:)` or `.onReceive()` triggering broad state mutations that invalidate unrelated views
+- Missing `Equatable` conformance on frequently-redrawn custom views
+- Flag: prefer `@StateObject` for owned objects, move init cost to `.task {}`
+
+**List performance**:
+- `ForEach` on non-Identifiable types without explicit `id:` (causes diff ambiguity)
+- Complex subviews inside `List` / `ForEach` without extraction to separate `View` struct
+- `ScrollView` + `VStack` + `ForEach` for large datasets (should use `List` or `LazyVStack`)
+- Flag: large collections need stable IDs, simple row views, and lazy containers
+
+**Timer/Observer leaks**:
+- `Timer.scheduledTimer` / `Timer.publish` without corresponding `invalidate()` / cancellation
+- `NotificationCenter.default.addObserver` without matching `removeObserver` in `deinit`
+- `AnyCancellable` set without clear ownership lifecycle
+- Flag: prefer `.onReceive()` and `.task {}` which auto-cancel with view lifecycle
+
 ## Scope Determination
 
 - If user specifies files/commits, review those

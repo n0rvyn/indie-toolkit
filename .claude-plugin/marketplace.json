@@ -60,6 +60,21 @@
         "comparison"
       ],
       "strict": true
+    },
+    {
+      "name": "skill-audit",
+      "source": "./skill-audit",
+      "description": "Review Claude Code plugins, skills, agents, hooks, and commands from the AI executor perspective",
+      "version": "1.0.0",
+      "category": "development",
+      "tags": [
+        "review",
+        "audit",
+        "skills",
+        "agents",
+        "plugins"
+      ],
+      "strict": true
     }
   ]
 }

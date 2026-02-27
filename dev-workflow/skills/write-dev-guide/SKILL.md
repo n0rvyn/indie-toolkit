@@ -5,7 +5,7 @@ description: "Use when starting a new project's development after design is appr
 
 ## Overview
 
-This skill dispatches the `dev-guide-writer` agent to create a phased development guide in a separate context, keeping the main conversation lean.
+This skill dispatches the `dev-workflow:dev-guide-writer` agent to create a phased development guide in a separate context, keeping the main conversation lean.
 
 ## Not This Skill
 
@@ -28,7 +28,7 @@ If no project-brief or design doc exists, inform the user and suggest running th
 
 ### Step 2: Dispatch Agent
 
-Use the Task tool to launch the `dev-guide-writer` agent with all gathered context. Structure the task prompt as:
+Use the Task tool to launch the `dev-workflow:dev-guide-writer` agent with all gathered context. Structure the task prompt as:
 
 ```
 Create a phased development guide with the following inputs:

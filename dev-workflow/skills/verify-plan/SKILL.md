@@ -5,7 +5,7 @@ description: "Use when a plan has been written and needs validation before execu
 
 ## Overview
 
-This skill dispatches the `plan-verifier` agent to validate an implementation plan in a separate context, keeping the main conversation lean.
+This skill dispatches the `dev-workflow:plan-verifier` agent to validate an implementation plan in a separate context, keeping the main conversation lean.
 
 **Optional flag: `--fast`**
 When passed: use Sonnet instead of Opus for verification.
@@ -37,7 +37,7 @@ After collecting plan and design doc paths, extract technical keywords from the 
 
 ### Step 2: Dispatch Agent
 
-Use the Task tool to launch the `plan-verifier` agent:
+Use the Task tool to launch the `dev-workflow:plan-verifier` agent:
 - Default (no --fast): add `model: "opus"` to the Task tool call
 - With --fast flag: add `model: "sonnet"` to the Task tool call
 

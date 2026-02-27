@@ -9,7 +9,7 @@ description: "Use when you need to check whether the codebase has drifted from i
 
 ## Overview
 
-This skill dispatches the `design-drift-auditor` agent to extract and verify design assertions against the codebase, then optionally dispatches `flow-tracer` agents for items that need call-chain verification.
+This skill dispatches the `dev-workflow:design-drift-auditor` agent to extract and verify design assertions against the codebase, then optionally dispatches `dev-workflow:flow-tracer` agents for items that need call-chain verification.
 
 **Modes:**
 - **Full scan**（default）— 5 个断言 category 全部检查
@@ -46,7 +46,7 @@ This skill dispatches the `design-drift-auditor` agent to extract and verify des
 
 ### Step 2: Dispatch design-drift-auditor Agent
 
-Use the Task tool to launch the `design-drift-auditor` agent with `model: "opus"`. Structure the task prompt based on the mode:
+Use the Task tool to launch the `dev-workflow:design-drift-auditor` agent with `model: "opus"`. Structure the task prompt based on the mode:
 
 **Full scan:**
 ```
@@ -92,7 +92,7 @@ Categories to check: all categories applicable to this document
 
 **如果 0 个**：跳到 Step 4。
 
-**如果 1-3 个**：在**单条消息**中并行发起 `flow-tracer` agent（每个标记一个 Task tool call）：
+**如果 1-3 个**：在**单条消息**中并行发起 `dev-workflow:flow-tracer` agent（每个标记一个 Task tool call）：
 
 ```
 Trace this flow through the codebase:

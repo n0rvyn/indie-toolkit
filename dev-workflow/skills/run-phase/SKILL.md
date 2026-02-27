@@ -9,10 +9,10 @@ This skill orchestrates one iteration of the development cycle by dispatching ag
 
 ```
 Locate/Resume Phase
-  → dispatch plan-writer agent (separate context)
-  → dispatch plan-verifier agent (separate context)
+  → dispatch dev-workflow:plan-writer agent (separate context)
+  → dispatch dev-workflow:plan-verifier agent (separate context)
   → execute plan (main context — writes code)
-  → dispatch feature-spec-writer agent (separate context)
+  → dispatch dev-workflow:feature-spec-writer agent (separate context)
   → dispatch review agents in parallel (separate contexts)
   → fix gaps (main context)
   → Phase done
@@ -82,7 +82,7 @@ If the user specifies a different Phase number, use that instead.
    - Scope: Phase N's scope items
    - Acceptance criteria: Phase N's acceptance criteria
    - Design doc reference: from dev-guide header (if exists)
-3. Use the Task tool to dispatch the `plan-writer` agent:
+3. Use the Task tool to dispatch the `dev-workflow:plan-writer` agent:
 
 ```
 Write an implementation plan with the following inputs:
@@ -138,7 +138,7 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
    - Infrastructure-only Phase (no user journeys): skip to Step 6
 3. For each completed feature:
    - Confirm feature name and scope with the user
-   - Use the Task tool to dispatch the `feature-spec-writer` agent:
+   - Use the Task tool to dispatch the `dev-workflow:feature-spec-writer` agent:
 
 ```
 Generate a feature spec with the following inputs:
@@ -160,13 +160,13 @@ Project root: {project root}
 
 1. Update state: `phase_step: review`, `last_updated: <now>`
 2. Determine which reviews to run from the Phase's Review checklist:
-   - **Always:** `implementation-reviewer` agent
+   - **Always:** `dev-workflow:implementation-reviewer` agent
    - **If Phase modified UI files:** `/ui-review`
    - **If Phase created new pages/components:** `/design-review`
    - **If Phase completed a full user journey:** `/feature-review`
    - **If this is the submission prep Phase:** `/submission-preview`
 3. Dispatch ALL applicable review agents **in parallel** using the Task tool in a single message:
-   - `implementation-reviewer` agent (always): pass plan file path + project root
+   - `dev-workflow:implementation-reviewer` agent (always): pass plan file path + project root
    - `ios-development:ui-reviewer` (if UI files modified): pass list of modified `*View.swift` files
    - `ios-development:design-reviewer` (if new pages/components): pass list of new View files
    - `ios-development:feature-reviewer` (if full user journey completed): pass feature scope + key files

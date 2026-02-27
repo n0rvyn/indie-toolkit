@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 ## Overview
 
-This skill dispatches the `rules-auditor` agent to audit CLAUDE.md rules in a separate context, keeping the main conversation lean.
+This skill dispatches the `dev-workflow:rules-auditor` agent to audit CLAUDE.md rules in a separate context, keeping the main conversation lean.
 
 ## Process
 
@@ -20,7 +20,7 @@ Collect the following before dispatching:
 
 ### Step 2: Dispatch Agent
 
-Use the Task tool to launch the `rules-auditor` agent with all gathered context. Structure the task prompt as:
+Use the Task tool to launch the `dev-workflow:rules-auditor` agent with all gathered context. Structure the task prompt as:
 
 ```
 Audit CLAUDE.md rules with the following inputs:

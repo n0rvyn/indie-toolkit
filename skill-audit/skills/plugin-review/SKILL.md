@@ -9,7 +9,7 @@ description: "Use when the user says 'review skill', 'review agent', 'review plu
 
 ## Overview
 
-This skill dispatches the `plugin-reviewer` agent to systematically review plugin artifacts. The review covers 7 dimensions: structural validation, reference integrity, workflow logic, execution feasibility, trigger/routing conflicts, edge case analysis, and spec compliance (Agent Skills Spec field conventions).
+This skill dispatches the `skill-audit:plugin-reviewer` agent to systematically review plugin artifacts. The review covers 7 dimensions: structural validation, reference integrity, workflow logic, execution feasibility, trigger/routing conflicts, edge case analysis, and spec compliance (Agent Skills Spec field conventions).
 
 ## Process
 
@@ -42,7 +42,7 @@ This skill dispatches the `plugin-reviewer` agent to systematically review plugi
 
 ### Step 3: Dispatch plugin-reviewer Agent
 
-Use the Task tool to launch the `plugin-reviewer` agent with `model: "opus"`:
+Use the Task tool to launch the `skill-audit:plugin-reviewer` agent with `model: "opus"`:
 
 ```
 Review these Claude Code plugin artifacts from the AI executor perspective.

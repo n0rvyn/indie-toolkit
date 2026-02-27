@@ -8,13 +8,13 @@ description: "Use when you have a spec or requirements for a multi-step task, be
 When invoked **standalone** (user runs write-plan directly): this skill automatically chains
 to `dev-workflow:verify-plan` at Step 3 — plan writing and verification happen in one flow.
 
-When invoked via **`run-phase`** orchestration: run-phase calls the `plan-writer` agent
+When invoked via **`run-phase`** orchestration: run-phase calls the `dev-workflow:plan-writer` agent
 directly (not this skill) and manages verification as a separate explicit step. Both paths
 produce a verified plan; the difference is control granularity.
 
 ## Overview
 
-This skill dispatches the `plan-writer` agent to generate an implementation plan in a separate context, keeping the main conversation lean.
+This skill dispatches the `dev-workflow:plan-writer` agent to generate an implementation plan in a separate context, keeping the main conversation lean.
 
 ## Process
 
@@ -41,7 +41,7 @@ If any of these are unclear, ask the user before dispatching.
 
 ### Step 2: Dispatch Agent
 
-Use the Task tool to launch the `plan-writer` agent with all gathered context. Structure the task prompt as:
+Use the Task tool to launch the `dev-workflow:plan-writer` agent with all gathered context. Structure the task prompt as:
 
 ```
 Write an implementation plan with the following inputs:

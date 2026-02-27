@@ -1,6 +1,6 @@
 {
   "name": "rag-server",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Local hybrid search MCP server with BM25 + vector similarity for project documentation",
   "author": {
     "name": "Norvyn"

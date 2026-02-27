@@ -1,6 +1,6 @@
 {
   "name": "mactools",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "macOS automation toolkit for Notes, Calendar, Mail, Safari, Spotlight, OCR, and more",
   "author": {
     "name": "Norvyn"

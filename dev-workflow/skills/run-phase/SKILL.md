@@ -174,19 +174,28 @@ Project root: {project root}
 
    Each agent receives a fresh context — they have no memory of how the code was written.
    This removes confirmation bias from self-review.
-4. When all return: collect results, present a consolidated summary of all findings
-5. Update state: `review_reports: [<paths>]`, `last_updated: <now>`
+4. When all return: each agent returns a compact summary with verdict, issue counts, and report file path. Present a consolidated summary table:
+
+| Review | Verdict | Issues | Report |
+|--------|---------|--------|--------|
+| Implementation | ✅/❌ | {counts} | {path} |
+| UI | ✅/❌ | {counts} | {path} |
+| Design | ✅/❌ | {counts} | {path} |
+| Feature | ✅/❌ | {counts} | {path} |
+
+5. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
 
 ### Step 7: Fix Gaps
 
 If any review found issues:
 
 1. Update state: `phase_step: fix`, `last_updated: <now>`
-2. List all gaps sorted by severity (critical first, then warnings)
-3. Ask the user: "Fix these gaps before moving on, or mark as known issues?"
-4. If fixing: address the gaps, then re-run only the reviews that had failures
-5. If skipping: note the known issues and proceed
-6. Update state: `gaps_remaining: <count>`, `last_updated: <now>`
+2. Read the relevant review report files (paths from Step 6 summaries) to get full issue details
+3. List all gaps sorted by severity (critical first, then warnings)
+4. Ask the user: "Fix these gaps before moving on, or mark as known issues?"
+5. If fixing: address the gaps, then re-run only the reviews that had failures
+6. If skipping: note the known issues and proceed
+7. Update state: `gaps_remaining: <count>`, `last_updated: <now>`
 
 ### Step 8: Phase Completion
 

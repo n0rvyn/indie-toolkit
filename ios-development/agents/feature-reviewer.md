@@ -4,7 +4,7 @@ description: |
   Performs product + UX completeness review from user journey perspective.
   Fresh context — validates feature completeness against user scenarios independently.
 model: sonnet
-tools: Glob, Grep, Read, Bash
+tools: Glob, Grep, Read, Bash, Write
 ---
 
 <!-- Source: ios-development/skills/feature-review/SKILL.md -->
@@ -21,6 +21,26 @@ each step. Fresh context — no memory of how the code was written.
 
 You will receive the feature scope description and a list of key implementation files, plus the
 project root path.
+
+## Output Contract
+
+1. Generate timestamp: `date +%Y-%m-%d-%H%M%S`
+2. Ensure directory exists: `mkdir -p .claude/reviews`
+3. **Write** the full Feature Review Report (format at end of document) to:
+   `.claude/reviews/feature-reviewer-{YYYY-MM-DD-HHmmss}.md`
+4. **Return** only this compact summary to the dispatcher:
+
+```
+Report: .claude/reviews/feature-reviewer-{timestamp}.md
+Verdict: {pass | fail}
+Story 覆盖: {N}/{M}
+死路: {N}
+产品问题: 🔴 {X} / 🟡 {Y}
+UX 问题: 🔴 {X} / 🟡 {Y}
+设备验证项: {N}
+```
+
+Verdict rule: any 🔴 issue = `fail`; otherwise `pass`.
 
 ## Process
 

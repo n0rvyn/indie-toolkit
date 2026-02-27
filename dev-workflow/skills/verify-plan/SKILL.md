@@ -60,10 +60,12 @@ Retrieved error patterns and lessons (from knowledge base):
 
 When the agent completes:
 
-1. Present the Plan Verification Summary returned by the agent
-2. Report the verdict:
+1. The agent returns a compact summary with verdict, issue counts, and report file path
+2. Present the summary to the user
+3. Report the verdict:
    - **Approved** — proceed to Step 4
-   - **Must revise** — list the specific revision items; apply revisions to the plan, then re-dispatch the verifier (max 2 revision cycles)
+   - **Must revise** — the summary includes revision items; apply revisions to the plan, then re-dispatch the verifier (max 2 revision cycles)
+4. For detailed analysis: read the full report at the path returned by the agent
 
 ### Step 4: Mark Verified
 

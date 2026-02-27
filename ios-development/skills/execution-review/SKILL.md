@@ -21,7 +21,7 @@ Before invoking the implementation reviewer, search for known issues related to 
 
 Use the `dev-workflow:implementation-reviewer` agent to perform the full plan-vs-code verification and design fidelity audit (if design doc exists).
 
-Wait for the agent to complete and present its findings before proceeding to Step 2.
+The agent returns a compact summary (verdict, gap counts, report file path) and writes the full report to `.claude/reviews/`. Wait for the agent to complete before proceeding to Step 2.
 
 ## Step 2: iOS-Specific Code Scan
 
@@ -53,13 +53,14 @@ Verify documentation was updated:
 
 ## Output
 
-Combine the implementation-reviewer agent's output with iOS-specific findings:
+Combine the implementation-reviewer agent's compact summary with iOS-specific findings. Read the full report file for gap details when needed.
 
 ```
 ## Execution Review Summary (iOS)
 
 ### Implementation Review
-{agent output — plan-vs-code gaps + design fidelity audit}
+{agent compact summary — verdict, gap counts}
+Full report: {report file path}
 
 ### iOS Code Scan
 - Localization: {N} issues

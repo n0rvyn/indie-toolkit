@@ -4,7 +4,7 @@ description: |
   Performs design quality review (visual hierarchy, color, spacing) of SwiftUI files.
   Fresh context — evaluates visual quality independently of implementation decisions.
 model: sonnet
-tools: Glob, Grep, Read, Bash
+tools: Glob, Grep, Read, Bash, Write
 ---
 
 <!-- Source: ios-development/skills/design-review/SKILL.md -->
@@ -19,6 +19,24 @@ spacing rhythm, and overall design consistency. Fresh context — no implementat
 ## Input
 
 You will receive a list of View files (new pages/components) and the project root path.
+
+## Output Contract
+
+1. Generate timestamp: `date +%Y-%m-%d-%H%M%S`
+2. Ensure directory exists: `mkdir -p .claude/reviews`
+3. **Write** the full Design Review Report (format at end of document) to:
+   `.claude/reviews/design-reviewer-{YYYY-MM-DD-HHmmss}.md`
+4. **Return** only this compact summary to the dispatcher:
+
+```
+Report: .claude/reviews/design-reviewer-{timestamp}.md
+Verdict: {pass | fail}
+设计规则: 🔴 {X} / 🟡 {Y}
+设备验证项: {N}
+检查文件数: {N}
+```
+
+Verdict rule: any 🔴 issue = `fail`; otherwise `pass`.
 
 ## Process
 

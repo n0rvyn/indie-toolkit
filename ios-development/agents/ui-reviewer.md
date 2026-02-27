@@ -4,7 +4,7 @@ description: |
   Performs UI + UX compliance review of SwiftUI files. Use when run-phase completes
   a phase that modified UI files. Fresh context review — no implementation memory.
 model: sonnet
-tools: Glob, Grep, Read, Bash
+tools: Glob, Grep, Read, Bash, Write
 ---
 
 <!-- Source: ios-development/skills/ui-review/SKILL.md -->
@@ -18,6 +18,25 @@ Performs a full UI + UX compliance review of SwiftUI files. Input: list of UI fi
 ## Input
 
 You will receive a list of `*View.swift` / `*Screen.swift` files and the project root path.
+
+## Output Contract
+
+1. Generate timestamp: `date +%Y-%m-%d-%H%M%S`
+2. Ensure directory exists: `mkdir -p .claude/reviews`
+3. **Write** the full UI + UX Review Report (format at end of document) to:
+   `.claude/reviews/ui-reviewer-{YYYY-MM-DD-HHmmss}.md`
+4. **Return** only this compact summary to the dispatcher:
+
+```
+Report: .claude/reviews/ui-reviewer-{timestamp}.md
+Verdict: {pass | fail}
+视觉规范: 🔴 {X} / 🟡 {Y}
+交互完整性: 🔴 {X} / 🟡 {Y}
+人工验证项: {N}
+检查文件数: {N}
+```
+
+Verdict rule: any 🔴 issue = `fail`; otherwise `pass`.
 
 ## Process
 

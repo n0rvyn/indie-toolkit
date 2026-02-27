@@ -9,8 +9,12 @@ on:
         required: true
         default: ios-development
         options:
+          - dev-workflow
           - ios-development
           - mactools
+          - product-lens
+          - rag-server
+          - skill-audit
           - all
       bump:
         description: "Semver bump type"
@@ -75,7 +79,7 @@ jobs:
           }
 
           if [[ "$TARGET" == "all" ]]; then
-            PLUGINS=("ios-development" "mactools")
+            PLUGINS=("dev-workflow" "ios-development" "mactools" "product-lens" "rag-server" "skill-audit")
           else
             PLUGINS=("$TARGET")
           fi
@@ -128,7 +132,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git add .claude-plugin/marketplace.json ios-development/.claude-plugin/plugin.json mactools/.claude-plugin/plugin.json
+          git add .claude-plugin/marketplace.json */.claude-plugin/plugin.json
 
           if git diff --cached --quiet; then
             echo "committed=false" >> "$GITHUB_OUTPUT"
@@ -149,7 +153,7 @@ jobs:
 
           if [[ "$target" == "all" ]]; then
             if [[ -n "${{ steps.bump.outputs.market_new_version }}" ]]; then
-              tag="cookit-marketplace-v${{ steps.bump.outputs.market_new_version }}"
+              tag="indie-toolkit-v${{ steps.bump.outputs.market_new_version }}"
             else
               tag="release-all-$(date +%Y%m%d%H%M%S)"
             fi

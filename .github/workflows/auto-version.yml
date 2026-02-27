@@ -1,0 +1,217 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dev-workflow/**"
+      - "ios-development/**"
+      - "mactools/**"
+      - "product-lens/**"
+      - "rag-server/**"
+      - "skill-audit/**"
+
+permissions:
+  contents: write
+
+jobs:
+  auto-version:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Detect changed plugins and bump versions
+        id: bump
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          MARKET_FILE=".claude-plugin/marketplace.json"
+          ALL_PLUGINS=("dev-workflow" "ios-development" "mactools" "product-lens" "rag-server" "skill-audit")
+
+          bump_semver() {
+            local version="$1"
+            local kind="$2"
+            IFS='.' read -r major minor patch <<< "$version"
+            case "$kind" in
+              patch) patch=$((patch + 1)) ;;
+              minor) minor=$((minor + 1)); patch=0 ;;
+              major) major=$((major + 1)); minor=0; patch=0 ;;
+              *) echo "Unsupported bump type: $kind" >&2; exit 1 ;;
+            esac
+            echo "${major}.${minor}.${patch}"
+          }
+
+          # Map bump types to numeric levels for comparison
+          bump_level() {
+            case "$1" in
+              major) echo 3 ;;
+              minor) echo 2 ;;
+              patch) echo 1 ;;
+              *) echo 0 ;;
+            esac
+          }
+
+          # Determine bump type from conventional commit messages
+          detect_bump_type() {
+            local commits="$1"
+            local max_bump="patch"
+
+            while IFS= read -r msg; do
+              [[ -z "$msg" ]] && continue
+              # BREAKING CHANGE in body or feat! prefix
+              if echo "$msg" | grep -qE '^[a-z]+(\(.+\))?!:' || echo "$msg" | grep -q 'BREAKING CHANGE'; then
+                max_bump="major"
+                break
+              elif echo "$msg" | grep -qE '^feat(\(.+\))?:'; then
+                max_bump="minor"
+              fi
+            done <<< "$commits"
+
+            echo "$max_bump"
+          }
+
+          # Get changed files in this push
+          changed_files="$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD)"
+
+          # Find which plugins have changes
+          changed_plugins=()
+          for plugin in "${ALL_PLUGINS[@]}"; do
+            if echo "$changed_files" | grep -q "^${plugin}/"; then
+              changed_plugins+=("$plugin")
+            fi
+          done
+
+          if [[ ${#changed_plugins[@]} -eq 0 ]]; then
+            echo "No plugin directories changed. Skipping."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Changed plugins: ${changed_plugins[*]}"
+
+          # Get commit messages for this push (only non-bot commits)
+          commit_messages="$(git log --format='%s' HEAD~1..HEAD 2>/dev/null || git log --format='%s' -1)"
+
+          # Bump each changed plugin
+          changed=()
+          max_marketplace_bump="patch"
+
+          for plugin in "${changed_plugins[@]}"; do
+            plugin_file="${plugin}/.claude-plugin/plugin.json"
+
+            if [[ ! -f "$plugin_file" ]]; then
+              echo "Warning: $plugin_file not found, skipping"
+              continue
+            fi
+
+            # Filter commits relevant to this plugin
+            plugin_commits="$(echo "$commit_messages" | grep -E "\(${plugin}\)" || echo "$commit_messages")"
+            bump_type="$(detect_bump_type "$plugin_commits")"
+
+            current_version="$(jq -r '.version' "$plugin_file")"
+            new_version="$(bump_semver "$current_version" "$bump_type")"
+
+            echo "  $plugin: $current_version -> $new_version ($bump_type)"
+
+            # Update plugin.json
+            tmp="$(mktemp)"
+            jq --arg v "$new_version" '.version = $v' "$plugin_file" > "$tmp"
+            mv "$tmp" "$plugin_file"
+
+            # Update marketplace.json plugin entry
+            tmp="$(mktemp)"
+            jq --arg name "$plugin" --arg v "$new_version" \
+              '(.plugins[] | select(.name == $name) | .version) = $v' \
+              "$MARKET_FILE" > "$tmp"
+            mv "$tmp" "$MARKET_FILE"
+
+            changed+=("${plugin}:${current_version}->${new_version}")
+
+            # Track highest bump level for marketplace version
+            if [[ $(bump_level "$bump_type") -gt $(bump_level "$max_marketplace_bump") ]]; then
+              max_marketplace_bump="$bump_type"
+            fi
+          done
+
+          # Bump marketplace metadata version
+          market_current="$(jq -r '.metadata.version' "$MARKET_FILE")"
+          market_new="$(bump_semver "$market_current" "$max_marketplace_bump")"
+          tmp="$(mktemp)"
+          jq --arg v "$market_new" '.metadata.version = $v' "$MARKET_FILE" > "$tmp"
+          mv "$tmp" "$MARKET_FILE"
+          changed+=("marketplace:${market_current}->${market_new}")
+
+          echo "  marketplace: $market_current -> $market_new ($max_marketplace_bump)"
+
+          # Output for downstream steps
+          {
+            echo "skipped=false"
+            echo "changes<<EOF"
+            for line in "${changed[@]}"; do
+              echo "$line"
+            done
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Commit version bumps
+        if: steps.bump.outputs.skipped != 'true'
+        id: commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add .claude-plugin/marketplace.json */.claude-plugin/plugin.json
+
+          if git diff --cached --quiet; then
+            echo "committed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git commit -m "chore(release): auto-bump versions [skip ci]"
+          git push origin HEAD:main
+          echo "committed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create tags
+        if: steps.commit.outputs.committed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          while IFS= read -r line; do
+            plugin="${line%%:*}"
+            new_version="${line##*->}"
+
+            if [[ "$plugin" == "marketplace" ]]; then
+              tag="indie-toolkit-v${new_version}"
+            else
+              tag="${plugin}-v${new_version}"
+            fi
+
+            git tag -a "$tag" -m "Release $tag"
+            echo "Created tag: $tag"
+          done <<< "${{ steps.bump.outputs.changes }}"
+
+          git push origin --tags
+
+      - name: Summary
+        if: steps.bump.outputs.skipped != 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Auto Version Bump Summary"
+            echo ""
+            echo "### Version Changes"
+            while IFS= read -r line; do
+              echo "- \`$line\`"
+            done <<< "${{ steps.bump.outputs.changes }}"
+          } >> "$GITHUB_STEP_SUMMARY"

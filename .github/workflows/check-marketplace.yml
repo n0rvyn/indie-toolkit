@@ -1,0 +1,92 @@
+name: Check Marketplace Consistency
+
+on:
+  push:
+    paths:
+      - ".claude-plugin/marketplace.json"
+      - "*/.claude-plugin/plugin.json"
+  pull_request:
+    paths:
+      - ".claude-plugin/marketplace.json"
+      - "*/.claude-plugin/plugin.json"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate marketplace consistency
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          MARKET_FILE=".claude-plugin/marketplace.json"
+          errors=0
+
+          echo "=== Marketplace Consistency Check ==="
+          echo ""
+
+          # 1. Every directory with .claude-plugin/plugin.json must be in marketplace.json
+          echo "--- Check 1: Plugin directories registered in marketplace ---"
+          for plugin_file in */.claude-plugin/plugin.json; do
+            plugin_dir="$(dirname "$(dirname "$plugin_file")")"
+            plugin_name="$(jq -r '.name' "$plugin_file")"
+
+            market_entry="$(jq -r --arg name "$plugin_name" '.plugins[] | select(.name == $name) | .name' "$MARKET_FILE")"
+            if [[ -z "$market_entry" ]]; then
+              echo "FAIL: $plugin_dir ($plugin_name) has plugin.json but is not in marketplace.json"
+              errors=$((errors + 1))
+            else
+              echo "  OK: $plugin_name registered"
+            fi
+          done
+          echo ""
+
+          # 2. Every marketplace entry must have a corresponding directory
+          echo "--- Check 2: Marketplace entries have directories ---"
+          for name in $(jq -r '.plugins[].name' "$MARKET_FILE"); do
+            source_dir="$(jq -r --arg name "$name" '.plugins[] | select(.name == $name) | .source' "$MARKET_FILE")"
+            # Remove leading ./ from source path
+            dir="${source_dir#./}"
+
+            if [[ ! -d "$dir" ]]; then
+              echo "FAIL: marketplace entry '$name' points to '$dir' which does not exist"
+              errors=$((errors + 1))
+            elif [[ ! -f "$dir/.claude-plugin/plugin.json" ]]; then
+              echo "FAIL: marketplace entry '$name' exists at '$dir' but has no .claude-plugin/plugin.json"
+              errors=$((errors + 1))
+            else
+              echo "  OK: $name -> $dir"
+            fi
+          done
+          echo ""
+
+          # 3. Versions must match between plugin.json and marketplace.json
+          echo "--- Check 3: Version consistency ---"
+          for plugin_file in */.claude-plugin/plugin.json; do
+            plugin_name="$(jq -r '.name' "$plugin_file")"
+            plugin_version="$(jq -r '.version' "$plugin_file")"
+
+            market_version="$(jq -r --arg name "$plugin_name" '.plugins[] | select(.name == $name) | .version' "$MARKET_FILE")"
+            if [[ -z "$market_version" ]]; then
+              continue  # Already caught in check 1
+            fi
+
+            if [[ "$plugin_version" != "$market_version" ]]; then
+              echo "FAIL: $plugin_name version mismatch — plugin.json=$plugin_version, marketplace.json=$market_version"
+              errors=$((errors + 1))
+            else
+              echo "  OK: $plugin_name v$plugin_version"
+            fi
+          done
+          echo ""
+
+          if [[ $errors -gt 0 ]]; then
+            echo "=== $errors inconsistency error(s) found ==="
+            exit 1
+          else
+            echo "=== All checks passed ==="
+          fi

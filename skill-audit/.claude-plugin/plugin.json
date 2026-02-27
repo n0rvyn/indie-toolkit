@@ -1,6 +1,8 @@
 {
   "name": "skill-audit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Review Claude Code plugins, skills, agents, hooks, and commands from the AI executor perspective",
-  "author": { "name": "Norvyn" }
+  "author": {
+    "name": "Norvyn"
+  }
 }

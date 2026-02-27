@@ -8,7 +8,7 @@ tools: Glob, Grep, Read, Bash, Write
 ---
 
 <!-- Source: ios-development/skills/ui-review/SKILL.md -->
-<!-- Last synced: 2026-02-25 -->
+<!-- Last synced: 2026-02-27 -->
 <!-- When updating the source skill file, manually update this agent file to match. -->
 
 # UI Reviewer Agent
@@ -73,6 +73,24 @@ For each UI file provided, check the following dimensions:
 
 - [ ] 图标按钮是否有 `.accessibilityLabel()`？
 - [ ] 装饰性图片是否标记 `.accessibilityHidden(true)`？
+
+#### A5. 同类组件一致性
+
+检查同后缀组件是否使用一致的布局修饰符。
+
+**代码检查**：从 struct 名提取类型后缀，`Grep("struct \\w+{suffix}", glob: "*.swift")` 搜索同类，对比：
+
+| 属性 | 一致性要求 |
+|------|-----------|
+| 宽度行为 | `.frame(maxWidth:` 一致（全 expanding 或全 hugging） |
+| 内边距 | `.padding(` 同方向同值 |
+| 背景 | `.background(` 同颜色/材质 |
+| 圆角 | `.clipShape(` / `cornerRadius` 同值 |
+| 阴影 | `.shadow(` 同参数 |
+
+**检查项**：
+- [ ] 同类组件的宽度策略是否一致？
+- [ ] 同类组件的 padding / background / cornerRadius / shadow 是否一致？
 
 ---
 

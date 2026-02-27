@@ -285,6 +285,13 @@
 - ❌ 用 `.glassEffect(.clear)` 替代 `.regular` — `.clear` 仅限媒体背景场景
 - ✅ 用 `#available(iOS 26, *)` 包裹 Glass-only API，fallback 到 `.borderedProminent` 等
 
+### 10.8 同类组件布局不一致
+- ❌ 同类 Card/Row/Cell 使用不同的宽度策略（一个 `.frame(maxWidth: .infinity)`，另一个内容自适应）
+- ❌ 同类组件的 padding / cornerRadius / shadow / background 值不同（如 `InsightCard` padding 16，`ExpenseCard` padding 12）
+- ✅ 所有同类组件共享相同的布局修饰符组合，或通过共享 ViewModifier 强制一致
+- 原因：SwiftUI 的隐式尺寸行为（expanding vs hugging）在编译期不报错；AI 逐文件生成代码时没有跨文件视觉一致性意识
+- 检查方法：`Grep("struct \\w+Card", glob: "*.swift")`，读取每个同类组件的 `.frame(` / `.padding(` / `.background(` / `.clipShape(` / `.shadow(` 修饰符，逐项对比
+
 ---
 
 ## 快速自检
@@ -311,6 +318,7 @@
 18. [ ] iOS 26: 是否手动给 Glass 元素加 .shadow()？
 19. [ ] 页面是否有 ≥ 3 级文字层级且通过眯眼测试？
 20. [ ] 页面区域划分是否清晰（不是一长串无分组元素）？
+21. [ ] 同类组件（*Card/*Row/*Cell）的 frame/padding/background/cornerRadius/shadow 是否一致？
 
 ---
 

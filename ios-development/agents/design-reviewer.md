@@ -8,7 +8,7 @@ tools: Glob, Grep, Read, Bash, Write
 ---
 
 <!-- Source: ios-development/skills/design-review/SKILL.md -->
-<!-- Last synced: 2026-02-25 -->
+<!-- Last synced: 2026-02-27 -->
 <!-- When updating the source skill file, manually update this agent file to match. -->
 
 # Design Reviewer Agent
@@ -97,10 +97,14 @@ For each file provided, check the following dimensions:
 
 **检查项**：
 - [ ] 同类卡片是否使用相同的圆角 / 阴影 / 内边距？
+- [ ] 同类卡片是否使用相同的宽度策略？（全部 `.frame(maxWidth: .infinity)` 或全部内容自适应，不混用）
+- [ ] 同类卡片的 `.background()` 颜色/材质是否一致？
 - [ ] 圆角是否使用设计系统变量（`CardStyle.cornerRadius` 等）？
 - [ ] 嵌套容器的圆角是否递减？（外层 16 → 内层 12 → 徽章 8）
 - [ ] 阴影是否克制？（推荐 `opacity ≤ 0.08, radius ≤ 4`）
 - [ ] 卡片内是否有足够 padding（≥ 12pt）不贴边？
+
+**代码检查（跨文件）**：从当前检查文件的 struct 名提取类型后缀，搜索同后缀组件 `Grep("struct \\w+{suffix}", glob: "*.swift")`（将 `{suffix}` 替换为实际后缀），提取每个组件的 `.frame(` / `.padding(` / `.background(` / `.clipShape(` / `.shadow(` 修饰符，逐项对比。不一致项标记 🔴。
 
 ### A6. 图标一致性
 

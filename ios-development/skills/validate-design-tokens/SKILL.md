@@ -109,6 +109,67 @@ Grep("IPHONEOS_DEPLOYMENT_TARGET", "*.xcodeproj/project.pbxproj", output_mode="c
 **Invalid patterns**:
 - `.shadow(color: .black.opacity(0.5), ...)`  // Too heavy
 
+### 6. Layout Frame Consistency
+
+**Purpose**: Detect same-type components with inconsistent sizing/frame behavior.
+
+**Process**:
+1. For each file in `filePaths`, extract the View struct name
+2. Identify the component type suffix (Card, Row, Cell, Badge, Chip, Tile, Banner)
+3. If a suffix is identified, search the project for other components with the same suffix:
+   ```
+   Grep("struct \\w+{suffix}", glob: "*.swift")
+   ```
+4. For each same-type component found, compare these layout attributes:
+
+| Attribute | Search Pattern | Consistency Rule |
+|-----------|---------------|-----------------|
+| Width behavior | `.frame(maxWidth:` / `.frame(width:` / no frame | All same-type must use identical width strategy |
+| Padding | `.padding(` | Same directions, same values or same token |
+| Background | `.background(` | Same color/material type |
+| Corner radius | `.clipShape(.rect(cornerRadius:` / `RoundedRectangle(cornerRadius:` | Same value or same token |
+| Shadow | `.shadow(` | Same parameters |
+
+**Valid patterns** (consistent):
+```swift
+// InsightCard — full width
+struct InsightCard: View {
+    var body: some View {
+        VStack { ... }
+            .padding(AppSpacing.sm)
+            .frame(maxWidth: .infinity)
+            .background(.background.secondary)
+            .clipShape(.rect(cornerRadius: AppCornerRadius.medium))
+}
+// ExpenseCard — matches InsightCard
+struct ExpenseCard: View {
+    var body: some View {
+        VStack { ... }
+            .padding(AppSpacing.sm)
+            .frame(maxWidth: .infinity)
+            .background(.background.secondary)
+            .clipShape(.rect(cornerRadius: AppCornerRadius.medium))
+}
+```
+
+**Invalid patterns** (inconsistent):
+```swift
+// InsightCard — full width
+struct InsightCard: View {
+    var body: some View {
+        VStack { ... }
+            .padding(16)
+            .frame(maxWidth: .infinity)  // expanding
+}
+// ExpenseCard — content hugging (MISMATCH)
+struct ExpenseCard: View {
+    var body: some View {
+        VStack { ... }
+            .padding(12)               // different padding
+            // no .frame(maxWidth:)    // hugging vs expanding
+}
+```
+
 ## Output Format
 
 ```

@@ -60,6 +60,33 @@ iOS/SwiftUI 代码的 UI + UX 专项审查。在功能模块完成后手动触�
 - [ ] 图标按钮是否有 `.accessibilityLabel()`？
 - [ ] 装饰性图片是否标记 `.accessibilityHidden(true)`？
 
+#### A5. 同类组件一致性
+
+检查同后缀组件（*Card/*Row/*Cell/*Badge/*Chip/*Tile/*Banner）是否使用一致的布局修饰符。
+
+**代码检查**：
+1. 从当前检查文件的 struct 名提取类型后缀（如 `ExpenseCard` → `Card`）
+2. 搜索同后缀的其他组件：`Grep("struct \\w+Card", glob: "*.swift")`
+3. 对比以下属性：
+
+| 属性 | 搜索模式 | 一致性要求 |
+|------|---------|-----------|
+| 宽度行为 | `.frame(maxWidth:` / `.frame(width:` / 无 frame | 同类必须相同 |
+| 内边距 | `.padding(` | 同方向同值（或同 token） |
+| 背景 | `.background(` | 同颜色/材质类型 |
+| 圆角 | `.clipShape(` / `cornerRadius` | 同值或同 token |
+| 阴影 | `.shadow(` | 同参数 |
+
+**检查项**：
+- [ ] 同类组件的宽度策略是否一致？（全部 expanding 或全部 hugging）
+- [ ] 同类组件的 padding 值是否一致？
+- [ ] 同类组件的 background / cornerRadius / shadow 是否一致？
+
+**常见问题**：
+- ❌ `InsightCard` 用 `.frame(maxWidth: .infinity)` 撑满，`ExpenseCard` 无 frame modifier 自适应
+- ❌ `ProfileRow` padding 16pt，`SettingsRow` padding 12pt
+- ✅ 所有 `*Card` 统一使用 `.frame(maxWidth: .infinity).padding(AppSpacing.sm).clipShape(.rect(cornerRadius: AppCornerRadius.medium))`
+
 ---
 
 ## Part B: 交互完整性（代码验证）

@@ -75,6 +75,30 @@ Write Code -> xcodebuild build -> Check errors -> Fix -> Repeat
 1. 计划中所有 UI 尺寸必须标注对应设计系统变量
 2. 无对应变量的值 → 标注 `⚠️ 待定` 并询问用户
 
+**Layer 3 - 同类组件一致性**（条件触发）：
+
+触发条件：创建新 UI 组件（View struct），且组件名包含常见类型后缀（Card、Row、Cell、Badge、Chip、Tile、Banner）。
+不触发：创建唯一类型的组件（项目中无同后缀组件）、修改已有组件内部逻辑。
+示例：
+  ✅ 触发：新建 ExpenseCard（项目已有 InsightCard）
+  ✅ 触发：新建 SettingsRow（项目已有 ProfileRow）
+  ❌ 不触发：新建 OnboardingView（唯一类型）
+  ❌ 不触发：修改 InsightCard 的数据绑定
+
+触发后执行：
+1. 搜索已有同类组件：
+   ```
+   Grep("struct \\w+Card", glob: "*.swift")  // 替换 Card 为实际后缀
+   Glob("**/*Card.swift")
+   ```
+2. 读取每个已有同类组件，提取以下属性的具体值：
+   - 宽度行为：`.frame(maxWidth:)` / `.frame(width:)` / 无 frame（内容自适应）
+   - 内边距：`.padding()` 值
+   - 背景：`.background()` 的颜色或材质
+   - 圆角：`.clipShape()` / `.cornerRadius()` 值
+   - 阴影：`.shadow()` 参数
+3. 新组件必须匹配已有同类组件的上述属性值。差异项标注 `⚠️ 不一致` 并在计划中说明理由或改为一致。
+
 <!-- section: 计划阶段架构审查（条件触发） keywords: architecture review, plan, triggers, parallel paths -->
 ## 计划阶段架构审查（条件触发）
 

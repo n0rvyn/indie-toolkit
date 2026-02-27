@@ -1,6 +1,7 @@
 ---
 name: localization-setup
 description: Provide localization workflow and setup guidance
+compatibility: Requires macOS and Xcode
 ---
 
 # Localization Setup Skill

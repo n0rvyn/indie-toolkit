@@ -1,6 +1,7 @@
 ---
 name: ios-swift-context
 description: "Use when working on Swift, iOS, macOS, iPadOS, SwiftUI, or SwiftData code, editing .swift files, planning Apple platform features, fixing Swift bugs, or reviewing Swift code. Provides essential development rules including build cycle, constraints, concurrency, UI rules, and plan execution principles."
+compatibility: Requires macOS and Xcode
 user-invocable: false
 ---
 

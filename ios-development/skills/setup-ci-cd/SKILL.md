@@ -1,6 +1,7 @@
 ---
 name: setup-ci-cd
 description: 配置 Fastlane 与 GitHub Actions，实现自动化构建和 TestFlight 上传。
+compatibility: Requires macOS and Xcode
 disable-model-invocation: true
 ---
 

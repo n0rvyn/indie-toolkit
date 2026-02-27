@@ -1,6 +1,7 @@
 ---
 name: swiftdata-patterns
 description: Provide SwiftData best practices and patterns guidance
+compatibility: Requires macOS and Xcode
 ---
 
 # SwiftData Patterns Skill

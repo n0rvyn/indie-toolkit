@@ -1,6 +1,7 @@
 ---
 name: submission-preview
 description: "Use before submitting to App Store, or when the user says 'submission preview', 'pre-submit check', 'will this pass review'. Checks app code against Apple's App Review Guidelines to catch common rejection reasons."
+compatibility: Requires macOS and Xcode
 ---
 
 ## Division of Responsibility

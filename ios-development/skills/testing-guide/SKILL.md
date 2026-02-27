@@ -1,6 +1,7 @@
 ---
 name: testing-guide
 description: Provide testing workflow and best practices guidance
+compatibility: Requires macOS and Xcode
 ---
 
 # Testing Guide Skill

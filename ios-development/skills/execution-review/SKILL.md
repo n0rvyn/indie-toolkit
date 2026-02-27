@@ -1,6 +1,7 @@
 ---
 name: execution-review
 description: 对照计划与代码执行结果，做实现完成度与偏差审查。
+compatibility: Requires macOS and Xcode
 ---
 
 # Execution Review (iOS)

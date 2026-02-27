@@ -1,6 +1,8 @@
 ---
 name: omnifocus
 description: "Use this skill for OmniFocus task and project operations: list, create, complete, inbox, flagged, and due items."
+context: fork
+model: haiku
 compatibility: Requires macOS
 allowed-tools: Bash(*skills/omnifocus/scripts/*)
 ---

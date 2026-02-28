@@ -101,6 +101,8 @@ When a task implements part of a design document, add these fields to help execu
 **Data flow:** [source → transform → destination]
 **Quality markers:** [specific acceptance criteria beyond "it works"]
 **Verify after:** [verification specific to design faithfulness]
+**UX ref:** [UX-NNN from design doc's UX Assertions table — which assertion(s) this task fulfills]
+**User interaction:** [what the user sees and does — derived from User Journeys, not invented]
 ```
 
 These fields are optional per-task. Use them when the task has design-critical details that could drift during implementation.
@@ -113,3 +115,4 @@ These fields are optional per-task. Use them when the task has design-critical d
 4. **Dependencies explicit** — if Task 3 depends on Task 1, say so
 5. **No forced TDD** — write tests where they add value; don't mandate test-first for every step
 6. **Reasonable task size** — self-contained and independently verifiable; not artificially split
+7. **UX-aware tasks** — when the design doc has a `## UX Assertions` section: read the User Journeys and UX Assertions table before writing any UI task. Each task that implements user-visible behavior must include `UX ref:` pointing to the assertion ID(s) it fulfills, and a brief `User interaction:` line describing what the user sees and does (derived from the User Journeys, not invented). Tasks that touch UI but don't map to any UX assertion should be flagged with `⚠️ No UX ref: [reason]`

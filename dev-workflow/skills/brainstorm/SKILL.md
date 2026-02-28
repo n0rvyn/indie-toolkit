@@ -61,6 +61,44 @@ After the user picks a direction:
 - Get approval on each section before moving to the next
 - Cover: data model, component structure, key interactions, edge cases
 
+#### 4a. User Journeys & UX Assertions (user-facing designs only)
+
+If the design involves user-visible behavior (UI components, interaction flows, navigation changes), add a final design section with two parts:
+
+**Part 1: User Journeys**
+
+Step-by-step narratives of what the user sees and does. One journey per primary flow. These give the plan-writer readable context to understand interaction intent.
+
+```markdown
+## User Journeys
+
+### Journey: [Name]
+1. User [action] → sees [result]
+2. User [action] → [component] responds with [behavior]
+3. ...
+```
+
+**Part 2: UX Assertions**
+
+Structured, verifiable assertions. Each captures one specific behavioral expectation with a concrete verification method. These are checkpoints that the plan-verifier uses to validate plan faithfulness.
+
+```markdown
+## UX Assertions
+
+| ID | Assertion | Verification |
+|----|-----------|-------------|
+| UX-001 | [Behavioral expectation in user's language] | [How to verify in code: Grep target, component check, state inspection] |
+| UX-002 | ... | ... |
+```
+
+Rules:
+- Assertions must be verifiable by reading code, not by running the app
+- Reference observable behavior, not implementation details
+- Verification column names specific files, components, or patterns to check
+- Number assertions sequentially (UX-001, UX-002, ...) for cross-referencing in plans and verification
+
+If the design has no user-visible behavior (pure infrastructure, data model only), skip this section.
+
 ### 5. Save Design Document
 
 Write the approved design to:

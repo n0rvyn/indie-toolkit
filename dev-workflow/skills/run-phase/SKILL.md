@@ -10,6 +10,7 @@ This skill orchestrates one iteration of the development cycle by dispatching ag
 ```
 Locate/Resume Phase
   → dispatch dev-workflow:plan-writer agent (separate context)
+  → UX review checkpoint (main context — if design has UX Assertions)
   → dispatch dev-workflow:plan-verifier agent (separate context)
   → execute plan (main context — writes code)
   → dispatch dev-workflow:feature-spec-writer agent (separate context)
@@ -30,7 +31,7 @@ This file tracks progress across sessions. Update it **before** starting each st
 project: <name>
 current_phase: 2
 phase_name: "Phase Name"
-phase_step: plan    # plan | verify | execute | spec | review | fix | done
+phase_step: plan    # plan | ux-review | verify | execute | spec | review | fix | done
 dev_guide: docs/06-plans/YYYY-MM-DD-project-dev-guide.md
 plan_file: null
 verification_report: null
@@ -82,7 +83,8 @@ If the user specifies a different Phase number, use that instead.
    - Scope: Phase N's scope items
    - Acceptance criteria: Phase N's acceptance criteria
    - Design doc reference: from dev-guide header (if exists)
-3. Use the Task tool to dispatch the `dev-workflow:plan-writer` agent:
+3. If a design doc path exists: read the design doc and check for a `## UX Assertions` section. Note the result — it controls the dispatch prompt below and Step 2.5.
+4. Use the Task tool to dispatch the `dev-workflow:plan-writer` agent:
 
 ```
 Write an implementation plan with the following inputs:
@@ -98,14 +100,59 @@ Design doc: {path or "none"}
 Project root: {project root}
 
 Context: This is Phase {N} of the dev-guide at {dev-guide path}.
+{IF design doc contains ## UX Assertions section, append:}
+⚠️ Design doc contains UX Assertions (## UX Assertions section). Read User Journeys and UX Assertions table BEFORE writing UI tasks. Each UI task must include UX ref: and User interaction: fields.
 ```
 
-4. When agent returns: note the plan file path from the summary
-5. Update state: `plan_file: <path>`, `last_updated: <now>`
-6. Present plan summary to user (task count, key files)
-7. Auto-select verification speed: count tasks in the returned plan file.
+5. When agent returns: note the plan file path from the summary
+6. Update state: `plan_file: <path>`, `last_updated: <now>`
+7. Present plan summary to user (task count, key files)
+8. Auto-select verification speed: count tasks in the returned plan file.
    If task count < 5: mark `--fast` flag for Step 3 (use Sonnet for verification).
    If task count ≥ 5: no flag (use Opus default).
+
+### Step 2.5: UX Review (conditional)
+
+**Trigger condition:** The design doc contains a `## UX Assertions` section with at least one assertion row (not just the header). If no design doc, no UX Assertions section, or the table has zero assertion rows, skip to Step 3.
+
+1. Update state: `phase_step: ux-review`, `last_updated: <now>`
+2. Read the generated plan file
+3. Read the design doc's `## UX Assertions` table and `## User Journeys` section
+4. Build a mapping table:
+
+For each UX assertion:
+- Find plan tasks with `UX ref: UX-NNN` matching this assertion
+- Extract the task's `User interaction:` line (if present)
+
+For each UI-facing plan task without a `UX ref:`:
+- Note as unmapped
+
+5. Present to user:
+
+```
+UX Assertion Coverage:
+
+| UX ID | Assertion | Plan Task(s) | User Interaction | Status |
+|-------|-----------|-------------|-----------------|--------|
+| UX-001 | {assertion text} | Task 3, Task 5 | {from task's User interaction: line, or "—"} | ✅ Mapped |
+| UX-002 | {assertion text} | — | — | ❌ No task |
+| UX-003 | {assertion text} | Task 7 | {from task} | ✅ Mapped |
+
+Unmapped UI tasks (no UX ref):
+- Task 4: {task title} — {reason or "needs UX assertion?"}
+
+Confirm this mapping is correct, or provide corrections.
+```
+
+6. Wait for user response:
+   - **User confirms**: proceed to Step 3
+   - **User provides corrections**:
+     - For minor fixes (add/correct `UX ref:` lines, adjust `User interaction:` text): edit the plan file directly
+     - For structural changes (add missing tasks, redesign task scope): re-dispatch `dev-workflow:plan-writer` with a correction prompt listing the required additions
+     - Re-present the mapping for confirmation after corrections
+   - Max 2 correction cycles; after that, proceed with noted gaps
+
+7. Update state: `last_updated: <now>`
 
 ### Step 3: Verify
 

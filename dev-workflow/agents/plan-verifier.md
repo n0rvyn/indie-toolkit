@@ -264,6 +264,29 @@ Do NOT modify the plan file. Return revision instructions only.
 - 空状态、极端数据量、并发访问、网络失败等设计隐含的边界场景
 - 设计文档中"如果...则..."的条件分支是否全部被计划覆盖
 
+**步骤 7：UX 交互走查**
+
+**前置条件**：设计文档包含 `## UX Assertions` 段落。如果无此段落，跳过本步骤。
+
+读取设计文档的 `## UX Assertions` 表格，逐条验证：
+
+对每条 UX 断言（UX-NNN）：
+1. 在计划中搜索 `UX ref:` 引用了该 ID 的 task
+2. 如果无 task 引用 → 标记为 Gap D（UX 断言未被任何 task 覆盖）
+3. 如果有 task 引用 → 读取 task 的步骤，执行断言的 Verification 列描述的检查方法：
+   - 检查指定的组件/文件是否在 task 的 Files 列表中
+   - 检查 task 步骤是否建立了断言描述的行为（状态替换 vs 追加、条件渲染逻辑、导航路径等）
+   - 对比 task 的 `User interaction:` 描述与设计文档 User Journeys 中对应步骤的一致性
+
+```
+[DF-7] UX 交互走查
+  - UX-001 "{断言内容}" → Task {N} — ✅ task 步骤覆盖了断言行为 / ❌ task 步骤未体现断言行为（{具体差异}）
+  - UX-002 "{断言内容}" → ❌ 无 task 引用此断言
+  - UX-003 "{断言内容}" → Task {N} — ⚠️ task 引用了但验证方法无法通过静态检查确认（需运行时验证）
+```
+
+反向检查：扫描计划中所有标记 `⚠️ No UX ref` 的 UI task，验证是否确实无对应 UX 断言，或是 plan-writer 遗漏了映射。
+
 ---
 
 #### AR. 架构审查（架构变更时）
@@ -343,7 +366,7 @@ Do NOT modify the plan file. Return revision instructions only.
 - S1 具体候选错误：生成 {N} 条，成立 {M} 条
 - S2 失败反向推理：编译失败 {N} 条，运行时 regression {N} 条
 - U1 Token 一致性：检查 {N} 项，缺失 {M} 项
-- DF 设计忠实度：设计要求映射 {N}/{total}，缺失锚点 {M} 个，隐含上下文 {N} 项未覆盖，粒度问题 {N} 处，边界场景 {N} 个未覆盖
+- DF 设计忠实度：设计要求映射 {N}/{total}，缺失锚点 {M} 个，隐含上下文 {N} 项未覆盖，粒度问题 {N} 处，边界场景 {N} 个未覆盖，UX 断言 {N}/{total} 覆盖
 - AR 架构审查：入口冲突 {N}，替代清单 {完整/不完整}
 
 ### 必须修订（验证发现的确实问题）

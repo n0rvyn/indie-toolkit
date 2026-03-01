@@ -1,7 +1,7 @@
 {
   "name": "dev-workflow",
-  "version": "2.1.1",
-  "description": "Development workflow plugin: planning, execution, phase orchestration, review, debugging, commits, and session management",
+  "version": "2.2.0",
+  "description": "Cross-stack development workflow: brainstorm, planning, phase orchestration, execution, review, debugging, design analysis, commits, and session management",
   "author": {
     "name": "Norvyn"
   }

@@ -46,6 +46,16 @@ If any input is missing from the task prompt, search for it in the codebase (dev
 
 **When crystal file is provided:** read it and ensure every `[D-xxx]` decision is reflected in at least one plan task. Rejected alternatives in the crystal must not appear as plan tasks. Add `Crystal ref: [D-xxx]` to task headers that implement specific decisions.
 
+## Scope Guards
+
+1. **Absence ≠ deletion**: If the current codebase has functionality X that is not mentioned in the scope items, X's status is "unchanged" (keep as-is). Only create deletion/removal tasks when the scope explicitly says "remove", "delete", "移除", or "删除" for that functionality. Design docs showing a target state without feature X does NOT authorize removing X — that's a UX change requiring explicit user instruction in the scope. Exception: if a crystal `[D-xxx]` decision explicitly calls for removal/replacement, that decision overrides this guard (D-xxx decisions represent user-confirmed intent).
+
+2. **Scope boundary compliance** (when crystal file has `## Scope Boundaries`):
+   - IN items: plan tasks should cover these
+   - OUT items: plan tasks must NOT touch these areas. If a task would need to modify an OUT item to complete an IN item, add a `**Scope conflicts:**` subsection after `**Crystal file:**` in the plan header: `IN: {item} requires modifying OUT: {item} — {why}`. Do not create the conflicting task; let the verifier and user resolve it.
+
+3. **No scope inference**: Decomposing a scope item into implementation steps is expected (e.g., "migrate color tokens" → one task per token category). But adding work that addresses a DIFFERENT concern not in the scope items is prohibited, even if it seems like a natural extension (e.g., scope says "migrate color tokens" → adding a font migration task is scope inference). If you believe additional work is necessary, note it in the plan header as "Recommended additions (not in scope)" — do not create tasks for it.
+
 ## Output
 
 When done:

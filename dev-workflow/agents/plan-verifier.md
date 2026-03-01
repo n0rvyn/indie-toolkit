@@ -51,7 +51,7 @@ Verdict: {approved | must-revise}
 [S2] failures: {N} compile, {M} runtime
 [U1] tokens: {N} checked, {M} missing (or "skipped")
 [DF] design faithfulness: {N}/{total} mapped, {M} gaps (or "skipped")
-[CF] crystal fidelity: {N}/{total} covered, {M} conflicts (or "skipped")
+[CF] crystal fidelity: {N}/{total} covered, {M} conflicts, {K} scope violations (or "skipped")
 [AR] architecture: {N} issues (or "skipped")
 Must-revise items: {N}
 ```
@@ -328,9 +328,31 @@ Do NOT modify the plan file. Return revision instructions only.
   - "{alternative name}": 否决原因 — {reason} → Task {N} implements this rejected approach — ❌ Conflict
 ```
 
+**步骤 3：Scope 边界验证**（crystal 文件包含 `## Scope Boundaries` 段落时）
+
+先检查 plan header 是否有 `**Scope conflicts:**` 段落。如有，这些是 plan-writer 识别出的 IN/OUT 冲突，报告为 must-revise 并在修订建议中引用这些冲突（需用户决策）。
+
+对 crystal 中每条 OUT 边界：
+1. 检查 plan 中是否有 task 修改该区域的文件/功能
+2. 如果有 → ❌ 标记为 must-revise（plan 超出授权 scope）
+
+对 plan 中每个删除现有功能的 task：
+识别方式——扫描每个 task 的步骤描述，查找：(a) `**Replaces:**` 锚点字段（表示替代旧代码），(b) 步骤中的 "remove"、"delete"、"移除"、"删除"、"drop" 关键词，(c) task 标题或步骤描述的功能净减少。
+
+对每个识别出的删除：
+1. 检查该删除是否被 IN scope 条目或 D-xxx 决策授权
+2. 如果未授权 → ❌ 标记为 must-revise（未授权的功能删除）
+
+```
+[CF-3] Scope 边界验证
+  - OUT: "{boundary item}" → ✅ 无 plan task 涉及 / ❌ Task {N} 越界
+  - 删除: Task {N} 移除 {functionality} → ✅ 已被 IN:{item}/D-{xxx} 授权 / ❌ 未找到授权
+```
+
 **判定**：
 - CF-1 有未覆盖的决策 → must-revise
 - CF-2 有冲突 → must-revise
+- CF-3 有边界越权或未授权删除 → must-revise
 
 ---
 
@@ -412,7 +434,7 @@ Do NOT modify the plan file. Return revision instructions only.
 - S2 失败反向推理：编译失败 {N} 条，运行时 regression {N} 条
 - U1 Token 一致性：检查 {N} 项，缺失 {M} 项
 - DF 设计忠实度：设计要求映射 {N}/{total}，缺失锚点 {M} 个，隐含上下文 {N} 项未覆盖，粒度问题 {N} 处，边界场景 {N} 个未覆盖，UX 断言 {N}/{total} 覆盖
-- CF 决策忠实度：决策覆盖 {N}/{total}，否决方案冲突 {N} 条
+- CF 决策忠实度：决策覆盖 {N}/{total}，否决方案冲突 {N} 条，scope 越界 {N} 处
 - AR 架构审查：入口冲突 {N}，替代清单 {完整/不完整}
 
 ### 必须修订（验证发现的确实问题）

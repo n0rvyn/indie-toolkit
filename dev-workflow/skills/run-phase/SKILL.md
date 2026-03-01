@@ -9,9 +9,10 @@ This skill orchestrates one iteration of the development cycle by dispatching ag
 
 ```
 Locate/Resume Phase
+  → scope confirmation checkpoint (main context)
   → dispatch dev-workflow:plan-writer agent (separate context)
   → UX review checkpoint (main context — if design has UX Assertions)
-  → dispatch dev-workflow:plan-verifier agent (separate context)
+  → invoke dev-workflow:verify-plan skill (separate context)
   → execute plan (main context — writes code)
   → dispatch dev-workflow:feature-spec-writer agent (separate context)
   → dispatch review agents in parallel (separate contexts)
@@ -75,6 +76,32 @@ last_updated: "<now>"
 
 If the user specifies a different Phase number, use that instead.
 
+### Step 1.5: Scope Confirmation
+
+Before dispatching plan-writer, present the Phase scope for explicit user confirmation.
+
+**Skip condition:** When resuming from state file with `phase_step` not `plan`, skip this step — scope was already confirmed in a prior session.
+
+1. Read the Phase's scope items from the dev-guide
+2. Present them as a numbered list to the user:
+
+```
+Phase {N} scope — confirm before planning:
+
+1. {scope item 1}
+2. {scope item 2}
+...
+
+Confirm these items, or correct before proceeding.
+```
+
+3. Wait for user response:
+   - User confirms → proceed to Step 2
+   - User corrects → edit the Phase's `**Scope:**` bulleted list in the dev-guide file to match user's corrections, re-present for confirmation
+   - Max 2 correction cycles; after that, proceed with last-confirmed scope
+
+This checkpoint catches scope pollution introduced during dev-guide updates (AI-added items that were not explicitly requested by the user).
+
 ### Step 2: Plan (agent dispatch)
 
 1. Update state: `phase_step: plan`, `last_updated: <now>`
@@ -85,6 +112,7 @@ If the user specifies a different Phase number, use that instead.
    - Design doc reference: from dev-guide header (if exists)
    - Design analysis reference: search `docs/06-plans/*-design-analysis.md`; if exactly 1 file, use it; if multiple, use the one whose filename matches the Phase's feature topic; if still ambiguous, ask the user; if none, set to "none"
    - Crystal file reference: search `docs/11-crystals/*-crystal.md`; if exactly 1 file, use it; if multiple, ask the user which one applies; if none, set to "none"
+   - If no crystal file found AND the Phase has architecture decisions marked as "resolved" in the dev-guide: suggest `/crystallize` to capture these decisions before planning. Do not block — user can decline and proceed without a crystal file.
 3. If a design doc path exists: read the design doc and check for a `## UX Assertions` section. Note the result — it controls the dispatch prompt below and Step 2.5.
 4. Use the Task tool to dispatch the `dev-workflow:plan-writer` agent:
 

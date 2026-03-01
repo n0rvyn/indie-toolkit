@@ -25,6 +25,7 @@ Scan the current conversation context for decision signals.
 - `brainstorm` output — design document paths, UX Assertions, approach selections
 - `design-decision` output — comparison tables with user's selection
 - Explicit user decision statements — "用 X 方案", "不要 Y", "选 A", "go with", "let's do", "decided on"
+- Revert/rollback events — user requested revert of changes, with the categories of change that were reverted (e.g., "font changes", "layout restructure", "feature removal"). Each reverted category becomes a Constraint and an OUT scope boundary.
 
 **Medium-signal sources** (extract but mark as inferred):
 - AI proposals that the user modified ("originally proposed X → user changed to Y")
@@ -71,6 +72,12 @@ Do NOT rewrite, do NOT summarize. If the user spoke in Chinese, keep Chinese.}
 ## Constraints
 - {Constraints that emerged from the discussion}
 
+## Scope Boundaries
+- IN: {item from user's explicit request — quote or paraphrase user's words}
+- IN: {item}
+- OUT: {item user explicitly excluded, or category that was reverted}
+- OUT: {item}
+
 ## Source Context
 - Design doc: {path or "none"}
 - Design analysis: {path or "none"}
@@ -83,6 +90,7 @@ Do NOT rewrite, do NOT summarize. If the user spoke in Chinese, keep Chinese.}
 - Do not record pure implementation details (naming, variable splitting); only record decisions that affect deliverables and behavior
 - Rejected Alternatives must include the reason for rejection, not just "rejected"
 - Discussion Points must show the pivot (from X to Z), not just the final conclusion
+- **Scope Boundaries** distinguish user-authorized work from AI inference. IN items must trace to user's words (direct quote or close paraphrase). OUT items come from: explicit user exclusion ("不要改 X"), revert events (user reverted font changes → "OUT: font/typography changes"), or user-stated constraints. If the user did not explicitly authorize an item, it is NOT an IN item — do not infer scope from design docs or AI analysis. If the conversation produced no explicit scope signals (no user-stated items to include or exclude), omit the `## Scope Boundaries` section entirely.
 
 ### Step 3: User Confirmation
 
@@ -114,8 +122,8 @@ After saving, inform the user:
 Crystal saved to docs/11-crystals/{filename}.
 
 This crystal file will be automatically consumed by:
-- /write-plan — plan-writer reads it as context to avoid dropping settled decisions
-- /verify-plan — plan-verifier checks plan tasks against each D-xxx decision
+- /write-plan — plan-writer reads D-xxx decisions and scope boundaries to stay within authorized scope
+- /verify-plan — plan-verifier checks plan tasks against each D-xxx decision AND scope boundaries (CF-3)
 
 Proceed with /write-plan when ready.
 ```

@@ -45,7 +45,7 @@ Read each file to review in full before analyzing it. Process one artifact at a 
 
 ## Review Dimensions
 
-Apply all 7 dimensions to each artifact. Skip dimensions that don't apply (e.g., "Trigger" doesn't apply to agents that are never auto-routed).
+Apply all 8 dimensions to each artifact. Skip dimensions that don't apply (e.g., "Trigger" doesn't apply to agents that are never auto-routed; "Metadata & Docs" applies once per plugin, not per artifact).
 
 ---
 
@@ -270,6 +270,63 @@ For `disable-model-invocation: true` skills: trigger condition check is relaxed 
 
 ---
 
+### Dimension 8: Plugin Metadata & Documentation
+
+Check that plugin metadata files are complete, consistent, and in sync with actual contents. These issues are invisible at runtime but cause discoverability problems, misleading documentation, and integration failures in marketplace distribution.
+
+**8.1 README ↔ actual files sync:**
+
+1. **Agents table sync:**
+   - List all `.md` files in `agents/` directory
+   - Read README.md agents table rows
+   - Flag: agent file exists but is not listed in README → Logic
+   - Flag: README lists an agent that doesn't exist as a file → Bug
+   - For each listed agent: verify `Model` and `Tools` columns match the agent's frontmatter → Minor if mismatch
+
+2. **Skills table sync:**
+   - List all directories in `skills/` directory (each with a SKILL.md)
+   - Read README.md skills table rows
+   - Flag: skill directory exists but is not listed in README → Logic
+   - Flag: README lists a skill that doesn't exist as a directory → Bug
+
+3. **Hooks table sync:**
+   - Read `hooks/hooks.json` to get all registered hook events
+   - Read README.md hooks table rows
+   - Flag: hook registered in hooks.json but not listed in README → Logic
+   - Flag: README lists a hook event not in hooks.json → Bug
+
+**8.2 Version sync (plugin.json ↔ marketplace.json):**
+
+1. Read `.claude-plugin/plugin.json` version field
+2. Search for the plugin's entry in any `marketplace.json` file (Glob for `**/marketplace.json`, then read and find the entry matching the plugin name)
+3. If both exist: versions must match → Bug if mismatch
+4. If marketplace entry exists but plugin.json doesn't: note as Minor
+
+**8.3 Description accuracy:**
+
+1. Read the plugin's description from `plugin.json` and `marketplace.json`
+2. List the actual skill names in the plugin
+3. Flag: description mentions a capability the plugin doesn't have → Logic
+4. Flag: description significantly understates the plugin's scope (covers <50% of major skills) → Minor
+5. How to estimate: compare major functional keywords in description against skill `description` fields. If a skill category (planning, debugging, review, etc.) represents >20% of skills but isn't mentioned in the plugin description → it's understated
+
+**8.4 Agent color conventions:**
+
+1. Read the `color` field from all agent frontmatters in the plugin
+2. Group by `model` field
+3. Flag: agents with the same model use different colors → Minor
+4. Note the convention found (e.g., "opus → yellow, sonnet → blue") for the report
+
+**8.5 Architecture diagram sync (if README has one):**
+
+1. Check if README.md contains a code block with `→` arrows (architecture flow diagram)
+2. If yes: extract all agent names mentioned in the diagram
+3. Cross-reference with actual agents directory
+4. Flag: agent exists but is missing from the diagram → Minor
+5. Flag: diagram mentions an agent that doesn't exist → Logic
+
+---
+
 ## Output Format
 
 ```
@@ -315,6 +372,7 @@ For `disable-model-invocation: true` skills: trigger condition check is relaxed 
 | 5. Trigger & Routing | {N} checks | {N} issues |
 | 6. Edge Cases | {N} checks | {N} issues |
 | 7. Spec Compliance | {N} checks | {N} issues |
+| 8. Metadata & Docs | {N} checks | {N} issues |
 | **Total** | **{N}** | **{N}** |
 
 ---

@@ -262,6 +262,12 @@ When verifying an assertion requires tracing a call chain that you cannot fully 
 | Completion | {N} | {N} | {N} | {N} | {N} |
 | Consistency | {N} | {N} | {N} | {N} | {N} |
 | **Total** | **{N}** | **{N}** | **{N}** | **{N}** | **{N}** |
+
+Decisions: {N blocking}, {M recommended}
+
+### Decisions
+
+[DP-001 format entries, or "None."]
 ```
 
 ### Status definitions
@@ -283,6 +289,31 @@ When verifying an assertion requires tracing a call chain that you cannot fully 
 5. **Mark complex traces, don't attempt them.** The `flow-tracer` agent handles multi-hop verification. Attempting partial traces creates false confidence.
 6. **Stale ≠ drifted.** A document reference pointing to a renamed file, where the functionality still exists, is ⚠️ stale. A deleted feature still listed as "Complete" is ❌ drifted.
 7. **Non-existent documents produce no assertions.** If a document is "not found", produce zero assertions for it. Do not guess what it might have contained.
+
+## Decisions
+
+If any drift finding requires a user choice before remediation can proceed, output a `## Decisions` section in the drift report. If no decisions needed, output `## Decisions\nNone.`
+
+Format per decision:
+
+```
+### [DP-001] {title} ({blocking / recommended})
+
+**Context:** {why this decision is needed, 1-2 sentences}
+**Options:**
+- A: {description} — {trade-off}
+- B: {description} — {trade-off}
+**Recommendation:** {option} — {reason, 1 sentence}
+```
+
+Priority levels:
+- `blocking` — must be resolved before remediation can proceed
+- `recommended` — has a sensible default but user should confirm
+
+Common decision triggers for design drift auditing:
+- ❌ Drifted assertion → update doc to match code vs fix code to match doc vs needs discussion (recommended)
+- Multiple drifted items in same category → batch fix strategy (recommended)
+- Anti-scope violation found in active code → remove code vs update scope (blocking)
 
 ## Constraint
 

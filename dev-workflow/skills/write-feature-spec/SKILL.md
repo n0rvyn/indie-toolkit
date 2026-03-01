@@ -64,7 +64,12 @@ When the agent completes:
    - User Story status counts (✅ / ⚠️ / ❌)
    - Number of deviations detected
 3. If deviations were found, briefly list them
-4. After spec is saved, offer:
+4. **Decision Points:** Check the agent's return for `Decisions:` count.
+   - If Decisions > 0: read the `## Decisions` section from the spec file
+   - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
+   - For each `recommended` decision: present as a group — "The spec has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
+   - Record user choices: edit the spec file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+5. After spec is saved, offer:
    "Spec saved at {path}. This can be used to:"
    - "Quickly restore context in a future session (share spec with new Claude session)"
    - "Document the feature for changelog or release notes"

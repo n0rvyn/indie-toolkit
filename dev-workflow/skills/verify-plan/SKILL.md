@@ -74,6 +74,12 @@ When the agent completes:
    - **Approved** — proceed to Step 4
    - **Must revise** — the summary includes revision items; apply revisions to the plan, then re-dispatch the verifier (max 2 revision cycles)
 4. For detailed analysis: read the full report at the path returned by the agent
+5. **Decision Points:** Check the agent's return for `Decisions:` count.
+   - If Decisions > 0: read the `## Decisions` section from the verification report
+   - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
+   - For each `recommended` decision: present as a group — "The verification has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
+   - Record user choices: edit the verification report, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+   - Then proceed to Step 4
 
 ### Step 4: Mark Verified
 

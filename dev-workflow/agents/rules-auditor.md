@@ -97,7 +97,37 @@ Return a Rules Review Report (format below) with:
 ### 修复建议
 1. [具体修改内容]
 2. ...
+
+Decisions: {N blocking}, {M recommended}
+
+### Decisions
+[DP-001 format entries, or "None."]
 ```
+
+## Decisions
+
+If any audit finding requires a user choice before fixes can be applied, output a `## Decisions` section in the report. If no decisions needed, output `## Decisions\nNone.`
+
+Format per decision:
+
+```
+### [DP-001] {title} ({blocking / recommended})
+
+**Context:** {why this decision is needed, 1-2 sentences}
+**Options:**
+- A: {description} — {trade-off}
+- B: {description} — {trade-off}
+**Recommendation:** {option} — {reason, 1 sentence}
+```
+
+Priority levels:
+- `blocking` — must be resolved before applying fixes
+- `recommended` — has a sensible default but user should confirm
+
+Common decision triggers for rules auditing:
+- Each loophole/gap/conflict found → fix with proposed wording or accept current risk (recommended, per item)
+- Conflicting rules where both are intentional → rewrite to clarify priority or merge (blocking)
+- Missing rule for observed deviation → add new rule or treat as one-off (recommended)
 
 ## 原则
 

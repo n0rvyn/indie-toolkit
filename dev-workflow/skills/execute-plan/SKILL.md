@@ -39,6 +39,11 @@ After each batch, report:
 - Verification output (pass/fail)
 - Any deviations from the plan and why
 
+**Decision Points:** If the plan file contains a `## Decisions` section with unresolved decisions (no `**Chosen:**` line), present them before the first batch:
+- For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
+- For each `recommended` decision: present as a group — "The plan has {N} unresolved recommended decisions. Accept all defaults, or review individually?"
+- Record user choices: edit the plan file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+
 Then say: **"Ready for feedback before next batch."**
 
 Wait for user feedback. Apply requested changes before continuing.

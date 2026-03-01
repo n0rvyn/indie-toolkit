@@ -38,6 +38,7 @@ Verdict: {✅ Implementation complete | ❌ N gaps require remediation}
 Plan-vs-Code gaps: {N} (Critical: {X}, Standard: {Y})
 Design Fidelity: {A: N, B: N, C: N, D: N, E: N mismatches} — or "N/A"
 Rules: R6 {summary}, R9 {summary}
+Decisions: {N blocking}, {M recommended}
 ```
 
 ## Inputs
@@ -256,6 +257,31 @@ Output per item:
 ### Verdict
 ✅ Implementation complete / ❌ {N} gaps require remediation
 ```
+
+## Decisions
+
+If any review finding requires a user choice before remediation can proceed, output a `## Decisions` section in the review report. If no decisions needed, output `## Decisions\nNone.`
+
+Format per decision:
+
+```
+### [DP-001] {title} ({blocking / recommended})
+
+**Context:** {why this decision is needed, 1-2 sentences}
+**Options:**
+- A: {description} — {trade-off}
+- B: {description} — {trade-off}
+**Recommendation:** {option} — {reason, 1 sentence}
+```
+
+Priority levels:
+- `blocking` — must be resolved before proceeding to next phase
+- `recommended` — has a sensible default but user should confirm
+
+Common decision triggers for implementation review:
+- Unauthorized deferral of plan requirement → accept deferral or require implementation (blocking)
+- Critical Gap found (missing feature, broken integration) → fix before proceeding or acknowledge risk (blocking)
+- Design fidelity mismatch (Gap A-E) → accept deviation or require correction (recommended)
 
 ## Constraint
 

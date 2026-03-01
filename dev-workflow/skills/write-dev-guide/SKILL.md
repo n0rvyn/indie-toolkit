@@ -52,7 +52,12 @@ When the agent completes:
 | Phase 2 | {goal} | Phase 1 |
 | ... | ... | ... |
 
-3. Ask user (AskUserQuestion): **确认结构** / **调整结构**（reorder, merge, split）
+3. **Decision Points:** Check the agent's return for `Decisions:` count.
+   - If Decisions > 0: read the `## Decisions` section from the dev-guide file
+   - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
+   - For each `recommended` decision: present as a group — "The dev-guide has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
+   - Record user choices: edit the dev-guide file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+4. Ask user (AskUserQuestion): **确认结构** / **调整结构**（reorder, merge, split）
 4. If user chooses「调整结构」:
    - Re-dispatch the agent with structural revision instructions appended to the original prompt
    - Re-read output, re-present table, repeat until user confirms

@@ -39,9 +39,12 @@ Before starting, confirm you have:
 4. **Code input** — file path(s) or "none" (may be HTML/CSS, Figma structured context in React+Tailwind format, or inline code)
 5. **Tech stack** — target implementation platform (e.g., "SwiftUI / iOS", "React", "Flutter")
 6. **Existing tokens file path** — or "none"
-7. **Project root path**
-8. **Design doc path** — (pipeline mode only)
-9. **UX Assertions table** — (pipeline mode only)
+7. **Token strategy** — `match` or `propose` (default: `match`)
+   - `match`: existing tokens are authoritative; match design values against them
+   - `propose`: generate a token proposal FROM the design using iOS-native conventions
+8. **Project root path**
+9. **Design doc path** — (pipeline mode only)
+10. **UX Assertions table** — (pipeline mode only)
 
 If any input is missing from the task prompt, note the gap and proceed with available information.
 
@@ -165,10 +168,13 @@ Status definitions:
 
 **If single-channel:** output `## Cross-Validation\nSkipped: single-channel input ({image-only / code-only}).`
 
-### Step 4 — Token Extraction and Matching
+### Step 4 — Token Extraction and Mapping
 
 1. Collect all unique design values from Step 2 (or estimated values from Step 1 if code unavailable)
-2. If an existing tokens file path was provided: read it and extract the project's current token definitions
+
+#### If token strategy is `match`:
+
+2. Read the existing tokens file and extract the project's current token definitions
 3. Match each extracted value against existing tokens:
 
 ```markdown
@@ -187,20 +193,8 @@ Status definitions:
 | #3B82F6 | Color.appPrimary (#3B82F6) | ✅ Matched |
 | #10B981 | — | 🆕 Candidate (suggest: Color.appSuccess) |
 
-### Corner Radius
-| Design Value | Existing Token | Status |
-|-------------|---------------|--------|
-| ... | ... | ... |
-
-### Shadows
-| Design Value | Existing Token | Status |
-|-------------|---------------|--------|
-| ... | ... | ... |
-
-### Typography
-| Design Value | Existing Token | Status |
-|-------------|---------------|--------|
-| ... | ... | ... |
+### Corner Radius / Shadows / Typography
+(same format per category)
 ```
 
 Rules:
@@ -208,38 +202,108 @@ Rules:
 - Unmatched values are "Candidate" — not "new token". The user decides whether to create tokens
 - If no tokens file exists: list all extracted values as candidates for a new token system
 
+#### If token strategy is `propose`:
+
+2. Do NOT read or match against existing tokens. Generate a token proposal from the design values, organized by category using iOS-native conventions:
+
+```markdown
+## Token Proposal
+
+### Typography
+| Design Value | Proposed iOS Token | Rationale |
+|-------------|-------------------|-----------|
+| 34px bold | .font(.largeTitle) | Nearest system Text Style |
+| 28px bold | .font(.title) | Nearest system Text Style |
+| 17px regular | .font(.body) | Nearest system Text Style |
+| 15px regular | .font(.subheadline) | Nearest system Text Style |
+| 13px regular | .font(.footnote) | Nearest system Text Style |
+
+Map each font-size to nearest iOS system Text Style: .largeTitle (34), .title (28), .title2 (22), .title3 (20), .headline (17 semibold), .body (17), .callout (16), .subheadline (15), .footnote (13), .caption (12), .caption2 (11). Include the original design value for reference.
+
+### Spacing
+| Design Value | Usage Context | Proposed Name |
+|-------------|--------------|---------------|
+| 24px | Page margins | spacing.page |
+| 16px | Card internal padding | spacing.card |
+| 12px | Between elements in a group | spacing.element |
+| 8px | Tight gaps (icon-to-label) | spacing.compact |
+
+Organize by usage context observed in the design. Keep original values — do not snap to a grid.
+
+### Colors
+| Design Value | Semantic Role | Proposed Name |
+|-------------|--------------|---------------|
+| #1A1A2E | Primary text | color.text.primary |
+| #6B7280 | Secondary text | color.text.secondary |
+| #3B82F6 | Primary action | color.primary |
+| #F3F4F6 | Surface background | color.surface |
+
+Assign semantic roles based on how the color is used in the design.
+
+### Corner Radius
+| Design Value | Usage | Proposed Name |
+|-------------|-------|---------------|
+| 12px | Cards | radius.card |
+| 8px | Buttons, inputs | radius.control |
+
+Keep original values. Name by usage context.
+
+### Shadows
+| CSS Value | iOS Translation | Proposed Name |
+|-----------|----------------|---------------|
+| 0 2px 8px rgba(0,0,0,0.08) | .shadow(color: .black.opacity(0.08), radius: 4, y: 2) | shadow.card |
+
+Translate CSS box-shadow to iOS .shadow() parameters (color, radius, x, y).
+```
+
+Rules:
+- Typography maps to system Text Styles, not custom sizes. This enables Dynamic Type and SF font optimization
+- Spacing, radius, and shadow values are preserved as-is from the design
+- Color values are preserved as-is; only the naming is added
+- Each proposed name is a suggestion — the user decides final naming
+
 ### Step 5 — Platform Translation
 
 **Skip if:** tech stack is web (HTML/CSS/React — no translation needed)
 
-Based on the detected tech stack, translate the design's HTML/CSS patterns to target platform idioms:
+Translate the design's HTML/CSS patterns to target platform idioms. Apply **category-specific strategies** — not all properties translate the same way:
+
+#### Translation Strategy (SwiftUI / iOS)
+
+| Category | Strategy | Rule | Rationale |
+|----------|----------|------|-----------|
+| Color | Direct transfer | hex/rgba as-is | No meaningful difference between web and iOS |
+| Corner radius | Direct transfer | px value as-is | No meaningful difference |
+| Shadow | Direct transfer | Map CSS box-shadow params to .shadow(color:radius:x:y:) | Direct parameter mapping |
+| Spacing (padding, gap) | Preserve original | Keep design values, do not snap to grid | Layer hierarchy (e.g. 18 vs 14) matters more than grid alignment |
+| font-size | Map to system Text Style | Map to nearest .largeTitle through .caption2 | Dynamic Type support, accessibility, SF font optimization |
+| line-height | Context-dependent | Short text (labels, titles, buttons): **discard** — use system default. Long text (body paragraphs, descriptions): **preserve** via `.lineSpacing(designLineHeight - systemDefault)` | System defaults are optimized for San Francisco; only multi-line body text benefits from custom line height |
+| letter-spacing | Discard | Do not translate to .tracking() or .kerning() | San Francisco has built-in tracking tables per font size; adding web letter-spacing on top makes spacing worse, not better |
+
+#### Translation Output
 
 ```markdown
 ## Platform Translation ({source} → {target})
 
-| HTML/CSS Pattern | {Target Platform} Equivalent | Token Reference |
-|-----------------|------------------------------|----------------|
-| display: flex; flex-direction: column | VStack(spacing: ...) | — |
-| gap: 16px | .spacing(AppSpacing.sm) | AppSpacing.sm |
-| padding: 24px | .padding(AppSpacing.md) | AppSpacing.md |
-| border-radius: 12px | .clipShape(.rect(cornerRadius: AppCornerRadius.medium)) | AppCornerRadius.medium |
-| background: #F3F4F6 | .background(Color.appSurface) | Color.appSurface |
-| box-shadow: 0 2px 4px rgba(0,0,0,0.1) | .shadow(color: .black.opacity(0.1), radius: 2, y: 2) | — |
-| font-size: 17px; font-weight: 400 | .font(.body) | system text style |
-| grid-template-columns: 1fr 1fr | LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) | — |
-| position: sticky; top: 0 | .safeAreaInset(edge: .top) or pinned header | — |
+| HTML/CSS Pattern | {Target} Equivalent | Strategy | Rationale |
+|-----------------|---------------------|----------|-----------|
+| font-size: 17px; font-weight: 400 | .font(.body) | Map to Text Style | 17px nearest to .body |
+| line-height: 1.6 (on body paragraph) | .lineSpacing(4) | Preserve (long text) | Multi-line body text needs custom rhythm |
+| line-height: 1.2 (on heading) | — (system default) | Discard (short text) | SF heading defaults are optimized |
+| letter-spacing: 0.5px | — (discard) | Discard | SF built-in tracking |
+| padding: 18px | .padding(18) | Preserve original | Design intent preserved |
+| gap: 14px | spacing: 14 | Preserve original | Design intent preserved |
+| border-radius: 12px | .clipShape(.rect(cornerRadius: 12)) | Direct transfer | — |
+| background: #F3F4F6 | .background(Color(hex: "F3F4F6")) | Direct transfer | — |
+| box-shadow: 0 2px 4px rgba(0,0,0,0.1) | .shadow(color: .black.opacity(0.1), radius: 2, y: 2) | Direct transfer | — |
+| display: flex; flex-direction: column | VStack(spacing: ...) | Layout mapping | — |
+| grid-template-columns: 1fr 1fr | LazyVGrid(columns: [GridItem(.flexible()), ...]) | Layout mapping | — |
+| overflow: scroll | ScrollView | Layout mapping | — |
+| position: sticky; top: 0 | .safeAreaInset(edge: .top) or pinned header | Layout mapping | — |
 ```
 
-**Translation tables by platform:**
-
-**SwiftUI (iOS/macOS):**
+**Layout pattern reference (SwiftUI):**
 - `display: flex` → `VStack` / `HStack` / `ZStack` (based on direction)
-- `gap: Npx` → spacing parameter or `.spacing()` modifier
-- `padding: Npx` → `.padding(N)` or `.padding(token)`
-- `border-radius: Npx` → `.clipShape(.rect(cornerRadius: N))`
-- `background: color` → `.background(Color.token)` or `.background(.material)`
-- `box-shadow` → `.shadow(color:radius:x:y:)`
-- `font-size` → `.font(.textStyle)` (map to closest system text style)
 - `grid` → `LazyVGrid` / `LazyHGrid`
 - `overflow: scroll` → `ScrollView`
 - `position: fixed` → overlay or `.safeAreaInset`
@@ -297,6 +361,33 @@ Generate actionable follow-up prompts that the user can paste directly into Stit
 
 If no issues found: `## Iteration Suggestions\nNo issues found. Design is ready for implementation planning.`
 
+### Step 8 — Decisions
+
+If any analysis finding requires a user choice before implementation can proceed, output a `## Decisions` section. If no decisions needed, output `## Decisions\nNone.`
+
+Format per decision:
+
+```markdown
+### [DP-001] {title} ({blocking / recommended})
+
+**Context:** {why this decision is needed, 1-2 sentences}
+**Options:**
+- A: {description} — {trade-off}
+- B: {description} — {trade-off}
+- C: {description} — {trade-off}
+**Recommendation:** {option} — {reason, 1 sentence}
+```
+
+Priority levels:
+- `blocking` — must be resolved before implementation planning; the dispatcher will ask the user via AskUserQuestion
+- `recommended` — has a sensible default (the Recommendation) but user should confirm; dispatcher presents as batch
+
+Common decision triggers for design analysis:
+- Custom web fonts detected that don't exist on target platform → font stack choice (blocking)
+- Design values conflict with platform conventions → preserve original vs adapt to native (recommended)
+- Multiple valid token organizations possible → naming strategy (recommended)
+- Cross-validation conflict where image and code disagree → which channel to trust (blocking)
+
 ---
 
 ## Return Contract
@@ -307,9 +398,12 @@ Return a compact summary to the dispatcher:
 Report: docs/06-plans/{filename}
 Mode: {pipeline / standalone}
 Channels: {dual / image-only / code-only}
-Token matches: {N matched} / {M total extracted} ({K new candidates})
+Token strategy: {match / propose}
+Tokens: {N matched} / {M total} ({K candidates})       ← match mode
+Tokens: {N values} across {M categories} (proposal)    ← propose mode
 UX Assertions: {X supported} / {Y not verifiable} / {Z contradicted} — or "N/A (standalone)"
 Iteration suggestions: {N issues}, {M missing states}
+Decisions: {N blocking}, {M recommended}
 Platform: {translation target or "web (no translation)"}
 ```
 
@@ -318,7 +412,7 @@ The dispatcher reads this summary and presents results to the user. The full rep
 ## Principles
 
 1. **Flag uncertainty** — when working from a single channel, mark all values that come from that channel's limitations. Visual estimates from images get `⚠️`. Code-only analysis gets `⚠️` for visual hierarchy claims.
-2. **Match before proposing** — always check the project's existing token system before proposing new tokens. Unmatched values become "candidates", not "new tokens". The user decides.
+2. **Respect token strategy** — in `match` mode, always check the project's existing token system before proposing new tokens; unmatched values become "candidates". In `propose` mode, generate a fresh token proposal from the design using iOS-native conventions; do not force-match against existing tokens. The user decides final token naming and adoption in both modes.
 3. **Platform translation is mapping, not invention** — translate what exists in the design. Do not add patterns, components, or behaviors not present in the prototype.
 4. **Static prototypes have limits** — do not penalize a prototype for not showing interactive behaviors, animations, or error states. Mark these as "not verifiable" rather than "contradicted".
 5. **Iteration prompts are actionable** — when suggesting design changes, output a copy-pasteable prompt for the design tool. Not just a description of what's wrong.

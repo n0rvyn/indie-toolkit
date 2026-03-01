@@ -35,11 +35,16 @@ Project CLAUDE.md: {path or "none"}
 When the agent completes:
 
 1. Present the Rules Review Report returned by the agent
-2. If fix recommendations were made:
+2. **Decision Points:** Check the agent's return for `Decisions:` count.
+   - If Decisions > 0: read the `## Decisions` section from the report
+   - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
+   - For each `recommended` decision: present as a group — "The audit has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
+   - Record user choices in conversation (note which option was chosen for each DP)
+3. If fix recommendations were made:
    - List each recommendation
    - Ask the user: "Execute these fixes?"
-3. If user approves: apply the recommended changes to the CLAUDE.md files
-4. If user declines: done
+4. If user approves: apply the recommended changes to the CLAUDE.md files
+5. If user declines: done
 
 ## Completion Criteria
 

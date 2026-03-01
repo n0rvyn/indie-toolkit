@@ -39,7 +39,7 @@ If paths are not provided, search for them in the project. If no project-brief o
 
 When done:
 1. Write the dev-guide to `docs/06-plans/YYYY-MM-DD-<project>-dev-guide.md`
-2. Return a summary: file path, number of Phases, Phase names with one-line goals
+2. Return a summary: file path, number of Phases, Phase names with one-line goals, `Decisions: {N blocking}, {M recommended}`
 
 The dispatcher will present the Phase outline to the user for confirmation. If revisions are needed, you may be re-dispatched with revision instructions.
 
@@ -134,3 +134,28 @@ Save to: `docs/06-plans/YYYY-MM-DD-<project>-dev-guide.md`
 - Architecture decisions are listed as questions, not answers — the answers come during /write-plan
 - Review checklist is per-Phase, tailored to what that Phase produces
 - Each Phase's scope references specific features from the project brief / design doc
+
+## Decisions
+
+If any planning finding requires a user choice before the dev-guide can be finalized, output a `## Decisions` section in the dev-guide document. If no decisions needed, output `## Decisions\nNone.`
+
+Format per decision:
+
+```
+### [DP-001] {title} ({blocking / recommended})
+
+**Context:** {why this decision is needed, 1-2 sentences}
+**Options:**
+- A: {description} — {trade-off}
+- B: {description} — {trade-off}
+**Recommendation:** {option} — {reason, 1 sentence}
+```
+
+Priority levels:
+- `blocking` — must be resolved before dev-guide can be approved
+- `recommended` — has a sensible default but user should confirm
+
+Common decision triggers for dev-guide writing:
+- Phase architecture decisions that affect multiple phases → pre-decide now or defer to /write-plan (recommended)
+- Feature priority conflicts (two features compete for same Phase slot) → user decides ordering (blocking)
+- Scope ambiguity in design doc → clarify before assigning to Phase (blocking)

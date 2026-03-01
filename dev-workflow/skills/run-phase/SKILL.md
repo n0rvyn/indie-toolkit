@@ -139,7 +139,12 @@ Context: This is Phase {N} of the dev-guide at {dev-guide path}.
 5. When agent returns: note the plan file path from the summary
 6. Update state: `plan_file: <path>`, `last_updated: <now>`
 7. Present plan summary to user (task count, key files)
-8. Auto-select verification speed: count tasks in the returned plan file.
+8. **Decision Points:** Check the plan-writer's return for `Decisions:` count.
+   - If Decisions > 0: read the `## Decisions` section from the plan file
+   - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
+   - For each `recommended` decision: present as a group — "The plan has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
+   - Record user choices: edit the plan file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+9. Auto-select verification speed: count tasks in the returned plan file.
    If task count < 5: mark `--fast` flag for Step 3 (use Sonnet for verification).
    If task count ≥ 5: no flag (use Opus default).
 
@@ -233,7 +238,12 @@ Project root: {project root}
 ```
 
 4. Present spec summary when agent returns
-5. Update state: `last_updated: <now>`
+5. **Decision Points:** Check the feature-spec-writer's return for `Decisions:` count.
+   - If Decisions > 0: read the `## Decisions` section from the spec file
+   - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
+   - For each `recommended` decision: present as a group — "The spec has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
+   - Record user choices: edit the spec file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+6. Update state: `last_updated: <now>`
 
 ### Step 6: Reviews (parallel agent dispatch)
 
@@ -275,6 +285,12 @@ If any review found issues:
 5. If fixing: address the gaps, then re-run only the reviews that had failures
 6. If skipping: note the known issues and proceed
 7. Update state: `gaps_remaining: <count>`, `last_updated: <now>`
+8. **Decision Points:** Check each review report for `Decisions:` count.
+   - If any report has Decisions > 0: read the `## Decisions` section from that report
+   - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
+   - For each `recommended` decision: present as a group — "Reviews have {N} recommended decisions with defaults. Accept all defaults, or review individually?"
+   - Record user choices: edit the report file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+   - Then proceed to Step 8
 
 ### Step 8: Phase Completion
 

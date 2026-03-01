@@ -54,6 +54,7 @@ Verdict: {approved | must-revise}
 [CF] crystal fidelity: {N}/{total} covered, {M} conflicts, {K} scope violations (or "skipped")
 [AR] architecture: {N} issues (or "skipped")
 Must-revise items: {N}
+Decisions: {N blocking}, {M recommended}
 ```
 
 If verdict is `must-revise`, also list the revision items (1 line each, prefixed with the strategy tag that identified them) in the return summary — the dispatcher needs these without reading the file.
@@ -450,6 +451,31 @@ Do NOT modify the plan file. Return revision instructions only.
 ```
 
 ---
+
+## Decisions
+
+If any verification finding requires a user choice before plan revision can proceed, output a `## Decisions` section in the verification report. If no decisions needed, output `## Decisions\nNone.`
+
+Format per decision:
+
+```
+### [DP-001] {title} ({blocking / recommended})
+
+**Context:** {why this decision is needed, 1-2 sentences}
+**Options:**
+- A: {description} — {trade-off}
+- B: {description} — {trade-off}
+**Recommendation:** {option} — {reason, 1 sentence}
+```
+
+Priority levels:
+- `blocking` — must be resolved before plan execution can proceed
+- `recommended` — has a sensible default but user should confirm
+
+Common decision triggers for plan verification:
+- CF-1: Crystal decision not covered by plan → add task, revise decision, or skip (blocking)
+- CF-3: Task exceeds OUT scope → authorize, remove task, or revise scope (blocking)
+- Unauthorized deletion detected → confirm removal or revert task (blocking)
 
 ## 原则
 

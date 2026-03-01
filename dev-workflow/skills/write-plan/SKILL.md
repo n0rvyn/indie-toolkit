@@ -75,7 +75,12 @@ When the agent completes:
    - Plan file path
    - Number of tasks
    - Key files to be created/modified
-3. Invoke `dev-workflow:verify-plan` to validate the plan before execution
+3. **Decision Points:** Check the agent's return for `Decisions:` count.
+   - If Decisions > 0: read the `## Decisions` section from the plan file
+   - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
+   - For each `recommended` decision: present as a group — "The plan has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
+   - Record user choices: edit the plan file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+4. Invoke `dev-workflow:verify-plan` to validate the plan before execution
 
 ## Completion Criteria
 

@@ -130,6 +130,12 @@ Mark any breaks: signal with no consumer, call to nonexistent target, field writ
    - 代码需修复 — 代码偏离了设计意图
    - 需决策 — 两边都可能对，需要用户判断
 4. **Unresolved 项处理**：如果有 `[unresolved]` 项，在报告末尾列出，建议用户手动验证或提供更精确的起点后重新 trace
+5. **Decision Points:** Check the agent's report for `Decisions:` count.
+   - If Decisions > 0: read the `## Decisions` section from the drift report
+   - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
+   - For each `recommended` decision: present as a group — "The drift audit has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
+   - Record user choices in conversation (note which option was chosen for each DP)
+   - Then proceed to Completion Criteria
 
 ## Completion Criteria
 

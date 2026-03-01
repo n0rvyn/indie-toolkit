@@ -82,7 +82,12 @@ Collect context for the agent regardless of mode:
      - Web: `**/design-tokens.*`, `**/theme.*`, `tailwind.config.*`
    - If found: note the path(s) for the agent
 
-3. **Design doc path** (pipeline mode): from Step 0
+3. **Token strategy:**
+   - If token files were found in item 2: ask the user — "Found tokens in {file}. Match design values against these existing tokens, or generate a fresh token proposal from the design? (match/propose)"
+   - If no token files found: default to `propose`
+   - User can override via explicit instruction in the invocation (e.g., "use propose mode", "match against my tokens")
+
+4. **Design doc path** (pipeline mode): from Step 0
 
 ### Step 3: Dispatch Agent
 
@@ -98,6 +103,7 @@ Design doc: {path or "none"}
 Project root: {path}
 Tech stack: {detected stack}
 Existing tokens file: {path or "none"}
+Token strategy: {match / propose}
 
 Channel availability: {dual / image-only / code-only}
 Image: {file path or "none"}
@@ -123,7 +129,7 @@ When the agent completes, read the analysis file it created.
 **Pipeline mode presentation:**
 
 1. **UX Assertion validation** — show the assertion table with ✅/❌/⚠️ status
-2. **Token mapping summary** — "{N} matched, {M} new candidates"
+2. **Token summary** — match mode: "{N} matched, {M} new candidates"; propose mode: "Token proposal: {N} values across {M} categories"
 3. **Conflicts** (if any) — list ⚠️ Conflicting items from cross-validation; ask user: follow the prototype or the design doc?
 4. **Platform translation highlights** — key mapping patterns
 5. **Iteration suggestions** (if any) — present follow-up prompts; ask "Iterate on the design, or proceed?"
@@ -131,10 +137,17 @@ When the agent completes, read the analysis file it created.
 
 **Standalone mode presentation:**
 
-1. **Full analysis summary** — visual intent + structural facts + token mapping + platform translation
+1. **Full analysis summary** — visual intent + structural facts + token mapping (or token proposal) + platform translation
 2. **Iteration suggestions** (if any) — present follow-up prompts
 3. Report the analysis file path
 4. Suggest: "Use this analysis as reference when running `/brainstorm` or `/write-plan`."
+
+**Decision Points:** After presenting the summary, check the agent's return for `Decisions:` count.
+- If Decisions > 0: read the `## Decisions` section from the analysis file
+- For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
+- For each `recommended` decision: present as a group — "The analysis has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
+- Record user choices: edit the analysis file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+- Then proceed to next step (suggest /write-plan or provide guidance)
 
 ## Completion Criteria
 

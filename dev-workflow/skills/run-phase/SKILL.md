@@ -49,7 +49,9 @@ last_updated: "YYYY-MM-DDTHH:MM:SS"
 1. Check for `.claude/dev-workflow-state.yml` (Read tool)
    - If exists AND `phase_step` is not `done`:
      - Present: "Phase {N} ({name}) in progress — step: {phase_step}. Resume?"
-     - If user accepts: skip to the step indicated by `phase_step`
+     - If user accepts:
+       - **Scope drift check** (only when `phase_step` is `plan` AND `plan_file` is not null): Read the Phase's current scope from the dev-guide and compare with the plan file's `Scope:` section. If they differ: "Dev-guide scope has changed since the plan was written. Re-run scope confirmation (Step 1.5)?" If user accepts: reset `phase_step: plan`, `plan_file: null`, and run Step 1.5. If user declines: proceed with existing plan. For steps after `plan` (verify/execute/review/fix): no check needed — the plan is the working document.
+       - Skip to the step indicated by `phase_step`
      - If user declines: ask which Phase to start
 2. If no state file or starting fresh:
    - Find dev-guide: `docs/06-plans/*-dev-guide.md` (if multiple, ask user)
@@ -76,31 +78,100 @@ last_updated: "<now>"
 
 If the user specifies a different Phase number, use that instead.
 
-### Step 1.5: Scope Confirmation
+### Step 1.5: Scope & Visual Expectation Confirmation
 
-Before dispatching plan-writer, present the Phase scope for explicit user confirmation.
+Before dispatching plan-writer, present the Phase scope and visual expectations for explicit user confirmation.
 
 **Skip condition:** When resuming from state file with `phase_step` not `plan`, skip this step — scope was already confirmed in a prior session.
 
-1. Read the Phase's scope items from the dev-guide
-2. Present them as a numbered list to the user:
+1. Read the Phase's scope items and `**用户可见的变化:**` section from the dev-guide
+2. Present to the user:
 
 ```
-Phase {N} scope — confirm before planning:
+Phase {N} — confirm before planning:
 
+范围：
 1. {scope item 1}
 2. {scope item 2}
 ...
 
-Confirm these items, or correct before proceeding.
+用户可见的变化：
+- {visual expectation 1, from dev-guide}
+- {visual expectation 2}
+（如果有需要补充的布局、交互细节，请在这一步告诉我）
+
+确认以上内容，或补充/修正后继续。
 ```
 
-3. Wait for user response:
-   - User confirms → proceed to Step 2
-   - User corrects → edit the Phase's `**Scope:**` bulleted list in the dev-guide file to match user's corrections, re-present for confirmation
-   - Max 2 correction cycles; after that, proceed with last-confirmed scope
+If `**用户可见的变化:**` starts with "无" (infrastructure Phase, e.g., "无" or "无 — 纯基建阶段"), present scope only (omit the visual section).
 
-This checkpoint catches scope pollution introduced during dev-guide updates (AI-added items that were not explicitly requested by the user).
+3. Wait for user response:
+   - User confirms without additions → proceed to Step 2
+   - User corrects scope → edit the Phase's `**Scope:**` bulleted list in the dev-guide file to match user's corrections, then check acceptance criteria sync (see below), re-present for confirmation
+   - User adds visual/interaction details → proceed to step 4 (auto-crystal)
+   - Max 2 correction cycles; after that, proceed with last-confirmed content
+
+   **Acceptance criteria sync** (after scope correction): Compare the Phase's `**Acceptance criteria:**` with the updated scope:
+   - If any criterion references a removed scope item → flag: "验收标准 '{criterion}' 对应的范围项已移除，是否同步删除？"
+   - If new scope items lack corresponding criteria → flag: "新增范围项 '{item}' 无验收标准，是否补充？"
+   - Present flags to user. Apply user's decisions (delete/add criteria) to the dev-guide before re-presenting the Phase.
+   - If no mismatches found, skip silently.
+
+4. **Auto-crystal** (conditional): If the user's response contains any new visual/interaction detail not already in the dev-guide's `用户可见的变化` section, treat as "adds details" regardless of whether they also said "confirmed."
+
+   **4a. Assemble decisions:** Extract from the user's input:
+   - Each confirmed visual/interaction detail → `[D-xxx]` in imperative form
+   - Each explicitly rejected approach → `## Rejected Alternatives` + `## Constraints`
+   - If no alternatives were discussed or rejected, write `None.` for those sections
+
+   **4b. Confirm with user:** Present the assembled decisions in-line:
+   ```
+   以下视觉/交互决策将记录供后续规划使用：
+   - [D-001] {detail}
+   - [D-002] {detail}
+   约束：{constraints, or "无"}
+
+   确认记录，或修改后继续。
+   ```
+   Apply user edits if any, then proceed to write.
+
+   **4c. Write crystal file:**
+   - First, search `docs/11-crystals/*-crystal.md` for an existing crystal file
+   - **If an existing crystal file is found:** append the visual decisions to it — add new `[D-xxx]` entries (continuing the existing numbering) to `## Decisions (machine-readable)`, merge new items into `## Constraints` and `## Scope Boundaries`. Do not overwrite existing content.
+   - **If no existing crystal file:** create `docs/11-crystals/YYYY-MM-DD-phase-{N}-visual-crystal.md` using this format:
+
+   ```markdown
+   # Decision Crystal: Phase {N} Visual Expectations
+
+   Date: YYYY-MM-DD
+
+   ## Initial Idea
+   {User's original visual description, denoised but not rewritten}
+
+   ## Discussion Points
+   {Any back-and-forth from the confirmation, if applicable}
+
+   ## Rejected Alternatives
+   {Approaches the user explicitly rejected, or "None."}
+
+   ## Decisions (machine-readable)
+   - [D-001] {confirmed visual/interaction detail in imperative form}
+   - [D-002] {detail}
+
+   ## Constraints
+   {Explicitly rejected visual approaches, or "None."}
+
+   ## Scope Boundaries
+   - IN: {items from user's visual additions}
+
+   ## Source Context
+   - Design doc: {path or "none"}
+   - Dev-guide: {dev-guide path} Phase {N}
+   ```
+
+   - Do NOT invoke /crystallize as a separate skill — write the file directly
+
+This checkpoint catches scope pollution and aligns visual expectations before plan-writer runs in a separate context.
 
 ### Step 2: Plan (agent dispatch)
 
@@ -272,7 +343,21 @@ Project root: {project root}
 | Design | ✅/❌ | {counts} | {path} |
 | Feature | ✅/❌ | {counts} | {path} |
 
-5. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
+5. **Surface human verification items:** If any review report's compact summary shows 人工验证项 > 0 or 设备验证项 > 0:
+   - Read each report file that has verification items
+   - Extract items from these sections:
+     - ui-reviewer: `### Part C: 人工验证清单`
+     - design-reviewer: `### Part B: 设备验证清单`
+     - feature-reviewer: `### Part C: 设备验证清单`
+   - Consolidate, deduplicate, and present in plain language below the summary table:
+
+   > 以下需要在设备上确认（来自 review 报告）：
+   > - [ ] {item, translated to spatial language — use screen position and appearance, NO code identifiers}
+   > - [ ] {item}
+   > - [ ] ⚠️ 需真机：{animation/transition items}
+
+   This is informational — do not block with AskUserQuestion. The user can raise issues during Step 7 (Fix Gaps).
+6. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
 
 ### Step 7: Fix Gaps
 

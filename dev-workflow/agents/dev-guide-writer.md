@@ -96,6 +96,10 @@ Save to: `docs/06-plans/YYYY-MM-DD-<project>-dev-guide.md`
 - Feature A
 - Feature B
 
+**用户可见的变化:**
+- {plain-language description of what the user will see/interact with after this Phase}
+- {describe by screen location and appearance, not code identifiers}
+
 **Architecture decisions:** Key technical decisions this Phase needs to make (list decision points, don't pre-decide — leave to /write-plan stage).
 
 **Acceptance criteria:**
@@ -134,6 +138,7 @@ Save to: `docs/06-plans/YYYY-MM-DD-<project>-dev-guide.md`
 - Architecture decisions are listed as questions, not answers — the answers come during /write-plan
 - Review checklist is per-Phase, tailored to what that Phase produces
 - Each Phase's scope references specific features from the project brief / design doc
+- 「用户可见的变化」uses spatial/functional language the user would use (e.g., "打开 App 后底部有 3 个标签" not "MainTabView with 3 tabs"). Source: design doc User Journeys and feature descriptions. Infrastructure-only Phases (no UI) write "无" for this section.
 
 ## Decisions
 

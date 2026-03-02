@@ -73,22 +73,29 @@ For each Phase i = 1..N:
 | 目标 | {phase goal} |
 | 前置依赖 | {dependencies} |
 | 范围项 | {scope items, bulleted} |
+| 用户可见的变化 | {from dev-guide, or "无 — 纯基建阶段"} |
 | 关键文件/组件 | {key files and components} |
 | 待定架构决策 | {architecture decisions to resolve} |
 | 验收标准 | {acceptance criteria} |
 
 2. Ask user (AskUserQuestion):
-   - If this Phase has non-empty「待定架构决策」: **确认** / **调整范围** / **解决架构决策**
-   - If this Phase has no pending decisions: **确认** / **调整范围**
+   - If Phase has 用户可见的变化 (not "无") AND 待定架构决策: **确认** / **调整范围** / **调整视觉预期** / **解决架构决策**
+   - If Phase has 用户可见的变化 (not "无") but no 待定架构决策: **确认** / **调整范围** / **调整视觉预期**
+   - If Phase has no 用户可见的变化 (infrastructure) AND 待定架构决策: **确认** / **调整范围** / **解决架构决策**
+   - If Phase has no 用户可见的变化 AND no 待定架构决策: **确认** / **调整范围**
 3. If user chooses「调整范围」:
    - Re-dispatch the agent with phase-scoped revision: "Revise Phase {i} with {user's changes}. Keep all other Phases unchanged."
    - Re-read output, re-present this Phase, repeat until user confirms
-4. If user chooses「解决架构决策」:
+4. If user chooses「调整视觉预期」:
+   - User provides corrections/additions to visual expectations
+   - Re-dispatch the agent: "Revise Phase {i}'s 「用户可见的变化」section with: {user's input}. Keep all other Phases unchanged."
+   - Re-read output, re-present this Phase, repeat until user confirms
+5. If user chooses「解决架构决策」:
    - List each pending decision as a numbered item
    - For each decision, ask user for their choice or direction
    - Re-dispatch the agent: "Update Phase {i}: resolve architecture decisions as follows: {user's decisions}. Keep all other Phases unchanged."
    - Re-read output, re-present this Phase (resolved decisions should move from「待定架构决策」into「范围项」or「验收标准」as appropriate), repeat until user confirms
-5. Proceed to next Phase
+6. Proceed to next Phase
 
 All Phases confirmed → proceed to Step 5.
 

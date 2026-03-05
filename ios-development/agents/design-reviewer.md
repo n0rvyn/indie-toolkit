@@ -8,7 +8,7 @@ tools: Glob, Grep, Read, Bash, Write
 ---
 
 <!-- Source: ios-development/skills/design-review/SKILL.md -->
-<!-- Last synced: 2026-02-27 -->
+<!-- Last synced: 2026-03-05 -->
 <!-- When updating the source skill file, manually update this agent file to match. -->
 
 # Design Reviewer Agent
@@ -98,6 +98,8 @@ For each file provided, check the following dimensions:
 **检查项**：
 - [ ] 同类卡片是否使用相同的圆角 / 阴影 / 内边距？
 - [ ] 同类卡片是否使用相同的宽度策略？（全部 `.frame(maxWidth: .infinity)` 或全部内容自适应，不混用）
+- [ ] 全宽意图的容器是否有 `.frame(maxWidth: .infinity)`？ScrollView > VStack/LazyVStack 内的卡片/区块如果有 `.background()` 或 `.clipShape()` 但无 `.frame(maxWidth:)`，且不在 List/Form 内 → 🔴 容器会抱住内容宽度而非撑满。
+- [ ] 是否存在固定 `.frame(width:)` 而非 `.frame(maxWidth:)` 的容器？固定宽度在不同设备上会显示异常。
 - [ ] 同类卡片的 `.background()` 颜色/材质是否一致？
 - [ ] 圆角是否使用设计系统变量（`CardStyle.cornerRadius` 等）？
 - [ ] 嵌套容器的圆角是否递减？（外层 16 → 内层 12 → 徽章 8）
@@ -146,6 +148,28 @@ For each file provided, check the following dimensions:
 - [ ] Write operations (save, delete, send) have feedback? (haptic, animation, toast, state change)
 - [ ] Destructive actions require confirmation?
 - [ ] Loading state visible for async operations?
+
+### A11. 弱化优先（De-emphasis over Emphasis）
+
+> 原则：强调某元素时，优先弱化竞争元素，而非放大目标元素。
+
+**检查项**：
+- [ ] 同一 View body 内是否有 2 个以上 `.font(.title)` 或 `.font(.title2)`？（= 标题竞争）
+- [ ] 是否有 2 个以上高饱和色在同一页面竞争注意力？
+- [ ] 辅助信息是否通过降色/降字重弱化，而非仅靠缩小字号？
+
+**代码检查**：统计同一 View body 中 `.font(.title` / `.font(.title2` 出现次数。>1 且无一个明确更大 → 🔴 标题竞争。
+
+### A12. 间距刻度合规（Spacing Scale Membership）
+
+> 原则：所有间距值必须属于项目定义的间距刻度（4pt 倍数优先）。
+
+**检查项**：
+- [ ] 所有 `.padding()` / `spacing:` 数值是否在项目 Spacing Token 列表内？
+- [ ] 是否存在非 4pt 倍数的间距值？（如 13pt、15pt、22pt）
+- [ ] 同一文件内是否存在 hardcoded 间距值与 Token 混用？
+
+**代码检查**：提取所有数字型 padding/spacing 参数，检查是否为 4 的倍数且在 Token 范围内。非 4pt 倍数 → 🔴；hardcoded 与 Token 混用 → 🟡。
 
 ---
 

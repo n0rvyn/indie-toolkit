@@ -99,6 +99,35 @@ Rules:
 
 If the design has no user-visible behavior (pure infrastructure, data model only), skip this section.
 
+#### 4b. Visual Design Decisions (user-facing designs only)
+
+If the design involves user-visible UI (same trigger as 4a), confirm these visual decisions before saving the design document:
+
+**Hierarchy Strategy**
+- What is primary / secondary / tertiary information on each key page?
+- Text hierarchy: how many size levels x color levels x weight levels? (Target: <=3 sizes from type scale, 2-3 foreground colors, 2 weights)
+- Action hierarchy: which action is primary (solid), secondary (outline/tinted), tertiary (text-only)?
+
+**Spacing & Density**
+- Density profile per page type? (Compact / Standard / Comfortable — ref ui-design-principles.md S2.5)
+- Use project's existing spacing scale or establish one?
+
+**Color Scheme**
+- Reuse existing palette or extend? Which semantic colors needed?
+- Color ratio target for app type (tool: 80/15/5, content: 60/30/10)
+- Dark mode strategy for new colors
+
+Present as table for user confirmation:
+
+| Page/Component | Info Hierarchy | Density | Key Color Decisions |
+|----------------|---------------|---------|---------------------|
+| {page name} | Primary: X, Secondary: Y, Tertiary: Z | Standard | Reuse existing palette |
+
+User can skip rows — use project defaults or ui-design-principles.md reference values.
+These decisions flow into the design document and constrain plan-writer output.
+
+If the design has no user-visible behavior (pure infrastructure, data model only), skip this section.
+
 ### 5. Save Design Document
 
 Write the approved design to:
@@ -106,6 +135,8 @@ Write the approved design to:
 ```
 docs/06-plans/YYYY-MM-DD-<topic>-design.md
 ```
+
+If Step 4b (Visual Design Decisions) was completed, include a `## Visual Design Decisions` section in the design document with the confirmed hierarchy/density/color table.
 
 If the design is primarily architectural (data model, service layer, component boundaries), also save or symlink to `docs/02-architecture/` so it's discoverable alongside other architecture docs.
 

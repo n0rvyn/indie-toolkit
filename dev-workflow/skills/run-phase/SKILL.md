@@ -39,6 +39,7 @@ verification_report: null
 batch_progress: null
 review_reports: []
 gaps_remaining: 0
+design_fix_applied: false
 last_updated: "YYYY-MM-DDTHH:MM:SS"
 ```
 
@@ -367,7 +368,19 @@ If any review found issues:
 2. Read the relevant review report files (paths from Step 6 summaries) to get full issue details
 3. List all gaps sorted by severity (critical first, then warnings)
 4. Ask the user: "Fix these gaps before moving on, or mark as known issues?"
-5. If fixing: address the gaps, then re-run only the reviews that had failures
+5. If fixing:
+   a. **Separate design issues from code issues.** If design-reviewer report exists among review_reports:
+      - Extract all 🔴 items from design-reviewer Part A
+      - Group by category: Hierarchy (A1, A11), Spacing (A3, A12), Consistency (A5, A6), Color (A2)
+      - Present design issues separately from other review issues:
+        > 设计问题（{N} 个必须修复）：
+        > - {category}: {count}
+        > 代码/UI 问题（{M} 个）：
+        > - {summary}
+   b. Fix all issues (design + code), then re-run only the reviews that had failures
+   c. **Design re-verification limit**: If design-reviewer still fails after 1 fix cycle,
+      report remaining design issues and proceed — do not loop.
+      Other reviewers (implementation, UI, feature) follow existing behavior.
 6. If skipping: note the known issues and proceed
 7. Update state: `gaps_remaining: <count>`, `last_updated: <now>`
 8. **Decision Points:** Check each review report for `Decisions:` count.

@@ -99,6 +99,25 @@ Write Code -> xcodebuild build -> Check errors -> Fix -> Repeat
    - 阴影：`.shadow()` 参数
 3. 新组件必须匹配已有同类组件的上述属性值。差异项标注 `⚠️ 不一致` 并在计划中说明理由或改为一致。
 
+<!-- section: 容器宽度意图（条件触发） keywords: container width, maxWidth, infinity, frame, adaptive layout -->
+## 容器宽度意图（条件触发）
+
+触发条件：创建或修改的 View 渲染为视觉容器（有 `.background()` 或 `.clipShape()` 或 `.shadow()`）。
+不触发：List/Form 内的 View（系统管理宽度）。有意 content-hugging 的小组件（Badge、Chip、Tag、inline label）。
+
+规则：写 frame modifier 前先判断宽度意图。
+
+| 意图 | Modifier | 适用场景 |
+|------|----------|---------|
+| 撑满（Full-width） | `.frame(maxWidth: .infinity)` | ScrollView > VStack/LazyVStack 内的卡片、区块、操作按钮、Banner |
+| 抱住内容（Content-hugging） | 无 frame 或 `.fixedSize()` | Badge、Tag、inline chip、图标按钮 |
+| 约束最大宽（Constrained） | `.frame(maxWidth: 400)` | iPad 上不需要撑满的内容卡片 |
+| 自适应（Adaptive） | `.frame(idealWidth: 300, maxWidth: .infinity)` | 有理想宽度但需要自适应增长的卡片 |
+
+常见错误：ScrollView > VStack 内的卡片/区块忘了 `.frame(maxWidth: .infinity)`，导致容器抱住内容宽度，在宽屏上显示为半宽。
+
+自检：写完容器 View 后问自己："这个容器在宽屏（iPad / 大 iPhone）上是正确撑满还是尴尬地抱住内容？"
+
 <!-- section: 计划阶段架构审查（条件触发） keywords: architecture review, plan, triggers, parallel paths -->
 ## 计划阶段架构审查（条件触发）
 

@@ -44,13 +44,15 @@ Notes:
 
 ## Codex
 
-Tell Codex:
+Run install/update commands from `.codex/INSTALL.md` (source of truth).
+
+If you prefer in-chat bootstrap, tell Codex:
 
 ```text
 Fetch and follow instructions from https://raw.githubusercontent.com/n0rvyn/indie-toolkit/main/.codex/INSTALL.md
 ```
 
-Detailed docs: `docs/README.codex.md`
+Role explanation and structure notes: `docs/README.codex.md`
 
 ## OpenCode
 

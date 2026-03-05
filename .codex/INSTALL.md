@@ -23,8 +23,11 @@ fi
 
 ```bash
 mkdir -p ~/.codex/skills
+ln -sfn ~/.codex/indie-toolkit/dev-workflow/skills ~/.codex/skills/indie-toolkit-dev-workflow
 ln -sfn ~/.codex/indie-toolkit/ios-development/skills ~/.codex/skills/indie-toolkit-ios-development
 ln -sfn ~/.codex/indie-toolkit/mactools/skills ~/.codex/skills/indie-toolkit-mactools
+ln -sfn ~/.codex/indie-toolkit/product-lens/skills ~/.codex/skills/indie-toolkit-product-lens
+ln -sfn ~/.codex/indie-toolkit/skill-audit/skills ~/.codex/skills/indie-toolkit-skill-audit
 ```
 
 3. Restart Codex.
@@ -32,8 +35,17 @@ ln -sfn ~/.codex/indie-toolkit/mactools/skills ~/.codex/skills/indie-toolkit-mac
 ## Verify
 
 ```bash
+ls -la ~/.codex/skills/indie-toolkit-dev-workflow
 ls -la ~/.codex/skills/indie-toolkit-ios-development
 ls -la ~/.codex/skills/indie-toolkit-mactools
+ls -la ~/.codex/skills/indie-toolkit-product-lens
+ls -la ~/.codex/skills/indie-toolkit-skill-audit
+
+find ~/.codex/skills/indie-toolkit-dev-workflow -name SKILL.md | wc -l
+find ~/.codex/skills/indie-toolkit-ios-development -name SKILL.md | wc -l
+find ~/.codex/skills/indie-toolkit-mactools -name SKILL.md | wc -l
+find ~/.codex/skills/indie-toolkit-product-lens -name SKILL.md | wc -l
+find ~/.codex/skills/indie-toolkit-skill-audit -name SKILL.md | wc -l
 ```
 
 ## Updating
@@ -47,6 +59,14 @@ If new skills were added in the repo, re-run the symlink commands once.
 ## Uninstall
 
 ```bash
+rm ~/.codex/skills/indie-toolkit-dev-workflow
 rm ~/.codex/skills/indie-toolkit-ios-development
 rm ~/.codex/skills/indie-toolkit-mactools
+rm ~/.codex/skills/indie-toolkit-product-lens
+rm ~/.codex/skills/indie-toolkit-skill-audit
 ```
+
+## Notes
+
+- Codex directly loads `skills/`; `agents/` and `hooks/` are plugin internals and are not linked directly.
+- `rag-server` is not a Codex skill folder. It is a separate MCP server component; see `rag-server/README.md`.

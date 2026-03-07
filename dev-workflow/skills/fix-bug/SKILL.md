@@ -35,6 +35,28 @@ If input is incomplete, ask for:
    - Identify the exact location where the error occurs
    - Note any relevant context (user action, data state)
 
+2.5. **Understand intent** (trigger: bug location involves non-trivial logic — conditional branches, state machines, multi-step transformations)
+
+   Before generating assertions, answer these questions by reading code + git history:
+
+   ```
+   [Intent Analysis]
+   - Original intent: what was this code trying to achieve?
+     (cite: comments, function name, commit message, surrounding context)
+   - Actual behavior: what does it actually do? (cite: code trace)
+   - Gap type: intentional workaround / unintentional bug /
+     incomplete implementation / outdated assumption
+   - Evidence for gap type: {git blame date, TODO comment, related issue, etc.}
+   - Current goal: what do we want it to do now?
+   - Delta: {original intent} -> {current goal} — same or different?
+   - If different: upstream/downstream impact assessment required before proceeding
+   ```
+
+   If gap type = "intentional workaround":
+     Stop. Do not treat as bug. Present finding to user:
+     "This appears to be an intentional workaround from {date/commit}.
+      Confirm: fix it or preserve the workaround?"
+
 3. **BV: Generate falsifiable assertions**
 
    Based on error symptoms and code context, generate 3-5 specific, falsifiable assertions.
@@ -54,6 +76,21 @@ If input is incomplete, ask for:
    - **Stale code interference** — replaced component still active
 
    Principle: backward verification (testing specific assertions) is significantly more accurate than forward generation (guessing a single cause). Even if all assertions are falsified, the verification process exposes reasoning paths that reveal the root cause.
+
+   **Assertion confirmation gate:**
+
+   Present assertions to user via AskUserQuestion:
+   "Diagnostic assertions ranked by likelihood. Confirm direction, reorder,
+    point to the most likely one, or add your own."
+
+   User can:
+   - Confirm all — proceed to Step 4 in listed order
+   - Point to one — verify that assertion first, skip others if confirmed
+   - Reorder — adjust verification sequence
+   - Add their own — prepend user's assertion as highest priority
+
+   Proceeding to Step 4 without presenting assertions to the user is a violation
+   of this skill's protocol.
 
 4. **Verify assertions systematically**
    - Test each assertion from Step 3, one at a time
@@ -121,6 +158,39 @@ If input is incomplete, ask for:
    - Reproduce the original bug scenario - confirm it's fixed
    - Test related scenarios to catch regressions
 
+10. **Tradeoff Report**
+
+   After verification, produce a fix report. Format depends on complexity
+   (same classification as Step 7):
+
+   **Simple fix (1-2 locations):**
+
+   ```
+   [Fix Summary] 修复 X/Y 项（跳过: {items} — {理由}）
+
+   [Tradeoff] {修复内容} — 行为变化: {before -> after} — 代价: {known cost} — 验证: {status}
+   ```
+
+   **Complex fix (3+ locations):**
+
+   ```
+   [Fix Summary] 修复 X/Y 项（跳过: {items} — {理由}）
+
+   | Issue | 修复前行为 | 修复后行为 | 收益 | 代价 | 验证状态 | 回归风险 |
+   |-------|-----------|-----------|------|------|---------|---------|
+   | ...   | ...       | ...       | ...  | ...  | ...     | ...     |
+   ```
+
+   **Mandatory fields:**
+   - **验证状态**: `verified` (ran test/command and saw expected output) or
+     `needs-device-verification: {specific steps}` (cannot verify in current environment)
+   - **回归风险**: if behavioral change, state impact scope (which callers/consumers affected)
+   - **Completeness**: "修复 X/Y 项" — every skipped item must have a reason
+
+   Build passing alone is compile-time verification only. Runtime behavioral changes
+   (conditional rendering, data-dependent logic, network failure paths) require either
+   a test or explicit `needs-device-verification` annotation.
+
 ## Escalation Rules
 
 ### 3-Strike Rule
@@ -167,3 +237,4 @@ When the root cause isn't obvious from assertions alone:
 - Original bug scenario verified fixed (Step 9 completed)
 - All ❌ consumers from value domain trace fixed (if Step 5 triggered)
 - No parallel path coordination issues left unresolved (if Step 6 triggered)
+- Tradeoff Report produced with verification status for every fix item (Step 10 completed)

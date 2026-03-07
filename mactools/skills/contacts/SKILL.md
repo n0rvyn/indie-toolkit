@@ -1,6 +1,6 @@
 ---
 name: contacts
-description: 搜索和查看 macOS 通讯录中的联系人信息。当用户需要查找联系人电话、邮箱、地址等信息时使用。关键词：通讯录、Contacts、联系人、电话、邮箱。
+description: "搜索和查看 macOS 通讯录中的联系人信息。当用户需要查找联系人电话、邮箱、地址等信息时使用。Use when the user needs to find contact phone numbers, emails, or addresses. Keywords: 通讯录, Contacts, 联系人, 电话, 邮箱."
 context: fork
 model: haiku
 compatibility: Requires macOS

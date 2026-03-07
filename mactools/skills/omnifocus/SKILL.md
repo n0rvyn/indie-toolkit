@@ -1,6 +1,6 @@
 ---
 name: omnifocus
-description: "Use this skill for OmniFocus task and project operations: list, create, complete, inbox, flagged, and due items."
+description: "查询、创建、完成 OmniFocus 任务和项目。Use when the user needs to list, create, complete tasks, or check inbox, flagged, and due items. Keywords: OmniFocus, 任务, 项目, 待办, inbox, flagged."
 context: fork
 model: haiku
 compatibility: Requires macOS

@@ -1,6 +1,6 @@
 ---
 name: mail
-description: 读取、搜索、整理 macOS 邮件。支持查看收件箱、读取邮件内容、标记、移动、删除（移废纸篓）。当用户需要整理邮件、查找邮件、清理收件箱时使用。关键词：邮件、Mail、收件箱、整理邮件、清理邮件。
+description: "读取、搜索、整理 macOS 邮件。支持查看收件箱、读取邮件内容、标记、移动、删除（移废纸篓）。当用户需要整理邮件、查找邮件、清理收件箱时使用。Use when the user needs to organize emails, search for messages, or clean up inbox. Keywords: 邮件, Mail, 收件箱, 整理邮件, 清理邮件."
 context: fork
 model: haiku
 compatibility: Requires macOS

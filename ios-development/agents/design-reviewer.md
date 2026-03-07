@@ -3,6 +3,20 @@ name: design-reviewer
 description: |
   Performs design quality review (visual hierarchy, color, spacing) of SwiftUI files.
   Fresh context — evaluates visual quality independently of implementation decisions.
+
+  Examples:
+
+  <example>
+  Context: User completed a SwiftUI page and wants visual polish feedback.
+  user: "Review the design of my settings page"
+  assistant: "I'll use the design-reviewer agent to evaluate the visual quality."
+  </example>
+
+  <example>
+  Context: run-phase completed a phase that created new UI components.
+  user: "Check the visual quality of the new dashboard"
+  assistant: "I'll use the design-reviewer agent for a fresh-context design review."
+  </example>
 model: sonnet
 tools: Glob, Grep, Read, Bash, Write
 ---

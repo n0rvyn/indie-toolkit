@@ -3,6 +3,20 @@ name: feature-reviewer
 description: |
   Performs product + UX completeness review from user journey perspective.
   Fresh context — validates feature completeness against user scenarios independently.
+
+  Examples:
+
+  <example>
+  Context: User completed implementing a feature with full user journey.
+  user: "Review the expense tracking feature for completeness"
+  assistant: "I'll use the feature-reviewer agent to validate the user journey."
+  </example>
+
+  <example>
+  Context: run-phase completed a phase that delivered a user-facing feature.
+  user: "Check if the onboarding flow covers all scenarios"
+  assistant: "I'll use the feature-reviewer agent for product+UX completeness review."
+  </example>
 model: sonnet
 tools: Glob, Grep, Read, Bash, Write
 ---

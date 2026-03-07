@@ -3,6 +3,20 @@ name: ui-reviewer
 description: |
   Performs UI + UX compliance review of SwiftUI files. Use when run-phase completes
   a phase that modified UI files. Fresh context review — no implementation memory.
+
+  Examples:
+
+  <example>
+  Context: User finished modifying several SwiftUI views.
+  user: "Run a UI review on the views I just changed"
+  assistant: "I'll use the ui-reviewer agent to check UI compliance."
+  </example>
+
+  <example>
+  Context: run-phase completed a phase that modified UI files.
+  user: "Check UI compliance for the updated screens"
+  assistant: "I'll use the ui-reviewer agent for a fresh-context compliance review."
+  </example>
 model: sonnet
 tools: Glob, Grep, Read, Bash, Write
 ---

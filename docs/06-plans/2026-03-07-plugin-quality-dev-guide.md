@@ -171,10 +171,10 @@
 
 **Acceptance criteria:**
 - [x] Every skill across all 6 plugins has an eval.md file (55/55 = 100%)
-- [x] `/plugin-review` runs clean on all 6 plugins (0 fail-level trigger issues; 50 pass, 4 warn)
+- [x] `/plugin-review` runs clean on all 6 plugins (0 fail-level trigger issues; 50 pass, 5 warn)
 - [x] Baseline document exists with all sections populated (`docs/06-plans/2026-03-08-plugin-quality-baseline.md`)
 - [x] Total eval.md count matches total SKILL.md count (55/55 = 1:1 coverage)
 
 **Review checklist:**
 - [x] /plugin-review (all 5 plugins with skills reviewed; 73 findings fixed in commit 83cfe4b)
-- [ ] /execution-review (verify completeness against this dev-guide)
+- [x] /execution-review (2 standard gaps found and fixed: baseline redundancy table + warn count)

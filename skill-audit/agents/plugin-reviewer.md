@@ -40,12 +40,13 @@ Before starting, confirm you have:
 1. **Files to review** — list of skill and agent file paths
 2. **Cross-reference files** — other skills/agents in the same plugin(s) for conflict detection
 3. **Plugin manifest path** — `.claude-plugin/plugin.json`
+4. **Eval files** (optional) — comma-separated paths to eval.md files for trigger plausibility checking
 
 Read each file to review in full before analyzing it. Process one artifact at a time.
 
 ## Review Dimensions
 
-Apply all 8 dimensions to each artifact. Skip dimensions that don't apply (e.g., "Trigger" doesn't apply to agents that are never auto-routed; "Metadata & Docs" applies once per plugin, not per artifact).
+Apply all 9 dimensions to each artifact. Skip dimensions that don't apply (e.g., "Trigger" doesn't apply to agents that are never auto-routed; "Metadata & Docs" applies once per plugin, not per artifact).
 
 ---
 
@@ -327,6 +328,62 @@ Check that plugin metadata files are complete, consistent, and in sync with actu
 
 ---
 
+### Dimension 9: Trigger Quality Review
+
+Check that skill descriptions have clear trigger scenarios, eval.md triggers (if present) are plausible, and cross-skill trigger conflicts are detected. This dimension produces a **Trigger Health Score** per skill.
+
+**Skip condition:** This dimension applies to skills only. Skip agents.
+
+**9.1 Description trigger quality:**
+
+For each skill being reviewed:
+
+| Check | How | Severity if fails |
+|-------|-----|-------------------|
+| Description starts with trigger pattern | Grep for patterns: "Use when", "Use for", "Use after", "Use before", "当.*时使用", or equivalent trigger phrase | Logic |
+| Description has concrete trigger scenario, not just vague words | Scan for standalone vague terms: "guidance", "best practices", "optional", "helper" without accompanying trigger scenario | Logic |
+| For mactools skills: description has both Chinese AND English | Check for presence of both CJK characters and English alphabets | Logic |
+
+**9.2 Eval.md consumption (if eval files provided):**
+
+For each skill that has a corresponding eval.md file:
+
+1. Read the eval.md file
+2. Extract trigger tests (lines matching `- ".*"`)
+3. For each trigger test:
+   - Check: does the trigger test keywords/intent align with the skill's description?
+   - Flag: trigger test that seems unrelated to description → Logic (include specific test and why it mismatches)
+4. Extract negative trigger tests (lines under `## Negative Trigger Tests`)
+5. Check: negative trigger tests don't overlap with other skills' positive trigger tests → Logic (potential routing ambiguity)
+
+**9.3 Cross-skill trigger conflict detection:**
+
+1. Collect all skill descriptions in the same plugin
+2. For each pair of skills (A, B):
+   - Extract trigger keywords/phrases from description A
+   - Extract trigger keywords/phrases from description B
+   - Check: would the same user input match both descriptions?
+   - Flag: if overlap detected → Logic (include ambiguous phrases and both skill names)
+3. Known ambiguity hotspots to check explicitly:
+   - `design-review` vs `ui-review` (both may trigger on "review UI")
+   - `feature-review` vs `design-review` (both may trigger on "review this feature")
+   - `write-plan` vs `write-dev-guide` (both may trigger on "write a plan")
+4. **Deduplication:** If Dimension 5 already flagged a specific conflict pair, reference the existing finding (e.g., "See D5-xxx") rather than creating a duplicate entry.
+
+**9.4 Trigger Health Score computation:**
+
+For each skill, compute an overall verdict:
+
+| Verdict | Criteria |
+|---------|----------|
+| pass | Description has clear trigger AND no conflicts detected AND eval.md (if exists) has plausible triggers |
+| warn | Description trigger is slightly vague OR one minor conflict detected OR eval.md missing for high-risk skill |
+| fail | Description lacks trigger scenario OR multiple conflicts detected OR eval.md triggers clearly mismatch description |
+
+Output the Trigger Health Score as a markdown table (see Output Format section).
+
+---
+
 ## Output Format
 
 ```
@@ -361,6 +418,14 @@ Check that plugin metadata files are complete, consistent, and in sync with actu
 
 ---
 
+### Trigger Health Score
+
+| Skill | Description Quality | Eval Coverage | Conflict Check | Verdict |
+|-------|--------------------|---------------|----------------|---------|
+| {name} | {pass/warn/fail} | {N/A or pass/fail} | {pass/warn/fail} | {overall} |
+
+---
+
 ### Dimension Summary
 
 | Dimension | Checked | Issues Found |
@@ -373,6 +438,7 @@ Check that plugin metadata files are complete, consistent, and in sync with actu
 | 6. Edge Cases | {N} checks | {N} issues |
 | 7. Spec Compliance | {N} checks | {N} issues |
 | 8. Metadata & Docs | {N} checks | {N} issues |
+| 9. Trigger Quality Review | {N} checks | {N} issues |
 | **Total** | **{N}** | **{N}** |
 
 ---

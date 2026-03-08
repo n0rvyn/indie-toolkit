@@ -10,7 +10,7 @@
 - "Design review"
 
 ## Output Assertions
-- [ ] Output covers 7 dimensions: structural, reference integrity, workflow logic, execution feasibility, trigger/routing, edge cases, spec compliance
+- [ ] Output covers 9 dimensions: structural, reference integrity, workflow logic, execution feasibility, trigger/routing, edge cases, spec compliance, metadata & docs, trigger quality review
 - [ ] Output is from AI executor perspective (not end-user)
 - [ ] Output flags trigger mechanism issues and execution feasibility problems
 

@@ -9,7 +9,7 @@ description: "Use when the user says 'review skill', 'review agent', 'review plu
 
 ## Overview
 
-This skill dispatches the `skill-audit:plugin-reviewer` agent to systematically review plugin artifacts. The review covers 7 dimensions: structural validation, reference integrity, workflow logic, execution feasibility, trigger/routing conflicts, edge case analysis, and spec compliance (Agent Skills Spec field conventions).
+This skill dispatches the `skill-audit:plugin-reviewer` agent to systematically review plugin artifacts. The review covers 9 dimensions: structural validation, reference integrity, workflow logic, execution feasibility, trigger/routing conflicts, edge case analysis, spec compliance, metadata & documentation, and trigger quality review.
 
 ## Process
 
@@ -37,6 +37,7 @@ This skill dispatches the `skill-audit:plugin-reviewer` agent to systematically 
 2. **All skill files** — `skills/*/SKILL.md`
 3. **All agent files** — `agents/*.md`
 4. **Marketplace registration** — 检查 `.claude-plugin/marketplace.json` 是否包含该 plugin
+5. **Eval files** — 对每个 skill 目录，检查是否存在 `skills/{name}/eval.md`
 
 构建文件清单传递给 agent。
 
@@ -56,6 +57,7 @@ Files to review:
 Also read these for cross-reference checking:
 - Other skills in same plugin(s): {paths, for trigger conflict detection}
 - Other agents in same plugin(s): {paths, for reference integrity}
+- Eval files: {comma-separated paths or "none"} — for trigger plausibility checking
 
 Focus on: logic bugs, trigger mechanism issues, execution feasibility, and edge cases.
 Do NOT review code style or formatting — only functional correctness.

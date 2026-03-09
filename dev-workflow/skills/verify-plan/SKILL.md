@@ -21,7 +21,7 @@ Collect the following before dispatching:
 1. **Plan file path** — identify from:
    - Most recent `write-plan` output in conversation
    - User-specified path
-   - Search `docs/06-plans/*.md` for recent plan files
+   - Search `docs/06-plans/*-plan.md` for recent plan files
 2. **Design doc path** — check the plan header for a `Design doc:` reference; if none, set to "none"
 3. **Design analysis path** — check the plan header for a `Design analysis:` reference; if none, search `docs/06-plans/*-design-analysis.md`; if none found, set to "none"
 4. **Crystal file path** — resolve in this order:

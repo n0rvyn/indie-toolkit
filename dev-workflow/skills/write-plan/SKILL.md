@@ -70,7 +70,7 @@ Additional context:
 
 When the agent completes:
 
-1. Read the plan file the agent created
+1. Read the plan file the agent created (filename: `docs/06-plans/YYYY-MM-DD-<feature-name>-plan.md`)
 2. Present a summary to the user:
    - Plan file path
    - Number of tasks

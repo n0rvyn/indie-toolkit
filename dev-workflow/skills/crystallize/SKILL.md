@@ -47,6 +47,13 @@ Exit without creating a file.
 Extract from identified signals and assemble into the following structure:
 
 ```markdown
+---
+type: crystal
+status: active
+tags: [{topic keywords from Discussion Points}]
+refs: [{design doc path, design analysis path from Source Context}]
+---
+
 # Decision Crystal: {topic}
 
 Date: YYYY-MM-DD
@@ -90,6 +97,7 @@ Do NOT rewrite, do NOT summarize. If the user spoke in Chinese, keep Chinese.}
 - Do not record pure implementation details (naming, variable splitting); only record decisions that affect deliverables and behavior
 - Rejected Alternatives must include the reason for rejection, not just "rejected"
 - Discussion Points must show the pivot (from X to Z), not just the final conclusion
+- **Frontmatter fields:** `type` is always `crystal`. `status` is always `active`. `tags` — derive 2-4 keywords from the Discussion Points topics and Decisions content. `refs` — list the design doc and design analysis paths from Source Context (omit entries that are "none").
 - **Scope Boundaries** distinguish user-authorized work from AI inference. IN items must trace to user's words (direct quote or close paraphrase). OUT items come from: explicit user exclusion ("不要改 X"), revert events (user reverted font changes → "OUT: font/typography changes"), or user-stated constraints. If the user did not explicitly authorize an item, it is NOT an IN item — do not infer scope from design docs or AI analysis. If the conversation produced no explicit scope signals (no user-stated items to include or exclude), omit the `## Scope Boundaries` section entirely.
 
 ### Step 3: User Confirmation

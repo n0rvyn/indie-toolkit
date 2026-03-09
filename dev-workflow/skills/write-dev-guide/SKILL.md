@@ -26,6 +26,14 @@ Collect the following before dispatching:
 
 If no project-brief or design doc exists, inform the user and suggest running the corresponding workflow first. Do not dispatch without these inputs.
 
+### Step 1.5: Check for Existing Dev-Guide
+
+Before dispatching the agent, check if a dev-guide already exists:
+
+1. Glob `docs/06-plans/*-dev-guide.md`
+2. If one or more files found: record them as `existing_dev_guides`
+3. If no files found: skip to Step 2
+
 ### Step 2: Dispatch Agent
 
 Use the Task tool to launch the `dev-workflow:dev-guide-writer` agent with all gathered context. Structure the task prompt as:
@@ -38,6 +46,19 @@ Design doc: {path}
 Project brief: {path or "none"}
 Architecture docs: {path or "none"}
 ```
+
+### Step 2.5: Mark Old Dev-Guide as Superseded
+
+After the agent writes the new dev-guide:
+
+1. If `existing_dev_guides` is empty: skip this step
+2. For each path in `existing_dev_guides`:
+   a. Read the file
+   b. Check if it starts with YAML frontmatter (first line is `---`)
+   c. If frontmatter exists: find the `current:` field and change its value to `false`
+   d. If no frontmatter exists (older file without frontmatter): skip this file (do not add frontmatter to files that weren't written with it)
+   e. Write the updated file back
+3. Report: "Marked {N} existing dev-guide(s) as `current: false`: {paths}"
 
 ### Step 3: Structural Review
 
@@ -110,4 +131,5 @@ After user confirms:
 - Dev-guide file saved to `docs/06-plans/`
 - Structure confirmed by user (Step 3)
 - All phases individually confirmed by user (Step 4)
+- Previous dev-guide(s) marked `current: false` (Step 2.5)
 - Next step (run-phase) communicated

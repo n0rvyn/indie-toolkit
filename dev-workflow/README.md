@@ -30,6 +30,7 @@ run-phase (orchestrator, main context)
 | dev-guide-writer | sonnet | Glob, Grep, Read, Write | Phased project development guide creation |
 | feature-spec-writer | sonnet | Glob, Grep, Read, Write | Design-vs-implementation feature spec generation |
 | rules-auditor | sonnet | Glob, Grep, Read | CLAUDE.md rules audit for conflicts and loopholes |
+| distill-discussion-reader | sonnet | Read, Glob, Grep | Discussion file classification and structured extraction |
 
 ## Skills
 
@@ -56,6 +57,7 @@ run-phase (orchestrator, main context)
 | crystallize | interactive | Lock settled decisions from current session into a persistent crystal file |
 | collect-lesson | interactive | Capture development lessons learned |
 | docs-rag | interactive | Documentation search and retrieval |
+| distill-discussion | interactive | Extract structured outputs (crystals, lessons) from raw discussion files |
 | generate-vf-prompt | interactive | Generate Verification-First prompts with falsifiable assertions |
 
 ## Hooks

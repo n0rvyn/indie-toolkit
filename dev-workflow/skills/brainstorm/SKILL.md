@@ -136,6 +136,19 @@ Write the approved design to:
 docs/06-plans/YYYY-MM-DD-<topic>-design.md
 ```
 
+The design document must begin with YAML frontmatter:
+
+```yaml
+---
+type: design
+status: active
+tags: [tag1, tag2]
+refs: []
+---
+```
+
+`type` is always `design`. `tags` — derive 2-5 keywords from the design topic and major concepts discussed (e.g., a sync feature design → `[sync, conflict-resolution, offline]`). `refs` — list the project brief path and any architecture docs referenced during the brainstorm session. `status` starts as `active`.
+
 If Step 4b (Visual Design Decisions) was completed, include a `## Visual Design Decisions` section in the design document with the confirmed hierarchy/density/color table.
 
 If the design is primarily architectural (data model, service layer, component boundaries), also save or symlink to `docs/02-architecture/` so it's discoverable alongside other architecture docs.

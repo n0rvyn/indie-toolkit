@@ -38,7 +38,7 @@ If paths are not provided, search for them in the project. If no project-brief o
 ## Output
 
 When done:
-1. Write the dev-guide to `docs/06-plans/YYYY-MM-DD-<project>-dev-guide.md`
+1. Write the dev-guide to `docs/06-plans/YYYY-MM-DD-<project>-dev-guide.md` (with YAML frontmatter as the first block)
 2. Return a summary: file path, number of Phases, Phase names with one-line goals, `Decisions: {N blocking}, {M recommended}`
 
 The dispatcher will present the Phase outline to the user for confirmation. If revisions are needed, you may be re-dispatched with revision instructions.
@@ -74,6 +74,14 @@ Save to: `docs/06-plans/YYYY-MM-DD-<project>-dev-guide.md`
 **Document format:**
 
 ```markdown
+---
+type: dev-guide
+status: active
+tags: [tag1, tag2]
+refs: []
+current: true
+---
+
 # [Project Name] Development Guide
 
 **Project brief:** docs/01-discovery/project-brief.md
@@ -88,6 +96,7 @@ Save to: `docs/06-plans/YYYY-MM-DD-<project>-dev-guide.md`
 
 ---
 
+<!-- section: phase-1 keywords: {scope-keyword-1}, {scope-keyword-2} -->
 ## Phase 1: [Name]
 
 **Goal:** One sentence describing the state after this Phase completes.
@@ -112,13 +121,18 @@ Save to: `docs/06-plans/YYYY-MM-DD-<project>-dev-guide.md`
 - [ ] /design-review (if Phase has new pages)
 - [ ] /feature-review (if Phase completes a full user journey)
 
+<!-- /section -->
+
 ---
 
+<!-- section: phase-2 keywords: {scope-keyword-1}, {scope-keyword-2} -->
 ## Phase 2: [Name]
 ...
+<!-- /section -->
 
 ---
 
+<!-- section: phase-N keywords: submission, app-store, accessibility -->
 ## Phase N: Submission Prep
 
 **Goal:** App Store submission ready.
@@ -131,6 +145,7 @@ Save to: `docs/06-plans/YYYY-MM-DD-<project>-dev-guide.md`
 **Review checklist:**
 - [ ] /submission-preview
 - [ ] /appstoreconnect-review
+<!-- /section -->
 ```
 
 **Writing guidelines:**
@@ -139,6 +154,8 @@ Save to: `docs/06-plans/YYYY-MM-DD-<project>-dev-guide.md`
 - Review checklist is per-Phase, tailored to what that Phase produces
 - Each Phase's scope references specific features from the project brief / design doc
 - 「用户可见的变化」uses spatial/functional language the user would use (e.g., "打开 App 后底部有 3 个标签" not "MainTabView with 3 tabs"). Source: design doc User Journeys and feature descriptions. Infrastructure-only Phases (no UI) write "无" for this section.
+- **Section markers:** Each `## Phase N:` block is wrapped in `<!-- section: phase-N keywords: {kw1}, {kw2} -->` ... `<!-- /section -->`. Keywords are derived from the Phase's scope items: use noun forms of the key features and technologies (e.g., scope items "Implement SwiftData persistence", "Add offline queue" → keywords: `swiftdata, persistence, offline, queue`). 3-5 keywords per section.
+- **Frontmatter fields:** `type` is always `dev-guide`. `status` is always `active` when first written. `tags` — derive 2-5 keywords from the project name and major feature areas in the Phases (e.g., `[sync, offline, swiftdata]`). `refs` — list paths to the design doc and project brief referenced in the header. `current` — always `true`; the write-dev-guide skill manages toggling this to `false` on the previously-current dev-guide.
 
 ## Decisions
 

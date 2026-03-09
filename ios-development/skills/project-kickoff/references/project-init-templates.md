@@ -3,7 +3,7 @@
 ## docs 目录结构
 
 ```bash
-mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-features,06-plans,07-changelog,08-product-evaluation,09-lessons-learned,10-app-store-connect}
+mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-features,06-plans,07-changelog,08-product-evaluation,09-lessons-learned,10-app-store-connect,11-crystals,_discussions}
 ```
 
 目录说明：
@@ -20,6 +20,8 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 | 08-product-evaluation/ | product-lens 评估报告 |
 | 09-lessons-learned/ | 踩坑记录 |
 | 10-app-store-connect/ | ASC 提交文档（隐私政策、用户协议、支持页、营销文案） |
+| 11-crystals/ | 决策结晶（crystallize / distill-discussion 输出） |
+| _discussions/ | 原始讨论存档（AI 对话导出、探索性笔记，非检索目标） |
 
 ## CLAUDE.md 追加模板
 
@@ -44,6 +46,13 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 | 变更历史 | `docs/07-changelog/` |
 | 产品评估 | `docs/08-product-evaluation/` |
 | 踩坑记录 | `docs/09-lessons-learned/` |
+| 决策结晶 | `docs/11-crystals/` |
+
+## 文档搜索约定
+
+搜索 `docs/` 下的结构化文档时，使用 glob pattern `[0-9]*/**/*.md`。此 pattern 匹配所有编号目录（01-discovery 到 11-crystals），自动排除 `_discussions/`（原始讨论存档，不宜直接检索——中间决策过程断章取义会产生误导）。
+
+需要提炼讨论文档时，使用 `/distill-discussion`。
 
 ## 计划执行规则
 

@@ -59,18 +59,25 @@ If any input is missing from the task prompt, search for it in the codebase (dev
 ## Output
 
 When done:
-1. Write the plan file to `docs/06-plans/YYYY-MM-DD-<feature-name>.md`
+1. Write the plan file to `docs/06-plans/YYYY-MM-DD-<feature-name>-plan.md` (with YAML frontmatter as the first block)
 2. Return a summary: plan file path, number of tasks, key files to be created/modified, `Decisions: {N blocking}, {M recommended}`
 
 ---
 
 ## Plan Document Format
 
-Save to: `docs/06-plans/YYYY-MM-DD-<feature-name>.md`
+Save to: `docs/06-plans/YYYY-MM-DD-<feature-name>-plan.md`
 
 ### Required Header
 
 ```markdown
+---
+type: plan
+status: active
+tags: [tag1, tag2]
+refs: []
+---
+
 # [Feature Name] Implementation Plan
 
 **Goal:** [One sentence]
@@ -93,6 +100,7 @@ Save to: `docs/06-plans/YYYY-MM-DD-<feature-name>.md`
 Each task should be a coherent unit of work. Don't force artificial granularity — a task can be small or substantial as long as it's self-contained and verifiable.
 
 ```markdown
+<!-- section: task-N keywords: keyword1, keyword2 -->
 ### Task N: [Component/Feature Name]
 
 **Files:**
@@ -108,6 +116,7 @@ Each task should be a coherent unit of work. Don't force artificial granularity 
 **Verify:**
 Run: `<exact command>`
 Expected: <what success looks like>
+<!-- /section -->
 ```
 
 ### Optional Design Anchor Fields
@@ -135,7 +144,9 @@ These fields are optional per-task. Use them when the task has design-critical d
 4. **Dependencies explicit** — if Task 3 depends on Task 1, say so
 5. **No forced TDD** — write tests where they add value; don't mandate test-first for every step
 6. **Reasonable task size** — self-contained and independently verifiable; not artificially split
-7. **UX-aware tasks** — when the design doc has a `## UX Assertions` section: read the User Journeys and UX Assertions table before writing any UI task. Each task that implements user-visible behavior must include `UX ref:` pointing to the assertion ID(s) it fulfills, and a brief `User interaction:` line describing what the user sees and does (derived from the User Journeys, not invented). Tasks that touch UI but don't map to any UX assertion should be flagged with `⚠️ No UX ref: [reason]`
+7. **Task section markers:** Each `### Task N:` block is wrapped in `<!-- section: task-N keywords: {kw1}, {kw2} -->` ... `<!-- /section -->`. Keywords are derived from the task's `**Files:**` paths and the technologies/APIs the task touches. Use the leaf file name (without extension) and key technology names. 2-4 keywords per task.
+8. **UX-aware tasks** — when the design doc has a `## UX Assertions` section: read the User Journeys and UX Assertions table before writing any UI task. Each task that implements user-visible behavior must include `UX ref:` pointing to the assertion ID(s) it fulfills, and a brief `User interaction:` line describing what the user sees and does (derived from the User Journeys, not invented). Tasks that touch UI but don't map to any UX assertion should be flagged with `⚠️ No UX ref: [reason]`
+9. **Frontmatter fields:** `type` is always `plan`. `status` is always `active` when first written. `tags` — derive 2-5 keywords from the feature name and key technologies in the tasks (e.g., tasks touching SwiftData and sync → `[swiftdata, sync, offline]`). `refs` — list the design doc path and crystal file path from the plan header (if set to a real path, not "none").
 
 ## Decisions
 

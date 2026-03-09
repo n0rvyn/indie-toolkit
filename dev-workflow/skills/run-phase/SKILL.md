@@ -34,7 +34,7 @@ current_phase: 2
 phase_name: "Phase Name"
 phase_step: plan    # plan | ux-review | verify | execute | spec | review | fix | done
 dev_guide: docs/06-plans/YYYY-MM-DD-project-dev-guide.md
-plan_file: null
+plan_file: null  # set to docs/06-plans/YYYY-MM-DD-<name>-plan.md after Step 2
 verification_report: null
 batch_progress: null
 review_reports: []
@@ -55,7 +55,7 @@ last_updated: "YYYY-MM-DDTHH:MM:SS"
        - Skip to the step indicated by `phase_step`
      - If user declines: ask which Phase to start
 2. If no state file or starting fresh:
-   - Find dev-guide: `docs/06-plans/*-dev-guide.md` (if multiple, ask user)
+   - Find dev-guide: `docs/06-plans/*-dev-guide.md` (if multiple, prefer the file with `current: true` in frontmatter; if no file has a `current:` field in frontmatter, treat all as candidates and ask user)
    - Read the document and check each Phase's acceptance criteria
    - Phases with all criteria checked = completed
    - Identify the first incomplete Phase

@@ -96,6 +96,13 @@ Deviations are factual records. Do not judge them as good or bad.
 Save to `docs/05-features/{feature-name}.md` using this template:
 
 ```markdown
+---
+type: feature-spec
+status: active
+tags: [tag1, tag2]
+refs: []
+---
+
 # {Feature Name}
 
 > {One-line description}
@@ -175,3 +182,4 @@ Common decision triggers for feature spec writing:
 - **No design source → stop and report.** Do not guess intent from code.
 - **Deviations are facts, not judgments.** Record what differs; do not label deviations as problems.
 - **Output format must be compatible with `/feature-review`.** The "用户可以..." + file:line format is consumed directly by that skill.
+- **Frontmatter fields:** `type` is always `feature-spec`. `status` is always `active`. `tags` — derive from the feature name and the User Story verbs (e.g., feature covers sync and offline access → `[sync, offline]`). `refs` — list the design doc path(s) used as design sources.

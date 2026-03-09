@@ -41,6 +41,7 @@ run-phase (orchestrator, main context)
 | brainstorm | interactive | Design exploration before implementation |
 | design-decision | interactive | Trade-off analysis with essential/accidental complexity |
 | fix-bug | interactive | Systematic diagnosis with value domain tracing |
+| issue | interactive | GitHub Issue unified entry point: list, read, create with prior hypotheses |
 | finish-branch | interactive | Test, document, merge/PR/discard |
 | parallel-agents | guide | Pattern for concurrent agent dispatch |
 | use-worktree | guide | Git worktree setup and safety |

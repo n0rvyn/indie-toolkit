@@ -17,7 +17,13 @@ description: "Use when you have a written implementation plan to execute. Batch 
 
 ### Step 2: Execute in Batches
 
-Default batch size: 3 tasks.
+**Batch size:** Determined by total task count:
+- Count total tasks in the plan
+- `batch_size = max(3, ceil(total_tasks / 3))`, capped at 6
+  - 1-9 tasks: batch of 3
+  - 10-12 tasks: batch of 4
+  - 13-15 tasks: batch of 5
+  - 16+ tasks: batch of 6
 
 **Before starting each batch (if search tool available):**
 1. Collect task titles and key technical terms from the batch (file names, API names, component names mentioned in task steps)

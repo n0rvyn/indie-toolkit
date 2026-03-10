@@ -14,8 +14,7 @@ Locate/Resume Phase
   → UX review checkpoint (main context — if design has UX Assertions)
   → invoke dev-workflow:verify-plan skill (separate context)
   → execute plan (main context — writes code)
-  → dispatch dev-workflow:feature-spec-writer agent (separate context)
-  → dispatch review agents in parallel (separate contexts)
+  → dispatch feature-spec + review agents in parallel (separate contexts)
   → fix gaps (main context)
   → Phase done
 ```
@@ -32,7 +31,7 @@ This file tracks progress across sessions. Update it **before** starting each st
 project: <name>
 current_phase: 2
 phase_name: "Phase Name"
-phase_step: plan    # plan | ux-review | verify | execute | spec | review | fix | done
+phase_step: plan    # plan | ux-review | verify | execute | review | fix | done
 dev_guide: docs/06-plans/YYYY-MM-DD-project-dev-guide.md
 plan_file: null  # set to docs/06-plans/YYYY-MM-DD-<name>-plan.md after Step 2
 verification_report: null
@@ -47,8 +46,12 @@ last_updated: "YYYY-MM-DDTHH:MM:SS"
 
 ### Step 1: Resume or Locate Phase
 
-1. Check for `.claude/dev-workflow-state.yml` (Read tool)
-   - If exists AND `phase_step` is not `done`:
+1. Check for `.claude/dev-workflow-state.yml`:
+   !`cat .claude/dev-workflow-state.yml 2>/dev/null || echo "NO_STATE_FILE"`
+   If output is "NO_STATE_FILE": proceed to step 2 (starting fresh).
+   Otherwise: parse the YAML content from the output.
+   - If `phase_step` is `spec` (legacy): treat as `review` and proceed to Step 5
+   - If `phase_step` is not `done`:
      - Present: "Phase {N} ({name}) in progress — step: {phase_step}. Resume?"
      - If user accepts:
        - **Scope drift check** (only when `phase_step` is `plan` AND `plan_file` is not null): Read the Phase's current scope from the dev-guide and compare with the plan file's `Scope:` section. If they differ: "Dev-guide scope has changed since the plan was written. Re-run scope confirmation (Step 1.5)?" If user accepts: reset `phase_step: plan`, `plan_file: null`, and run Step 1.5. If user declines: proceed with existing plan. For steps after `plan` (verify/execute/review/fix): no check needed — the plan is the working document.
@@ -186,7 +189,13 @@ This checkpoint catches scope pollution and aligns visual expectations before pl
    - Crystal file reference: search `docs/11-crystals/*-crystal.md`; if exactly 1 file, use it; if multiple, ask the user which one applies; if none, set to "none"
    - If no crystal file found AND the Phase has architecture decisions marked as "resolved" in the dev-guide: suggest `/crystallize` to capture these decisions before planning. Do not block — user can decline and proceed without a crystal file.
 3. If a design doc path exists: read the design doc and check for a `## UX Assertions` section. Note the result — it controls the dispatch prompt below and Step 2.5.
-4. Use the Task tool to dispatch the `dev-workflow:plan-writer` agent:
+4. **Preload relevant lessons:** Before dispatching plan-writer:
+   - Extract keywords from Phase scope items and goal (component names, technology terms, domain terms)
+   - Search `docs/09-lessons-learned/` for entries matching these keywords:
+     `Grep(pattern="<keyword1>|<keyword2>|<keyword3>", path="docs/09-lessons-learned/", output_mode="content", context=5)`
+   - If matches found: collect the matching lesson entries (file path + matched content) as `relevant_lessons`
+   - If no matches or directory does not exist: set `relevant_lessons` to "none"
+5. Use the Task tool to dispatch the `dev-workflow:plan-writer` agent:
 
 ```
 Write an implementation plan with the following inputs:
@@ -206,17 +215,22 @@ Project root: {project root}
 Context: This is Phase {N} of the dev-guide at {dev-guide path}.
 {IF design doc contains ## UX Assertions section, append:}
 ⚠️ Design doc contains UX Assertions (## UX Assertions section). Read User Journeys and UX Assertions table BEFORE writing UI tasks. Each UI task must include UX ref: and User interaction: fields.
+{IF relevant_lessons is not "none", append:}
+
+Relevant project lessons (from docs/09-lessons-learned/):
+{relevant_lessons — file path and matched content for each entry}
+These are past lessons from this project. Incorporate relevant ones to avoid known pitfalls.
 ```
 
-5. When agent returns: note the plan file path from the summary
-6. Update state: `plan_file: <path>`, `last_updated: <now>`
-7. Present plan summary to user (task count, key files)
-8. **Decision Points:** Check the plan-writer's return for `Decisions:` count.
+6. When agent returns: note the plan file path from the summary
+7. Update state: `plan_file: <path>`, `last_updated: <now>`
+8. Present plan summary to user (task count, key files)
+9. **Decision Points:** Check the plan-writer's return for `Decisions:` count.
    - If Decisions > 0: read the `## Decisions` section from the plan file
    - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
    - For each `recommended` decision: present as a group — "The plan has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
    - Record user choices: edit the plan file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
-9. Auto-select verification speed: count tasks in the returned plan file.
+10. Auto-select verification speed: count tasks in the returned plan file.
    If task count < 5: mark `--fast` flag for Step 3 (use Sonnet for verification).
    If task count ≥ 5: no flag (use Opus default).
 
@@ -265,6 +279,22 @@ Confirm this mapping is correct, or provide corrections.
 
 ### Step 3: Verify
 
+**Auto-approve condition:** If ALL of the following are true:
+- Plan has 3 or fewer tasks
+- No design doc reference (or set to "none")
+- No crystal file reference (or set to "none")
+
+Then skip full agent verification. Instead:
+1. Read the plan file
+2. Perform inline sanity check in main context:
+   - Each task has `**Files:**` and `**Steps:**` sections
+   - Task dependencies (if any) are ordered correctly
+   - No obvious gaps (e.g., task references a file not listed in any task's Files)
+3. Update state: `phase_step: verify`, `verification_report: "auto-approved (small plan)"`, `last_updated: <now>`
+4. Skip to Step 4
+
+**Otherwise:** proceed with full verification below.
+
 1. Update state: `phase_step: verify`, `last_updated: <now>`
 2. Invoke `dev-workflow:verify-plan` with the plan from Step 2 (pass `--fast` flag if set in Step 2)
 3. Update state: `verification_report: <summary>`, `last_updated: <now>`
@@ -287,64 +317,66 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
    - This stays in the main context because it writes code and needs checkpoint approval
 3. When execution completes, update state: `last_updated: <now>`
 
-### Step 5: Document Features (agent dispatch)
-
-1. Update state: `phase_step: spec`, `last_updated: <now>`
-2. Check the Phase scope for completed user journeys
-   - Infrastructure-only Phase (no user journeys): skip to Step 6
-3. For each completed feature:
-   - Confirm feature name and scope with the user
-   - Use the Task tool to dispatch the `dev-workflow:feature-spec-writer` agent:
-
-```
-Generate a feature spec with the following inputs:
-
-Feature name: {name}
-Feature scope: {scope}
-Design doc paths:
-{relevant design doc paths and sections}
-Dev-guide: {dev-guide path} Phase {N}
-Key implementation files:
-{list of key files}
-Project root: {project root}
-```
-
-4. Present spec summary when agent returns
-5. **Decision Points:** Check the feature-spec-writer's return for `Decisions:` count.
-   - If Decisions > 0: read the `## Decisions` section from the spec file
-   - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
-   - For each `recommended` decision: present as a group — "The spec has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
-   - Record user choices: edit the spec file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
-6. Update state: `last_updated: <now>`
-
-### Step 6: Reviews (parallel agent dispatch)
+### Step 5: Document Features & Reviews (parallel agent dispatch)
 
 1. Update state: `phase_step: review`, `last_updated: <now>`
-2. Determine which reviews to run from the Phase's Review checklist:
+
+2. **Determine agents to dispatch:**
+
+   **Feature spec agents (conditional):**
+   - Check the Phase scope for completed user journeys
+   - If this is NOT an infrastructure-only Phase: confirm feature name and scope with the user, then prepare `dev-workflow:feature-spec-writer` dispatch for each completed feature
+   - If infrastructure-only (no user journeys): no feature-spec-writer dispatch
+
+   **Review agents (always at least one):**
    - **Always:** `dev-workflow:implementation-reviewer` agent
    - **If Phase modified UI files:** `/ui-review`
    - **If Phase created new pages/components:** `/design-review`
    - **If Phase completed a full user journey:** `/feature-review`
    - **If this is the submission prep Phase:** `/submission-preview`
-3. Dispatch ALL applicable review agents **in parallel** using the Task tool in a single message:
-   - `dev-workflow:implementation-reviewer` agent (always): pass plan file path + project root
+
+3. **Dispatch ALL agents in parallel** using the Task tool in a single message:
+
+   For feature-spec-writer (if applicable):
+   ```
+   Generate a feature spec with the following inputs:
+
+   Feature name: {name}
+   Feature scope: {scope}
+   Design doc paths:
+   {relevant design doc paths and sections}
+   Dev-guide: {dev-guide path} Phase {N}
+   Key implementation files:
+   {list of key files}
+   Project root: {project root}
+   ```
+
+   For implementation-reviewer (always): pass plan file path + project root
+   For ios-development agents (conditional):
    - `ios-development:ui-reviewer` (if UI files modified): pass list of modified `*View.swift` files
    - `ios-development:design-reviewer` (if new pages/components): pass list of new View files
    - `ios-development:feature-reviewer` (if full user journey completed): pass feature scope + key files
-   - `dev-workflow:implementation-reviewer` handles plan vs code; ios agents handle quality
 
    Each agent receives a fresh context — they have no memory of how the code was written.
    This removes confirmation bias from self-review.
-4. When all return: each agent returns a compact summary with verdict, issue counts, and report file path. Present a consolidated summary table:
 
-| Review | Verdict | Issues | Report |
-|--------|---------|--------|--------|
-| Implementation | ✅/❌ | {counts} | {path} |
+4. **When all return:** Present a consolidated summary table:
+
+| Agent | Verdict | Issues | Report/Spec |
+|-------|---------|--------|-------------|
+| Feature Spec: {name} | ✅/❌ | {user story counts} | {path} |
+| Implementation | ✅/❌ | {gap counts} | {path} |
 | UI | ✅/❌ | {counts} | {path} |
 | Design | ✅/❌ | {counts} | {path} |
-| Feature | ✅/❌ | {counts} | {path} |
+| Feature Review | ✅/❌ | {counts} | {path} |
 
-5. **Surface human verification items:** If any review report's compact summary shows 人工验证项 > 0 or 设备验证项 > 0:
+5. **Feature spec decision points:** If feature-spec-writer was dispatched, check its return for `Decisions:` count.
+   - If Decisions > 0: read the `## Decisions` section from the spec file
+   - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
+   - For each `recommended` decision: present as a group — "The spec has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
+   - Record user choices: edit the spec file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+
+6. **Surface human verification items:** If any review report's compact summary shows 人工验证项 > 0 or 设备验证项 > 0:
    - Read each report file that has verification items
    - Extract items from these sections:
      - ui-reviewer: `### Part C: 人工验证清单`
@@ -357,15 +389,16 @@ Project root: {project root}
    > - [ ] {item}
    > - [ ] ⚠️ 需真机：{animation/transition items}
 
-   This is informational — do not block with AskUserQuestion. The user can raise issues during Step 7 (Fix Gaps).
-6. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
+   This is informational — do not block with AskUserQuestion. The user can raise issues during Step 6 (Fix Gaps).
 
-### Step 7: Fix Gaps
+7. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
+
+### Step 6: Fix Gaps
 
 If any review found issues:
 
 1. Update state: `phase_step: fix`, `last_updated: <now>`
-2. Read the relevant review report files (paths from Step 6 summaries) to get full issue details
+2. Read the relevant review report files (paths from Step 5 summaries) to get full issue details
 3. List all gaps sorted by severity (critical first, then warnings)
 4. Ask the user: "Fix these gaps before moving on, or mark as known issues?"
 5. If fixing:
@@ -388,15 +421,15 @@ If any review found issues:
    - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
    - For each `recommended` decision: present as a group — "Reviews have {N} recommended decisions with defaults. Accept all defaults, or review individually?"
    - Record user choices: edit the report file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
-   - Then proceed to Step 8
+   - Then proceed to Step 7
 
-### Step 8: Phase Completion
+### Step 7: Phase Completion
 
 1. Update state: `phase_step: done`, `last_updated: <now>`
 2. Update the dev-guide:
    - Check off this Phase's acceptance criteria
    - Add status line: `**Status:** ✅ Completed — YYYY-MM-DD` after the Phase heading
-3. **Issue archival** (conditional): If Step 7 has items marked as "known issues" or skipped gaps:
+3. **Issue archival** (conditional): If Step 6 has items marked as "known issues" or skipped gaps:
    - Ask: "Create GitHub Issues for {N} deferred items?"
    - If yes:
      - Check label existence: `gh label list --json name -q '.[].name'`
@@ -415,7 +448,7 @@ If any review found issues:
 
 ## Rules
 
-- **Never skip Step 6.** Reviews are not optional.
+- **Never skip Step 5.** Reviews are not optional.
 - **Never skip verification.** Step 3 must run before Step 4.
 - **Phase order matters.** Don't start Phase N+1 if Phase N has unchecked acceptance criteria (unless user explicitly overrides).
 - **Consolidate review output.** Merge all review results into one summary with sections.
@@ -423,6 +456,6 @@ If any review found issues:
 
 ## Completion Criteria
 
-- Phase acceptance criteria checked off in dev-guide (Step 8)
+- Phase acceptance criteria checked off in dev-guide (Step 7)
 - State file `phase_step` set to `done`
 - Next phase communicated to user

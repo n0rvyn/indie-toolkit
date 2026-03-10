@@ -7,10 +7,10 @@ on:
         description: "Which plugin to release"
         type: choice
         required: true
-        default: ios-development
+        default: apple-dev
         options:
           - dev-workflow
-          - ios-development
+          - apple-dev
           - mactools
           - product-lens
           - rag-server
@@ -79,7 +79,7 @@ jobs:
           }
 
           if [[ "$TARGET" == "all" ]]; then
-            PLUGINS=("dev-workflow" "ios-development" "mactools" "product-lens" "rag-server" "skill-audit")
+            PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "rag-server" "skill-audit")
           else
             PLUGINS=("$TARGET")
           fi

@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - "dev-workflow/**"
-      - "ios-development/**"
+      - "apple-dev/**"
       - "mactools/**"
       - "product-lens/**"
       - "rag-server/**"
@@ -37,7 +37,7 @@ jobs:
           set -euo pipefail
 
           MARKET_FILE=".claude-plugin/marketplace.json"
-          ALL_PLUGINS=("dev-workflow" "ios-development" "mactools" "product-lens" "rag-server" "skill-audit")
+          ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "rag-server" "skill-audit")
 
           bump_semver() {
             local version="$1"

@@ -18,3 +18,4 @@ rag-server/embed/embed
 # Claude Code files
 /.claude
 /.codex
+VALIDATION_REPORT.md

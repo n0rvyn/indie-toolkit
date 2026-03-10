@@ -23,7 +23,7 @@ fi
 
 ```bash
 mkdir -p ~/.config/opencode/skills
-ln -sfn ~/.config/opencode/indie-toolkit/ios-development/skills ~/.config/opencode/skills/indie-toolkit-ios-development
+ln -sfn ~/.config/opencode/indie-toolkit/apple-dev/skills ~/.config/opencode/skills/indie-toolkit-apple-dev
 ln -sfn ~/.config/opencode/indie-toolkit/mactools/skills ~/.config/opencode/skills/indie-toolkit-mactools
 ```
 
@@ -32,7 +32,7 @@ ln -sfn ~/.config/opencode/indie-toolkit/mactools/skills ~/.config/opencode/skil
 ## Verify
 
 ```bash
-ls -la ~/.config/opencode/skills/indie-toolkit-ios-development
+ls -la ~/.config/opencode/skills/indie-toolkit-apple-dev
 ls -la ~/.config/opencode/skills/indie-toolkit-mactools
 ```
 
@@ -47,6 +47,6 @@ If new skills were added in the repo, re-run the symlink commands once.
 ## Uninstall
 
 ```bash
-rm ~/.config/opencode/skills/indie-toolkit-ios-development
+rm ~/.config/opencode/skills/indie-toolkit-apple-dev
 rm ~/.config/opencode/skills/indie-toolkit-mactools
 ```

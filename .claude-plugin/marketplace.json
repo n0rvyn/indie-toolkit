@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Indie toolkit with iOS development, macOS tooling, and more",
-    "version": "1.12.1"
+    "version": "1.13.0"
   },
   "plugins": [
     {
       "name": "dev-workflow",
       "source": "./dev-workflow",
       "description": "Cross-stack development workflow: brainstorm, planning, phase orchestration, execution, review, debugging, design analysis, commits, and session management",
-      "version": "2.9.1",
+      "version": "2.10.0",
       "category": "development",
       "tags": [
         "workflow",

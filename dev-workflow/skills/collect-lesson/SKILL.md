@@ -1,11 +1,22 @@
 ---
 name: collect-lesson
-description: "Use after resolving a bug, completing a task with notable pitfalls, or discovering an important architecture constraint. Extracts a structured lesson entry from the session and saves it to the knowledge base."
+description: "Use after resolving a bug, completing a task with notable pitfalls, or discovering an important architecture constraint. Extracts a structured entry from the session and saves it to the knowledge base."
 ---
 
 ## Overview
 
-This skill extracts a structured lesson or error entry from the current session and writes it to the knowledge base via `add_entry`. It checks for near-duplicates before creating, and asks the user to confirm the draft.
+This skill extracts a structured knowledge entry from the current session and writes it to the central knowledge base at `~/.claude/knowledge/` or the project-local `docs/09-lessons-learned/`. It checks for near-duplicates before creating, and asks the user to confirm the draft.
+
+## Supported Content Types
+
+| Type | When to use | Suggested body structure |
+|------|-------------|------------------------|
+| **Lesson / Error** | Bug fixed, pitfall discovered | Symptom / Root Cause / Prevention |
+| **API Note** | API quirk, undocumented behavior, version diff | Behavior / Gotcha / Example |
+| **Architecture Decision** | Cross-project reusable pattern or constraint | Context / Decision / Consequences |
+| **Reference** | WWDC note, framework learning, article summary | Summary / Key Points / Links |
+
+The body format is flexible; the YAML frontmatter is mandatory.
 
 ## Process
 
@@ -13,77 +24,75 @@ This skill extracts a structured lesson or error entry from the current session 
 
 Review the current conversation to identify:
 
-1. **Symptom** — What went wrong or what was the key observation? (1-2 sentences)
-2. **Root cause** — Why did it happen? (1-2 sentences)
-3. **Prevention** — What rule or check prevents this in the future? (1-2 sentences)
-4. **Keywords** — 3-6 keywords for FTS search (error type, component name, API name, pattern name)
-5. **Category** — Pick the most fitting slug: `value-domain`, `concurrency`, `swiftdata`, `swift-concurrency`, `architecture`, `tooling`, `testing`, `ux`, `api-misuse`, or a new slug if none fit
-6. **Source type** — `error` for bugs and pitfalls, `lesson` for best practices and architecture decisions
+1. **Title** — 5-8 words, action-oriented (e.g., "Actor dispatch blocks main context synchronously")
+2. **Body** — Markdown content following the appropriate structure for the content type
+3. **Keywords** — 3-6 keywords for search (error type, component name, API name, pattern name)
+4. **Category** — Pick the most fitting slug: `api-usage`, `bug-postmortem`, `architecture`, `platform-constraints`, `stability-audit`, `data-research`, `workflow`, `reference`, or a new slug if none fit
 
-Compose a draft markdown body:
+### Step 2: Check for Near-Duplicates
 
-```markdown
-## Symptom
+Search the central knowledge base for similar entries:
 
-{symptom — 1-2 sentences}
+1. `Grep(pattern="<keywords joined by |>", path="~/.claude/knowledge/", output_mode="files_with_matches")`
+2. For each matching file, read its frontmatter `keywords:` line and title
+3. If any file has significant keyword overlap (3+ shared keywords): present it to the user as "Similar entry already in knowledge base:" and ask whether to create a new entry, update the existing one, or skip
 
-## Root Cause
+If `~/.claude/knowledge/` does not exist yet, skip this step.
 
-{root-cause — 1-2 sentences}
+### Step 3: Ask User to Confirm
 
-## Prevention
-
-{prevention — 1-2 sentences}
-```
-
-### Step 2: Check for Near-Duplicates (if search tool available)
-
-1. Call `search(query="<keywords joined by space>", source_type=["error", "lesson"], project_root="<cwd>")`
-2. If results score > 0.5: present them to the user as "Similar entries already in knowledge base:" and ask whether to continue creating a new entry or update the existing one
-3. If no results or search unavailable: skip and continue
-
-### Step 3: Ask User for Title and Scope
-
-Present the draft entry to the user:
+Present the draft entry:
 
 ```
-Draft lesson entry:
+Draft knowledge entry:
 
-Title:     {suggested title — 5-8 words, action-oriented}
+Title:     {suggested title}
 Category:  {category}
 Keywords:  {keyword1}, {keyword2}, ...
-Scope:     project (saves to docs/09-lessons-learned/) OR global (saves to ~/.claude/rag/lessons/)
+Scope:     global (saves to ~/.claude/knowledge/{category}/)
+           OR project (saves to docs/09-lessons-learned/)
 
 ---
 {markdown body}
 ---
 
-Confirm: save as-is, edit, or skip?
-If saving: project or global scope?
+Options:
+- Save as-is (global or project scope?)
+- Edit (specify what to change)
+- Skip
 ```
 
-Wait for user response. Apply any edits the user requests before calling `add_entry`.
+Wait for user response. Apply any edits before saving.
 
 ### Step 4: Save Entry
 
 Once the user confirms:
 
-Call `add_entry` with:
-- `title`: confirmed title
-- `category`: category slug
-- `scope`: user-chosen scope ("project" or "global")
-- `content`: the markdown body
-- `keywords`: list of keyword strings
-- `source_type`: "error" or "lesson"
-- `project_root`: current working directory (required when scope is "project")
+1. Determine the target directory:
+   - **Global scope**: `~/.claude/knowledge/{category}/`
+   - **Project scope**: `docs/09-lessons-learned/`
 
-Report back: `Saved as {id} at {path}`
+2. Generate filename: `YYYY-MM-DD-{slug}.md` where slug is the title lowercased, spaces replaced with hyphens, non-alphanumeric removed, truncated to 40 chars
 
-### Graceful Degradation
+3. Create directory if needed: `Bash("mkdir -p {target_directory}")`
 
-If `add_entry` tool is unavailable or the call fails: print the draft entry and tell the user to copy it manually to `docs/09-lessons-learned/E{NNN}-{slug}.md` with the front-matter format shown in the entry.
+4. Write the file using the `Write` tool:
+
+```yaml
+---
+category: {category}
+keywords: [{kw1}, {kw2}, ...]
+date: {YYYY-MM-DD}
+source_project: {current project name, optional}
+---
+# {Title}
+
+{body}
+```
+
+5. Report back: `Saved to {file_path}`
 
 ## Completion Criteria
 
-- Lesson entry saved via `add_entry` with confirmed id and path
-- Or: draft printed for manual copy (graceful degradation path)
+- Entry saved to `~/.claude/knowledge/{category}/` or `docs/09-lessons-learned/` with correct frontmatter
+- User confirmed the draft before saving

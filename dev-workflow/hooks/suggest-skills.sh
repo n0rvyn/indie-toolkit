@@ -48,8 +48,10 @@ elif echo "$lower" | grep -qE 'crystal|crystallize|固化.*决策|决策.*结晶
   echo "[skill-hint] Related: /crystallize — locks settled decisions into a crystal file before planning"
 elif echo "$lower" | grep -qE 'design.*decision|设计决策|tradeoff|trade.off'; then
   echo "[skill-hint] Related: /design-decision — analyzes trade-offs between approaches"
+elif echo "$lower" | grep -qE 'search.*knowledge|知识库|past.*lesson|之前.*遇到|find.*lesson|记得.*问题|similar.*bug|seen.*before|how.*last.*time|以前怎么'; then
+  echo "[skill-hint] Related: /kb — search cross-project knowledge base"
 elif echo "$lower" | grep -qE 'lesson|教训|踩坑|pitfall'; then
-  echo "[skill-hint] Related: /collect-lesson — extracts structured lesson to knowledge base"
+  echo "[skill-hint] Related: /collect-lesson — extracts and saves a lesson to the knowledge base"
 elif echo "$lower" | grep -qE 'kickoff|新项目|init.*project|project.*init'; then
   echo "[skill-hint] Related: /project-kickoff — guided iOS project initialization"
 elif echo "$lower" | grep -qE 'dev.?guide|开发指南|development guide'; then

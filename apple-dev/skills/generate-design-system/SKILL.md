@@ -2,7 +2,6 @@
 name: generate-design-system
 description: "Use when the user needs to generate SwiftUI Design System code from token specifications, or says 'generate design system'. Creates Apple HIG-compliant design tokens and component styles."
 compatibility: Requires macOS and Xcode
-disable-model-invocation: true
 ---
 
 # Generate Design System Skill

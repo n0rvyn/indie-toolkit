@@ -494,7 +494,7 @@ Read `references/doc-templates.md` 的「docs/05-features/README.md 模板」段
 
 Read `references/doc-templates.md` 的「Design System 初始化」段，按指引创建 DesignSystem.swift。如果 CP4 中用户提供了设计文件，优先从设计文件提取 token 值；否则使用默认模板值。
 
-询问用户是否使用 `generate-design-system` skill 生成完整版。
+询问用户是否生成完整版 Design System。如果用户确认，直接调用 `Skill("apple-dev:generate-design-system")` 执行，不中断流程。
 
 #### 9.7 不要预建的目录
 

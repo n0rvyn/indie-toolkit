@@ -1,5 +1,5 @@
 ---
-name: reviewing-rules
+name: audit-rules
 description: "Use when Claude exhibited unexpected behavior, for periodic rule health checks, or after adding new rules. Audits CLAUDE.md rules from the AI execution perspective for conflicts, loopholes, gaps, and redundancies."
 disable-model-invocation: true
 ---
@@ -20,7 +20,7 @@ Collect the following before dispatching:
 
 ### Step 2: Dispatch Agent
 
-Use the Task tool to launch the `dev-workflow:rules-auditor` agent with all gathered context. Structure the task prompt as:
+Use the Agent tool to launch the `dev-workflow:rules-auditor` agent with all gathered context. Structure the task prompt as:
 
 ```
 Audit CLAUDE.md rules with the following inputs:

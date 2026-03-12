@@ -61,7 +61,7 @@ run-phase (orchestrator, main context)
 | verify-plan | dispatcher | Gathers context, dispatches plan-verifier agent |
 | write-dev-guide | dispatcher | Gathers context, dispatches dev-guide-writer agent |
 | write-feature-spec | dispatcher | Gathers context, dispatches feature-spec-writer agent |
-| reviewing-rules | dispatcher | Gathers context, dispatches rules-auditor agent |
+| audit-rules | dispatcher | Gathers context, dispatches rules-auditor agent |
 | design-drift | dispatcher | Design document vs codebase drift audit |
 | crystallize | interactive | Lock settled decisions from current session into a persistent crystal file |
 | collect-lesson | interactive | Capture development lessons learned |

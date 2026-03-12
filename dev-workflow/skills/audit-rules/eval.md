@@ -1,4 +1,4 @@
-# reviewing-rules Eval
+# audit-rules Eval
 
 ## Trigger Tests
 <!-- Prompts that SHOULD trigger this skill -->
@@ -8,6 +8,9 @@
 - "检查规则是否有冲突或漏洞"
 - "Do a periodic health check on the rules"
 - "Claude added animations without asking — check the rules"
+- "Claude keeps ignoring a rule I wrote"
+- "The rules file feels bloated, check what can be cut"
+- "I added new rules, check for conflicts"
 
 ## Negative Trigger Tests
 <!-- Prompts that should NOT trigger this skill -->

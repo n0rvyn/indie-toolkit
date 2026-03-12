@@ -30,8 +30,9 @@ Before starting, confirm you have:
 1. **Deviation description** (optional) — what unexpected behavior was observed
 2. **Global CLAUDE.md path** — `~/.claude/CLAUDE.md`
 3. **Project CLAUDE.md path** — project-level `CLAUDE.md` (if exists)
+4. **Installed plugin behaviors** (optional) — structured summary of hooks and skill descriptions from installed plugins
 
-Read both files before proceeding.
+Read both CLAUDE.md files before proceeding. If plugin behaviors are provided, use them for cross-check analysis in step 2.5.
 
 ## Output
 
@@ -71,6 +72,25 @@ Return a Rules Review Report (format below) with:
 ### 2.4 冗余检测
 找出重复表述（不一定要删，但需知晓）
 
+### 2.5 Plugin 行为交叉检查
+如果输入包含 plugin behaviors，对每条 CLAUDE.md 规则与 plugin 行为交叉检查：
+
+**冲突**：规则与 plugin 行为矛盾
+- CLAUDE.md 要求 X，但某 skill 流程会跳过 X
+- CLAUDE.md 禁止 Y，但某 skill 流程会执行 Y
+- 输出格式：`| CLAUDE.md 规则 | Plugin 行为 | 冲突描述 |`
+
+**冗余覆盖**：规则已被 hook 强制执行
+- hook 已在工具层面拦截，CLAUDE.md 规则变成纯文本重复
+- 注意：hook 强制 + 规则声明可以是有意的双重保障，标记为 info 而非建议删除
+- 输出格式：`| CLAUDE.md 规则 | Hook 行为 | 冗余类型 |`
+
+**缺失约束**：plugin 引入行为但无规则约束
+- plugin skill 会执行敏感操作（commit、push、delete、apply fixes）但 CLAUDE.md 无对应约束
+- 输出格式：`| Plugin 行为 | 建议规则 |`
+
+如果未提供 plugin behaviors，输出「未提供 plugin 信息，跳过」。
+
 3. 针对发现的问题，提出具体修复建议
 4. 用户确认后执行修复
 
@@ -93,6 +113,21 @@ Return a Rules Review Report (format below) with:
 ### 缺失
 | 缺失规则 | 会导致的问题 |
 |---------|--------------|
+
+### Plugin 行为交叉检查
+[如果有 plugin behaviors 输入则填写，否则标注"未提供 plugin 信息，跳过"]
+
+#### 规则-行为冲突
+| CLAUDE.md 规则 | Plugin 行为 | 冲突描述 |
+|----------------|-------------|---------|
+
+#### 冗余覆盖
+| CLAUDE.md 规则 | Hook 行为 | 冗余类型 |
+|----------------|-----------|---------|
+
+#### 缺失约束
+| Plugin 行为 | 建议规则 |
+|-------------|---------|
 
 ### 修复建议
 1. [具体修改内容]

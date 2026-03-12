@@ -11,6 +11,8 @@
 - "Claude keeps ignoring a rule I wrote"
 - "The rules file feels bloated, check what can be cut"
 - "I added new rules, check for conflicts"
+- "Check if my CLAUDE.md rules conflict with installed plugins"
+- "Claude keeps doing something a plugin should prevent — check the rules"
 
 ## Negative Trigger Tests
 <!-- Prompts that should NOT trigger this skill -->
@@ -25,6 +27,8 @@
 - [ ] Output presents Rules Review Report when agent completes
 - [ ] Output presents Decision Points via AskUserQuestion if any blocking decisions exist
 - [ ] Output asks user to approve or decline fix recommendations before applying
+- [ ] Output collects installed plugin hooks and skill descriptions before dispatching
+- [ ] Output passes plugin behavior summary to rules-auditor agent
 
 ## Redundancy Risk
 Baseline comparison: Base model can read rules but lacks systematic conflict/loophole/gap analysis from AI executor perspective

@@ -97,6 +97,71 @@
 \```
 ```
 
+## project-brief.md 模板
+
+```markdown
+# [项目名称]
+
+> 一句话描述
+
+## 背景
+
+### 解决什么问题
+### 目标用户
+### 核心价值
+
+## 可行性检验
+
+### 为什么要开发（而非用现有工具）
+### AI 替代风险评估
+
+## 市场调研
+
+> 定制项目写入：「定制项目，客户已确认需求，跳过市场调研」
+
+### 竞品概览
+
+| 产品 | 定位 | 优点 | 缺点 |
+|------|------|------|------|
+| ... | ... | ... | ... |
+
+### 竞品详情
+
+#### [竞品 1]
+...
+
+## 产品定位
+
+### 差异化
+### 护城河
+### 风险与机会
+
+## 风险与缓解（事前验尸）
+
+| 失败场景 | 维度 | 可能性 | 影响 | 缓解措施 |
+|----------|------|--------|------|----------|
+| ... | ... | ... | ... | ... |
+
+## 功能规划
+
+### 完整功能
+1. ...
+2. ...
+
+### 明确不做
+- ...
+
+### 技术选型
+...
+
+### 数据策略
+...
+
+## 参考链接
+
+- [产品名](URL) - 简述
+```
+
 ## Design System 初始化
 
 **设计输入处理**：如果 CP4 中用户提供了设计文件（Stitch 生成或已有设计稿），先读取设计文件提取颜色、字体、间距等 token 值，以提取值为准初始化 DesignSystem.swift。如果 CP4 选择了「跳过设计」，使用下方默认模板值。
@@ -111,7 +176,7 @@
 | 间距 | 4xs~2xl（2pt~64pt） | 8pt 网格（原则 §2.1） |
 | 字体 | headline/body/caption | Minor Third 阶梯（原则 §1.1） |
 | 圆角 | small/medium/large | 嵌套递减（原则 §2.3） |
-| 阴影 | subtle/medium | opacity ≤ 0.08（原则 §10.2） |
+| 阴影 | 5 级（flat/subtle/small/medium/large） | z 轴语义分层（原则 §10.2） |
 | 动效 | 200-500ms, spring | 原则 §9 |
 
 初始化时读取 `~/.claude/docs/ui-design-principles.md` §2 间距系统和 §3 颜色系统确定具体值。
@@ -158,8 +223,16 @@ enum AppCornerRadius {
 // MARK: - Shadow
 
 enum AppShadow {
+    /// 基面元素，无阴影
+    static let flat = ShadowStyle(color: .clear, radius: 0, y: 0)
+    /// 轻微浮起：卡片默认态
     static let subtle = ShadowStyle(color: .black.opacity(0.04), radius: 2, y: 1)
-    static let medium = ShadowStyle(color: .black.opacity(0.08), radius: 4, y: 2)
+    /// 中度浮起：悬停态卡片、下拉菜单
+    static let small = ShadowStyle(color: .black.opacity(0.06), radius: 4, y: 2)
+    /// 明显浮起：弹出面板、浮动按钮
+    static let medium = ShadowStyle(color: .black.opacity(0.08), radius: 8, y: 4)
+    /// 最高层级：模态弹窗、拖拽中元素
+    static let large = ShadowStyle(color: .black.opacity(0.12), radius: 16, y: 8)
 }
 
 struct ShadowStyle {
@@ -175,7 +248,46 @@ extension View {
 }
 ```
 
+颜色阶梯结构（在 DesignSystem.swift 中追加）：
+
+```swift
+// MARK: - Color Scale
+
+/// 颜色阶梯：每色 9 级，500 为基准色，向上变浅向下变深。
+/// 值来自 Asset Catalog（支持 light/dark 变体），不硬编码 hex。
+/// 灰色阶梯的饱和度建议 S 值 5-12%，避免在不同显示器上偏色。
+enum AppColor {
+    // -- Primary（替换为项目主色名） --
+    static let primary50  = Color("Primary50")   // 最浅，背景/高亮底
+    static let primary100 = Color("Primary100")
+    static let primary200 = Color("Primary200")
+    static let primary300 = Color("Primary300")
+    static let primary400 = Color("Primary400")
+    static let primary500 = Color("Primary500")  // 基准色：按钮、链接
+    static let primary600 = Color("Primary600")
+    static let primary700 = Color("Primary700")
+    static let primary800 = Color("Primary800")
+    static let primary900 = Color("Primary900")  // 最深，深色文本/标题
+
+    // -- Gray（带微饱和的中性灰） --
+    static let gray50  = Color("Gray50")
+    static let gray100 = Color("Gray100")
+    static let gray200 = Color("Gray200")
+    static let gray300 = Color("Gray300")
+    static let gray400 = Color("Gray400")
+    static let gray500 = Color("Gray500")
+    static let gray600 = Color("Gray600")
+    static let gray700 = Color("Gray700")
+    static let gray800 = Color("Gray800")
+    static let gray900 = Color("Gray900")
+
+    // -- 按需添加 Accent / Success / Warning / Danger 阶梯 --
+}
+```
+
 根据项目品牌色补充 `Color` extensions（使用 Asset Catalog 定义 light/dark 变体）。
+
+**颜色定义指引**：定义颜色时以 HSL 维度思考（色相/饱和度/亮度独立调整），调色时只改一个维度。Asset Catalog 中使用 Display P3 色彩空间。代码中避免硬编码 hex 字符串，使用 Asset Catalog 命名颜色引用。
 
 **询问用户：是否使用 Apple HIG Design Token 系统生成 DesignSystem.swift？**
 

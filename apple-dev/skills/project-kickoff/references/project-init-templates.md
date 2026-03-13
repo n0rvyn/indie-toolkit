@@ -93,6 +93,7 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 
 必须：[项目特定必须项]
 必须：[由步骤 9.2.1 生成的平台 API 规则]
+必须：正面/负面/警告状态同时使用图标区分，不只靠颜色（色觉无障碍）
 \```
 
 ## Swift 6 并发（本项目）
@@ -113,6 +114,11 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 | 间距 | `AppSpacing.xs/sm/md/lg/xl` | 4/8/16/24/32 |
 | 圆角 | `AppCornerRadius.small/medium/large` | 8/12/16 |
 | 颜色 | `Color.appPrimary/appSecondary/...` | 见 DesignSystem.swift |
+| 阴影 | `AppShadow.flat/subtle/small/medium/large` | 5 级 z 轴语义 |
+
+**UI 约束**：
+- 颜色调整时用 HSL 维度思考（独立调色相/饱和度/亮度），不在代码中硬编码 hex
+- 元素分隔优先使用间距或背景色差，其次阴影，最后才用边框
 
 ## 遇到困惑时
 

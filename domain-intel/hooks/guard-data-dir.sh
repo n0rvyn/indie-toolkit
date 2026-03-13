@@ -1,10 +1,10 @@
 #!/bin/bash
 # domain-intel PreToolUse(Write) hook
-# Guards against writing domain-intel data outside the configured data_dir
+# Guards against writing domain-intel data outside the current working directory
 #
 # Strategy: Only activate when BOTH conditions are true:
 #   1. The file content contains domain-intel-specific markers
-#   2. The path is NOT within the configured data_dir
+#   2. The path is NOT within the CWD (the initialized domain-intel directory)
 # This avoids false positives on unrelated files with generic path patterns.
 
 input=$(cat)
@@ -15,6 +15,11 @@ content=$(echo "$input" | python3 -c "import sys,json; d=json.load(sys.stdin); p
 
 # If we couldn't extract the path, allow (not our concern)
 if [ -z "$file_path" ]; then
+  exit 0
+fi
+
+# If CWD doesn't have config.yaml, this isn't a domain-intel directory — skip guard
+if [ ! -f "./config.yaml" ]; then
   exit 0
 fi
 
@@ -40,35 +45,13 @@ if [ "$is_intel_data" = false ]; then
   fi
 fi
 
-# If not domain-intel data, allow — this is the key change vs the old version.
-# We no longer match on generic path patterns like /insights/ or /state.yaml.
+# If not domain-intel data, allow
 if [ "$is_intel_data" = false ]; then
   exit 0
 fi
 
-# Step 2: It IS domain-intel data — verify it's going to the configured data_dir
-CONFIG_FILE="$HOME/.claude/domain-intel.local.md"
-
-if [ ! -f "$CONFIG_FILE" ]; then
-  echo "BLOCK: [domain-intel] Cannot write intel data — no config found. Run /intel setup first."
-  exit 2
-fi
-
-# Extract data_dir from YAML frontmatter
-data_dir=$(sed -n '/^---$/,/^---$/p' "$CONFIG_FILE" | grep '^data_dir:' | sed 's/data_dir: *//' | tr -d '"' | tr -d "'" | sed "s|^~|$HOME|")
-
-if [ -z "$data_dir" ]; then
-  echo "BLOCK: [domain-intel] Cannot write intel data — data_dir not configured. Run /intel setup."
-  exit 2
-fi
-
-# Resolve data_dir to absolute path (handle symlinks and ..)
-if [ -d "$data_dir" ]; then
-  data_dir_resolved=$(cd "$data_dir" && pwd -P)
-else
-  # Directory doesn't exist yet — do best-effort expansion
-  data_dir_resolved=$(echo "$data_dir" | sed "s|^~|$HOME|")
-fi
+# Step 2: It IS domain-intel data — verify it's going to the CWD
+allowed_dir=$(pwd -P)
 
 # Resolve file_path's parent directory if possible
 file_dir=$(dirname "$file_path")
@@ -78,19 +61,19 @@ else
   file_path_resolved="$file_path"
 fi
 
-# Check if the resolved file_path starts with resolved data_dir
+# Check if the resolved file_path starts with CWD
 case "$file_path_resolved" in
-  "$data_dir_resolved"/*)
+  "$allowed_dir"/*)
     exit 0
     ;;
 esac
 
 # Also check unresolved paths as fallback
 case "$file_path" in
-  "$data_dir"/*)
+  "$(pwd)"/*)
     exit 0
     ;;
 esac
 
-echo "BLOCK: [domain-intel] Write blocked: $file_path is outside configured data_dir ($data_dir). Run /intel config to check settings."
+echo "BLOCK: [domain-intel] Write blocked: $file_path is outside the current domain-intel directory ($allowed_dir). cd to the correct directory first."
 exit 2

@@ -1,32 +1,14 @@
 #!/bin/bash
 # domain-intel SessionStart hook
-# Checks config validity and reports unread insight count
+# Checks if CWD is an initialized domain-intel directory and reports unread insight count
 
-CONFIG_FILE="$HOME/.claude/domain-intel.local.md"
-
-# Check config exists
-if [ ! -f "$CONFIG_FILE" ]; then
-  echo "[domain-intel] Not configured. Run /intel setup to get started."
-  exit 0
-fi
-
-# Extract data_dir from YAML frontmatter
-data_dir=$(sed -n '/^---$/,/^---$/p' "$CONFIG_FILE" | grep '^data_dir:' | sed 's/data_dir: *//' | tr -d '"' | tr -d "'" | sed "s|^~|$HOME|")
-
-# Check data_dir is set
-if [ -z "$data_dir" ]; then
-  echo "[domain-intel] data_dir not set. Run /intel setup to configure."
-  exit 0
-fi
-
-# Check data_dir exists
-if [ ! -d "$data_dir" ]; then
-  echo "[domain-intel] data_dir $data_dir not found. Run /intel setup to fix."
+# If CWD doesn't have config.yaml, this isn't a domain-intel directory — silent exit
+if [ ! -f "./config.yaml" ]; then
   exit 0
 fi
 
 # Check state file for last scan
-state_file="$data_dir/state.yaml"
+state_file="./state.yaml"
 last_scan="never"
 if [ -f "$state_file" ]; then
   last_scan=$(grep '^last_scan:' "$state_file" | sed 's/last_scan: *//' | tr -d '"')
@@ -38,7 +20,7 @@ if [ "$last_scan" = "never" ]; then
 fi
 
 # Count unread insights
-insights_dir="$data_dir/insights"
+insights_dir="./insights"
 if [ ! -d "$insights_dir" ]; then
   exit 0
 fi

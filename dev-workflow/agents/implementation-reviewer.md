@@ -273,17 +273,29 @@ Output per item:
 
 If any review finding requires a user choice before remediation can proceed, output a `## Decisions` section in the review report. If no decisions needed, output `## Decisions\nNone.`
 
+**Each decision point MUST be self-contained** — a reader who skipped the rest of the report should still understand the gap, the current state, and what each option means concretely.
+
 Format per decision:
 
 ```
 ### [DP-001] {title} ({blocking / recommended})
 
-**Context:** {why this decision is needed, 1-2 sentences}
+**Gap:** {what the plan required} vs {what the code actually does now}. {concrete impact on user/system behavior}.
+
 **Options:**
-- A: {description} — {trade-off}
-- B: {description} — {trade-off}
+
+| | A: {name} | B: {name} |
+|---|---|---|
+| Behavior | {what the user/system sees} | {what the user/system sees} |
+| Implementation | {effort: lines/files to change} | {effort: lines/files to change} |
+| Risk | {what could go wrong} | {what could go wrong} |
+
 **Recommendation:** {option} — {reason, 1 sentence}
 ```
+
+Self-check before finalizing each DP:
+- Remove the Recommendation row. Can a reader pick an option using only the table? If not, add more detail.
+- Does the Gap field make sense without reading the full report? "Plan says X, code does Y" is the minimum.
 
 Priority levels:
 - `blocking` — must be resolved before proceeding to next phase

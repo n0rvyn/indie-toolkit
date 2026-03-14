@@ -60,6 +60,11 @@ Automation:
   CronCreate(cron="47 8 * * *", prompt="cd {CWD} && /scan")
   Note: cron jobs auto-expire after 3 days.
 
+Sources:
+  GitHub — uses gh CLI API (auto-detected); falls back to web search
+  Product Hunt — optional, requires API credentials (/intel config to set up)
+  RSS, official changelogs, figures, companies — configured in setup
+
 Concepts:
   Directory = Profile — each initialized directory is a separate workspace
   LENS.md — your interests, figures, and companies (evolves over time)
@@ -93,14 +98,34 @@ Guided first-time configuration.
 
 4. Ask about additional RSS feeds (or accept defaults from template).
 
-5. Generate `./config.yaml` from template with user selections (domains, sources).
+5. **API source configuration**
 
-6. Create subdirectories:
+   a. **GitHub API check** — run `Bash(command="gh auth status 2>&1")`:
+      - If exit code 0 (authenticated): output `GitHub API: ✓ authenticated via gh CLI (structured search, no scraping)`
+      - If exit code non-zero (gh not installed or not authenticated): output `GitHub API: ✗ gh CLI not authenticated — falling back to web search. For better results, run: gh auth login`
+      - This is informational only; GitHub collection works either way (API or WebSearch fallback).
+
+   b. **Product Hunt** — ask via AskUserQuestion:
+      - "Enable Product Hunt as a source? (discovers new tools, launches, and products)"
+      - Options:
+        - "Yes, I have API credentials" — proceed to credential prompts
+        - "Yes, set up later" — enable in config with empty credentials (skipped at scan time)
+        - "No, skip" — leave disabled
+      - If user chose "Yes, I have API credentials":
+        - Ask via AskUserQuestion (free text): "Product Hunt Client ID?" and "Product Hunt Client Secret?"
+        - Validate by running: `Bash(command="python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/fetch_producthunt.py\" --client-id \"<id>\" --client-secret \"<secret>\" --max-items 1 --timeout 15")` (check exit code of the script directly; do NOT pipe to tail/grep which overrides the exit code)
+        - If exit code 0: `Product Hunt API: ✓ authenticated`
+        - If exit code 1: `Product Hunt API: ✗ authentication failed — check credentials. You can update them later in config.yaml under sources.producthunt.`  Set enabled to true but keep the user's credentials (they may fix them later).
+      - Link for getting credentials: `https://www.producthunt.com/v2/oauth/applications`
+
+6. Generate `./config.yaml` from template with user selections (domains, sources, Product Hunt config from step 5b).
+
+7. Create subdirectories:
    ```
    mkdir -p ./insights ./digests ./trends ./briefings
    ```
 
-7. Initialize state:
+8. Initialize state:
    Write `./state.yaml`:
    ```yaml
    last_scan: "never"
@@ -108,7 +133,7 @@ Guided first-time configuration.
    total_scans: 0
    ```
 
-8. **Generate LENS.md** — the user's information filtering profile.
+9. **Generate LENS.md** — the user's information filtering profile.
 
    a. For each selected domain, ask using AskUserQuestion:
       - "Notable figures to follow in {domain}?" — present pre-populated options from the template (e.g., for AI: Hinton, LeCun, Karpathy; for iOS: Lattner, Sundell, Hudson). Allow multiSelect.
@@ -125,11 +150,15 @@ Guided first-time configuration.
       - Frontmatter: populate `figures[]` and `companies[]` from user selections (uncomment chosen entries, leave others commented)
       - Body: fill in "Who I Am", "What I Care About", "Current Questions", "What I Don't Care About" from user answers
 
-9. Output:
+10. Output:
 ```
 [domain-intel] Setup complete in {CWD}.
   Domains: {domain names}
-  Sources: {N} RSS feeds, {N} official sites, GitHub enabled
+  Sources:
+    GitHub: {✓ API | ✗ web search fallback}
+    Product Hunt: {✓ enabled | ✗ disabled | ⚠ enabled, credentials pending}
+    RSS feeds: {N}
+    Official sites: {N}
   LENS: ./LENS.md (tracking {N} figures, {N} companies)
 
 Next steps:
@@ -310,9 +339,11 @@ View or modify configuration.
 
 1. Read and display current config from `./config.yaml`:
    - Active domains (names)
-   - Source counts (RSS feeds, official sites, GitHub status)
+   - Source counts (RSS feeds, official sites, GitHub API status, Product Hunt status)
    - Scan parameters
    - LENS.md status: exists? How many figures/companies tracked?
+   - For GitHub: run `gh auth status 2>&1` and report authenticated or not
+   - For Product Hunt: report enabled/disabled, credentials present or empty
 
 2. If user provided a modification request:
    - **add RSS feed**: append to sources.rss list
@@ -321,6 +352,8 @@ View or modify configuration.
    - **change setting**: update the specified value
    - **remove source/domain**: remove from the list
    - **edit LENS**: redirect to `/intel evolve` or open LENS.md path for manual editing
+   - **configure product hunt** / **add PH token**: prompt for client_id and client_secret, validate with fetch_producthunt.py, update sources.producthunt in config
+   - **check github**: run `gh auth status` and report result
 
 3. After modification: write updated config back to `./config.yaml`.
 

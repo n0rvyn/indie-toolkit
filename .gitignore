@@ -9,6 +9,9 @@ rag-server/.venv/
 rag-server/__pycache__/
 rag-server/embed/embed
 
+.claude
+__pycache__/
+
 # Dev-workflow transient state
 .claude/dev-workflow-state.yml
 

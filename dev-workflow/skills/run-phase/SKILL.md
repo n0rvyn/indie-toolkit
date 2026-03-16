@@ -364,7 +364,7 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 | Agent | Verdict | Issues | Report/Spec |
 |-------|---------|--------|-------------|
 | Feature Spec: {name} | ✅/❌ | {user story counts} | {path} |
-| Implementation | ✅/❌ | {gap counts} | {path} |
+| Implementation | ✅/❌ | {gap counts} — Tests: {required}/{exist}/{covered} | {path} |
 | UI | ✅/❌ | {counts} | {path} |
 | Design | ✅/❌ | {counts} | {path} |
 | Feature Review | ✅/❌ | {counts} | {path} |
@@ -390,7 +390,12 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 
    This is informational — do not block with AskUserQuestion. The user can raise issues during Step 6 (Fix Gaps).
 
-7. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
+7. **Surface test coverage summary:** If implementation-reviewer's compact return includes a `Tests:` line:
+   - Extract: required, exist, pass, shell counts
+   - If shell > 0 or pass < required: present warning below the human verification items:
+     > ⚠️ 测试覆盖不完整：{N} 个计划要求的测试中，{M} 个为空壳或未覆盖核心路径
+
+8. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
 
 ### Step 6: Fix Gaps
 

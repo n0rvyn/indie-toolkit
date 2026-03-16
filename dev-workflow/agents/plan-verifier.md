@@ -60,6 +60,7 @@ Verdict: {approved | must-revise}
 [DF] design faithfulness: {N}/{total} mapped, {M} gaps (or "skipped")
 [CF] crystal fidelity: {N}/{total} covered, {M} conflicts, {K} scope violations (or "skipped")
 [AR] architecture: {N} issues (or "skipped")
+[T1] test coverage: {N} logic tasks, {M} tested, {K} type-matched (or "skipped")
 Must-revise items: {N}
 Decisions: {N blocking}, {M recommended}
 ```
@@ -83,7 +84,7 @@ Do NOT modify the plan file. Return revision instructions only.
 | 类型 | 识别信号 | 适用策略 |
 |------|---------|---------|
 | 架构变更 | 新增 Service/Agent/Tool、改数据流、新增事件入口、替代组件 | S1 + S2 + AR |
-| 功能开发 | 新增/修改功能、改已有代码行为 | S1 |
+| 功能开发 | 新增/修改功能、改已有代码行为 | S1 + T1 |
 | UI 开发 | 新建/修改 View、组件样式、布局 | S1 + U1 |
 | 多步骤执行 | 步骤 >= 5 且有编译/运行时依赖 | S2 |
 | 有设计文档的计划 | 计划引用了设计文档 | DF |
@@ -150,6 +151,49 @@ Do NOT modify the plan file. Return revision instructions only.
 
 ---
 
+#### T1. 测试覆盖验证
+
+**目的**：验证计划是否包含与代码类型相匹配的测试覆盖。
+
+**前置条件**：计划类型为"功能开发"（分类表触发 T1）。
+
+步骤：
+1. 扫描所有 task，识别有逻辑实现的 task（创建/修改函数、类、服务、数据变换）
+2. 对每个有逻辑的 task，检查是否有对应的测试 task 或在 `**Verify:**` 中嵌入了测试步骤
+3. 验证测试类型是否匹配代码类型：
+   - 业务逻辑（算法、数据变换、校验）→ Unit Test
+   - 用户旅程（端到端流程、API 集成）→ E2E Test
+   - 性能敏感（渲染、大数据处理）→ Performance Test
+   - UI 组件（视图、控件、动画）→ Snapshot/UI Test
+4. 统计：有逻辑 task 数、含测试的 task 数、测试类型匹配数
+
+**输出格式**：
+
+```
+[T1 测试覆盖]
+| 代码类型 | 有逻辑的 Task | 有测试覆盖 | 测试类型匹配 |
+|---------|--------------|-----------|-------------|
+| 业务逻辑 | Task 2, 5 | Task 2 | ✅ UT |
+| 用户旅程 | Task 3 | Task 3, 4 | ✅ E2E |
+| UI 组件 | Task 7 | — | ⚠️ 无测试 |
+
+覆盖率：{M}/{N} 有逻辑 task 有测试
+类型匹配：{K}/{M} 测试类型正确
+```
+
+**Gap 输出**（当覆盖率 < 100% 或类型不匹配）：
+```
+❌ T1 Gap: Task {N} ({代码类型}) 无测试覆盖
+   建议：添加测试 task 或在 Task {N} 的 Verify 中嵌入 {推荐测试类型} 验证步骤
+
+⚠️ T1 Gap: Task {N} ({代码类型}) 测试类型不匹配 — 实际: {实际测试类型}, 推荐: {推荐测试类型}
+   建议：将 {实际测试类型} 替换为 {推荐测试类型}，或说明偏离理由
+```
+
+**注意**：纯配置修改（改 .md、.yml、.json 且无逻辑）不计入"有逻辑 task"。测试覆盖率低不一定是 must-revise；仅当有逻辑 task 完全无测试时标记为 Gap。
+
+---
+
 #### U1. Design Token 一致性验证（UI 计划专用）
 
 **目的**：验证 UI 计划中的所有视觉值有 token 支撑。
@@ -210,6 +254,7 @@ Read `{Plugin agents dir}/architecture-review.md` and execute all verification s
 ### 策略执行
 - S1 具体候选错误：生成 {N} 条，成立 {M} 条
 - S2 失败反向推理：编译失败 {N} 条，运行时 regression {N} 条
+- T1 测试覆盖：逻辑 task {N}，有测试 {M}，类型匹配 {K}
 - U1 Token 一致性：检查 {N} 项，缺失 {M} 项
 - DF 设计忠实度：设计要求映射 {N}/{total}，缺失锚点 {M} 个，隐含上下文 {N} 项未覆盖，粒度问题 {N} 处，边界场景 {N} 个未覆盖，UX 断言 {N}/{total} 覆盖
 - CF 决策忠实度：决策覆盖 {N}/{total}，否决方案冲突 {N} 条，scope 越界 {N} 处

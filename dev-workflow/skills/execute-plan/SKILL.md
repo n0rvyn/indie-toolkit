@@ -49,6 +49,13 @@ For each task in the batch:
 4. Follow steps exactly as written
 5. Run all verification commands
 6. If verification fails: stop and report, do not guess at fixes
+7. **Test task immediate verification:** After completing each task, check if it is a test task:
+   - Detection: task title or Files section contains: test, Tests, Spec, spec, _test, .test
+   - If yes: Run the task's tests immediately, scoped to the specific test target/class created by this task (not the full test suite):
+     - Determine test target from the task's Files section (e.g., test file path → test class name)
+     - Run targeted: `swift test --filter {TestClassName}`, `xcodebuild test -only-testing:{Target}/{TestClass}`, `npm test -- {testFile}`, `cargo test {test_name}`, etc.
+     - If targeted test fails: stop and report, do not proceed to next task
+   - This ensures tests pass at the point of creation, not deferred to wrap-up
 
 ### Step 3: Checkpoint Report
 

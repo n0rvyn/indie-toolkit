@@ -152,6 +152,19 @@ These fields are optional per-task. Use them when the task has design-critical d
 7. **Task section markers:** Each `### Task N:` block is wrapped in `<!-- section: task-N keywords: {kw1}, {kw2} -->` ... `<!-- /section -->`. Keywords are derived from the task's `**Files:**` paths and the technologies/APIs the task touches. Use the leaf file name (without extension) and key technology names. 2-4 keywords per task.
 8. **UX-aware tasks** — when the design doc has a `## UX Assertions` section: read the User Journeys and UX Assertions table before writing any UI task. Each task that implements user-visible behavior must include `UX ref:` pointing to the assertion ID(s) it fulfills, and a brief `User interaction:` line describing what the user sees and does (derived from the User Journeys, not invented). Tasks that touch UI but don't map to any UX assertion should be flagged with `⚠️ No UX ref: [reason]`
 9. **Frontmatter fields:** `type` is always `plan`. `status` is always `active` when first written. `tags` — derive 2-5 keywords from the feature name and key technologies in the tasks (e.g., tasks touching SwiftData and sync → `[swiftdata, sync, offline]`). `refs` — list the design doc path and crystal file path from the plan header (if set to a real path, not "none").
+10. **Intelligent test assessment** — evaluate test requirements based on code type, not blanket rules (supplements item 5):
+   - **Business logic** (algorithms, data transformations, validation): needs Unit Tests
+   - **User journeys** (end-to-end flows, API integrations): needs E2E Tests
+   - **Performance-critical** (rendering, data processing, large datasets): needs Performance Tests
+   - **UI components** (views, controls, animations): needs Snapshot Tests or UI Tests
+   - When a task involves any of these code types, either:
+     a. Create a separate test task with appropriate test type, OR
+     b. Embed test verification steps in the functional task's `**Verify:**` section
+   - Platform-specific test implementations can reference apple-dev plugin skills:
+     - UT/Mock/TDD → `apple-dev:testing-guide`
+     - E2E/Snapshot/A11y → `apple-dev:xc-ui-test`
+     - Performance → `apple-dev:profiling`
+   - This supplements item 5 (No forced TDD) — tests are recommended where they add value, not mandated for every task
 
 ## Decisions
 

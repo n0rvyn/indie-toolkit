@@ -43,6 +43,7 @@ Verdict: {✅ Implementation complete | ❌ N gaps require remediation}
 Plan-vs-Code gaps: {N} (Critical: {X}, Standard: {Y})
 Design Fidelity: {A: N, B: N, C: N, D: N, E: N mismatches} — or "N/A"
 Rules: R6 {summary}, R9 {summary}
+Tests: {N} required, {M} exist, {K} covered, shell: {X}
 Decisions: {N blocking}, {M recommended}
 ```
 
@@ -55,7 +56,7 @@ Before starting, identify:
 
 ## Part 1: Plan-vs-Code Verification (always run)
 
-For each plan task in scope, execute sections 1-13 below. Every assertion must reference actual file:line from the codebase.
+For each plan task in scope, execute sections 1-13.1 below. Every assertion must reference actual file:line from the codebase.
 
 ### 1. Deletion Verification
 
@@ -180,6 +181,42 @@ Unplanned: {file} — reason: {secondary fix / bypass / plan omission}
 Plan-specified: M / User-confirmed: K / Unconfirmed: J → {file list}
 ```
 
+### 13.1 Test Completeness Audit
+
+Check whether tests required by the plan were actually written and cover core paths.
+
+**Steps:**
+1. Extract all tasks from the plan that are marked as test tasks or contain test steps (Files section has `Test:` entries, or Verify section references test execution)
+2. For each test task:
+   - Verify test file exists at the specified path
+   - Verify test file is non-empty (not just a skeleton/placeholder)
+   - Verify test covers the core functional path (has actual assertions, not just empty test methods)
+3. Identify shell tests: test files that exist but contain only test skeletons (e.g., `func testFoo() {}` with no assertions, `test("name", () => {})` with no expect calls)
+
+**Gap output format:**
+
+```
+❌ Gap T-exist: Plan Task {N} requires test at {path}, but file does not exist
+   Action: create test file with core path coverage
+
+⚠️ Gap T-shell: Task {N} test file exists but is a shell (no assertions)
+   Location: {file:line}
+   Action: add assertions verifying core behavior
+
+✅ T-pass: Task {N} test at {path} covers core path
+   Coverage: {brief description of what's tested}
+```
+
+**Statistics output:**
+```
+[Test Completeness]
+- Required tests: {N}
+- Files exist: {M}
+- Non-empty tests: {K}
+- Core path covered: {L}
+- Shell tests: {X}
+```
+
 ---
 
 ## Part 2: Design Fidelity Audit (when design doc exists)
@@ -251,6 +288,7 @@ Output per item:
 
 ### Plan-vs-Code (Part 1)
 - Total gaps: N (Critical: X, Standard: Y)
+- Tests: {N} required, {M} exist, {K} covered, shell: {X}
 - [list each gap with section reference]
 
 ### Design Fidelity (Part 2) — if applicable

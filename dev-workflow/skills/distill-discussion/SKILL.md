@@ -11,7 +11,7 @@ Reads one or more discussion files and extracts structured knowledge from them. 
 **Key differences from `/crystallize`:**
 - Input is a file, not the current conversation context
 - Can route to lesson output (not just crystals)
-- Handles large files (>10KB) via agent dispatch for context isolation
+- Handles large files (>50KB) via agent dispatch for context isolation
 - Processes external AI conversations (Claude.ai exports, ChatGPT exports) which have different structure than Claude Code chat logs
 
 ## Process
@@ -23,7 +23,7 @@ Reads one or more discussion files and extracts structured knowledge from them. 
 3. If the user provides a directory path: Glob `{directory}/*.md` and present the list:
    ```
    Found {N} discussion files in {directory}:
-   1. {path} ({size estimate: small <10KB / large >10KB})
+   1. {path} ({size estimate: small <50KB / large >50KB})
    2. {path}
    ...
 
@@ -37,8 +37,8 @@ For each input file:
 
 Check file size with `Bash(wc -c < {path})`. Do NOT read the file to check size.
 
-**If output > 10240 (10KB):** dispatch a `dev-workflow:distill-discussion-reader` agent (see Step 2a).
-**If output <= 10240:** classify inline (see Step 2b).
+**If output > 51200 (50KB):** dispatch a `dev-workflow:distill-discussion-reader` agent (see Step 2a).
+**If output <= 51200:** classify inline (see Step 2b).
 
 #### Step 2a: Large File -- Agent Dispatch
 

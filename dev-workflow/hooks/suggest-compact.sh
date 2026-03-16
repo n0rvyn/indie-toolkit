@@ -45,7 +45,7 @@ fi
 delta=$((tool_count - last_suggested))
 
 # Not enough tool calls since last suggestion
-if [ "$delta" -lt 50 ]; then
+if [ "$delta" -lt 150 ]; then
   exit 0
 fi
 
@@ -61,7 +61,7 @@ if [ -f "$workflow_state" ]; then
 fi
 
 # Suggest if at transition, or if absolute count is very high
-if [ "$at_transition" = true ] || [ "$tool_count" -gt 80 ]; then
+if [ "$at_transition" = true ] || [ "$tool_count" -gt 300 ]; then
   mkdir -p .claude
   echo "$tool_count" > "$state_file"
   echo "[dev-workflow] ${tool_count} tool calls this session (${delta} since last checkpoint). Consider running /compact to free context before continuing."

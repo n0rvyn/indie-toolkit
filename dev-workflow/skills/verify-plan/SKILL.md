@@ -5,7 +5,7 @@ description: "Use when a plan has been written and needs validation before execu
 
 ## Overview
 
-This skill dispatches the `dev-workflow:plan-verifier` agent to validate an implementation plan in a separate context, keeping the main conversation lean.
+This skill dispatches the `dev-workflow:plan-verifier` agent to validate an implementation plan in a separate context so it starts with a fresh, unbiased perspective.
 
 **Optional flag: `--fast`**
 When passed: use Sonnet instead of Opus for verification.

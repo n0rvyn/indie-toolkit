@@ -110,12 +110,12 @@ Estimate whether the agent can complete its task within Claude Code's operationa
 **Context consumption estimate:**
 1. Count how many files the agent is instructed to read
 2. If the number is variable (e.g., "all feature specs"), estimate the typical range
-3. Flag if total estimated read volume > 5000 lines before any verification work begins
+3. Flag if total estimated read volume > 15000 lines before any verification work begins
 
 **Tool call estimate:**
 1. Count verification steps that require Grep/Read per assertion
 2. Estimate assertions per document type × document count
-3. Flag if total estimated tool calls > 100 (likely to hit max_turns)
+3. Flag if total estimated tool calls > 200 (likely to hit max_turns)
 
 **Tool availability:**
 1. List every action the agent instructions describe (read, grep, search, write, run command, ask question, launch sub-agent)

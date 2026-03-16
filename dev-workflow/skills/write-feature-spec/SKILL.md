@@ -5,7 +5,7 @@ description: "Generate feature spec (docs/05-features/) capturing what was built
 
 ## Overview
 
-This skill dispatches the `dev-workflow:feature-spec-writer` agent to generate a feature spec in a separate context, keeping the main conversation lean.
+This skill dispatches the `dev-workflow:feature-spec-writer` agent to generate a feature spec in a separate context so it starts with a fresh, unbiased perspective.
 
 ## Process
 

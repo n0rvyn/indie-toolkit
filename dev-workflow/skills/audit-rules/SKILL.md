@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 ## Overview
 
-This skill dispatches the `dev-workflow:rules-auditor` agent to audit CLAUDE.md rules in a separate context, keeping the main conversation lean.
+This skill dispatches the `dev-workflow:rules-auditor` agent to audit CLAUDE.md rules in a separate context so it starts with a fresh, unbiased perspective.
 
 ## Process
 

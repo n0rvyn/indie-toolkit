@@ -19,11 +19,12 @@ description: "Use when you have a written implementation plan to execute. Batch 
 
 **Batch size:** Determined by total task count:
 - Count total tasks in the plan
-- `batch_size = max(3, ceil(total_tasks / 3))`, capped at 6
+- `batch_size = max(3, ceil(total_tasks / 3))`, capped at 10
   - 1-9 tasks: batch of 3
-  - 10-12 tasks: batch of 4
-  - 13-15 tasks: batch of 5
-  - 16+ tasks: batch of 6
+  - 10-15 tasks: batch of 5
+  - 16-21 tasks: batch of 7
+  - 22-27 tasks: batch of 9
+  - 28+ tasks: batch of 10
 
 **Before starting each batch (if rag-server MCP `search` tool available):**
 1. Collect task titles and key technical terms from the batch (file names, API names, component names mentioned in task steps)
@@ -34,7 +35,7 @@ description: "Use when you have a written implementation plan to execute. Batch 
 **Before starting each batch — pre-read batch files:**
 1. Scan all tasks in this batch — collect every file path from their `**Files:**` sections
 2. Deduplicate the file list
-3. If more than 15 unique files: keep the 15 that appear in the most tasks (tiebreaker: prefer files listed earlier in the plan); the rest will be read per-task as needed
+3. If more than 30 unique files: keep the 30 that appear in the most tasks (tiebreaker: prefer files listed earlier in the plan); the rest will be read per-task as needed
 4. Read the selected files in parallel (single message, multiple Read tool calls)
 5. Track which files you modify via Write/Edit tools during execution: after completing each task, note every file you wrote or edited. Before starting the next task, re-read any pre-read file that you modified
 

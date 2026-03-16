@@ -3,19 +3,19 @@ name: distill-discussion-reader
 description: |
   Reads a single discussion file and classifies it by conclusion type.
   Returns structured extraction (crystal fields, lesson fields, or skip reason).
-  Used by the distill-discussion skill for large files (>10KB) that need
+  Used by the distill-discussion skill for large files (>50KB) that need
   context isolation.
 
   Examples:
 
   <example>
   Context: Large discussion file needs classification.
-  user: "Classify this 15KB discussion file"
+  user: "Classify this 60KB discussion file"
   assistant: "I'll dispatch the distill-discussion-reader agent to classify the file."
   </example>
 
   <example>
-  Context: Batch processing discussions, one file exceeds 10KB.
+  Context: Batch processing discussions, one file exceeds 50KB.
   user: "Extract decisions from the WWDC discussion export"
   assistant: "I'll use the distill-discussion-reader agent to analyze this large file."
   </example>

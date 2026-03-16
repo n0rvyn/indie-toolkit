@@ -5,7 +5,7 @@ description: "Use when starting a new project's development after design is appr
 
 ## Overview
 
-This skill dispatches the `dev-workflow:dev-guide-writer` agent to create a phased development guide in a separate context, keeping the main conversation lean.
+This skill dispatches the `dev-workflow:dev-guide-writer` agent to create a phased development guide in a separate context so it starts with a fresh, unbiased perspective.
 
 ## Not This Skill
 

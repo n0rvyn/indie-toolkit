@@ -1,10 +1,10 @@
 # dev-workflow
 
-Cross-stack development workflow plugin for Claude Code. Provides a full plan-execute-review lifecycle with context-efficient agent dispatching.
+Cross-stack development workflow plugin for Claude Code. Provides a full plan-execute-review lifecycle with fresh-context agent dispatching.
 
 ## Architecture
 
-Heavy document-generation and analysis tasks run as **agents** (separate context windows) dispatched via the Task tool. Interactive tasks that need user input or write code stay as **skills** in the main context. The `run-phase` orchestrator dispatches agents and coordinates the sequence.
+Heavy document-generation and analysis tasks run as **agents** (fresh context) dispatched via the Task tool, so each agent starts with an unbiased perspective. Interactive tasks that need user input or write code stay as **skills** in the main context. The `run-phase` orchestrator dispatches agents and coordinates the sequence.
 
 ```
 run-phase (orchestrator, main context)
@@ -86,4 +86,4 @@ run-phase (orchestrator, main context)
 
 - Bug fix, plan verification, and design decision skills use universal methodology (value domain tracing, reverse reasoning, entry point uniqueness, complexity analysis) that works across tech stacks.
 - iOS-specific checks (Design Token consistency, Swift concurrency) are provided by the `apple-dev` plugin's references.
-- Document-generation tasks (plans, specs, guides, audits) run in separate agent contexts to preserve main context for code execution.
+- Document-generation tasks (plans, specs, guides, audits) run in separate agent contexts so each starts with a fresh, unbiased perspective.

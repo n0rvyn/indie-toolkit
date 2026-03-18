@@ -402,7 +402,7 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 If any review found issues:
 
 1. Update state: `phase_step: fix`, `last_updated: <now>`
-2. Read the relevant review report files (paths from Step 5 summaries) to get full issue details
+2. Read the relevant review report files (paths from Step 5 summaries) to get full issue details. Skip entries that are not file paths (e.g., `"user-override"` sentinel values).
 3. List all gaps sorted by severity (critical first, then warnings)
 4. Ask the user: "Fix these gaps before moving on, or mark as known issues?"
 5. If fixing:
@@ -428,6 +428,19 @@ If any review found issues:
    - Then proceed to Step 7
 
 ### Step 7: Phase Completion
+
+0. **Pre-completion gate** (structural enforcement):
+   - Read `review_reports` from state file
+   - If `review_reports` is empty (no reports):
+     **BLOCK**: "Cannot complete phase: no review reports found. Run Step 5 before marking phase as done."
+     Do NOT proceed. Use AskUserQuestion:
+     - Option A: "Run Step 5 now" → return to Step 5
+     - Option B: "Skip review and complete phase" → add `review_reports: ["user-override"]`, log override, proceed
+   - If any review report has verdict ❌ AND `gaps_remaining` > 0:
+     **BLOCK**: "Cannot complete phase: {gaps_remaining} unresolved gaps."
+     Do NOT proceed. Use AskUserQuestion:
+     - Option A: "Fix gaps (Step 6)" → return to Step 6
+     - Option B: "Mark as known issues and complete" → proceed with gaps noted
 
 1. Update state: `phase_step: done`, `last_updated: <now>`
 2. Update the dev-guide:

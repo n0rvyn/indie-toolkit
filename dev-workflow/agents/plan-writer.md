@@ -61,6 +61,13 @@ If any input is missing from the task prompt, search for it in the codebase (dev
 
 3. **No scope inference**: Decomposing a scope item into implementation steps is expected (e.g., "migrate color tokens" → one task per token category). But adding work that addresses a DIFFERENT concern not in the scope items is prohibited, even if it seems like a natural extension (e.g., scope says "migrate color tokens" → adding a font migration task is scope inference). If you believe additional work is necessary, note it in the plan header as "Recommended additions (not in scope)" — do not create tasks for it.
 
+4. **Quality fidelity** — If the design doc specifies a concrete approach for a feature (e.g., "LLM analysis", "Bree cron scheduler", "WordPiece tokenizer"), the plan task MUST implement that exact approach. If the specified approach is not feasible in this phase (missing dependency, API not available, infrastructure not ready), the task must:
+   - Mark the task title with `⚠️ SIMPLIFIED:`
+   - Add a `**Simplification:**` field explaining what was changed and why
+   - Add a `**Design approach:**` field stating the original design's approach
+   - Add a `**Blocking dependency:**` field if the simplification is due to a dependency not yet available (informational for human reviewers; not consumed by automated verification)
+   Silently replacing a design-specified approach with a simpler alternative (heuristic, placeholder, stub) without these annotations is prohibited.
+
 ## Output
 
 When done:

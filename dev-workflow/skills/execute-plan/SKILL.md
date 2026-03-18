@@ -112,8 +112,17 @@ If `.claude/dev-workflow-state.yml` exists and `phase_step` is `execute`:
   - `last_updated`: current timestamp
 - This enables cross-session resume if the session ends mid-execution
 
+**Completion handoff (run-phase context):**
+When `.claude/dev-workflow-state.yml` exists and `phase_step` is `execute`:
+- After all tasks complete and Step 5 (Wrap Up) is reached:
+  - Do NOT suggest implementation-reviewer or finish-branch
+  - Do NOT update `phase_step` in the state file (orchestrator owns state transitions)
+  - Output: "Execution complete. Returning to run-phase for mandatory review."
+  - This prevents the executing agent from bypassing the review step
+
 ## Completion Criteria
 
 - All plan tasks executed and verified
 - Full project build passes (Step 5)
-- Wrap-up suggestions presented (implementation-reviewer, finish-branch)
+- When in run-phase context: text handoff signal output (state update left to orchestrator)
+- When standalone: Wrap-up suggestions presented (implementation-reviewer, finish-branch)

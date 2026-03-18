@@ -51,7 +51,11 @@
 - **Gap B（未接入）**：计划中的新组件是否都有明确的数据流路径
 - **Gap C（旧代码）**：设计中的"替代/删除 X"是否都有对应的计划 task 列出删除目标
 - **Gap D（未建设）**：设计要求是否全部有对应的计划 task（来自步骤 1 的正向映射）
-- **Gap E（退化）**：设计中描述了具体算法/方式的功能，计划的 task 描述是否模糊到允许简化实现
+- **Gap E（退化）**：设计中描述了具体算法/方式的功能，计划是否使用了不同的实现方式
+  **严重性规则**：
+  - 如果 task 使用 `⚠️ SIMPLIFIED:` 标注并包含 `Simplification:` + `Design approach:` 字段 → 分类为 **acknowledged**（用户知情的简化，对应 implementation-reviewer 的 known simplification）
+  - 如果 task 描述了与设计不同的实现方式但未标注 → 分类为 **must-revise**（必须修改：添加标注或恢复设计方案；对应 implementation-reviewer 的 silent degradation）
+  - 关键词检测：task 描述中包含 "simplified"、"heuristic"、"placeholder"、"for now"、"basic"、"stub" 且无 `⚠️ SIMPLIFIED:` 标注 → must-revise
 
 **步骤 4：隐含上下文检查**
 

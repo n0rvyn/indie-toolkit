@@ -274,9 +274,14 @@ For each algorithm, data structure, or approach the design specifies:
 - Read the actual implementation
 - Compare: does the code use the design's approach, or a simplified version?
 
+**Severity rules:**
+- If the plan task was marked `⚠️ SIMPLIFIED:` with `Simplification:` + `Design approach:` fields, AND the code matches the simplified plan → ⚠️ known simplification (not a gap; corresponds to design-faithfulness's acknowledged)
+- If the code uses a different approach than the design WITHOUT any `⚠️ SIMPLIFIED:` annotation in the plan → ❌ must-fix (silent degradation; corresponds to design-faithfulness's must-revise)
+- Keyword detection: code or plan uses "simplified", "heuristic", "placeholder", "stub", "basic", "for now" for design-specified functionality without annotation → ❌ must-fix
+
 Output per item:
 ```
-[E - Degraded] {design_file:line} Design: {approach}, Code: {actual_approach} — ✅ faithful / ❌ simplified
+[E - Degraded] {design_file:line} Design: {approach}, Code: {actual_approach} — ✅ faithful / ⚠️ known simplification (plan annotated) / ❌ silent degradation (must-fix)
 ```
 
 ---

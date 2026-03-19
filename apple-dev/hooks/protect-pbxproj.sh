@@ -42,10 +42,13 @@ except:
 " 2>/dev/null)
 
     # Check if command targets .pbxproj/.xcworkspace with modification intent
+    # Allow git commands (add, commit, diff, log, status, etc.) to pass through
     if echo "$command" | grep -qE '\.(pbxproj|xcworkspace)'; then
-        if echo "$command" | grep -qE '(sed|awk|perl|ruby|python|echo|printf|cat\s*<<|tee|>\s*[^&]|>>)'; then
-            echo "$deny_msg"
-            exit 0
+        if ! echo "$command" | grep -qE '^\s*git\s'; then
+            if echo "$command" | grep -qE '(sed|awk|perl|ruby|python|echo|printf|cat\s*<<|tee|>\s*[^&]|>>)'; then
+                echo "$deny_msg"
+                exit 0
+            fi
         fi
     fi
 fi

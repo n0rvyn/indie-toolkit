@@ -67,6 +67,8 @@ On trigger:
 
 ## Special Cases
 
+**Xcode project files**: `*.xcodeproj` directory contents (e.g., `project.pbxproj`) must always be staged and committed with related changes. Never skip, ignore, or exclude these files; Xcode Cloud relies on them to locate the project.
+
 **Merge commits**: When merging branches, use default merge message. Do not re-split changes.
 
 **Fixup previous commit**: If user says "add to last commit" or "amend":

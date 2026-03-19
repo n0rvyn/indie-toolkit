@@ -85,8 +85,14 @@ Apple platform SwiftUI 代码的 UI + UX 专项审查。在功能模块完成后
 - [ ] 同类组件的 padding 值是否一致？
 - [ ] 同类组件的 background / cornerRadius / shadow 是否一致？
 
+**启发式规则（区块级 View 宽度）**：
+有 `.background()` + `.overlay(strokeBorder)` / `.border()` 的 View，在垂直布局（VStack / ScrollView / List）中如果缺少 `frame(maxWidth: .infinity)`，标记为 🟡。
+- 判定方法：搜索同时含 `.background(` 和 `.strokeBorder(`（或 `.border(`）但不含 `.frame(maxWidth:` 的 View body
+- 排除：badge、button、tag 等内联元素（struct 名含 Badge/Button/Tag/Chip 后缀）
+
 **常见问题**：
 - ❌ `InsightCard` 用 `.frame(maxWidth: .infinity)` 撑满，`ExpenseCard` 无 frame modifier 自适应
+- ❌ `SyncProgressCard` 有 background + strokeBorder 但无 `frame(maxWidth: .infinity)`，导致卡片宽度 hug content
 - ❌ `ProfileRow` padding 16pt，`SettingsRow` padding 12pt
 - ✅ 所有 `*Card` 统一使用 `.frame(maxWidth: .infinity).padding(AppSpacing.sm).clipShape(.rect(cornerRadius: AppCornerRadius.medium))`
 

@@ -14,7 +14,6 @@ description: |
   </example>
 
 model: sonnet
-tools: Read
 color: yellow
 ---
 

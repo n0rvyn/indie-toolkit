@@ -3,7 +3,7 @@ name: inspect
 description: "Use when the user says 'inspect', 'inspection', 'linux inspection', 'host inspection', 'security audit', 'batch inspection', 'inspect hosts', 'inspect setup', 'inspect config', or asks about Linux host security checks. Single human-facing entry point for batch Linux host inspection: setup, run, status, report, and help."
 model: sonnet
 user-invocable: true
-allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/*) Bash(echo*) Bash(mkdir*) Bash(ls*) Bash(pwd*) Read Write
+allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/*) Bash(mkdir*) Bash(ls*) Bash(pwd*) Bash(which*) Read Write
 ---
 
 ## Overview
@@ -68,6 +68,7 @@ Configuration:
     - Inline host definitions (Ansible YAML inventory format)
     - External Ansible YAML inventory file (inventory_file: /path/to/hosts.yml)
     - Host groups, per-host variables, tags
+    - SSH key or password authentication (password auth requires sshpass)
 
 Inspection Categories:
   security       — SSH config, SUID files, users, sudo, firewall, SELinux, permissions, passwords
@@ -115,8 +116,11 @@ Guided first-time configuration.
      - IP or hostname (ansible_host)
      - SSH user (default: root)
      - SSH port (default: 22)
-     - SSH key path (default: ~/.ssh/id_rsa). Only key-based auth is supported (BatchMode=yes).
+     - Authentication method using AskUserQuestion:
+       - "SSH key (recommended)" → ask key path (default: ~/.ssh/id_rsa)
+       - "Password" → ask password. Show note: "SSH key-based auth is recommended for security. Password is stored in plaintext in config and requires sshpass."
      - Need sudo? (yes/no)
+       - If yes and auth is password-based: ask "Use the same password for sudo?" (yes → reuse as become_pass, no → ask for separate sudo password or NOPASSWD)
      - Tags (optional, comma-separated)
    - If 10+: suggest creating an Ansible inventory file instead
 
@@ -140,13 +144,25 @@ Guided first-time configuration.
    Bash(command="mkdir -p ./reports")
    ```
 
-10. **Test connectivity** — for each configured host (up to 3):
+10. **Check sshpass** — if any host uses password auth (`ansible_ssh_pass` is set):
     ```
-    echo "echo ok" | bash "${CLAUDE_PLUGIN_ROOT}/scripts/ssh_exec.sh" "<host>" "<port>" "<user>" "<key>" "10"
+    Bash(command="which sshpass")
     ```
-    Report result per host: ✓ reachable or ✗ unreachable (with error)
+    - If not found: ask the user via AskUserQuestion:
+      - "sshpass is required for password-based SSH but is not installed. Install it?"
+      - Options:
+        - "Yes, install sshpass" → the user approves the install command (brew/apt) manually
+        - "No, switch to SSH key auth" → go back and reconfigure affected hosts with key-based auth
+    - If found: proceed.
 
-11. Output:
+11. **Test connectivity** — for each configured host (up to 3):
+    ```
+    bash "${CLAUDE_PLUGIN_ROOT}/scripts/ssh_exec.sh" "<host>" "<port>" "<user>" "<key>" "10" "false" "sudo" "<password>" <<< "echo ok"
+    ```
+    - Pass `<password>` from the host's `ansible_ssh_pass` field; omit or pass empty if using key auth.
+    - Report result per host: ✓ reachable or ✗ unreachable (with error)
+
+12. Output:
     ```
     [linux-inspect] Setup complete in {CWD}.
       Hosts: {N} ({N} reachable, {N} unreachable)
@@ -188,11 +204,12 @@ Execute the full inspection pipeline.
 4. **Map checks to agents:**
    - Security checks (SEC-*), Network checks (NET-*), Compliance checks (CMP-*) → security-auditor
    - Log checks (LOG-*), System checks (SYS-*), Vulnerability checks (VUL-*) → log-analyzer
+   - Any check ID not matching a known prefix → log-analyzer (fallback)
 
 5. **Dispatch host-connector agent:**
    ```
    Dispatch the `host-connector` agent with:
-   - **hosts**: parsed host list with connection details
+   - **hosts**: parsed host list with connection details (including ansible_ssh_pass, ansible_become_pass if configured)
    - **checks**: full list of checks to execute (all categories)
    - **ssh_script**: "${CLAUDE_PLUGIN_ROOT}/scripts/ssh_exec.sh"
    - **timeout**: from config defaults.timeout
@@ -214,7 +231,7 @@ Execute the full inspection pipeline.
       - **checklist**: checklist content for logs/system/vulnerabilities sections
       - **min_severity**: from config
 
-   Run both agents in parallel for each host. If multiple hosts, dispatch all agents at once.
+   Run both agents in parallel for each host. If multiple hosts, dispatch analysis agents in batches of 3 hosts at a time. Collect all results from one batch before dispatching the next.
 
 7. **Dispatch report-assembler agent:**
    ```
@@ -306,7 +323,7 @@ View or modify configuration.
    - Report directory
 
 3. If user provided a modification request:
-   - **add host**: ask for host details (name, IP, user, port, key, become, tags), add to appropriate group
+   - **add host**: ask for host details (name, IP, user, port, key or password, become, tags), add to appropriate group
    - **remove host**: remove from inventory
    - **add group**: create new group under `all.children`
    - **change category**: update `inspection.categories` list

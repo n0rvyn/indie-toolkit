@@ -16,6 +16,11 @@ defaults:
   timeout: 30                    # SSH command timeout (seconds)
   parallel: 5                    # Max concurrent host connections
 
+# ── Authentication ─────────────────────────────────────────────────
+# SSH key-based authentication is recommended for security and reliability.
+# Password auth is supported but requires sshpass to be installed.
+# Passwords are stored in plaintext in this file — use SSH keys when possible.
+
 # ── External Inventory (optional) ────────────────────────────────────
 # Point to an existing Ansible YAML inventory file.
 # When set, the 'hosts' section below is ignored.
@@ -29,10 +34,10 @@ defaults:
 #   ansible_port          - SSH port (default: 22)
 #   ansible_user          - SSH user (default: from defaults)
 #   ansible_ssh_private_key_file - Path to SSH key
+#   ansible_ssh_pass      - SSH login password (optional; omit to use key-based auth)
 #   ansible_become        - Enable privilege escalation (true/false)
-#   ansible_become_method - Escalation method (sudo/su)
-#   ansible_become_pass   - NOT RECOMMENDED. Do not store passwords in plaintext.
-#                          Configure NOPASSWD in sudoers for the inspection user instead.
+#   ansible_become_method - Escalation method (sudo only)
+#   ansible_become_pass   - sudo password (optional; omit if NOPASSWD is configured)
 #   tags                  - Custom tags for filtering (linux-inspect extension)
 
 all:
@@ -45,6 +50,7 @@ all:
         #   tags: [production, nginx]
         # web2:
         #   ansible_host: 192.168.1.11
+        #   ansible_ssh_pass: "secret"    # password auth (requires sshpass)
         #   tags: [production, nginx]
     dbservers:
       hosts:

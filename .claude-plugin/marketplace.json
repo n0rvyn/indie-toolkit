@@ -71,20 +71,6 @@
       "strict": true
     },
     {
-      "name": "rag-server",
-      "source": "./rag-server",
-      "description": "Local hybrid search MCP server with BM25 + vector similarity for project documentation",
-      "version": "1.1.1",
-      "category": "tooling",
-      "tags": [
-        "mcp",
-        "rag",
-        "search",
-        "embeddings"
-      ],
-      "strict": true
-    },
-    {
       "name": "skill-audit",
       "source": "./skill-audit",
       "description": "Review Claude Code plugins, skills, agents, hooks, and commands from the AI executor perspective",
@@ -134,43 +120,6 @@
         "health",
         "codex",
         "emotion"
-      ],
-      "strict": true
-    },
-    {
-      "name": "linux-inspect",
-      "source": "./linux-inspect",
-      "description": "Adaptive Linux host inspection plugin — single-SSH collector, per-host profiles with auto-evolution, structured analysis with delta awareness. Ansible-compatible inventory.",
-      "version": "2.1.0",
-      "category": "operations",
-      "tags": [
-        "linux",
-        "security",
-        "inspection",
-        "ssh",
-        "vulnerability",
-        "compliance",
-        "audit",
-        "ansible"
-      ],
-      "strict": true
-    },
-    {
-      "name": "oss-governance",
-      "source": "./oss-governance",
-      "description": "Open source governance: multi-host dependency scanning, license compliance, vulnerability audit, and reporting via SSH",
-      "version": "1.0.0",
-      "category": "operations",
-      "tags": [
-        "governance",
-        "compliance",
-        "license",
-        "security",
-        "sbom",
-        "audit",
-        "ansible",
-        "ssh",
-        "dependencies"
       ],
       "strict": true
     }

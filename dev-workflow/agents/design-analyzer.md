@@ -183,8 +183,9 @@ Status definitions:
 ### Spacing
 | Design Value | Existing Token | Status |
 |-------------|---------------|--------|
-| 16px | AppSpacing.sm (16) | ✅ Matched |
+| 16px | AppSpacing.sm (16) or AppLayout.marginCompact (16) | ✅ Matched — use AppLayout if page margin, AppSpacing if component padding |
 | 24px | AppSpacing.md (24) | ✅ Matched |
+| 20px | AppLayout.marginRegular (20) | ✅ Matched — layout constraint, not rhythmic spacing |
 | 6px | — | 🆕 Candidate (nearest: AppSpacing._3xs = 4, AppSpacing._2xs = 8) |
 
 ### Colors

@@ -39,18 +39,46 @@ Grep("IPHONEOS_DEPLOYMENT_TARGET", "*.xcodeproj/project.pbxproj", output_mode="c
 ### 1. Spacing Compliance
 
 **Search for**:
-- `.padding(N)` where N is not 8pt multiple
-- `.spacing(N)` where N is not 8pt multiple
+- `.padding(N)` where N is not on the AppSpacing scale (2/4/8/12/16/24/32/48/64)
+- `.spacing(N)` where N is not on the AppSpacing scale
 - Hardcoded frame sizes
 
 **Valid patterns**:
 - `.padding(AppSpacing.md)`
-- `.padding(16)`  // 8pt multiple
+- `.padding(16)`  // matches AppSpacing.sm
 - `.spacing(AppSpacing.xs)`
+- `.padding(.horizontal, AppLayout.marginCompact)`
 
 **Invalid patterns**:
-- `.padding(15)`  // Not 8pt multiple
-- `.padding(10)`  // Not 8pt multiple
+- `.padding(15)`  // Not on scale
+- `.padding(10)`  // Not on scale
+
+### 1a. Layout Margin Compliance
+
+**Search for**:
+- `.padding(.horizontal, 16)` and `.padding(.horizontal, 20)` in files whose View struct name ends with `View`, `Screen`, or `Page`
+
+Flag ALL occurrences with: "If this is a page-level margin, use `AppLayout.marginCompact` / `AppLayout.marginRegular` instead."
+
+**Valid patterns**:
+- `.padding(.horizontal, AppLayout.marginCompact)`
+- `.padding(.horizontal, AppLayout.marginRegular)`
+- `.frame(maxWidth: AppLayout.maxContentWidth)`
+
+**Invalid patterns** (🟡 advisory):
+- `.padding(.horizontal, 16)` → If page margin, suggest `AppLayout.marginCompact`
+- `.padding(.horizontal, 20)` → If page margin, suggest `AppLayout.marginRegular`
+
+### 1b. Spacing Hierarchy Review (advisory 🟡)
+
+**Heuristic**: Check if VStack/HStack spacing values match the hierarchy level of their children.
+
+| Children type | Expected spacing range | Suggested tokens |
+|---|---|---|
+| Text, Image, Label (leaf elements) | 4–12pt | AppSpacing._3xs ~ .xs |
+| Card, Section, Group (containers) | 24–48pt | AppSpacing.md ~ .xl |
+
+- Flag as 🟡 (advisory, not mandatory) when spacing seems mismatched for the hierarchy level
 
 ### 2. Color Compliance
 
@@ -88,14 +116,15 @@ Grep("IPHONEOS_DEPLOYMENT_TARGET", "*.xcodeproj/project.pbxproj", output_mode="c
 ### 4. Corner Radius Compliance
 
 **Search for**:
-- `cornerRadius(N)` where N is hardcoded
+- `cornerRadius:` values in `.clipShape(.rect(cornerRadius:))` or `RoundedRectangle(cornerRadius:)` where N is hardcoded
 
 **Valid patterns**:
-- `.cornerRadius(AppCornerRadius.medium)`
-- `.cornerRadius(12)`  // If matches AppCornerRadius.medium
+- `.clipShape(.rect(cornerRadius: AppCornerRadius.medium))`
+- `RoundedRectangle(cornerRadius: AppCornerRadius.medium)`
+- `.clipShape(.rect(cornerRadius: 12))`  // If matches AppCornerRadius.medium
 
 **Invalid patterns**:
-- `.cornerRadius(15)`  // Not in standard set
+- `.clipShape(.rect(cornerRadius: 15))`  // Not in standard set
 
 ### 5. Shadow Compliance
 

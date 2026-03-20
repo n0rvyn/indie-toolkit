@@ -62,8 +62,8 @@ For each UI file provided, check the following dimensions:
 
 #### A1. 间距与布局（增强：Token 检查）
 
-- [ ] 间距值是否为 8pt 倍数？（4/8/16/24/32）
-- [ ] 是否使用项目 Design System Token？（`AppSpacing.xs/sm/md/lg` 而非硬编码）
+- [ ] 间距值是否在 AppSpacing scale 上？（2/4/8/12/16/24/32/48/64）
+- [ ] 是否使用项目 Design System Token？（`AppSpacing._4xs/_3xs/_2xs/xs/sm/md/lg/xl/_2xl` + `AppLayout.marginCompact/marginRegular` 而非硬编码）
 - [ ] 触摸目标是否 ≥ 44pt？
 - [ ] 安全区域是否正确处理？
 

@@ -111,7 +111,8 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 **项目 Design System**：
 | 类型 | Token | 示例 |
 |------|-------|------|
-| 间距 | `AppSpacing.xs/sm/md/lg/xl` | 4/8/16/24/32 |
+| 间距 | `AppSpacing._4xs/_3xs/_2xs/xs/sm/md/lg/xl/_2xl` | 2/4/8/12/16/24/32/48/64 |
+| 布局 | `AppLayout.marginCompact/marginRegular/maxContentWidth` | 16/20/672 |
 | 圆角 | `AppCornerRadius.small/medium/large` | 8/12/16 |
 | 颜色 | `Color.appPrimary/appSecondary/...` | 见 DesignSystem.swift |
 | 阴影 | `AppShadow.flat/subtle/small/medium/large` | 5 级 z 轴语义 |

@@ -141,7 +141,7 @@ For each file provided, check the following dimensions:
 ### A8. Design Token 合规性
 
 **检查项**：
-- [ ] 间距是否使用 Design System Token（`AppSpacing.md` 而非硬编码）？
+- [ ] 间距是否使用 Design System Token（`AppSpacing.*` / `AppLayout.*` 而非硬编码）？
 - [ ] 颜色是否使用语义色（`Color.appPrimary` 而非 `Color(hex:)`）？
 - [ ] 字体是否使用动态字体（`.font(.body)` 而非 `.font(.system(size:))`）？
 - [ ] 圆角是否使用 Token（`AppCornerRadius.medium` 而非硬编码 `12`）？

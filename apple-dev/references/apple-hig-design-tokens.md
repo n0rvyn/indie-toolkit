@@ -126,16 +126,25 @@ The body style scales from **14pt** at xSmall to **53pt** at AX5 — a **3.12× 
 
 Apple does not publish a formal grid. The observed system uses **multiples of 4pt** as the de facto base unit.
 
-| Token Name | Value | Usage |
-|-----------|-------|-------|
-| space.xxs | **2pt** | Tight icon-to-text gap |
-| space.xs | **4pt** | Minimum element spacing |
-| space.sm | **8pt** | Default VStack/HStack spacing, view margins |
-| space.md | **16pt** | Standard content padding, cell horizontal margins |
-| space.lg | **20pt** | Content margins on larger iPhones (414pt+ width) |
-| space.xl | **24pt** | Section spacing |
-| space.2xl | **32pt** | Large section gaps |
-| space.3xl | **48pt** | Major layout divisions |
+| Token Name | Value | Swift (AppSpacing) | Hierarchy Level |
+|-----------|-------|-------------------|-----------------|
+| space._4xs | **2pt** | `._4xs` | 极细微调整 |
+| space._3xs | **4pt** | `._3xs` | element ↔ element (icon-to-label) |
+| space._2xs | **8pt** | `._2xs` | element ↔ element (同组元素间距) |
+| space.xs | **12pt** | `.xs` | element ↔ element (列表项、卡片内元素) |
+| space.sm | **16pt** | `.sm` | container padding (卡片内边距、页面水平边距) |
+| space.md | **24pt** | `.md` | group ↔ group (卡片之间、区块间距) |
+| space.lg | **32pt** | `.lg` | section ↔ section (大分组间距) |
+| space.xl | **48pt** | `.xl` | section ↔ section (页面板块间距) |
+| space._2xl | **64pt** | `._2xl` | page-level (页面级大留白) |
+
+**Layout constraints** (non-rhythmic; driven by platform and size class):
+
+| Token Name | Value | Swift (AppLayout) | Usage |
+|-----------|-------|-------------------|-------|
+| layout.margin.compact | **16pt** | `.marginCompact` | iPhone content margin (compact size class) |
+| layout.margin.regular | **20pt** | `.marginRegular` | iPad/Mac content margin (regular size class) |
+| layout.maxContentWidth | **672pt** | `.maxContentWidth` | Readable content width for regular size class |
 
 ### Safe area insets (current devices, portrait)
 
@@ -495,6 +504,23 @@ Use a proportion rule to assign palette layers to semantic token roles. Derive t
 }
 ```
 
+### Semantic layout tokens (JSON, DTCG format)
+
+Layout constraints are structural values driven by platform and size class, separate from the rhythmic spacing scale.
+
+```json
+{
+  "layout": {
+    "margin": {
+      "$type": "dimension",
+      "compact": { "$value": "{spacing.4}", "$description": "16pt — iPhone content margin (compact size class)" },
+      "regular": { "$value": "{spacing.5}", "$description": "20pt — iPad/Mac content margin (regular size class)" }
+    },
+    "maxContentWidth": { "$type": "dimension", "$value": "672pt", "$description": "Readable content width for regular size class" }
+  }
+}
+```
+
 ### Component token specifications
 
 Every interactive component needs tokens for **background, text, border, cornerRadius, padding, height, font, shadow, opacity** across **default, pressed, disabled, focused** states.
@@ -511,8 +537,8 @@ Every interactive component needs tokens for **background, text, border, cornerR
       "text":          { "$value": "{color.text.onBrand}" },
       "textDisabled":  { "$value": "{color.text.tertiary}" },
       "cornerRadius":  { "$value": "{radius.md}" },
-      "paddingX":      { "$value": "{space.md}" },
-      "paddingY":      { "$value": "{space.sm}" },
+      "paddingX":      { "$value": "{space.sm}" },
+      "paddingY":      { "$value": "{space._2xs}" },
       "minHeight":     { "$value": "{ size.touch-target }" },
       "font":          { "$value": "{typography.body}" },
       "fontWeight":    { "$value": "semibold" },
@@ -562,7 +588,7 @@ Every interactive component needs tokens for **background, text, border, cornerR
     "borderWidth":     { "$value": "{border.width.thin}" },
     "cornerRadius":    { "$value": "{radius.sm}" },
     "height":          { "$value": "44" },
-    "paddingX":        { "$value": "{space.sm}" },
+    "paddingX":        { "$value": "{space._2xs}" },
     "fontSize":        { "$value": "17" },
     "labelFont":       { "$value": "{typography.subheadline}" },
     "helperFont":      { "$value": "{typography.caption1}" },
@@ -581,7 +607,7 @@ Every interactive component needs tokens for **background, text, border, cornerR
     "border":          { "$value": "{color.border.default}" },
     "borderWidth":     { "$value": "0" },
     "cornerRadius":    { "$value": "{radius.lg}" },
-    "padding":         { "$value": "{space.md}" },
+    "padding":         { "$value": "{space.sm}" },
     "shadow": {
       "$type": "shadow",
       "$value": { "offsetX": "0", "offsetY": "2", "blur": "8", "spread": "0", "color": "#00000014" }
@@ -618,7 +644,7 @@ Every interactive component needs tokens for **background, text, border, cornerR
     "rowBg":         { "$value": "{color.bg.primary}" },
     "separator":     { "$value": "{color.border.default}" },
     "separatorInset": { "$value": "16" },
-    "cellPadding":   { "$value": "{space.md}" },
+    "cellPadding":   { "$value": "{space.sm}" },
     "primaryText":   { "$value": "{typography.body}" },
     "secondaryText": { "$value": "{typography.subheadline}" },
     "secondaryColor": { "$value": "{color.text.secondary}" }
@@ -663,8 +689,8 @@ Tokens adapt between compact and regular width size classes. The system uses pla
 
 | Token | Compact (iPhone) | Regular (iPad/Mac) |
 |-------|-----------------|-------------------|
-| layout.margin | **16pt** | **20pt** |
-| layout.maxContentWidth | **100%** | **672pt** (readable width) |
+| layout.margin | **16pt** `{layout.margin.compact}` | **20pt** `{layout.margin.regular}` |
+| layout.maxContentWidth | **100%** | **672pt** `{layout.maxContentWidth}` |
 | nav.style | Stack | Split (sidebar) |
 | list.rowHeight | **44pt** | **44pt** (or denser on Mac) |
 | typography.scale | 1.0× | 1.0× (same text styles) |
@@ -762,6 +788,7 @@ This is the full primitive layer generated from the sporty ThemeConfig:
   "spacing": {
     "$type": "dimension",
     "0":   { "$value": "0pt" },
+    "0.5": { "$value": "2pt" },
     "1":   { "$value": "4pt" },
     "2":   { "$value": "8pt" },
     "3":   { "$value": "12pt" },

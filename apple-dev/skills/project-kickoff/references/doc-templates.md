@@ -209,6 +209,18 @@ enum AppSpacing {
     static let _2xl: CGFloat = 64
 }
 
+// MARK: - Layout
+
+/// 页面级布局约束 — 非节奏值，由平台和 size class 驱动
+enum AppLayout {
+    /// 16pt — iPhone 内容边距 (compact size class)
+    static let marginCompact: CGFloat = 16
+    /// 20pt — iPad/Mac 内容边距 (regular size class)
+    static let marginRegular: CGFloat = 20
+    /// 672pt — regular size class 最大内容宽度
+    static let maxContentWidth: CGFloat = 672
+}
+
 // MARK: - Corner Radius
 
 enum AppCornerRadius {

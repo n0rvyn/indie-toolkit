@@ -75,7 +75,6 @@ run-phase (orchestrator, main context)
 |-------|--------|---------|
 | SessionStart | check-workflow-state.sh | Detects in-progress phase, prompts resume |
 | PreToolUse (Bash) | scan-secrets.sh | Intercepts git commit, blocks if secrets detected in staged content |
-| Stop | suggest-compact.sh | Suggests /compact at phase transitions when tool call count is high |
 | UserPromptSubmit | suggest-skills.sh | Pattern-matches user prompt and suggests relevant skills |
 
 ## Workflow State

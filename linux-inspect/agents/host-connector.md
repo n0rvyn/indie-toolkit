@@ -122,4 +122,4 @@ stats:
 5. **No invented data.** If a command produces no output, return empty string. Do not fabricate results.
 6. **Escape safely.** Commands are piped via stdin to avoid shell injection.
 7. **Privilege escalation.** Use become/become_method as configured per host. Only `sudo` is supported. If sudo fails (requires password but none configured), record the error and continue.
-8. **Truncate large output.** If any single check output exceeds 200 lines, keep the first 200 lines and append `[truncated: N lines total, showing first 200]`. This prevents context overflow in downstream analysis agents.
+8. **Truncate large output.** If any single check output exceeds 500 lines, keep the first 500 lines and append `[truncated: N lines total, showing first 500]`. This keeps output within downstream analysis agents' context budget (~200K).

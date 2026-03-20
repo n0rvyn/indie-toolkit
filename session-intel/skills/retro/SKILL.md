@@ -55,9 +55,9 @@ For each parsed session, dispatch the `session-intel:session-parser` agent:
 - Merge all enriched fields back into the session data
 
 **Batching**: Combine multiple sessions into a single agent prompt to reduce dispatch count:
-- Up to 5 sessions per agent call (pass all 5 session JSONs in one prompt)
-- For >20 sessions: skip LLM enrichment for sessions with <5 user turns (mark as "mixed" DNA, empty summary)
-- This keeps total agent dispatches under 10 even for 30-day retros
+- Up to 10 sessions per agent call (pass all 10 session JSONs in one prompt)
+- For >40 sessions: skip LLM enrichment for sessions with <5 user turns (mark as "mixed" DNA, empty summary)
+- This keeps total agent dispatches manageable even for 30-day retros
 
 **Parallelism**: Launch multiple batch agent calls in parallel when possible.
 

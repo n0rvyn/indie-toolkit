@@ -218,9 +218,9 @@ Synthesize unread insights into a briefing.
    "No unread insights. Last scan: {date}. Run /scan to collect new data."
    → **stop**
 
-3. If count > 50: sort files by filename (which encodes date) descending, take the most recent 50. Output: `"Showing most recent 50 of {N} unread insights. Run /intel brief again for the rest."`
+3. If count > 150: sort files by filename (which encodes date) descending, take the most recent 150. Output: `"Showing most recent 150 of {N} unread insights. Run /intel brief again for the rest."`
 
-4. Read the selected unread insight files (up to 50).
+4. Read the selected unread insight files (up to 150).
 
 5. Find any convergence signal files from the same dates:
    ```

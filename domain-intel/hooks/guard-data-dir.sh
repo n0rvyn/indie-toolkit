@@ -33,6 +33,10 @@ case "$content" in
   *"selection_reason:"*)        is_intel_data=true ;;
   *"# Convergence Signals"*)    is_intel_data=true ;;
   *"# Trend Snapshot"*)         is_intel_data=true ;;
+  *"## Core Question"*)         is_intel_data=true ;;
+  *"## Angles of Interest"*)    is_intel_data=true ;;
+  *"# Research Report"*)        is_intel_data=true ;;
+  *"# Research Update"*)        is_intel_data=true ;;
 esac
 
 # Also check if content has the specific frontmatter combo used by insight files

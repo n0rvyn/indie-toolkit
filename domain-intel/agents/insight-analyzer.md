@@ -4,7 +4,7 @@ description: |
   Deep analysis agent for domain intelligence.
   Applies source-specific prompts to extract structured insights from raw collected items.
   Two-stage: quick screen → deep analysis. Produces significance-scored, tagged insight records.
-  Supports six source types: GitHub repos, Product Hunt launches, RSS articles, official changelogs, notable figures, and company news.
+  Supports ten source types: GitHub repos, Product Hunt launches, RSS articles, official changelogs, notable figures, company news, academic papers, YouTube videos, community discussions, and general web articles.
   Uses LENS.md context for personalized relevance calibration when available.
 
   Examples:
@@ -42,7 +42,7 @@ When `lens_context` is provided, use it as your primary relevance compass. The u
 
 You will receive:
 1. **items** — list of raw items (url, title, source, snippet, metadata)
-2. **source_type** — github | producthunt | rss | official | figure | company (all items in this batch share the same source type)
+2. **source_type** — github | producthunt | rss | official | figure | company | academic | youtube | community | web (all items in this batch share the same source type)
 3. **domains** — domain definitions with name (for categorization)
 4. **significance_threshold** — minimum score to include in output
 5. **date** — today's date (for generating IDs)
@@ -207,6 +207,90 @@ For each company-sourced item, answer through the lens defined in LENS.md (or th
 - **3**: Meaningful update that signals direction; confirms or accelerates a known trend.
 - **2**: Incremental product update; expected evolution without strategic surprise.
 - **1**: Minor announcement, hiring news, or routine update with no strategic signal.
+
+---
+
+#### Academic Paper Analysis
+
+For each academic-sourced item, answer through the lens of someone evaluating whether this research matters for practical applications:
+
+1. **Problem** — What research question or gap does this paper address? Why does it matter beyond academia? (1-2 sentences)
+
+2. **Technology** — What methodology or approach is used? Is this theoretical, experimental, or applied? What datasets or frameworks are involved? (1-2 sentences)
+
+3. **Insight** — What are the key findings? What does this paper prove or disprove that practitioners should know? What's the non-obvious implication for people building real systems? (1-2 sentences)
+
+4. **Difference** — How does this advance beyond prior work? What assumption does it challenge? Is this confirmatory or novel? (1-2 sentences)
+
+**Significance scoring for academic:**
+- **5**: Landmark paper; introduces a new paradigm, achieves a major breakthrough, or provides definitive evidence on a contested question. Will reshape how practitioners think.
+- **4**: Novel approach with strong evidence; practical implications are clear and actionable. Worth reading in full.
+- **3**: Incremental contribution to an active research area; adds useful data points or minor methodological improvements.
+- **2**: Survey or review paper; useful for orientation but contains no new findings. Or a paper with weak evidence for its claims.
+- **1**: Tangentially related to the topic; no actionable insights for practitioners.
+
+---
+
+#### YouTube Video Analysis
+
+For each YouTube-sourced item, answer through the lens of someone filtering video content for genuine signal vs. noise. The `metadata` field may contain `channel: {name}` and `views: {N}`.
+
+1. **Problem** — What topic or question does this video address? What's the context — tutorial, interview, talk, review, commentary? (1-2 sentences)
+
+2. **Technology** — What specific technical content is covered? What tools, frameworks, or approaches are demonstrated or discussed? (1-2 sentences)
+
+3. **Insight** — What does this video communicate that isn't easily found in text form? Does the speaker have unique expertise or access? What's the key takeaway? (1-2 sentences)
+
+4. **Difference** — How does this content differ from the mainstream narrative? Is the speaker offering an original perspective, or repeating common knowledge? (1-2 sentences)
+
+**Significance scoring for YouTube:**
+- **5**: Original deep analysis or exclusive information from a domain expert; content that changes understanding of the topic. High production value paired with genuine expertise.
+- **4**: Expert interview or technical deep-dive with unique insights; speaker has firsthand experience or access that text sources don't capture.
+- **3**: Solid educational content; well-structured tutorial or review that adds practical value even if not groundbreaking.
+- **2**: News coverage or surface-level commentary; restates information available elsewhere without adding depth.
+- **1**: Clickbait, promotional content, or surface-level overview with no technical substance.
+
+---
+
+#### Community Discussion Analysis
+
+For each community-sourced item (Reddit, Hacker News, forums), answer through the lens of someone mining collective practitioner experience. The `metadata` field may contain `platform: {name}`.
+
+1. **Problem** — What topic or question is being discussed? What prompted this discussion — a release, an incident, a question, a controversy? (1-2 sentences)
+
+2. **Technology** — What specific technical aspects are being discussed? Are participants sharing code, benchmarks, comparisons, or architectural decisions? (1-2 sentences)
+
+3. **Insight** — What's the collective signal? Is there consensus or disagreement? Are practitioners sharing real-world experiences (production usage, migration stories, failures) that differ from official documentation? (1-2 sentences)
+
+4. **Difference** — How does the community perspective differ from official sources or media coverage? Are there warnings, caveats, or practical tips that only emerge from actual usage? (1-2 sentences)
+
+**Significance scoring for community:**
+- **5**: Primary source or insider information; someone with direct involvement sharing non-public details. Or a discussion revealing a widespread real-world problem not covered elsewhere.
+- **4**: Deep technical discussion with multiple experienced practitioners contributing concrete evidence, benchmarks, or migration experiences.
+- **3**: Useful thread with practical tips and real-world validation of approaches; adds practitioner perspective to a known topic.
+- **2**: Opinions and speculation without strong evidence; discussion without clear resolution or actionable takeaways.
+- **1**: Noise; low-quality comments, repetitive complaints, or off-topic tangents.
+
+---
+
+#### Web Article Analysis
+
+For web articles from search results, industry media, official sites, or institutional sources — the catch-all for items that don't fit other source types. Uses the same lens as RSS analysis.
+
+1. **Problem** — What question or challenge does this article address? Why does it matter now? (1-2 sentences)
+
+2. **Technology** — What technical concepts, frameworks, or approaches are discussed? At what level of maturity? (1-2 sentences)
+
+3. **Insight** — What is the non-obvious takeaway? What does the author know or argue that most readers don't yet appreciate? (1-2 sentences)
+
+4. **Difference** — How does this perspective differ from the mainstream view? What assumption does it challenge? (1-2 sentences)
+
+**Significance scoring for web:**
+- **5**: Original analysis revealing a non-obvious shift. Changes how you think about the topic.
+- **4**: Deep insight with practical implications. You'd bookmark this and revisit.
+- **3**: Well-argued perspective; adds to understanding without being groundbreaking.
+- **2**: Standard coverage of known developments; confirms but doesn't extend.
+- **1**: Rehash of common knowledge; listicle; promotional content disguised as insight.
 
 ---
 

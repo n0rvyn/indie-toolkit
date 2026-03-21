@@ -1,6 +1,6 @@
 # domain-intel
 
-Domain intelligence engine for Claude Code. Automated collection, AI analysis, and trend synthesis from GitHub (via API), Product Hunt, RSS, official changelogs, notable figures, and company news.
+Domain intelligence engine for Claude Code. Automated collection, AI analysis, and trend synthesis from GitHub (via API), Product Hunt, RSS, official changelogs, notable figures, and company news. Includes targeted deep research with evolving focus profiles.
 
 ## Quick Start
 
@@ -46,14 +46,83 @@ Switch profiles by switching directories. No global config needed.
 | `/scan` | sonnet | Pipeline orchestrator: collect, filter, analyze, store |
 | `/digest` | sonnet | Generate daily/weekly digest with trend synthesis |
 | `/intel` | sonnet | Human entry point: status, briefing, Q&A, config, evolve |
+| `/research` | sonnet | Targeted deep research: full scan, incremental updates, evolving focus |
 
 ## Agents
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
 | source-scanner | sonnet | Collection from GitHub (gh API), Product Hunt (GraphQL API), RSS, official changelogs, figures, companies (optional Playwright fallback for JS-rendered pages) |
-| insight-analyzer | sonnet | Deep analysis with source-specific prompts, LENS-aware |
+| research-scanner | sonnet | Multi-source topic-focused collection: search engines, GitHub, academic, YouTube, community, media, official, institutions |
+| insight-analyzer | sonnet | Deep analysis with source-specific prompts, LENS/FOCUS-aware |
 | trend-synthesizer | sonnet | Cross-insight pattern detection and synthesis |
+| research-synthesizer | sonnet | Report-oriented synthesis with entity extraction, opinion spectrum, timeline |
+| focus-evolver | sonnet | Research focus evolution from user feedback and signals |
+
+## Deep Research (`/research`)
+
+Targeted deep research on a specific topic across the entire internet.
+
+```
+/research OpenCLaw              # First run: init + full deep research
+/research OpenCLaw              # Subsequent: show status
+/research OpenCLaw refine       # Update focus based on your interests
+/research OpenCLaw update       # Incremental scan with evolved focus
+```
+
+### How It Works
+
+1. **Init**: Ask for your core question and angles of interest, auto-discover aliases
+2. **Broad scan**: Search engines, GitHub, arXiv, YouTube, Reddit/HN, industry media, official sites, institutions
+3. **3-tier filter**: URL dedup, title dedup, relevance scoring against your FOCUS
+4. **Deep analysis**: Source-specific prompts extract structured findings
+5. **Recursive depth**: Discover key entities in first pass, then search specifically for their positions
+6. **Comprehensive report**: Overview, entity graph, opinion spectrum, timeline, information gaps
+
+### FOCUS.md
+
+Each research topic has its own evolving profile:
+- **Core Question**: What you're trying to understand
+- **Angles of Interest**: Ordered dimensions to explore (position = search budget weight)
+- **Active Questions**: Concrete questions to prioritize
+- **De-prioritized**: Aspects to skip
+- **Key Entities**: Discovered people, orgs, projects, papers
+
+After reading a report, run `/research <topic> refine` to express your interests naturally. The system proposes FOCUS.md updates for your approval.
+
+### Research Directory Structure
+
+```
+./Research/<topic-slug>/
+├── FOCUS.md                    # Your research profile (evolves over time)
+├── config.yaml                 # Source toggles and scan parameters
+├── state.yaml                  # Scan stats and seen URLs
+├── .focus-signals.yaml         # Accumulated evolution signals
+├── findings/YYYY-MM/           # Individual finding files
+├── reports/                    # Comprehensive and incremental reports
+└── timeline.md                 # Chronological timeline
+```
+
+### Research Pipeline
+
+```
+Topic + FOCUS.md
+    | research-scanner (sonnet) — 8 source categories
+    v
+Raw Items
+    | 3-tier filter (URL dedup → title dedup → FOCUS-aware scoring)
+    v
+Filtered Items
+    | insight-analyzer (sonnet) × N source types (parallel)
+    v
+First-Pass Findings
+    | entity-driven second pass (depth)
+    v
+All Findings
+    | research-synthesizer (sonnet)
+    v
+Report + Entity Graph + Timeline
+```
 
 ## LENS.md
 

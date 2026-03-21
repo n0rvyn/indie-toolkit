@@ -124,6 +124,21 @@
         "emotion"
       ],
       "strict": true
+    },
+    {
+      "name": "yt-intel",
+      "source": "./yt-intel",
+      "description": "YouTube video curation tool - scrapes recommended/search videos, extracts transcripts, scores with Claude AI on 6 dimensions, outputs TOP-5 recommendations + FYI summaries",
+      "version": "1.0.0",
+      "category": "intelligence",
+      "tags": [
+        "youtube",
+        "curation",
+        "video",
+        "recommendations",
+        "transcripts"
+      ],
+      "strict": true
     }
   ]
 }

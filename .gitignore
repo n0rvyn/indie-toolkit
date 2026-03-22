@@ -16,3 +16,4 @@ __pycache__/
 /.claude
 /.codex
 VALIDATION_REPORT.md
+pkos/scripts/.voice-transcribe-bin

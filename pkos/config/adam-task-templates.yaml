@@ -1,0 +1,142 @@
+# PKOS Task Templates for Adam
+# Load via Adam API: POST /task-templates for each entry
+# Or import via Adam CLI when available
+
+templates:
+  - id: pkos-inbox
+    name: "PKOS Inbox Monitor"
+    description: "Process pending items from Reminders, Notes, and voice files"
+    trigger:
+      type: cron
+      cron: "*/15 * * * *"  # Every 15 minutes
+    steps:
+      - id: process-inbox
+        prompt: "/inbox"
+    tags: [pkos, inbox, pipeline]
+    config:
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/pkos"]
+      maxBudgetUsd: 1.0
+      maxTurns: 50
+
+  - id: pkos-domain-scan
+    name: "PKOS Domain Intel Scan"
+    description: "Run domain-intel collection pipeline"
+    trigger:
+      type: cron
+      cron: "0 8,20 * * *"  # Twice daily at 8am and 8pm
+    steps:
+      - id: scan
+        prompt: "/scan"
+    tags: [pkos, domain-intel, collection]
+    config:
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/domain-intel"]
+      maxBudgetUsd: 2.0
+      maxTurns: 100
+
+  - id: pkos-yt-scan
+    name: "PKOS YouTube Scan"
+    description: "Run yt-intel curation pipeline"
+    trigger:
+      type: cron
+      cron: "0 12 * * *"  # Daily at noon
+    steps:
+      - id: scan
+        prompt: "/yt-scan"
+    tags: [pkos, yt-intel, collection]
+    config:
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/yt-intel"]
+      maxBudgetUsd: 2.0
+      maxTurns: 100
+
+  - id: pkos-signal
+    name: "PKOS Signal Aggregator"
+    description: "Collect behavioral signals from Notion + Obsidian"
+    trigger:
+      type: cron
+      cron: "0 22 * * *"  # Daily at 10pm
+    steps:
+      - id: collect-signals
+        prompt: "/signal --days 1"
+    tags: [pkos, signal, feedback]
+    config:
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/pkos"]
+      maxBudgetUsd: 0.5
+      maxTurns: 30
+
+  - id: pkos-digest
+    name: "PKOS Daily Digest"
+    description: "Generate daily digest for Obsidian + Notion"
+    trigger:
+      type: cron
+      cron: "30 7 * * *"  # Daily at 7:30am
+    steps:
+      - id: generate-digest
+        prompt: "/digest --type daily"
+    tags: [pkos, digest, daily]
+    config:
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/pkos"]
+      maxBudgetUsd: 0.5
+      maxTurns: 30
+
+  - id: pkos-sync
+    name: "PKOS Notion Sync"
+    description: "Sync latest processing status to Notion Pipeline DB"
+    trigger:
+      type: event
+      event: "template_complete:pkos-inbox"
+    steps:
+      - id: sync
+        prompt: "Query Notion Pipeline DB for items with Status 'inbox' and check if corresponding Obsidian notes exist. Update status to 'processed' for items that have been routed."
+    tags: [pkos, sync, notion]
+    config:
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/pkos"]
+      maxBudgetUsd: 0.3
+      maxTurns: 20
+
+  - id: pkos-review
+    name: "PKOS Weekly Review"
+    description: "Generate weekly review with digest + signal analysis"
+    trigger:
+      type: cron
+      cron: "0 9 * * 0"  # Weekly on Sunday at 9am
+    steps:
+      - id: weekly-digest
+        prompt: "/digest --type weekly"
+      - id: evolve-suggestions
+        prompt: "/evolve --days 7"
+        dependsOn: weekly-digest
+    tags: [pkos, review, weekly]
+    config:
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/pkos"]
+      maxBudgetUsd: 1.5
+      maxTurns: 80
+
+  - id: pkos-serendipity
+    name: "PKOS Serendipity Discovery"
+    description: "Find unexpected cross-domain connections in knowledge graph"
+    trigger:
+      type: cron
+      cron: "0 10 * * 0"  # Weekly on Sunday at 10am (after review)
+    steps:
+      - id: discover
+        prompt: "/serendipity --count 5"
+    tags: [pkos, serendipity, weekly]
+    config:
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/pkos"]
+      maxBudgetUsd: 1.0
+      maxTurns: 50
+
+  - id: pkos-evolve
+    name: "PKOS Profile Evolution"
+    description: "Generate LENS/FOCUS update suggestions from weekly signals"
+    trigger:
+      type: event
+      event: "template_complete:pkos-review"
+    steps:
+      - id: evolve
+        prompt: "/evolve --days 7"
+    tags: [pkos, evolve, feedback]
+    config:
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/pkos"]
+      maxBudgetUsd: 0.5
+      maxTurns: 30

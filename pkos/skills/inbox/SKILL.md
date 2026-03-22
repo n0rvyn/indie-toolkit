@@ -122,55 +122,30 @@ status: seed
 {raw_content}
 ```
 
-2. Create Notion Pipeline DB entry via MCP:
+2. Create Notion Pipeline DB entry via Python API (token and proxy from env):
+```bash
+NO_PROXY="*" python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item \
+  32a1bde4-ddac-81ff-8f82-f2d8d7a361d7 \
+  "{title}" \
+  --props '{"Status": "inbox", "Source": "{source}", "Type": "{classification}", "Topics": "{topics_csv}", "Priority": "{urgency}"}'
 ```
-mcp__claude_ai_Notion__notion-create-pages(
-  parent: {"data_source_id": "32a1bde4-ddac-8182-830b-000bbcbf077d"},
-  pages: [{"properties": {
-    "Title": "{title}",
-    "Status": "inbox",
-    "Source": "{source}",
-    "Type": "{classification}",
-    "Topics": "[{topics_json_array}]",
-    "Priority": "{urgency}",
-    "date:Created:start": "{today}",
-    "date:Created:is_datetime": 0
-  }}]
-)
-```
-Note the returned page ID.
+Note the returned page ID from output.
 
-3. Update Notion status after Obsidian note written via MCP:
-```
-mcp__claude_ai_Notion__notion-update-page(
-  page_id: "{notion_page_id}",
-  command: "update_properties",
-  properties: {
-    "Status": "processed",
-    "Obsidian Link": "obsidian://open?vault=PKOS&file={obsidian_path_encoded}",
-    "date:Processed:start": "{today}",
-    "date:Processed:is_datetime": 0
-  }
-)
+3. Update Notion status after Obsidian note written:
+```bash
+NO_PROXY="*" python3 ~/.claude/skills/notion/scripts/notion_api.py update-db-item-properties \
+  {notion_page_id} \
+  --props '{"Status": "processed", "Obsidian Link": "obsidian://open?vault=PKOS&file={obsidian_path_encoded}"}'
 ```
 
 **B. task → Notion only (no Obsidian note)**
 
-1. Create Notion Pipeline DB entry with Status "actionable" via MCP:
-```
-mcp__claude_ai_Notion__notion-create-pages(
-  parent: {"data_source_id": "32a1bde4-ddac-8182-830b-000bbcbf077d"},
-  pages: [{"properties": {
-    "Title": "{title}",
-    "Status": "actionable",
-    "Source": "{source}",
-    "Type": "task",
-    "Topics": "[{topics_json_array}]",
-    "Priority": "{urgency}",
-    "date:Created:start": "{today}",
-    "date:Created:is_datetime": 0
-  }}]
-)
+1. Create Notion Pipeline DB entry with Status "actionable":
+```bash
+NO_PROXY="*" python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item \
+  32a1bde4-ddac-81ff-8f82-f2d8d7a361d7 \
+  "{title}" \
+  --props '{"Status": "actionable", "Source": "{source}", "Type": "task", "Topics": "{topics_csv}", "Priority": "{urgency}"}'
 ```
 
 2. If urgency is high or a due date is mentioned, create a Reminder:
@@ -228,7 +203,7 @@ All items synced to Notion Pipeline DB.
 
 ## Notion Configuration
 
-- Pipeline DB data source ID: `32a1bde4-ddac-8182-830b-000bbcbf077d`
-- Access method: Notion MCP (built-in, no token/proxy needed)
-- MCP tools: `mcp__claude_ai_Notion__notion-create-pages`, `mcp__claude_ai_Notion__notion-update-page`
-- Topics multi_select: only use existing options; to add new topics, update data source schema first
+- Pipeline DB ID: `32a1bde4-ddac-81ff-8f82-f2d8d7a361d7`
+- Access method: Python API (`~/.claude/skills/notion/scripts/notion_api.py`)
+- Token + proxy: provided via Adam template env (`NOTION_TOKEN`, `NO_PROXY`)
+- Topics multi_select: use existing options from DB schema

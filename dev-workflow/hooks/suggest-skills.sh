@@ -1,6 +1,6 @@
 #!/bin/bash
 # UserPromptSubmit hook: match user input and suggest relevant skills.
-# Injects a one-line suggestion as context. Max 1 suggestion per prompt.
+# Injects suggestions as context. Audit-hint and skill-hint can coexist.
 
 input=$(cat)
 
@@ -22,6 +22,21 @@ fi
 # Skip very short prompts (greetings, yes/no)
 if [ ${#prompt} -lt 6 ]; then
   exit 0
+fi
+
+# Audit staleness check (non-blocking; falls through to skill suggestions)
+_audit_lower=$(echo "$prompt" | tr '[:upper:]' '[:lower:]')
+if echo "$_audit_lower" | grep -qE 'commit|提交|write.*plan|计划|dev.?guide|开发指南'; then
+  _audit_file=".claude/last-audit-commit"
+  if [ -f "$_audit_file" ]; then
+    _stored_sha=$(head -1 "$_audit_file" 2>/dev/null)
+    if [ -n "$_stored_sha" ] && git rev-parse HEAD >/dev/null 2>&1; then
+      _count=$(git rev-list --count "$_stored_sha"..HEAD 2>/dev/null)
+      if [ -n "$_count" ] && [ "$_count" -ge 20 ]; then
+        echo "[audit-hint] 距上次代码审计已有 ${_count} 个 commit，建议运行 /code-audit"
+      fi
+    fi
+  fi
 fi
 
 # Lowercase for matching

@@ -133,7 +133,8 @@ Mark any breaks: signal with no consumer, call to nonexistent target, field writ
 5. **Decision Points:** Check the agent's report for `Decisions:` count.
    - If Decisions > 0: read the `## Decisions` section from the drift report
    - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
-   - For each `recommended` decision: present as a group — "The drift audit has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
+   - For `recommended` decisions: present as a group via a single AskUserQuestion. **Critical:** all DP content must be inside the `question` field — text printed before AskUserQuestion gets visually covered by the question widget. Read each recommended DP's full block (heading + Context + Options + Recommendation) from the drift report and concatenate them verbatim in the question field, separated by `\n---\n`. End with: `\n\n全部接受推荐，还是逐个审查？`
+   - If the user does NOT choose to accept all: present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it
    - Record user choices in conversation (note which option was chosen for each DP)
    - Then proceed to Completion Criteria
 

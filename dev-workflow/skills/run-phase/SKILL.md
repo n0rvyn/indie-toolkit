@@ -241,8 +241,9 @@ These are past lessons from this project. Incorporate relevant ones to avoid kno
 9. **Decision Points:** Check the plan-writer's return for `Decisions:` count.
    - If Decisions > 0: read the `## Decisions` section from the plan file
    - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
-   - For each `recommended` decision: present as a group — "The plan has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
-   - Record user choices: edit the plan file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+   - For `recommended` decisions: present as a group via a single AskUserQuestion. **Critical:** all DP content must be inside the `question` field — text printed before AskUserQuestion gets visually covered by the question widget. Read each recommended DP's full block (heading + Context + Options + Recommendation) from the plan file and concatenate them verbatim in the question field, separated by `\n---\n`. End with: `\n\n全部接受推荐，还是逐个审查？`
+   - If the user does NOT choose to accept all: present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it
+   - Record user choices: edit the plan file, replace the `**Recommendation:**` or `**Recommendation (unverified):**` line with `**Chosen:** {user's choice}`
 10. Auto-select verification speed: count tasks in the returned plan file.
    If task count < 5: mark `--fast` flag for Step 3 (use Sonnet for verification).
    If task count ≥ 5: no flag (use Opus default).
@@ -386,8 +387,9 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 5. **Feature spec decision points:** If feature-spec-writer was dispatched, check its return for `Decisions:` count.
    - If Decisions > 0: read the `## Decisions` section from the spec file
    - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
-   - For each `recommended` decision: present as a group — "The spec has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
-   - Record user choices: edit the spec file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+   - For `recommended` decisions: present as a group via a single AskUserQuestion. **Critical:** all DP content must be inside the `question` field — text printed before AskUserQuestion gets visually covered by the question widget. Read each recommended DP's full block (heading + Context + Options + Recommendation) from the spec file and concatenate them verbatim in the question field, separated by `\n---\n`. End with: `\n\n全部接受推荐，还是逐个审查？`
+   - If the user does NOT choose to accept all: present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it
+   - Record user choices: edit the spec file, replace the `**Recommendation:**` or `**Recommendation (unverified):**` line with `**Chosen:** {user's choice}`
 
 6. **Surface human verification items:** If any review report's compact summary shows 人工验证项 > 0 or 设备验证项 > 0:
    - Read each report file that has verification items
@@ -413,11 +415,21 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 
 ### Step 6: Fix Gaps
 
-If any review found issues:
+If any review found issues (plan-vs-code gaps > 0, or pre-existing issues > 0):
 
 1. Update state: `phase_step: fix`, `last_updated: <now>`
 2. Read the relevant review report files (paths from Step 5 summaries) to get full issue details. Skip entries that are not file paths (e.g., `"user-override"` sentinel values).
 3. List all gaps sorted by severity (critical first, then warnings)
+   Separate gaps by origin:
+   - **Plan gaps**: issues introduced by or missed during plan execution
+   - **Pre-existing issues**: problems discovered during review that existed before this phase (from implementation-reviewer's `### Pre-existing Issues` section or R9 `pre-existing` entries)
+
+   Present them separately:
+   > 计划执行问题（{N} 个）：
+   > - {gap list}
+   >
+   > 发现的已有问题（{M} 个）：
+   > - {issue + root cause from review report}
 4. Ask the user: "Fix these gaps before moving on, or mark as known issues?"
 5. If fixing:
    a. **Separate design issues from code issues.** If design-reviewer report exists among review_reports:
@@ -437,8 +449,9 @@ If any review found issues:
 8. **Decision Points:** Check each review report for `Decisions:` count.
    - If any report has Decisions > 0: read the `## Decisions` section from that report
    - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
-   - For each `recommended` decision: present as a group — "Reviews have {N} recommended decisions with defaults. Accept all defaults, or review individually?"
-   - Record user choices: edit the report file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+   - For `recommended` decisions: present as a group via a single AskUserQuestion. **Critical:** all DP content must be inside the `question` field — text printed before AskUserQuestion gets visually covered by the question widget. Read each recommended DP's full block (heading + Context + Options + Recommendation) from the report file and concatenate them verbatim in the question field, separated by `\n---\n`. End with: `\n\n全部接受推荐，还是逐个审查？`
+   - If the user does NOT choose to accept all: present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it
+   - Record user choices: edit the report file, replace the `**Recommendation:**` or `**Recommendation (unverified):**` line with `**Chosen:** {user's choice}`
    - Then proceed to Step 7
 
 ### Step 7: Phase Completion

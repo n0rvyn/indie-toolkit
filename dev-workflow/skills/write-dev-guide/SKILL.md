@@ -89,7 +89,7 @@ When the agent completes:
 
    - **Recommendation line**: only for `recommended` decisions, append `**推荐:** {option} — {reason}` after the table. For `blocking` decisions, omit this line.
    - **AskUserQuestion**: for `recommended` decisions, mark the recommended option with "(推荐)" in the label. For `blocking` decisions, do not pre-select any option.
-   - Record user choices: edit the dev-guide file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+   - Record user choices: edit the dev-guide file, replace the `**Recommendation:**` or `**Recommendation (unverified):**` line with `**Chosen:** {user's choice}`
 4. Ask user (AskUserQuestion): **确认结构** / **调整结构**（reorder, merge, split）
 5. If user chooses「调整结构」:
    - Re-dispatch the agent with structural revision instructions appended to the original prompt

@@ -86,12 +86,9 @@ When the agent completes:
 5. **Decision Points:** Check the agent's return for `Decisions:` count.
    - If Decisions > 0: read the `## Decisions` section from the verification report
    - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
-   - For `recommended` decisions: present as a group via a single AskUserQuestion. **Critical:** all DP summaries must be inside the `question` field text — text printed before AskUserQuestion gets visually covered by the question widget. Format the question field as:
-     ```
-     验证发现 {N} 个推荐决策：\n\n- DP-xxx: {title} → 推荐 {option} ({reason})\n- DP-yyy: {title} → 推荐 {option} ({reason})\n\n全部接受默认还是逐个审查？
-     ```
+   - For `recommended` decisions: present as a group via a single AskUserQuestion. **Critical:** all DP content must be inside the `question` field — text printed before AskUserQuestion gets visually covered by the question widget. Read each recommended DP's full block (heading + Context + Options + Recommendation) from the verification report and concatenate them verbatim in the question field, separated by `\n---\n`. End with: `\n\n全部接受推荐，还是逐个审查？`
    - If the user does NOT choose "Accept all defaults": present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it
-   - Record user choices: edit the verification report, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+   - Record user choices: edit the verification report, replace the `**Recommendation:**` or `**Recommendation (unverified):**` line with `**Chosen:** {user's choice}`
    - Then proceed to Step 4
 
 ### Step 4: Mark Verified

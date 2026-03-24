@@ -145,8 +145,9 @@ When the agent completes, read the analysis file it created.
 **Decision Points:** After presenting the summary, check the agent's return for `Decisions:` count.
 - If Decisions > 0: read the `## Decisions` section from the analysis file
 - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
-- For each `recommended` decision: present as a group — "The analysis has {N} recommended decisions with defaults. Accept all defaults, or review individually?"
-- Record user choices: edit the analysis file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+- For `recommended` decisions: present as a group via a single AskUserQuestion. **Critical:** all DP content must be inside the `question` field — text printed before AskUserQuestion gets visually covered by the question widget. Read each recommended DP's full block (heading + Context + Options + Recommendation) from the analysis file and concatenate them verbatim in the question field, separated by `\n---\n`. End with: `\n\n全部接受推荐，还是逐个审查？`
+- If the user does NOT choose to accept all: present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it
+- Record user choices: edit the analysis file, replace the `**Recommendation:**` or `**Recommendation (unverified):**` line with `**Chosen:** {user's choice}`
 - Then proceed to next step (suggest /write-plan or provide guidance)
 
 ## Completion Criteria

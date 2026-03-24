@@ -68,8 +68,9 @@ After each batch, report:
 
 **Decision Points:** If the plan file contains a `## Decisions` section with unresolved decisions (no `**Chosen:**` line), present them before the first batch:
 - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
-- For each `recommended` decision: present as a group — "The plan has {N} unresolved recommended decisions. Accept all defaults, or review individually?"
-- Record user choices: edit the plan file, replace `**Recommendation:**` with `**Chosen:** {user's choice}`
+- For `recommended` decisions: present as a group via a single AskUserQuestion. **Critical:** all DP content must be inside the `question` field — text printed before AskUserQuestion gets visually covered by the question widget. Read each recommended DP's full block (heading + Context + Options + Recommendation) from the plan file and concatenate them verbatim in the question field, separated by `\n---\n`. End with: `\n\n全部接受推荐，还是逐个审查？`
+- If the user does NOT choose to accept all: present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it
+- Record user choices: edit the plan file, replace the `**Recommendation:**` or `**Recommendation (unverified):**` line with `**Chosen:** {user's choice}`
 
 Then say: **"Ready for feedback before next batch."**
 

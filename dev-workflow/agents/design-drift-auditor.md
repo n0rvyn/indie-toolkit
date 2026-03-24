@@ -306,6 +306,11 @@ Format per decision:
 **Recommendation:** {option} — {reason, 1 sentence}
 ```
 
+**Recommendation quality rule:**
+- Recommendations must cite code evidence (file:line or structural reasoning grounded in specific code). Example: "Option A; `Router.swift:42` shows routes are registered centrally, extending that pattern is lower-risk"
+- If code evidence is unavailable (decision about a new pattern with no existing precedent): use `**Recommendation (unverified):**` instead of `**Recommendation:**`, and state why evidence is absent
+- Self-check: remove the recommendation. Can a reader reach the same conclusion by following the cited evidence? If not, the evidence is insufficient
+
 Priority levels:
 - `blocking` — must be resolved before remediation can proceed
 - `recommended` — has a sensible default but user should confirm

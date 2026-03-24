@@ -54,7 +54,7 @@ Read the plan file, design doc, design analysis, and crystal file (if provided) 
 ```
 Report: .claude/reviews/plan-verifier-{timestamp}.md
 Verdict: {approved | must-revise}
-[S1] assertions: {N} tested, {M} failed
+[S1] assertions: {N} tested, {M} failed (reported: {X} C>=80, filtered: {Y} C<80)
 [S2] failures: {N} compile, {M} runtime
 [U1] tokens: {N} checked, {M} missing (or "skipped")
 [DF] design faithfulness: {N}/{total} mapped, {M} gaps (or "skipped")
@@ -113,12 +113,21 @@ Do NOT modify the plan file. Return revision instructions only.
   - 删除遗漏：计划说"替代 X"但未列出 X 的所有引用位置？
   - 参数传播：计划修改的组件暴露了可配置参数（Color、Font、CGFloat 等）时，计划的搜索策略是否覆盖了 caller 传入的参数值？grep 旧标识符只捕获定义侧引用，发现不了从未被标识符化的裸值
 
+**置信度评分**（S1 专用）：每条断言结果附 `[C:{score}]`，0-100 分。
+- +20: file:line 证据直接支持判断
+- +20: Grep 结果明确确认或否定预期状态
+- +20: 断言足够具体，可复现的场景
+- +20: 其他策略（S2/DF/CF）的发现印证此断言
+- +20: 符合已知项目模式（from memory）
+
+**阈值 80**：`❌ 断言成立` 但 C < 80 的进入报告末尾的「低置信度发现」附录，不计入 must-revise 项。
+
 **输出格式**：
 
 ```
 [断言 1] 步骤 {N}：{具体错误描述，如 "FeynmanStudentAgent 在 LearningOrchestrator.registerAgents() 中未注册，导致 Feynman 模式下该 Agent 不会被调用"}
 验证：读取 {file:line}
-结果：✅ 断言不成立（{证据}） / ❌ 断言成立 → 计划需补充：{具体修订}
+结果：✅ 断言不成立 [C:90]（{证据}） / ❌ 断言成立 [C:85] → 计划需补充：{具体修订}
 
 [断言 2] ...
 ```
@@ -252,7 +261,7 @@ Read `{Plugin agents dir}/architecture-review.md` and execute all verification s
 ## Plan Verification Summary
 
 ### 策略执行
-- S1 具体候选错误：生成 {N} 条，成立 {M} 条
+- S1 具体候选错误：生成 {N} 条，成立 {M} 条（报告: {X} C>=80, 过滤: {Y} C<80）
 - S2 失败反向推理：编译失败 {N} 条，运行时 regression {N} 条
 - T1 测试覆盖：逻辑 task {N}，有测试 {M}，类型匹配 {K}
 - U1 Token 一致性：检查 {N} 项，缺失 {M} 项
@@ -270,6 +279,9 @@ Read `{Plugin agents dir}/architecture-review.md` and execute all verification s
 
 ### 无需修订（验证通过的部分）
 - {列出验证通过的关键断言，证明计划在这些方面是充分的}
+
+### 低置信度发现 (C < 80)
+- [C:{score}] [S1 断言 {N}] {描述} — 低置信度原因：{说明}
 ```
 
 ---

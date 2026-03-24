@@ -36,6 +36,22 @@ If reviewing code that was just written in this session:
 2. **Context matters**: Verify against actual code, not assumptions
 3. **Be specific**: "Line 42 may throw if X is nil" > "handle errors better"
 
+## Confidence Scoring
+
+Every finding must include a confidence tag after the severity emoji: `🔴 [C:{score}] Must fix`
+
+**Scoring heuristic** (additive):
+- +20: file:line evidence directly supports the finding
+- +20: Grep result confirms or denies the expected state
+- +20: finding is corroborated by another check dimension
+- +20: covers a verified, exercised code path
+- +20: aligns with known project patterns or Apple platform conventions
+
+**Threshold: 80.** Findings with C < 80:
+- Grouped under a `### Low-Confidence Items (C < 80)` section at the end of the review output
+- NOT counted in the main finding list
+- Each entry: `[C:{score}] {finding} — low confidence reason: {explanation}`
+
 ## Priority by Change Type
 
 **New feature**:
@@ -143,7 +159,8 @@ Check for code patterns that cause UI stuttering, memory issues, or excessive re
 - Point out issues directly with file:line references
 - Suggest specific fixes, not vague recommendations
 - If code is solid, say "Looks good" briefly with one-line reason
-- Severity levels: 🔴 Must fix | 🟡 Should fix | 🟢 Consider
+- Severity levels: `🔴 [C:{score}] Must fix | 🟡 [C:{score}] Should fix | 🟢 [C:{score}] Consider`
+- Items with C < 80 go to `## Low-Confidence Items` at the end, not the main list
 
 ## Constraint
 

@@ -1,7 +1,7 @@
 ---
 name: finalize
 description: "Use after all phases of a dev-guide are complete, or when the user says 'finalize', 'final check', 'cross-phase validation'. Runs full test suite, verifies acceptance criteria across all phases, audits cumulative test coverage, and produces a final validation report."
-allowed-tools: Bash(npm:*) Bash(cargo:*) Bash(pytest:*) Bash(go:*) Bash(xcodebuild:*) Bash(swift:*) Bash(git:*) Bash(mkdir:*) Bash(test:*) Bash(cat:*) Bash(ls:*) Bash(date:*) Bash(wc:*)
+allowed-tools: Bash(npm:*) Bash(cargo:*) Bash(pytest:*) Bash(go:*) Bash(xcodebuild:*) Bash(swift:*) Bash(git:*) Bash(mkdir:*) Bash(test:*) Bash(cat:*) Bash(ls:*) Bash(date:*) Bash(wc:*) Bash(find:*)
 ---
 
 ## Overview
@@ -12,6 +12,7 @@ Cross-phase validation gate. Runs after all dev-guide phases are complete to cat
 Validate preconditions (all phases done?)
   → Full test suite (0 fail, 0 skip)
   → Cross-phase acceptance criteria regression check
+  → Dev-guide scope deliverable verification
   → Cumulative test coverage audit
   → Generate report
   → Present results
@@ -86,6 +87,38 @@ Cross-Phase Acceptance Criteria:
 ```
 
 5. Failures = regression warnings. Do NOT block here; the test suite (Step 2) is the hard gate. Include in report.
+
+### Step 3.5: Dev-Guide Scope Deliverable Verification
+
+This step catches scope items promised in the dev-guide but never created — the gap that per-phase reviews miss when phases are executed without the full plan/verify/review cycle.
+
+1. For each Phase section in the dev-guide, read the **scope description** (the bullet list or paragraph under the Phase heading, before acceptance criteria).
+2. Extract **file deliverables**: any token that looks like a file or component name:
+   - Tokens with file extensions: `ChannelForm.tsx`, `ConfigManager.swift`, `auth.test.ts`
+   - Tokens matching `path/to/file` patterns: `web/src/components/channels/ChannelCard.tsx`
+   - PascalCase tokens immediately followed by a file-type context word (e.g., "ChannelForm component", "AuthService class") — extract as `{Token}.{inferred extension}` based on project language
+   - Ignore generic words, acceptance-criteria identifiers (already covered by Step 3), and test files (covered by Step 4)
+3. For each extracted deliverable:
+
+| Check | Method |
+|---|---|
+| Exact path given | `test -f {path}` |
+| Filename only (no directory) | `find . -name "{filename}" -not -path "*/node_modules/*" -not -path "*/.git/*"` |
+| Component name (no extension) | Grep for `{name}` in source files matching the project's primary extensions |
+
+4. Output table:
+
+```
+Dev-Guide Scope Deliverables:
+
+| Phase | Deliverable | Check | Result |
+|-------|-------------|-------|--------|
+| 12 | ChannelForm.tsx | find -name | ❌ NOT FOUND |
+| 12 | ChannelCard.tsx | find -name | ❌ NOT FOUND |
+| 12 | ChannelMessages.tsx | find -name | ✅ Found at web/src/pages/Channels.tsx:L45 |
+```
+
+5. Deliverables not found = scope gaps. Do NOT block (soft gate, same as Step 3). Include in report.
 
 ### Step 4: Cumulative Test Coverage Audit
 
@@ -177,6 +210,13 @@ Untested source files (no corresponding test):
 
 {criteria table from Step 3}
 
+## Scope Deliverables
+- Total deliverables extracted: {N}
+- Found: {M} ✅
+- Not found: {K} ❌
+
+{deliverables table from Step 3.5}
+
 ## Cumulative Test Coverage
 - Plan-required tests: {N}
 - Covered: {M} ✅
@@ -210,6 +250,7 @@ Untested source files (no corresponding test):
 Finalization complete.
 Tests: {P}/{N} pass, {S} skip, {F} fail
 Criteria: {M}/{N} verified, {K} regressions, {J} manual
+Scope: {M}/{N} deliverables found, {K} missing
 Coverage: {M}/{N} plan-required covered, {K} shell, {J} missing
 Untested files: {count}
 Report: .claude/reviews/finalize-{timestamp}.md
@@ -227,7 +268,7 @@ Verdict: ✅ Ready / ⚠️ Warnings / ❌ Not ready
 ## Rules
 
 - **Step 2 is a hard gate.** Test failures and skips block finalization. No override.
-- **Steps 3-4 are soft gates.** Regressions and coverage gaps are reported but do not block. The test suite is the authoritative pass/fail.
+- **Steps 3-4 (including 3.5) are soft gates.** Regressions, scope gaps, and coverage gaps are reported but do not block. The test suite is the authoritative pass/fail.
 - **One report per run.** Each `/finalize` invocation produces a new timestamped report. Previous reports are not overwritten.
 - **No code fixes.** This skill validates and reports. It does not fix issues. The user fixes and re-runs.
 
@@ -235,6 +276,7 @@ Verdict: ✅ Ready / ⚠️ Warnings / ❌ Not ready
 
 - Full test suite passes with 0 fail, 0 skip
 - Cross-phase acceptance criteria checked (regressions flagged if any)
+- Dev-guide scope deliverables verified (missing items flagged if any)
 - Cumulative test coverage audited (gaps flagged if any)
 - Report written to `.claude/reviews/`
 - Verdict communicated to user

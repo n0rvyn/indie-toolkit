@@ -12,7 +12,7 @@ phase_name=$(grep '^phase_name:' "$STATE_FILE" | sed 's/phase_name: *//' | tr -d
 step=$(grep '^phase_step:' "$STATE_FILE" | sed 's/phase_step: *//')
 updated=$(grep '^last_updated:' "$STATE_FILE" | sed 's/last_updated: *//' | tr -d '"')
 
-if [ "$step" = "done" ]; then
+if [ "$step" = "done" ] || [ "$step" = "finalized" ]; then
   exit 0
 fi
 

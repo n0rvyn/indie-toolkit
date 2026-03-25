@@ -486,9 +486,16 @@ If any review found issues (plan-vs-code gaps > 0, or pre-existing issues > 0):
    - `docs/03-decisions/` — if architectural decisions were made
 5. Report:
 
-> Phase N complete.
-> Next: Phase N+1 — [name]: [goal].
-> Run `/run-phase` to continue, or `/commit` to save progress first.
+   **Detect if this is the last phase:** After checking off this Phase's acceptance criteria (step 2 above), re-read the dev-guide. If ALL phases now have all acceptance criteria checked (`- [x]`), this is the last phase.
+
+   **If more phases remain:**
+   > Phase N complete.
+   > Next: Phase N+1 — [name]: [goal].
+   > Run `/run-phase` to continue, or `/commit` to save progress first.
+
+   **If all phases are complete:**
+   > Phase N complete. All phases done.
+   > Run `/finalize` for cross-phase validation, or `/commit` to save progress.
 
 ## Rules
 

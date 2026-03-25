@@ -15,6 +15,11 @@ run-phase (orchestrator, main context)
   → feature-spec-writer agent (sonnet) → spec file
   → review agents (parallel)           → consolidated findings
   → fix gaps                           → Phase done
+
+finalize (after all phases complete)
+  → full test suite (0 fail, 0 skip)
+  → cross-phase criteria regression
+  → cumulative test coverage audit     → validation report
 ```
 
 ## Agent Dispatch Guidelines
@@ -83,6 +88,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | kb | interactive | Cross-project knowledge base search with freshness indicators |
 | distill-discussion | interactive | Extract structured outputs (crystals, lessons) from raw discussion files |
 | generate-vf-prompt | interactive | Generate Verification-First prompts with falsifiable assertions |
+| finalize | interactive | Cross-phase validation: full test suite, acceptance criteria regression, cumulative coverage audit |
 
 ## Hooks
 

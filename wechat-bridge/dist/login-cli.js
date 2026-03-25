@@ -239,7 +239,7 @@ async function login(opts) {
   });
   console.log(`
 Connected! Credentials saved for channel "${opts.channelId}".`);
-  console.log("You can now use: claude --channels wechat-bridge");
+  console.log("You can now use: claude --dangerously-load-development-channels plugin:wechat-bridge@indie-toolkit");
 }
 async function main() {
   const args = process.argv.slice(2);

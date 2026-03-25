@@ -1,6 +1,6 @@
 ---
 name: write-dev-guide
-description: "Use when starting a new project's development after design is approved, or the user says 'write dev guide'. Creates a phased, project-level development guide that serves as the cornerstone document for all subsequent /write-plan cycles."
+description: "Use when starting a new project's development after design is approved, or the user says 'write dev guide', 'break down this project into phases', or '写开发指南'. Creates a phased, project-level development guide that serves as the cornerstone document for all subsequent /write-plan and /run-phase cycles. Not for single-feature plans (use write-plan) or design exploration (use brainstorm)."
 ---
 
 ## Overview
@@ -47,6 +47,8 @@ Project brief: {path or "none"}
 Architecture docs: {path or "none"}
 ```
 
+When the agent returns: note the dev-guide file path from the agent's summary.
+
 ### Step 2.5: Mark Old Dev-Guide as Superseded
 
 After the agent writes the new dev-guide:
@@ -60,9 +62,35 @@ After the agent writes the new dev-guide:
    e. Write the updated file back
 3. Report: "Marked {N} existing dev-guide(s) as `current: false`: {paths}"
 
+### Step 2.7: Quality Verification
+
+After the dev-guide is written and old guides are superseded:
+
+1. Dispatch the `dev-workflow:dev-guide-verifier` agent with:
+   - Dev-guide file path (noted from Step 2 agent return summary)
+   - Design doc path (from Step 1)
+   - Project brief path (from Step 1)
+   - Architecture docs path (from Step 1)
+   - Project root
+   - Previously resolved decisions: none (decisions are resolved in Step 3, after verification)
+
+2. Read the agent's compact summary.
+
+3. If verdict is `approved`:
+   - Report: "Quality verification passed."
+   - Proceed to Step 3.
+
+4. If verdict is `must-revise`:
+   a. **V7 (Structural) issues**: directly Edit the dev-guide file to fix (frontmatter fields, missing sections, section markers — mechanical fixes only)
+   b. **V1-V6 issues**: collect all revision items into a revision instruction block
+   c. Re-dispatch `dev-workflow:dev-guide-writer` agent with the original prompt + revision instructions from the verifier. Max 1 revision cycle.
+   d. After revision: re-run V7 check only (structural, in main context — verify frontmatter fields, required sections, section markers) to confirm mechanical fixes. Do NOT re-dispatch the verifier agent.
+   e. If V1-V6 issues persist after the single revision cycle: note the unresolved items and present them to the user in Step 3 alongside the Phase outline, so the user can decide whether to accept or manually adjust.
+   f. If the verifier produced Decisions (DP-xxx entries): carry them forward to Step 3, where they will be presented alongside the dev-guide's own decisions.
+
 ### Step 3: Structural Review
 
-When the agent completes:
+When the agent completes (and Step 2.7 passes or revision is done):
 
 1. Read the dev-guide file the agent created
 2. Extract the Phase outline and present as an overview table:
@@ -75,7 +103,11 @@ When the agent completes:
 
 3. **Decision Points:**
    **Ordering constraint:** The Phase outline table (step 2 above) must be presented to the user BEFORE any decision points. Do not reorder.
-   - Read the `## Decisions` section from the dev-guide file. If the section content is `None.`, skip to step 4. Otherwise, process each `### [DP-xxx]` entry:
+   - Collect decisions from two sources:
+     a. Read the `## Decisions` section from the dev-guide file
+     b. If Step 2.7 produced verifier Decisions, include those as well (prefix verifier DPs with `[V]` to distinguish source)
+   - If both sources have `None.` content, skip to step 4. Otherwise, merge all `### [DP-xxx]` entries. Present blocking decisions first (regardless of source), then recommended.
+   - Process each `### [DP-xxx]` entry:
    - **Comparison table** (all decisions): extract from the decision's `**Options:**` lines, keeping each option's `{description} — {trade-off}` as-is in one column:
 
      ### [DP-xxx] {title}
@@ -141,6 +173,7 @@ After user confirms:
 ## Completion Criteria
 
 - Dev-guide file saved to `docs/06-plans/`
+- Quality verification passed or revision completed (Step 2.7)
 - Structure confirmed by user (Step 3)
 - Phase details reviewed and confirmed by user (Step 4)
 - Previous dev-guide(s) marked `current: false` (Step 2.5)

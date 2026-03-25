@@ -48,6 +48,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | plan-verifier | opus | Glob, Grep, Read, Bash, Write | Verification-first plan validation (S1/S2/U1/DF/CF/AR) |
 | plan-writer | sonnet | Glob, Grep, Read, Write | Structured implementation plan generation |
 | dev-guide-writer | sonnet | Glob, Grep, Read, Write | Phased project development guide creation |
+| dev-guide-verifier | opus | Glob, Grep, Read, Bash, Write | Dev-guide quality verification (coverage, dependencies, data flow, code overlap, terms, criteria, structure) |
 | feature-spec-writer | sonnet | Glob, Grep, Read, Write | Design-vs-implementation feature spec generation |
 | rules-auditor | sonnet | Glob, Grep, Read | CLAUDE.md rules audit for conflicts and loopholes |
 | distill-discussion-reader | sonnet | Read, Glob, Grep | Discussion file classification and structured extraction |

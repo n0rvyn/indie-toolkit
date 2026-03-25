@@ -1,6 +1,6 @@
 # wechat-bridge
 
-Claude Code plugin that bridges WeChat messages to Claude Code sessions via the MCP `--channels` protocol (research preview).
+Claude Code plugin that bridges WeChat messages to Claude Code sessions via the MCP `--channels` protocol (development preview).
 
 ## Features
 
@@ -11,7 +11,15 @@ Claude Code plugin that bridges WeChat messages to Claude Code sessions via the 
 
 ## Quick Start
 
-### 1. Build
+### 1. Install
+
+Install from the indie-toolkit marketplace:
+
+```bash
+claude mcp add-from-marketplace indie-toolkit wechat-bridge
+```
+
+Or, for local development:
 
 ```bash
 cd wechat-bridge
@@ -21,6 +29,8 @@ npm run build
 
 ### 2. Login
 
+WeChat authentication is required before running the channel. Use the `/wechat-login` skill or run manually:
+
 ```bash
 node dist/login-cli.js login
 ```
@@ -29,8 +39,10 @@ Scan the QR code with your WeChat app. Credentials are saved to `~/.adam/wechat/
 
 ### 3. Run with Claude Code
 
+The `--channels` protocol is a development preview and requires the development flag:
+
 ```bash
-claude --channels wechat-bridge
+claude --dangerously-load-development-channels plugin:wechat-bridge@indie-toolkit
 ```
 
 ## Permission Relay
@@ -77,7 +89,7 @@ Delete these files to force re-login.
 ## Architecture
 
 ```
-Claude Code (--channels wechat-bridge)
+Claude Code (--dangerously-load-development-channels plugin:wechat-bridge@indie-toolkit)
     ↕ MCP stdio (JSON-RPC)
 wechat-bridge MCP Channel Server
     ↕ iLink Bot HTTP API (long-poll)
@@ -95,11 +107,11 @@ Run `node dist/login-cli.js login` first.
 The login flow auto-refreshes the QR code up to 3 times. If it still expires, restart the login command.
 
 **Permission requests not arriving**
-Check that the MCP server is running (`claude --channels wechat-bridge`) and that your WeChat session is active.
+Check that Claude Code was started with `--dangerously-load-development-channels plugin:wechat-bridge@indie-toolkit` and that your WeChat session is active.
 
 **Messages not being received**
 The getUpdates long-poll has a ~35s cycle. Messages may take up to 35 seconds to arrive. Check stderr output for API errors.
 
 ## Note
 
-The `--channels` protocol is a Claude Code **research preview** feature. The API may change in future versions. This plugin uses a protocol adapter layer to minimize the impact of breaking changes.
+The `--channels` protocol is a Claude Code **development preview** feature gated behind `--dangerously-load-development-channels`. The API may change in future versions. This plugin uses a protocol adapter layer (`protocol.ts`) to minimize the impact of breaking changes.

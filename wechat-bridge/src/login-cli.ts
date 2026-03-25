@@ -66,7 +66,7 @@ async function login(opts: { apiBaseUrl: string; channelId: string; routeTag?: s
   });
 
   console.log(`\nConnected! Credentials saved for channel "${opts.channelId}".`);
-  console.log("You can now use: claude --channels wechat-bridge");
+  console.log("You can now use: claude --dangerously-load-development-channels plugin:wechat-bridge@indie-toolkit");
 }
 
 async function main(): Promise<void> {

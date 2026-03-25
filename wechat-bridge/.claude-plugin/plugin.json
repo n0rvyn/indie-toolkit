@@ -1,0 +1,14 @@
+{
+  "name": "wechat-bridge",
+  "version": "1.0.0",
+  "description": "Bridge WeChat messages to Claude Code sessions via MCP --channels protocol. Enables permission relay and bidirectional messaging.",
+  "author": {
+    "name": "Norvyn"
+  },
+  "mcpServers": {
+    "wechat-bridge": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/server.js"]
+    }
+  }
+}

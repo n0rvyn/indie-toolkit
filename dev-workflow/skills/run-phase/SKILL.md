@@ -236,15 +236,19 @@ These are past lessons from this project. Incorporate relevant ones to avoid kno
 ```
 
 6. When agent returns: note the plan file path from the summary
-7. Update state: `plan_file: <path>`, `last_updated: <now>`
-8. Present plan summary to user (task count, key files)
-9. **Decision Points:** Check the plan-writer's return for `Decisions:` count.
+7. **File existence gate:** Read the reported plan file path. If the file does not exist or is empty:
+   - Log: "Plan file not found at {path}. Re-dispatching plan-writer (attempt 2/2)."
+   - Re-dispatch `dev-workflow:plan-writer` with the same prompt (one retry only)
+   - If the file still does not exist after retry: STOP. Present error to user: "Plan-writer failed to produce a file after 2 attempts. Check agent output for errors."
+8. Update state: `plan_file: <path>`, `last_updated: <now>`
+9. Present plan summary to user (task count, key files)
+10. **Decision Points:** Check the plan-writer's return for `Decisions:` count.
    - If Decisions > 0: read the `## Decisions` section from the plan file
    - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
    - For `recommended` decisions: present as a group via a single AskUserQuestion. **Critical:** all DP content must be inside the `question` field — text printed before AskUserQuestion gets visually covered by the question widget. Read each recommended DP's full block (heading + Context + Options + Recommendation) from the plan file and concatenate them verbatim in the question field, separated by `\n---\n`. End with: `\n\n全部接受推荐，还是逐个审查？`
    - If the user does NOT choose to accept all: present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it
    - Record user choices: edit the plan file, replace the `**Recommendation:**` or `**Recommendation (unverified):**` line with `**Chosen:** {user's choice}`
-10. Auto-select verification speed: count tasks in the returned plan file.
+11. Auto-select verification speed: count tasks in the returned plan file.
    If task count < 5: mark `--fast` flag for Step 3 (use Sonnet for verification).
    If task count ≥ 5: no flag (use Opus default).
 
@@ -374,7 +378,9 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
    Each agent receives a fresh context — they have no memory of how the code was written.
    This removes confirmation bias from self-review.
 
-4. **When all return:** Present a consolidated summary table:
+4. **When all return:** Verify each agent's reported output file exists (Read the path). If any file is missing, note it as "❌ File not produced" in the summary — do not retry review agents (their output is informational, not blocking).
+
+5. Present a consolidated summary table:
 
 | Agent | Verdict | Issues | Report/Spec |
 |-------|---------|--------|-------------|
@@ -384,14 +390,14 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 | Design | ✅/❌ | {counts} | {path} |
 | Feature Review | ✅/❌ | {counts} | {path} |
 
-5. **Feature spec decision points:** If feature-spec-writer was dispatched, check its return for `Decisions:` count.
+6. **Feature spec decision points:** If feature-spec-writer was dispatched, check its return for `Decisions:` count.
    - If Decisions > 0: read the `## Decisions` section from the spec file
    - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
    - For `recommended` decisions: present as a group via a single AskUserQuestion. **Critical:** all DP content must be inside the `question` field — text printed before AskUserQuestion gets visually covered by the question widget. Read each recommended DP's full block (heading + Context + Options + Recommendation) from the spec file and concatenate them verbatim in the question field, separated by `\n---\n`. End with: `\n\n全部接受推荐，还是逐个审查？`
    - If the user does NOT choose to accept all: present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it
    - Record user choices: edit the spec file, replace the `**Recommendation:**` or `**Recommendation (unverified):**` line with `**Chosen:** {user's choice}`
 
-6. **Surface human verification items:** If any review report's compact summary shows 人工验证项 > 0 or 设备验证项 > 0:
+7. **Surface human verification items:** If any review report's compact summary shows 人工验证项 > 0 or 设备验证项 > 0:
    - Read each report file that has verification items
    - Extract items from these sections:
      - ui-reviewer: `### Part C: 人工验证清单`
@@ -406,12 +412,12 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 
    This is informational — do not block with AskUserQuestion. The user can raise issues during Step 6 (Fix Gaps).
 
-7. **Surface test coverage summary:** If implementation-reviewer's compact return includes a `Tests:` line:
+8. **Surface test coverage summary:** If implementation-reviewer's compact return includes a `Tests:` line:
    - Extract: required, exist, pass, shell counts
    - If shell > 0 or pass < required: present warning below the human verification items:
      > ⚠️ 测试覆盖不完整：{N} 个计划要求的测试中，{M} 个为空壳或未覆盖核心路径
 
-8. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
+9. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
 
 ### Step 6: Fix Gaps
 

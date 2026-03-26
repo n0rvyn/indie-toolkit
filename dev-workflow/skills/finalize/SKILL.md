@@ -153,7 +153,7 @@ This step catches tests that per-phase implementation-reviewer missed.
      !`git log --diff-filter=A --format=%H -- {dev_guide_path} | head -1`
    - If no result (dev-guide not tracked in git): skip the untested-source-files scan and note "base commit not found — untested files scan skipped" in the report
    - Get source files modified since that point (omit HEAD to include uncommitted changes):
-     !`git diff --name-only <the hash from above> -- '*.swift' '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.go' '*.rs'`
+     !`git diff --name-only {base_commit} -- '*.swift' '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.go' '*.rs'`
    - For each modified source file: check if a corresponding test file exists (convention: `FooTests.swift` for `Foo.swift`, `foo.test.ts` for `foo.ts`, `test_foo.py` for `foo.py`)
    - List source files with no corresponding test
 

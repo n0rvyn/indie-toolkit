@@ -48,7 +48,7 @@ For each task in the batch:
    - Execute changes
    - Run verification (Grep), output command and results
    - Verify results match strategy before claiming task completion
-4. Follow steps exactly as written
+4. Follow steps exactly as written — if a task says "start real server and call SDK", do that; if it says "run database migrations", run them. Do not replace with mocks, stubs, or "simpler" alternatives. For approach-level substitutions (not just step-level), see Safety Rule #5
 5. Run all verification commands
 6. If verification fails: stop and report, do not guess at fixes
 7. **Test task immediate verification:** After completing each task, check if it is a test task:
@@ -96,6 +96,8 @@ When all tasks are done:
 - **Don't skip verifications** — even if you're confident the code is correct
 - **Stop when blocked** — hit a blocker mid-batch? Stop and ask. Don't guess.
 - **Plan has critical gaps?** — raise them. Don't fill gaps with assumptions.
+- **No silent downgrade** — the plan specifies the approach; implement that approach. Do not substitute a "simpler", "more practical", or "effective enough" alternative. If you believe the plan's approach is infeasible, raise it as a blocker with evidence (e.g., error output, missing dependency, API limitation, unavailable credentials) — do not silently replace it. "Seems complex" is not evidence of infeasibility. This applies to test strategies, architecture choices, library selections, and implementation patterns; it does NOT apply to equivalent-outcome choices within a step (e.g., `for` loop vs `map`, variable naming).
+  - **Timing:** discovered before starting a task → raise blocker before any edits. Discovered mid-task → stop, revert partial changes for that task, then raise blocker.
 
 ## When to Stop and Ask
 

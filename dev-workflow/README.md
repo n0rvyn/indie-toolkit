@@ -1,20 +1,21 @@
 # dev-workflow
 
-Cross-stack development workflow plugin for Claude Code. Provides a full plan-execute-review lifecycle with fresh-context agent dispatching.
+Cross-stack development workflow plugin for Claude Code. Provides a full plan-execute-review lifecycle with model-appropriate task routing.
 
 ## Architecture
 
-Heavy document-generation and analysis tasks run as **agents** (fresh context) dispatched via the Task tool, so each agent starts with an unbiased perspective. Interactive tasks that need user input or write code stay as **skills** in the main context. The `run-phase` orchestrator dispatches agents and coordinates the sequence.
+**Opus thinks, Sonnet does, Opus reviews.** Judgment-intensive steps (planning, fixing) run in main context with Opus and full conversation history. Mechanical execution runs as a dispatched Sonnet agent. Reviews run as dispatched Opus agents for unbiased assessment.
 
 ```
-run-phase (orchestrator, main context)
-  → design-analyzer agent (opus)       → design analysis file
-  → plan-writer agent (sonnet)         → plan file on disk
+run-phase (orchestrator, main context — opus)
+  → write plan (main context — opus, full user intent)
   → plan-verifier agent (opus)         → verification report
-  → execute-plan skill                 → code changes (main context)
+  → execute-plan agent (sonnet)        → code changes
+  → build/test agent (sonnet)          → pass/fail results
   → feature-spec-writer agent (sonnet) → spec file
-  → review agents (parallel)           → consolidated findings
-  → fix gaps                           → Phase done
+  → review agents (parallel — opus)    → consolidated findings
+  → fix all issues (main context — opus: build/test + review gaps)
+  → Phase done
 
 finalize (after all phases complete)
   → full test suite (0 fail, 0 skip)
@@ -41,17 +42,17 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 
 | Agent | Model | Tools | Purpose |
 |-------|-------|-------|---------|
+| build-test | sonnet | Bash, Glob, Read | Build and test runner; returns pass/fail results without fixing (read-only) |
+| execute-plan | sonnet | Glob, Grep, Read, Write, Edit, Bash, LSP | Mechanical plan execution — follows verified plan tasks |
 | design-analyzer | opus | Glob, Grep, Read, Write | Multi-modal design prototype analysis (dual-channel image+code) |
-| design-drift-auditor | opus | Glob, Grep, Read, Bash | Design document vs codebase drift detection |
-| flow-tracer | opus | Glob, Grep, Read, Bash | End-to-end call chain tracing with break detection |
+| design-drift-auditor | opus | Glob, Grep, Read | Design document vs codebase drift detection (read-only) |
+| flow-tracer | opus | Glob, Grep, Read | End-to-end call chain tracing with break detection (read-only) |
 | implementation-reviewer | opus | Glob, Grep, Read, Bash, Write | Plan-vs-code verification and design fidelity audit |
 | plan-verifier | opus | Glob, Grep, Read, Bash, Write | Verification-first plan validation (S1/S2/U1/DF/CF/AR) |
-| plan-writer | sonnet | Glob, Grep, Read, Write | Structured implementation plan generation |
-| dev-guide-writer | sonnet | Glob, Grep, Read, Write | Phased project development guide creation |
 | dev-guide-verifier | opus | Glob, Grep, Read, Bash, Write | Dev-guide quality verification (coverage, dependencies, data flow, code overlap, terms, criteria, structure) |
 | feature-spec-writer | sonnet | Glob, Grep, Read, Write | Design-vs-implementation feature spec generation |
-| rules-auditor | sonnet | Glob, Grep, Read | CLAUDE.md rules audit for conflicts and loopholes |
-| distill-discussion-reader | sonnet | Read, Glob, Grep | Discussion file classification and structured extraction |
+| rules-auditor | sonnet | Glob, Grep, Read | CLAUDE.md rules audit for conflicts and loopholes (read-only) |
+| distill-discussion-reader | sonnet | Read, Glob, Grep | Discussion file classification and structured extraction (read-only) |
 
 ### Supporting Files (not agents)
 
@@ -65,8 +66,8 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 
 | Skill | Type | Description |
 |-------|------|-------------|
-| run-phase | orchestrator | Phase lifecycle: dispatch agents, coordinate sequence, manage state |
-| execute-plan | interactive | Batch code execution with checkpoint approval |
+| run-phase | orchestrator | Phase lifecycle: write plan, dispatch agents, coordinate sequence, manage state |
+| execute-plan | dispatcher | Dispatches sonnet execute-plan agent for mechanical plan execution |
 | brainstorm | interactive | Design exploration before implementation |
 | design-decision | interactive | Trade-off analysis with essential/accidental complexity |
 | fix-bug | interactive | Systematic diagnosis with value domain tracing |
@@ -75,12 +76,12 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | parallel-agents | guide | Pattern for concurrent agent dispatch |
 | use-worktree | guide | Git worktree setup and safety |
 | commit | fork (haiku) | Conventional commit analysis and execution |
-| handoff | fork (haiku) | Cold-start prompt generation for session transfer |
+| handoff | fork (sonnet) | Cold-start prompt generation for cross-day/cross-person session transfer |
 | generate-design-prompt | interactive | Generate Stitch/Figma prompts from project features; supports initial and refinement modes |
 | understand-design | dispatcher | Dual-channel design prototype analysis, token extraction, platform translation |
-| write-plan | dispatcher | Gathers context, dispatches plan-writer agent |
+| write-plan | interactive | Writes implementation plan in main context (full conversation context) |
 | verify-plan | dispatcher | Gathers context, dispatches plan-verifier agent |
-| write-dev-guide | dispatcher | Gathers context, dispatches dev-guide-writer agent |
+| write-dev-guide | interactive | Writes phased dev-guide in main context, dispatches verifier agent |
 | write-feature-spec | dispatcher | Gathers context, dispatches feature-spec-writer agent |
 | audit-rules | dispatcher | Gathers context, dispatches rules-auditor agent |
 | design-drift | dispatcher | Design document vs codebase drift audit |
@@ -106,6 +107,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 
 ## Design Principles
 
-- Bug fix, plan verification, and design decision skills use universal methodology (value domain tracing, reverse reasoning, entry point uniqueness, complexity analysis) that works across tech stacks.
-- iOS-specific checks (Design Token consistency, Swift concurrency) are provided by the `apple-dev` plugin's references.
-- Document-generation tasks (plans, specs, guides, audits) run in separate agent contexts so each starts with a fresh, unbiased perspective.
+- **Opus thinks, Sonnet does, Opus reviews** — model routing based on task type, not context conservation
+- Bug fix, plan verification, and design decision skills use universal methodology (value domain tracing, reverse reasoning, entry point uniqueness, complexity analysis) that works across tech stacks
+- iOS-specific checks (Design Token consistency, Swift concurrency) are provided by the `apple-dev` plugin's references
+- Review agents run in separate contexts for unbiased assessment; writing tasks run in main context to benefit from full conversation history

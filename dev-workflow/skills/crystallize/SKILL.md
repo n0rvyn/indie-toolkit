@@ -1,17 +1,17 @@
 ---
 name: crystallize
-description: "Use before /write-plan or when the session has settled significant design decisions. Extracts the decision history from the current conversation — initial ideas, discussion points, rejected alternatives, and final conclusions — into a persistent crystal file that plan-writer and plan-verifier consume."
+description: "Use before /write-plan or when the session has settled significant design decisions. Extracts the decision history from the current conversation into a persistent crystal file that /write-plan and plan-verifier consume."
 user-invocable: true
 ---
 
 ## Overview
 
-Extracts settled decisions from the current conversation into a persistent file (`docs/11-crystals/`). This bridges the gap between human-AI discussion and structured planning: the plan-writer agent runs in a separate context and cannot see the discussion history, so it needs an explicit record of what was decided and why.
+Extracts settled decisions from the current conversation into a persistent file (`docs/11-crystals/`). This creates a structured, machine-readable record of what was decided and why, consumed by plan writing and verification steps.
 
 ## When to Use
 
 - After a `brainstorm` or `design-decision` session that involved trade-offs, rejected alternatives, or changed assumptions
-- Before `/write-plan` when the conversation contains decisions that the plan-writer agent must respect
+- Before `/write-plan` when the conversation contains decisions that the plan must respect
 - Before `/handoff` when decisions from this session need to survive into the next session
 - Any time the user says "lock this", "crystallize", "record these decisions"
 

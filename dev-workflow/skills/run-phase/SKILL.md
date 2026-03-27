@@ -5,21 +5,20 @@ description: "Use when the user says 'run phase', 'start phase N', 'next phase',
 
 ## Overview
 
-This skill orchestrates one iteration of the development cycle by dispatching agents for document-generation steps and keeping only code execution in the main context.
+This skill orchestrates one iteration of the development cycle. Opus handles judgment-intensive steps (planning, fixing) in main context; Sonnet handles mechanical execution as a dispatched agent; Opus reviews in dispatched agents for unbiased assessment.
 
 ```
 Locate/Resume Phase
-  → scope confirmation checkpoint (main context)
-  → dispatch dev-workflow:plan-writer agent (separate context)
+  → scope confirmation checkpoint (main context — opus)
+  → write plan (main context — opus, full conversation context)
   → UX review checkpoint (main context — if design has UX Assertions)
-  → invoke dev-workflow:verify-plan skill (separate context)
-  → execute plan (main context — writes code)
+  → verify plan (dispatch opus agent — unbiased review)
+  → execute plan (dispatch sonnet agent — mechanical, follows verified plan)
+  → build + test (dispatch sonnet agent — run commands, return results)
   → dispatch feature-spec + review agents in parallel (separate contexts)
-  → fix gaps (main context)
+  → fix all issues (main context — opus: build/test failures + review gaps)
   → Phase done
 ```
-
-It does not do the work itself. It dispatches agents and coordinates the sequence.
 
 ## State File
 
@@ -31,11 +30,12 @@ This file tracks progress across sessions. Update it **before** starting each st
 project: <name>
 current_phase: 2
 phase_name: "Phase Name"
-phase_step: plan    # plan | ux-review | verify | execute | review | fix | done
+phase_step: plan    # plan | ux-review | verify | execute | build-test | review | fix | done
 dev_guide: docs/06-plans/YYYY-MM-DD-project-dev-guide.md
 plan_file: null  # set to docs/06-plans/YYYY-MM-DD-<name>-plan.md after Step 2
 verification_report: null
-batch_progress: null
+task_progress: null
+build_test_result: null
 review_reports: []
 gaps_remaining: 0
 last_updated: "YYYY-MM-DDTHH:MM:SS"
@@ -73,7 +73,8 @@ phase_step: plan
 dev_guide: <dev-guide path>
 plan_file: null
 verification_report: null
-batch_progress: null
+task_progress: null
+build_test_result: null
 review_reports: []
 gaps_remaining: 0
 last_updated: "<now>"
@@ -83,7 +84,7 @@ If the user specifies a different Phase number, use that instead.
 
 ### Step 1.5: Scope & Visual Expectation Confirmation
 
-Before dispatching plan-writer, present the Phase scope and visual expectations for explicit user confirmation.
+Before writing the plan, present the Phase scope and visual expectations for explicit user confirmation.
 
 **Skip condition:** When resuming from state file with `phase_step` not `plan`, skip this step — scope was already confirmed in a prior session.
 
@@ -188,9 +189,9 @@ User responds:
 
    - Do NOT invoke /crystallize as a separate skill — write the file directly
 
-This checkpoint catches scope pollution and aligns visual expectations before plan-writer runs in a separate context.
+This checkpoint catches scope pollution and aligns visual expectations before writing the plan.
 
-### Step 2: Plan (agent dispatch)
+### Step 2: Plan (main context)
 
 1. Update state: `phase_step: plan`, `last_updated: <now>`
 2. Gather Phase context from dev-guide:
@@ -201,56 +202,26 @@ This checkpoint catches scope pollution and aligns visual expectations before pl
    - Design analysis reference: search `docs/06-plans/*-design-analysis.md`; if exactly 1 file, use it; if multiple, use the one whose filename matches the Phase's feature topic; if still ambiguous, ask the user; if none, set to "none"
    - Crystal file reference: search `docs/11-crystals/*-crystal.md`; if exactly 1 file, use it; if multiple, ask the user which one applies; if none, set to "none"
    - If no crystal file found AND the Phase has architecture decisions marked as "resolved" in the dev-guide: suggest `/crystallize` to capture these decisions before planning. Do not block — user can decline and proceed without a crystal file.
-3. If a design doc path exists: read the design doc and check for a `## UX Assertions` section. Note the result — it controls the dispatch prompt below and Step 2.5.
-4. **Preload relevant lessons:** Before dispatching plan-writer:
+3. If a design doc path exists: read the design doc and check for a `## UX Assertions` section. Note the result — it controls Step 2.5.
+4. **Preload relevant lessons:**
    - Extract keywords from Phase scope items and goal (component names, technology terms, domain terms)
    - Search `docs/09-lessons-learned/` for entries matching these keywords:
      `Grep(pattern="<keyword1>|<keyword2>|<keyword3>", path="docs/09-lessons-learned/", output_mode="content", context=5)`
-   - If matches found: collect the matching lesson entries (file path + matched content) as `relevant_lessons`
-   - If no matches or directory does not exist: set `relevant_lessons` to "none"
-5. Use the Task tool to dispatch the `dev-workflow:plan-writer` agent:
-
-```
-Write an implementation plan with the following inputs:
-
-Goal: {Phase goal}
-Scope:
-{Phase scope items}
-
-Acceptance criteria:
-{Phase acceptance criteria}
-
-Design doc: {path or "none"}
-Design analysis: {path or "none"}
-Crystal file: {path or "none"}
-Project root: {project root}
-
-Context: This is Phase {N} of the dev-guide at {dev-guide path}.
-{IF design doc contains ## UX Assertions section, append:}
-⚠️ Design doc contains UX Assertions (## UX Assertions section). Read User Journeys and UX Assertions table BEFORE writing UI tasks. Each UI task must include UX ref: and User interaction: fields.
-{IF relevant_lessons is not "none", append:}
-
-Relevant project lessons (from docs/09-lessons-learned/):
-{relevant_lessons — file path and matched content for each entry}
-These are past lessons from this project. Incorporate relevant ones to avoid known pitfalls.
-```
-
-6. When agent returns: note the plan file path from the summary
-7. **File existence gate:** Read the reported plan file path. If the file does not exist or is empty:
-   - Log: "Plan file not found at {path}. Re-dispatching plan-writer (attempt 2/2)."
-   - Re-dispatch `dev-workflow:plan-writer` with the same prompt (one retry only)
-   - If the file still does not exist after retry: STOP. Present error to user: "Plan-writer failed to produce a file after 2 attempts. Check agent output for errors."
-8. Update state: `plan_file: <path>`, `last_updated: <now>`
-9. Present plan summary to user (task count, key files)
-10. **Decision Points:** Check the plan-writer's return for `Decisions:` count.
-   - If Decisions > 0: read the `## Decisions` section from the plan file
+   - If matches found: note the matching lesson entries for reference during plan writing
+   - If no matches or directory does not exist: skip silently
+5. **Read source files:** Read the design doc, design analysis, crystal file (if any), and key codebase files relevant to the Phase scope. This grounds the plan in actual code state.
+6. **Write the plan** following the Plan Writing Reference in `${CLAUDE_PLUGIN_ROOT}/skills/write-plan/SKILL.md`. Use the gathered Phase context as inputs. Save to `docs/06-plans/YYYY-MM-DD-<feature-name>-plan.md`.
+7. Update state: `plan_file: <path>`, `last_updated: <now>`
+8. Present plan summary to user (task count, key files)
+9. **Decision Points:** Check the `## Decisions` section of the plan file.
+   - If Decisions > 0: read the section
    - For each `blocking` decision: present to user via AskUserQuestion with options from the decision point
    - For `recommended` decisions: present as a group via a single AskUserQuestion. **Critical:** all DP content must be inside the `question` field — text printed before AskUserQuestion gets visually covered by the question widget. Read each recommended DP's full block (heading + Context + Options + Recommendation) from the plan file and concatenate them verbatim in the question field, separated by `\n---\n`. End with: `\n\n全部接受推荐，还是逐个审查？`
    - If the user does NOT choose to accept all: present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it
    - Record user choices: edit the plan file, replace the `**Recommendation:**` or `**Recommendation (unverified):**` line with `**Chosen:** {user's choice}`
-11. Auto-select verification speed: count tasks in the returned plan file.
-   If task count < 5: mark `--fast` flag for Step 3 (use Sonnet for verification).
-   If task count ≥ 5: no flag (use Opus default).
+10. Auto-select verification speed: count tasks in the plan file.
+    If task count < 5: mark `--fast` flag for Step 3 (use Sonnet for verification).
+    If task count ≥ 5: no flag (use Opus default).
 
 ### Step 2.5: UX Review (conditional)
 
@@ -289,7 +260,7 @@ Confirm this mapping is correct, or provide corrections.
    - **User confirms**: proceed to Step 3
    - **User provides corrections**:
      - For minor fixes (add/correct `UX ref:` lines, adjust `User interaction:` text): edit the plan file directly
-     - For structural changes (add missing tasks, redesign task scope): re-dispatch `dev-workflow:plan-writer` with a correction prompt listing the required additions
+     - For structural changes (add missing tasks, redesign task scope): revise the plan directly in main context
      - Re-present the mapping for confirmation after corrections
    - Max 2 correction cycles; after that, proceed with noted gaps
 
@@ -328,12 +299,30 @@ Present the remaining issues to the user:
 
 Wait for user choice. If A: stop. If B: mark state `verification_report: "partial"` and continue.
 
-### Step 4: Execute (main context)
+### Step 4: Execute (sonnet agent dispatch)
 
 1. Update state: `phase_step: execute`, `last_updated: <now>`
-2. Invoke `dev-workflow:execute-plan` to execute the verified plan
-   - This stays in the main context because it writes code and needs checkpoint approval
-3. When execution completes, update state: `last_updated: <now>`
+2. Dispatch the `dev-workflow:execute-plan` agent (sonnet) with the plan file path and project root
+3. When the agent returns: read the execution report
+4. Present summary: completed/blocked/failed task counts
+5. If blocked or failed tasks exist: note them for Step 6 (Fix)
+6. Update state: `last_updated: <now>`
+
+### Step 4.5: Build & Test (agent dispatch)
+
+1. Update state: `phase_step: build-test`, `last_updated: <now>`
+2. Dispatch the `dev-workflow:build-test` agent:
+
+```
+Run build and test suite for the project.
+
+Project root: {project root}
+```
+
+3. When the agent returns: read the build/test results
+4. Present summary: build pass/fail, test pass/fail with counts
+5. Note any failures for Step 6 (Fix)
+6. Update state: `build_test_result: pass/fail`, `last_updated: <now>`
 
 ### Step 5: Document Features & Reviews (parallel agent dispatch)
 
@@ -419,24 +408,28 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 
 9. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
 
-### Step 6: Fix Gaps
+### Step 6: Fix Issues
 
-If any review found issues (plan-vs-code gaps > 0, or pre-existing issues > 0):
+If any of the following have issues: execution report (blocked/failed tasks), build/test results (failures), or review reports (gaps):
 
 1. Update state: `phase_step: fix`, `last_updated: <now>`
-2. Read the relevant review report files (paths from Step 5 summaries) to get full issue details. Skip entries that are not file paths (e.g., `"user-override"` sentinel values).
-3. List all gaps sorted by severity (critical first, then warnings)
-   Separate gaps by origin:
-   - **Plan gaps**: issues introduced by or missed during plan execution
-   - **Pre-existing issues**: problems discovered during review that existed before this phase (from implementation-reviewer's `### Pre-existing Issues` section or R9 `pre-existing` entries)
+2. Collect all issues from three sources:
+   a. **Execution failures** (from Step 4): blocked/failed tasks from the execute-plan agent report
+   b. **Build/test failures** (from Step 4.5): build errors, failing tests
+   c. **Review gaps** (from Step 5): plan-vs-code gaps, pre-existing issues
+   Read the relevant report files for full details. Skip entries that are not file paths (e.g., `"user-override"` sentinel values).
+3. List all issues sorted by severity (critical first, then warnings)
+   Separate by origin:
+   - **Build/test 失败（{N} 个）：**
+   > - {build errors or failing tests}
+   - **执行阻塞（{N} 个）：**
+   > - {blocked/failed tasks with reasons}
+   - **Review 问题（{N} 个）：**
+   > - {plan-vs-code gaps}
+   - **已有问题（{M} 个）：**
+   > - {pre-existing issues from implementation-reviewer}
 
-   Present them separately:
-   > 计划执行问题（{N} 个）：
-   > - {gap list}
-   >
-   > 发现的已有问题（{M} 个）：
-   > - {issue + root cause from review report}
-4. Ask the user: "Fix these gaps before moving on, or mark as known issues?"
+4. Ask the user: "Fix these issues before moving on, or mark as known issues?"
 5. If fixing:
    a. **Separate design issues from code issues.** If design-reviewer report exists among review_reports:
       - Extract all 🔴 items from design-reviewer Part A

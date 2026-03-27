@@ -11,7 +11,7 @@
 
 ## Output Assertions
 - [ ] Output updates state file before each step
-- [ ] Output dispatches plan-writer agent for planning step
+- [ ] Output writes plan in main context (not dispatched to agent)
 - [ ] Output invokes verify-plan before execute-plan
 - [ ] Phase completion report generated with next phase info
 

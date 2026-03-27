@@ -175,7 +175,7 @@ After design is approved, inform the user based on the design type:
 
 **If significant decisions were made during this brainstorm** (rejected alternatives, changed assumptions, architectural constraints):
 
-> Consider running `/crystallize` to lock these decisions before proceeding to `/write-plan`. This ensures the plan-writer agent — which runs in a separate context — knows what was discussed and decided.
+> Consider running `/crystallize` to lock these decisions before proceeding to `/write-plan`. This ensures the plan-verifier agent — which runs in a separate context for unbiased review — knows what was discussed and decided.
 
 ## Completion Criteria
 

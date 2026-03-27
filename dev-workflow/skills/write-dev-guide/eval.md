@@ -15,11 +15,11 @@
 
 ## Output Assertions
 <!-- What must be true in the skill's output -->
-- [ ] Output gathers design doc, project brief, and architecture docs before dispatching
+- [ ] Output gathers design doc, project brief, and architecture docs before writing
 - [ ] Output stops and informs user if no design doc exists (suggests running project-kickoff first)
-- [ ] Output dispatches dev-guide-writer agent with all gathered context
-- [ ] Output dispatches dev-guide-verifier agent after writer completes (Step 2.7)
-- [ ] If verifier finds revision-needed: V7 issues are fixed directly, V1-V6 issues trigger writer re-dispatch
+- [ ] Output writes dev-guide directly in main context
+- [ ] Output dispatches dev-guide-verifier agent after writing completes (Step 2.7)
+- [ ] If verifier finds revision-needed: V7 issues are fixed directly, V1-V6 issues are revised in main context
 - [ ] If verifier produces Decisions: they are merged with dev-guide Decisions in Step 3
 - [ ] Output presents Phase outline as a table with Goal and Dependencies
 - [ ] Output presents Decision Points via AskUserQuestion for blocking decisions

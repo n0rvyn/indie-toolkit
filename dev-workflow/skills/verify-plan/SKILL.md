@@ -47,7 +47,7 @@ Use the Task tool to launch the `dev-workflow:plan-verifier` agent:
 - Default (no --fast): add `model: "opus"` to the Task tool call
 - With --fast flag: add `model: "sonnet"` to the Task tool call
 
-Note: must explicitly set model; the parent session runs Sonnet and inheritance gives Sonnet, not Opus.
+Note: must explicitly set model to ensure the agent uses the intended model regardless of parent session configuration.
 
 Before dispatching, extract any **previously resolved decisions** from the plan file:
 - Search the plan's `## Decisions` section for entries with `**Chosen:**` (not just `**Recommendation:**`)

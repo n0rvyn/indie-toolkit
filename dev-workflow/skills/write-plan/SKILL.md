@@ -167,6 +167,7 @@ These fields are optional per-task. Use them when the task has design-critical d
 1. **Complete file paths** — always absolute from project root
 2. **Actual code** — not pseudocode, not "implement X here"
 3. **Exact commands** — copy-pasteable verification commands with expected output
+   - **Task-level `Verify:` scope**: each task's Verify should contain only that task's specific checks (grep for expected strings, type-check a single file, run a single test file). Full build/test suite belongs exclusively in the final verification task (guideline 11). Do not put `npm run build`, `npm test`, `swift build`, `xcodebuild test`, or equivalent full-suite commands in intermediate task Verify sections.
 4. **Dependencies explicit** — if Task 3 depends on Task 1, say so
 5. **No forced TDD** — write tests where they add value; don't mandate test-first for every step
 6. **Reasonable task size** — self-contained and independently verifiable; not artificially split

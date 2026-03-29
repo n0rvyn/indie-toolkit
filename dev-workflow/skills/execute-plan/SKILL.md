@@ -40,8 +40,6 @@ When the agent returns:
 2. Present summary to the user: completed/blocked/failed counts
 3. If blocked or failed tasks exist: list them with reasons
 
-4. **Build/test coverage check**: If the execution report shows no final verification task was run (no task with build/test commands in its Verify section): discover and run build/test commands directly (read package.json/Makefile/etc. to find commands)
-
 **Standalone mode** (not within run-phase):
 - If failures: fix in main context (opus)
 - Suggest `dev-workflow:implementation-reviewer` for plan-vs-code audit

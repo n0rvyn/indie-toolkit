@@ -19,6 +19,7 @@ description: |
   </example>
 model: sonnet
 tools: Glob, Grep, Read, Bash, Write
+allowed-tools: Bash(mkdir*) Bash(date*) Write(*/.claude/reviews/*)
 maxTurns: 30
 ---
 

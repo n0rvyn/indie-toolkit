@@ -65,6 +65,16 @@ sources:
     #     - /changelog
     #     - /blog
 
+  # External sources — pre-analyzed insight files from other plugins.
+  # Each external source is a directory containing IEF-compliant .md files.
+  # Files are imported during /scan and removed from the source directory after import.
+  external: []
+  # Example:
+  # external:
+  #   - name: YouTube Scout
+  #     path: ~/.youtube-scout/exports
+  #     pre_collect: /youtube-scan   # optional: skill to invoke before importing
+
 # Scan parameters
 scan:
   max_items_per_source: 20
@@ -75,3 +85,7 @@ scan:
   # Schedule hint: use CronCreate for automated scans
   # Example: every morning at 8:47am → cron: "47 8 * * *"
   # Cron jobs auto-expire after 3 days — recreate in new sessions
+
+  # Automatically generate a daily digest after scan if new insights were stored.
+  # Set to false to keep /scan and /digest as separate steps.
+  auto_digest: false

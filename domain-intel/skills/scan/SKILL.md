@@ -13,6 +13,13 @@ Uses sonnet because the 3-tier filter requires precise arithmetic (Jaccard simil
 
 Designed for **automated cron execution** — minimal output, no interactive prompts, fail-safe.
 
+### Cron Mode Detection
+
+If the invocation prompt contains `[cron]`:
+- Set `CRON_MODE = true`
+- All parameters from config (no AskUserQuestion)
+- Pre-collect failures are logged but never block the pipeline
+
 ## Process
 
 ### Step 0: Resolve Working Directory
@@ -33,9 +40,11 @@ Store the result as `WD`. **All file paths in this skill are relative to `WD`** 
    - `sources.github` — enabled flag, languages, min_stars
    - `sources.rss[]` — list of {name, url}
    - `sources.official[]` — list of {name, url, paths[]}
+   - `sources.external[]` — list of {name, path, pre_collect (optional)}
    - `sources.producthunt` — enabled flag, client_id, client_secret, topics[]
    - `scan.max_items_per_source` (default: 20)
    - `scan.significance_threshold` (default: 2)
+   - `scan.auto_digest` (default: false)
 
 3. Read `{WD}/LENS.md` if it exists:
    - Parse YAML frontmatter → extract `figures[]` and `companies[]`
@@ -55,6 +64,17 @@ Store the result as `WD`. **All file paths in this skill are relative to `WD`** 
    ```
 
 6. Read `{WD}/state.yaml` if it exists (for stats tracking).
+
+### Step 1.5: Pre-collect External Sources
+
+If `sources.external[]` is empty or not defined → skip to Step 2.
+
+For each external source that has a `pre_collect` field:
+1. Log: `[domain-intel] Pre-collecting: {name} via {pre_collect}`
+2. Invoke the skill specified in `pre_collect` (e.g., `/youtube-scan`)
+   - If in `[cron]` mode: append `[cron]` to the skill invocation
+3. If the skill fails or is unavailable → log warning: `[domain-intel] Pre-collect failed for {name}: {reason}. Continuing without it.` → continue to next external source
+4. Pre-collect is best-effort: failures never block the main scan pipeline
 
 ### Step 2: Dispatch source-scanner
 
@@ -86,7 +106,9 @@ stats:
 
 Save `source_signals` for merging in Step 6.5.
 
-If total items == 0 → output `[domain-intel] Scan complete — no items collected. Check source configuration.` → update state → **stop**
+If total items == 0 AND `sources.external[]` is empty or not defined → output `[domain-intel] Scan complete — no items collected. Check source configuration.` → update state → **stop**
+
+If total items == 0 AND `sources.external[]` is defined → log `[domain-intel] No items from built-in sources. Proceeding to external import.` → skip Steps 3-5 → jump to Step 5.5.
 
 ### Step 3: 3-Tier Filter
 
@@ -227,9 +249,35 @@ read: false
 
 Track: `stored = N`
 
+### Step 5.5: Import External Insights
+
+If `sources.external[]` is empty or not defined → skip to Step 6.
+
+For each external source in `sources.external[]`:
+1. Resolve `~` in path to absolute path: `Bash(command="echo {path}")`
+2. Glob: `{resolved_path}/*.md`
+   - If path doesn't exist or no files found → log: `[domain-intel] External source {name}: no files at {path}` → skip
+3. For each `.md` file:
+   a. Read and parse YAML frontmatter
+   b. Validate required fields: `id`, `source`, `url`, `title`, `significance`, `date`
+      - If missing required fields → log warning, delete the source file, skip
+   c. Check URL deduplication against already-stored insights (same Tier 1 logic)
+      - If duplicate → delete the source file, skip
+   d. Check significance >= `scan.significance_threshold`
+      - If below threshold → delete the source file, skip
+   e. Extract month from the file's `date` field (not current scan month): `{file_YYYY-MM}`
+      - `Bash(command="mkdir -p {WD}/insights/{file_YYYY-MM}")`
+   f. Copy file to `{WD}/insights/{file_YYYY-MM}/{id}.md`
+      - If ID collides with existing file → increment sequence number in ID
+   g. Delete the source file (consumed)
+4. Track: `imported = N`
+5. Log: `[domain-intel] Imported {N} external insights from {name}`
+
+Include imported insights in the pool for Step 6 (Convergence Signal Detection) and Step 6.5 (Lens Signal Collection).
+
 ### Step 6: Convergence Signal Detection
 
-Read all insights stored today (from Step 5 results).
+Read all insights stored today (from Step 5 and Step 5.5 combined). Glob `{WD}/insights/*/` for files with today's date prefix `{YYYY-MM-DD}-*`.
 
 Group by normalized topic:
 - Extract the primary tag (first tag) + category as topic key
@@ -291,7 +339,7 @@ Write `{WD}/state.yaml`:
 
 ```yaml
 last_scan: "{YYYY-MM-DD}T{HH:MM:SS}"
-total_insights: {previous_total + stored}
+total_insights: {previous_total + stored + imported}
 total_scans: {previous_scans + 1}
 last_scan_stats:
   collected: {raw items from scanner}
@@ -300,6 +348,7 @@ last_scan_stats:
   after_keyword: {N}
   analyzed: {sent to analyzers}
   stored: {above threshold}
+  imported: {N}  # external insights imported
   convergence_signals: {N}
   lens_signals: {N}
   failed_sources: {N}
@@ -319,10 +368,26 @@ Output a concise summary:
 
 If failed_sources > 0, list them.
 
+If imported > 0, include in summary:
+```
+  External imports: {source1}: {N}, {source2}: {N}
+```
+
 If lens_signals > 0, append:
 ```
   LENS evolution signals: {N} (run /intel evolve to review)
 ```
+
+### Step 8.5: Auto-Digest
+
+If `scan.auto_digest` is `false` or not defined → skip.
+
+If `stored + imported == 0` → skip (nothing new to digest).
+
+Invoke `/digest` for today's date (daily mode).
+- If in `[cron]` mode: append `[cron]` to the invocation
+- If digest succeeds → output: `[domain-intel] Auto-digest generated. See digests/ directory.`
+- If digest fails → log warning: `[domain-intel] Auto-digest failed: {reason}`. Do not fail the scan.
 
 ## Error Handling
 

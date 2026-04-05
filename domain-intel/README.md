@@ -151,17 +151,38 @@ No changes are ever applied automatically. All evolution requires explicit user 
 
 ## Automated Scanning (Cron)
 
-Set up recurring scans with CronCreate:
+With external sources configured, a single `/scan` drives the full pipeline:
 
 ```
-# Morning scan at 8:47am (specify directory)
-CronCreate(cron="47 8 * * *", prompt="cd ~/Knowledge/ai-ml && /scan")
-
-# Weekly digest every Friday at 5:03pm
-CronCreate(cron="3 17 * * 5", prompt="cd ~/Knowledge/ai-ml && /digest week")
+# Pipeline: pre-collect (youtube-scan) → scan → import → (digest if auto_digest enabled)
+CronCreate(cron="47 8 * * *", prompt="cd ~/Knowledge/ai-ml && /scan [cron]")
 ```
+
+The `[cron]` tag enables non-interactive mode: parameters from config, failures logged not prompted.
+
+To include auto-digest after scan, set `scan.auto_digest: true` in config.yaml.
 
 Note: Cron jobs auto-expire after 3 days. Recreate in new sessions.
+
+## External Sources (IEF)
+
+domain-intel can consume pre-analyzed insights from other plugins via the Insight Exchange Format.
+
+Configure in `config.yaml`:
+```yaml
+sources:
+  external:
+    - name: YouTube Scout
+      path: ~/.youtube-scout/exports
+      pre_collect: /youtube-scan
+```
+
+When `/scan` runs:
+1. Pre-collect: invokes `/youtube-scan` to produce fresh exports
+2. Import: reads IEF files from the export directory
+3. Imported insights participate in convergence detection, lens signals, and digests
+
+See project-level CLAUDE.md for the full IEF specification.
 
 ## Optional: Browser Fallback
 
@@ -188,6 +209,9 @@ When enabled, the source-scanner retries failed `fetch_url.py` calls (exit code 
 ## Pipeline
 
 ```
+External Feeders (YouTube Scout / other IEF producers)
+    │ pre-collect (Step 1.5)
+    ▼
 Sources (GitHub API/Product Hunt/RSS/Official/Figures/Companies)
     │ source-scanner (sonnet)
     ▼
@@ -197,7 +221,7 @@ Raw Items
 Filtered Items
     │ insight-analyzer (sonnet) × N source types (parallel)
     ▼
-Structured Insights
+Structured Insights + External IEF Import (Step 5.5)
     │ convergence signal detection + lens signal collection
     ▼
 Stored Insights + Signals

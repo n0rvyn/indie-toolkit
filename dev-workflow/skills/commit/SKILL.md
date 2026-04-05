@@ -3,7 +3,7 @@ name: commit
 description: "Use when the user says 'commit' or wants to save progress after completing a task. Analyzes uncommitted changes, groups them logically, and commits with conventional format messages."
 context: fork
 model: haiku
-allowed-tools: Bash(git add:*, git commit:*, git diff:*, git status:*, git log:*)
+allowed-tools: Bash(git add:*, git commit:*, git diff:*, git status:*, git log:*, wc -c *)
 ---
 
 ## Input
@@ -33,14 +33,47 @@ On trigger:
      - Bug fixes vs features -> separate commits
      - Documentation -> separate commit
 
-3. **Create commit messages**
+3. **Pre-commit audit**
+
+   Before committing, scan `git diff <file>` for each file in the group. This is a **blocking gate** — groups with findings are held back. Only scan added lines (lines starting with `+` in diff output).
+
+   **3a. Secrets & credentials**
+   - API keys: `sk-[a-zA-Z0-9]{20,}`, `ghp_[a-zA-Z0-9]{20,}`, `gho_[a-zA-Z0-9]{20,}`, `AKIA[A-Z0-9]{16}`, `Bearer [a-zA-Z0-9._\-]{20,}`
+   - Hardcoded secrets: `password\s*=\s*["']`, `secret\s*=\s*["']`, `token\s*=\s*["']` (with non-empty literal values, not placeholders like `<YOUR_TOKEN>`)
+   - Private keys: `-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----`
+   - .env files: any `.env`, `.env.*` file being committed (except `.env.example`)
+   - Credential files: `credentials.json`, `serviceAccountKey.json`, `*.pem`, `*.p12`
+
+   **3b. Debug residue**
+   - JavaScript/TypeScript: `console.log(`, `debugger;`, `debugger `
+   - Swift (`.swift` files only): standalone `print(` (not inside a function name like `printSomething`)
+   - Python: `breakpoint()`, `pdb.set_trace()`, `import pdb`
+   - Warn only (do not block): `TODO`, `FIXME`, `HACK`, `XXX`, `#if DEBUG` blocks
+
+   **3c. Large files**
+   - Any file > 500KB: check with `git diff --stat` or file size in diff header
+   - Binary files (images, archives, compiled artifacts) that are not in `.gitignore`
+
+   **Audit behavior:**
+   - **Blocking findings** (secrets, debug statements, large files): Do NOT commit the affected group. Report each finding as:
+     ```
+     ⛔ BLOCKED: <file>:<line> — <reason>
+     ```
+   - **Warn-only findings** (TODO/FIXME): Commit proceeds, but include in summary:
+     ```
+     ⚠️ NOTE: <file>:<line> — <reason>
+     ```
+   - If ALL groups are blocked, commit nothing and report the full audit result
+   - If SOME groups are clean, commit those and report blocked groups separately
+
+4. **Create commit messages**
    - Follow conventional commit format: `type(scope): description`
    - Types: `feat`, `fix`, `docs`, `refactor`, `style`, `test`, `chore`
    - Scope: component/service name (e.g., `sync`, `home`, `repository`)
    - Description: concise summary of what changed
    - Multi-line body: explain why and how (if needed)
 
-4. **Commit in logical order**
+5. **Commit in logical order**
    - Start with foundational changes (models, protocols)
    - Then service layer changes
    - Then view/viewmodel changes
@@ -60,7 +93,7 @@ On trigger:
    git commit -m "..."  # <-- nothing left to commit!
    ```
 
-5. **Verify**
+6. **Verify**
    - After all commits, run `git log --oneline -5` to show recent commits
    - Run `git status` to confirm working tree is clean
    - Report summary of commits created
@@ -105,12 +138,18 @@ Optional body explaining:
 ## Output Format
 
 After completing commits, provide:
-1. Summary of commits created (list with hashes)
-2. Total number of commits
-3. Confirmation that working tree is clean
+1. **Audit findings** (if any):
+   - Blocked groups with `⛔ BLOCKED` items (file, line, reason)
+   - Warnings with `⚠️ NOTE` items
+2. Summary of commits created (list with hashes)
+3. Total number of commits
+4. Number of blocked groups (if any), with instructions to fix and re-run
+5. Confirmation that working tree is clean (or list of remaining unstaged changes from blocked groups)
 
 ## Completion Criteria
 
-- All logical change groups committed
-- `git status` shows clean working tree (or only intentionally unstaged files)
+- Pre-commit audit executed for all groups
+- All clean groups committed; blocked groups reported with actionable details
+- `git status` shows clean working tree (or only blocked/intentionally unstaged files)
 - Commit summary with hashes presented
+- No secrets, credentials, or debug statements committed

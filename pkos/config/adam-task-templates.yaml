@@ -37,18 +37,18 @@ templates:
       maxBudgetUsd: 2.0
       maxTurns: 100
 
-  - id: pkos-yt-scan
+  - id: pkos-youtube-scan
     name: "PKOS YouTube Scan"
-    description: "Run yt-intel curation pipeline"
+    description: "Run youtube-scout curation pipeline"
     trigger:
       type: cron
       cron: "0 12 * * *"  # Daily at noon
     steps:
       - id: scan
-        prompt: "/yt-scan"
-    tags: [pkos, yt-intel, collection]
+        prompt: "/youtube-scan"
+    tags: [pkos, youtube-scout, collection]
     config:
-      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/yt-intel"]
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/youtube-scout"]
       maxBudgetUsd: 2.0
       maxTurns: 100
 

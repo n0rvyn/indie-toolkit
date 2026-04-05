@@ -38,7 +38,7 @@ Compose these sections:
 - 📝 {title} → idea (~/Obsidian/PKOS/20-Ideas/...)
 ```
 
-**Intel Highlights**: Summarize the most significant domain-intel or yt-intel insights (top 3):
+**Intel Highlights**: Summarize the most significant domain-intel or youtube-scout insights (top 3):
 ```markdown
 ### Intel Highlights
 - {insight title}: {one-line summary}

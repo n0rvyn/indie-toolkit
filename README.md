@@ -21,7 +21,7 @@ The current codebase contains:
 | `skill-audit` | Claude Code plugin | Auditor for plugins, skills, agents, hooks, commands, and trigger quality |
 | `domain-intel` | Claude Code plugin | Domain intelligence engine with automated collection, AI analysis, trend synthesis, and evolving LENS profiles |
 | `session-intel` | Claude Code plugin | AI session analytics: extract, analyze, and correlate Claude Code and Codex sessions with git history |
-| `yt-intel` | Claude Code plugin | YouTube video curation: scrape, transcript extraction, AI scoring, TOP-5 recommendations |
+| `youtube-scout` | Claude Code plugin | YouTube video intelligence: scrape, transcript extraction, AI scoring, TOP-5 recommendations + IEF-compliant export |
 | `pkos` | Claude Code plugin | Personal Knowledge Operating System: inbox processing, signal aggregation, digest generation, vault operations |
 
 ## Repository Layout
@@ -36,7 +36,7 @@ The current codebase contains:
 ├── skill-audit/
 ├── domain-intel/
 ├── session-intel/
-├── yt-intel/
+├── youtube-scout/
 ├── pkos/
 ├── docs/
 ├── .claude-plugin/   # marketplace manifest
@@ -63,7 +63,7 @@ Install any plugin you want:
 /plugin install skill-audit@indie-toolkit
 /plugin install domain-intel@indie-toolkit
 /plugin install session-intel@indie-toolkit
-/plugin install yt-intel@indie-toolkit
+/plugin install youtube-scout@indie-toolkit
 /plugin install pkos@indie-toolkit
 ```
 
@@ -79,7 +79,7 @@ Current marketplace entries from `.claude-plugin/marketplace.json`:
 | `skill-audit` | `1.1.1` | Audit plugins, skills, agents, hooks, commands, and trigger quality | `skill-audit/README.md` |
 | `domain-intel` | `1.1.0` | Domain intelligence: collection, analysis, trends, evolving LENS profiles | `domain-intel/README.md` |
 | `session-intel` | `1.1.0` | AI session analytics: extract, analyze, correlate sessions with git history | `session-intel/README.md` |
-| `yt-intel` | `1.0.0` | YouTube video curation, transcript extraction, AI scoring, recommendations | — |
+| `youtube-scout` | `1.0.0` | YouTube video intelligence: scrape, transcript extraction, AI scoring, recommendations + IEF export | `youtube-scout/README.md` |
 | `pkos` | `0.1.0` | Personal Knowledge OS: inbox, signals, digests, vault, profiles, serendipity | — |
 
 Note:

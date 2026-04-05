@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Indie toolkit with iOS development, macOS tooling, and more",
-    "version": "1.29.6"
+    "version": "1.29.7"
   },
   "plugins": [
     {
@@ -129,7 +129,7 @@
       "name": "youtube-scout",
       "source": "./youtube-scout",
       "description": "YouTube video intelligence — scrapes recommended/search videos, extracts transcripts, scores with Claude AI on 6 quality dimensions, exports IEF-compliant insights for cross-plugin consumption",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "intelligence",
       "tags": [
         "youtube",

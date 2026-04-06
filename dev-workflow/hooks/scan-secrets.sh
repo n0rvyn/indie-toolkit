@@ -73,6 +73,8 @@ safe_value_re = re.compile(
     r'(test|mock|fake|dummy|sample|demo|example|changeme|placeholder|xxx|your_|process\.env|\.env|\\\$\{|type=|TODO|FIXME)',
     re.IGNORECASE
 )
+# Identifiers are not secrets: dotted config paths (anthropic.apiKey) and env var names (ANTHROPIC_API_KEY)
+identifier_re = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+$|^[A-Z][A-Z0-9_]{3,}$')
 schema_re = re.compile(
     r'(interface\s|type\s|:\s*(string|number|boolean)|typeof|PropTypes|@param|@type)',
     re.IGNORECASE
@@ -94,6 +96,8 @@ for line in sys.stdin:
     if len(value) < MIN_LENGTH:
         continue
     if safe_value_re.search(value):
+        continue
+    if identifier_re.match(value):
         continue
     if entropy(value) < ENTROPY_THRESHOLD:
         continue

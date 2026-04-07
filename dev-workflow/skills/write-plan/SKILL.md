@@ -118,6 +118,8 @@ refs: []
 
 **Crystal file:** [path to crystal file, if one exists — links to verify-plan CF strategy]
 
+**Threat model:** [included / not applicable]
+
 ---
 ```
 
@@ -203,6 +205,20 @@ These fields are optional per-task. Use them when the task has design-critical d
        Expected: All pass with zero failures
        ```
     f. If the project has separate test categories (unit, e2e, integration), list each command. Do NOT collapse to a single generic command unless that single command truly runs everything.
+
+### Security Assessment
+
+When the plan goal, task descriptions, or scope items contain any of these security-signal keywords — `sandbox`, `permission`, `auth`, `RBAC`, `deny`, `allow`, `isolation`, `encrypt`, `token`, `credential`, `secret`, `certificate`, `injection`, `escape`, `validate` — the plan MUST include a `## Threat Model` section after the plan header and before Task 1. Set the header field `**Threat model:** included`. When none of these keywords appear, set `**Threat model:** not applicable` and omit the section.
+
+The Threat Model section contains four subsections:
+
+1. **Attack surface** — For each controlled input that could be attacker-influenced, identify the input source and attack class. Example: user-supplied file paths → path traversal/injection; user-supplied regex → ReDoS; user-supplied template strings → template injection.
+
+2. **Failure modes** — For each new security component introduced by the plan (permission check, sandbox profile, auth gate, validation layer), document what happens when it fails silently. Acceptable answers: deny-all (safe default), allow-all (unsafe — must justify), crash/abort (acceptable for dev tooling, not for user-facing). Unspecified failure mode = gap the verifier will flag.
+
+3. **Resource lifecycle** — For each task that creates temp files, spawns child processes, opens file handles, or opens sockets: document who cleans up on success, on error (catch/finally), and on signal/crash (SIGTERM/SIGINT handler or equivalent). All three triggers must be addressed; missing any one is a gap.
+
+4. **Input validation requirements** — For each task that embeds external input into a structured format (SQL, shell commands, SBPL profiles, regex, template strings, URL parameters), document what characters must be validated or escaped and where in the code the validation occurs.
 
 ### Crystal File Integration
 

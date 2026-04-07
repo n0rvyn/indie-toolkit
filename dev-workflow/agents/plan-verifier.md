@@ -62,6 +62,7 @@ Verdict: {approved | must-revise}
 [DF] design faithfulness: {N}/{total} mapped, {M} gaps (or "skipped")
 [CF] crystal fidelity: {N}/{total} covered, {M} conflicts, {K} scope violations (or "skipped")
 [AR] architecture: {N} issues (or "skipped")
+[S3] runtime semantics: {N} checked, {M} gaps (or "skipped")
 [T1] test coverage: {N} logic tasks, {M} tested, {K} type-matched (or "skipped")
 Must-revise items: {N}
 Decisions: {N blocking}, {M recommended}
@@ -85,12 +86,13 @@ Do NOT modify the plan file. Return revision instructions only.
 
 | 类型 | 识别信号 | 适用策略 |
 |------|---------|---------|
-| 架构变更 | 新增 Service/Agent/Tool、改数据流、新增事件入口、替代组件 | S1 + S2 + AR |
+| 架构变更 | 新增 Service/Agent/Tool、改数据流、新增事件入口、替代组件 | S1 + S2 + AR + S3 |
 | 功能开发 | 新增/修改功能、改已有代码行为 | S1 + T1 |
 | UI 开发 | 新建/修改 View、组件样式、布局 | S1 + U1 |
 | 多步骤执行 | 步骤 >= 5 且有编译/运行时依赖 | S2 |
 | 有设计文档的计划 | 计划引用了设计文档 | DF |
 | 有 crystal 文件的计划 | 计划引用了 crystal 文件 | CF |
+| 安全/资源敏感 | sandbox, permission, auth, RBAC, deny, allow, isolation, encrypt, token, credential, secret, certificate, injection, escape, validate, process spawn, child process, tmp/temp | S1 + S2 + S3 |
 
 ### 2. 执行适用策略
 
@@ -266,6 +268,60 @@ Read `{Plugin agents dir}/architecture-review.md` and execute all verification s
 
 ---
 
+#### S3. 运行时语义与资源安全验证（安全/资源敏感计划）
+
+**目的**：验证计划是否覆盖了运行时语义正确性和资源安全的关键维度。
+
+**前置条件**：计划分类命中"安全/资源敏感"或"架构变更"类型。另外，如果计划头部包含 `**Threat model:** included`，无论分类结果如何，S3 均激活。否则跳过。
+
+**预检查（Threat Model 一致性）**：
+1. 如果计划分类命中"安全/资源敏感"：检查计划头部是否有 `**Threat model:** included`。缺失 = must-revise：`❌ S3 Pre [must-revise]: 计划匹配安全/资源敏感分类但未包含 Threat Model 节`
+2. 如果 `**Threat model:** included`：读取 `## Threat Model` 节的四个子节（Attack surface、Failure modes、Resource lifecycle、Input validation requirements），在后续逐 task 检查中交叉验证——Threat Model 声称的内容必须与 task 级发现一致。矛盾处标记为 gap（如 Threat Model 说"Task 3 通过 finally 清理"但 Task 3 步骤中无 finally 规划）
+
+步骤：逐 task 检查以下四个维度。每个维度引用计划文本和代码库中的 file:line 作为证据。
+
+**维度 1：Async/await 正确性**
+对计划中引用的每个 async 方法，验证调用站点是否指定了 await。对返回 boolean 的方法，验证调用方式是 `method()` 而非 `method`（函数引用的 truthiness 永远为 true，如 `!provider.isAvailable` 永远为 false）。
+
+**维度 2：输入注入面**
+对每个将外部输入嵌入结构化格式（SQL、SBPL、shell 参数、regex、模板字符串、URL 参数）的 task，验证计划是否指定了：(a) 哪些字符需要验证/转义，(b) 验证发生在代码的哪个位置。缺少任一项 = gap。
+
+**维度 3：资源生命周期**
+对每个创建临时文件、spawn 子进程、或打开 handle/socket 的 task，验证计划是否指定了三个清理触发器：on-success、on-error（catch/finally）、on-signal（SIGTERM/SIGINT handler 或等效机制）。缺少任一触发器 = gap。
+
+**维度 4：失败可见性**
+对每个 spawn 外部二进制或调用外部服务的 task，验证计划是否指定了：(a) spawn/连接失败如何上报调用方，(b) 非零退出码/错误响应如何上报，(c) 超时如何处理。缺少任一项 = gap。
+
+**输出格式**：
+
+```
+[S3 运行时语义]
+| Task | 维度 | 检查项 | 结果 |
+|------|------|--------|------|
+| Task 3 | 资源生命周期 | process cleanup on-error | ❌ 未指定 catch/finally 清理 |
+| Task 3 | 失败可见性 | process failure surfacing | ✅ 计划指定 throw on non-zero exit |
+| Task 5 | 输入注入面 | shell arg escaping | ❌ 未指定转义策略 |
+
+检查总计：{N} 项
+Gap 数：{M} 项
+```
+
+**Gap 输出**：
+```
+❌ S3 Gap [must-revise]: Task {N} — {维度}: {description}
+⚠️ S3 Gap [advisory]: Task {N} — {维度}: {description}
+```
+
+**严重程度**：
+- Threat Model 节缺失（预检查失败）→ **must-revise**
+- 资源生命周期缺少任一触发器 → **must-revise**
+- 输入注入面未指定验证/转义 → **must-revise**
+- 失败可见性缺少任一项 → **must-revise**
+- Threat Model 与 task 级发现矛盾 → **must-revise**
+- Async/await 问题 → **advisory**（可在执行时修正）
+
+---
+
 ### 3. 汇总与计划修订建议
 
 ```
@@ -279,10 +335,11 @@ Read `{Plugin agents dir}/architecture-review.md` and execute all verification s
 - DF 设计忠实度：设计要求映射 {N}/{total}，缺失锚点 {M} 个，隐含上下文 {N} 项未覆盖，粒度问题 {N} 处，边界场景 {N} 个未覆盖，UX 断言 {N}/{total} 覆盖
 - CF 决策忠实度：决策覆盖 {N}/{total}，否决方案冲突 {N} 条，scope 越界 {N} 处
 - AR 架构审查：入口冲突 {N}，替代清单 {完整/不完整}
+- S3 运行时语义：检查 {N} 项，gap {M} 项
 
 ### 必须修订（验证发现的确实问题）
 1. [步骤 X] {具体修订内容}
-   依据：{S1/S2/U1/DF/CF/AR 的哪条验证}
+   依据：{S1/S2/U1/DF/CF/AR/S3 的哪条验证}
 
 ### 建议补充（验证过程中暴露的风险）
 1. [步骤 X] {补充内容}

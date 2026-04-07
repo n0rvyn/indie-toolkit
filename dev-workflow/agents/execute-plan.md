@@ -35,6 +35,7 @@ You will receive:
 2. Count total tasks
 3. Collect all file paths from `**Files:**` sections across all tasks
 4. Read all referenced files in parallel to understand current state
+5. If plan header contains `**Threat model:** included`: read the `## Threat Model` section and note its requirements (attack surface, failure modes, resource lifecycle, input validation) as additional constraints for the failure-path self-check in Step 2
 
 ### Step 2: Execute Tasks
 
@@ -48,7 +49,15 @@ For each task in order:
    - Run verification Grep to confirm all targets updated
 4. Follow steps exactly as written — do not replace with mocks, stubs, or "simpler" alternatives
 5. Run all verification commands specified in the task's `**Verify:**` section
-6. Record result: task number, status (done/blocked/failed), any notes
+6. **Failure-path self-check** — after writing code, verify before recording the task:
+   - Every process-spawning call has error and exit handlers
+   - Every `try/catch` has a meaningful catch body (not empty, not just `console.warn`)
+   - Every temp file/directory has a cleanup path (finally block, on-exit hook, defer, or equivalent)
+   - Every external input embedded into a structured format (SQL, shell, regex, SBPL, template strings) is validated/escaped before embedding
+   **Behavior:**
+   - If the plan's Threat Model or task steps specified these and the code is missing them → implement them (plan compliance)
+   - If the plan did not specify them → do NOT add unrequested code; record `⚠️ Missing failure path: {description}` in the task result so it is visible in the execution report
+7. Record result: task number, status (done/blocked/failed), any notes
 
 **When blocked or failed:**
 - Record the blocker with evidence (error output, missing dependency, etc.)

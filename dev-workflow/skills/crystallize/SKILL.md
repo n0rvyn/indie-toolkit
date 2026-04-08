@@ -68,13 +68,16 @@ Do NOT rewrite, do NOT summarize. If the user spoke in Chinese, keep Chinese.}
 2. **{Point B}**: {same structure}
 
 ## Rejected Alternatives
-- **{Alternative name}**: Rejected because — {specific reason}
-- **{Alternative name}**: Rejected because — {specific reason}
+- **{Alternative name}**: Rejected because — {specific reason}. Rejection scope: {what exactly was rejected}; does NOT reject {what remains valid}.
+- **{Alternative name}**: Rejected because — {specific reason}. Rejection scope: {scope}.
 
 ## Decisions (machine-readable)
-- [D-001] {clear conclusion in imperative form}
-- [D-002] {clear conclusion}
+- [D-001] {clear conclusion in imperative form, traceable to user's words}
+- [D-002] {clear conclusion} (linked: D-003 — {relationship description})
 - [D-003] {clear conclusion}
+
+### AI-supplemented
+- [D-S01] ⚠️ AI 补充 {AI-inferred decision} — Reasoning: {why AI thinks this is needed}
 
 ## Constraints
 - {Constraints that emerged from the discussion}
@@ -93,10 +96,11 @@ Do NOT rewrite, do NOT summarize. If the user spoke in Chinese, keep Chinese.}
 
 **Extraction rules**:
 - **Initial Idea is denoising, not summarizing**: preserve the user's original content and phrasing. Only clean noise (filler, repetition, tangents). AI must not rephrase — rephrasing introduces interpretation bias that gets permanently baked into the crystal.
-- Each `[D-xxx]` must be decidable — a plan can be checked against it (does the plan comply or not?)
+- **Decision traceability**: Each `[D-xxx]` must be decidable (a plan can be checked against it) AND traceable to a specific user statement. For each D-xxx, the AI must be able to point to the user's words that led to it. If the AI cannot quote or closely paraphrase the user, it is an AI inference, not a user decision. AI-inferred decisions must be listed in a separate `### AI-supplemented` sub-section under Decisions, each prefixed with `⚠️ AI 补充` and the reasoning that led to the inference. The user confirms or rejects these separately.
+- **Decision relationships**: When the user states that two decisions are linked, co-located, or conditionally dependent (e.g., "A and B should be in the same module", "if A is strict enough, B is unnecessary"), record the relationship inline: `[D-002] ... (linked: D-006 — permissionMode strictness determines whether Bash control is needed)`. Do not split linked decisions into independent items without preserving the linkage.
 - Do not record pure implementation details (naming, variable splitting); only record decisions that affect deliverables and behavior
-- Rejected Alternatives must include the reason for rejection, not just "rejected"
-- Discussion Points must show the pivot (from X to Z), not just the final conclusion
+- **Rejected Alternative precision**: Rejected Alternatives must include both the **reason** for rejection AND the **scope boundary** of rejection. Format: `**{Alternative name}**: Rejected because — {reason}. Rejection scope: {what exactly was rejected}; does NOT reject {what remains valid or open}.` Example: "bashPolicy three-value enum: Rejected because — over-designed. Rejection scope: the specific enum design (restricted/audited/unrestricted); does NOT reject Bash fine-grained management as a direction."
+- **Discussion Point fidelity**: Discussion Points must show the pivot (from X to Z), not just the final conclusion. When the user provides concrete examples, routing rules, flow descriptions, or specific scenarios to illustrate a decision, preserve the essential detail in the Discussion Point — do not abstract "微信A triggers, report_to is A, deliver_to is B, approval goes to A" into "end-to-end verification needed."
 - **Frontmatter fields:** `type` is always `crystal`. `status` is always `active`. `tags` — derive 2-4 keywords from the Discussion Points topics and Decisions content. `refs` — list the design doc and design analysis paths from Source Context (omit entries that are "none").
 - **Scope Boundaries** distinguish user-authorized work from AI inference. IN items must trace to user's words (direct quote or close paraphrase). OUT items come from: explicit user exclusion ("不要改 X"), revert events (user reverted font changes → "OUT: font/typography changes"), or user-stated constraints. If the user did not explicitly authorize an item, it is NOT an IN item — do not infer scope from design docs or AI analysis. If the conversation produced no explicit scope signals (no user-stated items to include or exclude), omit the `## Scope Boundaries` section entirely.
 

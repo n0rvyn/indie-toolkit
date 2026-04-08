@@ -258,7 +258,7 @@ Verdict: ✅ Ready / ⚠️ Warnings / ❌ Not ready
 3. If test coverage gaps: list shell/missing test file paths
 4. If manual verification items exist: print the checklist
 5. Suggest next action:
-   - ✅ Ready: "Run `/commit` to save, then `/finish-branch` to integrate."
+   - ✅ Ready: "Run `/commit` to save, then `/finish-branch` to integrate. Consider `/generate-bases-views` to update knowledge views."
    - ⚠️ Warnings: "Review the warnings above. If acceptable, `/commit` and `/finish-branch`. Otherwise fix and re-run `/finalize`."
    - ❌ Not ready: "Fix the issues above, then re-run `/finalize`."
 

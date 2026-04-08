@@ -142,6 +142,14 @@ Cross-references: {N} related entries found, {M} mutual links added, {C} contrad
 
 If no related entries: `Cross-references: no related entries (< 2 keyword overlap)`
 
+### Step 6: Next Steps
+
+After saving, inform the user:
+
+```
+Optional: Run `/generate-bases-views --target lessons` to update the Obsidian Bases lessons dashboard.
+```
+
 ## Completion Criteria
 
 - Entry saved to `~/.claude/knowledge/{category}/` or `docs/09-lessons-learned/` with correct frontmatter

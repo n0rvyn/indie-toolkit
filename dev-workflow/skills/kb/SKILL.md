@@ -129,6 +129,9 @@ If still no results after the project-local fallback, and `~/Obsidian/PKOS/` exi
 
 If PKOS results found, present them with label: "[PKOS vault results — not in central knowledge base. Use /pkos kb-bridge to export relevant entries.]"
 
+**Structured query hint:** If the query targets specific properties (date range, topic, quality score), suggest:
+> For structured queries, open `~/Obsidian/PKOS/99-System/bases/` in Obsidian — Bases views support filtering by date, topic, quality, and status.
+
 This is a read-only search fallback. It does not modify the PKOS vault.
 
 **Note**: This PKOS fallback also applies to Step 3B (Question/Synthesis mode) — if the initial search in `~/.claude/knowledge/` returns zero results, try the PKOS vault before giving up on synthesis.

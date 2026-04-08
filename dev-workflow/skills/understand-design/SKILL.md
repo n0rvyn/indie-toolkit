@@ -124,7 +124,10 @@ Additional context:
 
 ### Step 4: Present Results
 
-When the agent completes, read the analysis file it created.
+When the agent completes:
+- If the agent's return contains a file path (e.g., `docs/06-plans/*-design-analysis.md`): read that file
+- If no file path in return: search `docs/06-plans/*-design-analysis.md` for the most recent file. If found with `**Status:** in-progress`, the agent was truncated — use the partial results.
+- If no file found at all: fall back to parsing the agent's return text as the analysis summary
 
 **Pipeline mode presentation:**
 

@@ -301,7 +301,7 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 
 1. Update state: `phase_step: execute`, `last_updated: <now>`
 2. Dispatch the `dev-workflow:execute-plan` agent (sonnet) with the plan file path and project root
-3. When the agent returns: read the execution report
+3. When the agent returns: read the report file at `docs/06-plans/execution-report.md` (or the path from the agent's `Report written to:` line). If the file shows `**Status:** in-progress`, the agent was truncated — treat the partial results as the execution report.
 4. Present summary: completed/blocked/failed task counts
 5. If blocked or failed tasks exist: note them for Step 6 (Fix)
 6. Update state: `last_updated: <now>`
@@ -340,7 +340,7 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
    Project root: {project root}
    ```
 
-   For implementation-reviewer (always): pass plan file path + project root
+   For implementation-reviewer (always): pass plan file path, project root, and design doc path (from state or dev-guide; "none" if no design doc)
    For apple-dev agents (conditional):
    - `apple-dev:ui-reviewer` (if UI files modified): pass list of modified `*View.swift` files
    - `apple-dev:design-reviewer` (if new pages/components): pass list of new View files
@@ -349,7 +349,10 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
    Each agent receives a fresh context — they have no memory of how the code was written.
    This removes confirmation bias from self-review.
 
-4. **When all return:** Verify each agent's reported output file exists (Read the path). If any file is missing, note it as "❌ File not produced" in the summary — do not retry review agents (their output is informational, not blocking).
+4. **When all return:** For each agent, check its report file:
+   - Agent returned a `Report:` path → Read that file
+   - Agent was truncated (no `Report:` in return) → search `.claude/reviews/` for the agent's report file pattern (e.g., `implementation-reviewer-*.md`). If found and `**Status:** in-progress`, the agent was truncated — use the partial results.
+   - No report file found at all → note as "❌ File not produced" in the summary — do not retry review agents (their output is informational, not blocking).
 
 5. Present a consolidated summary table:
 

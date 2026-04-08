@@ -36,7 +36,10 @@ Project root: {project root}
 
 When the agent returns:
 
-1. Read the execution report
+1. Read the report file at `docs/06-plans/execution-report.md`
+   - If the agent's return message contains `Report written to:`, use that path
+   - If the file exists but `**Status:**` is `in-progress`, the agent was truncated — the file still contains all completed task results up to the truncation point
+   - If the file does not exist: fall back to parsing the agent's return message
 2. Present summary to the user: completed/blocked/failed counts
 3. If blocked or failed tasks exist: list them with reasons
 

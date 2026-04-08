@@ -65,7 +65,7 @@ Design analysis: {path or "none"}
 Crystal file: {path or "none"}
 Project root: {path}
 
-Plugin agents dir: !`echo "${CLAUDE_PLUGIN_ROOT}/agents"`
+Plugin agents dir: !`echo "${CLAUDE_PLUGIN_ROOT:?CLAUDE_PLUGIN_ROOT is not set}/agents"`
 Previously resolved decisions (do not re-ask these):
 {List of "DP-xxx: Title → Chosen Option X" or "none"}
 
@@ -77,7 +77,8 @@ Retrieved error patterns and lessons (from knowledge base):
 
 When the agent completes:
 
-1. The agent returns a compact summary with verdict, issue counts, and report file path
+1. Check the agent's return for a `Report:` path. If present, read the report file.
+   - If the agent was truncated (no `Report:` in return): search `.claude/reviews/plan-verifier-*.md` for the most recent file. If found with `**Status:** in-progress`, the agent was truncated — use the partial results and note: "⚠️ Verifier was truncated. Partial results below — some strategies may not have run."
 2. Present the summary to the user
 3. Report the verdict:
    - **Approved** — proceed to Step 4

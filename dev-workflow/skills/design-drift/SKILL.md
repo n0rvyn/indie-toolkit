@@ -86,9 +86,14 @@ Document to focus: {path}
 Categories to check: all categories applicable to this document
 ```
 
+### Step 2.5: Handle Truncated Agent
+
+Check the agent's return for a `Report:` path. If present, read the report file.
+- If the agent was truncated (no `Report:` in return): search `.claude/reviews/design-drift-*.md` for the most recent file. If found with `**Status:** in-progress`, the agent was truncated — use the partial results and note: "⚠️ Drift auditor was truncated. Partial results below — some categories may not have been checked."
+
 ### Step 3: Process Flow-Trace Items
 
-扫描 agent 返回报告中的 `[needs-flow-trace]` 标记。
+扫描 drift report 文件中的 `[needs-flow-trace]` 标记。
 
 **如果 0 个**：跳到 Step 4。
 

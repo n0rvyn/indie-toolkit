@@ -1,0 +1,8 @@
+{
+  "name": "skill-master",
+  "version": "1.0.0",
+  "description": "Unified plugin lifecycle: brainstorm, create, eval, review, iterate, and package Claude Code plugins and components. Single entry /master.",
+  "author": {
+    "name": "Norvyn"
+  }
+}

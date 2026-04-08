@@ -21,7 +21,7 @@ description: |
 model: opus
 tools: Glob, Grep, Read, Bash, Write
 allowed-tools: Bash(mkdir*) Bash(date*) Write(*/.claude/reviews/*)
-maxTurns: 40
+maxTurns: 80
 color: yellow
 memory: project
 ---
@@ -49,9 +49,16 @@ Read the plan file, design doc, design analysis, and crystal file (if provided) 
 
 1. Generate timestamp: `date +%Y-%m-%d-%H%M%S`
 2. Ensure directory exists: `mkdir -p .claude/reviews`
-3. **Write** the full Plan Verification Summary (format in section 3 below) to:
-   `.claude/reviews/plan-verifier-{YYYY-MM-DD-HHmmss}.md`
-4. **Return** only this compact summary to the dispatcher:
+3. **Initialize report file** at `.claude/reviews/plan-verifier-{YYYY-MM-DD-HHmmss}.md` with:
+   ```markdown
+   ## Plan Verification Summary
+   **Status:** in-progress
+   **Plan:** {plan file path}
+   **Started:** {timestamp}
+   ```
+4. **Incremental writes**: After completing each strategy (S1, S2, T1, U1, DF, CF, AR, S3), **append** that strategy's output section to the report file immediately. Do not accumulate results in memory.
+5. When all strategies are done, **append** the summary (section 3 format below) and update the header: change `**Status:** in-progress` to `**Status:** complete`.
+6. **Return** only this compact summary to the dispatcher:
 
 ```
 Report: .claude/reviews/plan-verifier-{timestamp}.md

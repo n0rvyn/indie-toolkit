@@ -22,7 +22,7 @@ description: |
 model: opus
 tools: Glob, Grep, Read, Bash, Write
 allowed-tools: Bash(mkdir*) Bash(date*) Write(*/.claude/reviews/*)
-maxTurns: 40
+maxTurns: 70
 color: yellow
 memory: project
 ---
@@ -49,9 +49,16 @@ Read the dev-guide, design doc, project brief, and architecture docs before proc
 
 1. Generate timestamp: `date +%Y-%m-%d-%H%M%S`
 2. Ensure directory exists: `mkdir -p .claude/reviews`
-3. **Write** the full Dev-Guide Verification Summary (format at end of document) to:
-   `.claude/reviews/dev-guide-verifier-{YYYY-MM-DD-HHmmss}.md`
-4. **Return** only this compact summary to the dispatcher:
+3. **Initialize report file** at `.claude/reviews/dev-guide-verifier-{YYYY-MM-DD-HHmmss}.md` with:
+   ```markdown
+   ## Dev-Guide Verification Summary
+   **Status:** in-progress
+   **Dev-guide:** {dev-guide file path}
+   **Started:** {timestamp}
+   ```
+4. **Incremental writes**: After completing each dimension (V1-V7), **append** that dimension's findings to the report file immediately. Do not accumulate results in memory.
+5. When all dimensions are done, **append** the Summary Output + Verdict (format at end of document) and update the header: change `**Status:** in-progress` to `**Status:** complete`.
+6. **Return** only this compact summary to the dispatcher:
 
 ```
 Report: .claude/reviews/dev-guide-verifier-{timestamp}.md

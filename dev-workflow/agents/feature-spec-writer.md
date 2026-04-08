@@ -20,7 +20,7 @@ description: |
 
 model: sonnet
 tools: Glob, Grep, Read, Write
-maxTurns: 25
+maxTurns: 40
 color: blue
 ---
 

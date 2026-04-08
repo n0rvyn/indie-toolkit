@@ -29,7 +29,7 @@ description: |
 model: opus
 tools: Glob, Grep, Read, Bash, Write
 allowed-tools: Bash(git diff*) Bash(git log*) Bash(git status*) Bash(git show*) Bash(cd * && git diff*) Bash(cd * && git log*) Bash(cd * && git status*) Bash(cd * && git show*) Bash(date*) Bash(mkdir*)
-maxTurns: 40
+maxTurns: 80
 color: yellow
 memory: project
 ---
@@ -62,9 +62,16 @@ Every gap and finding must include a confidence tag: `[C:{score}]` where score i
 
 1. Generate timestamp: `date +%Y-%m-%d-%H%M%S`
 2. Ensure directory exists: `mkdir -p .claude/reviews`
-3. **Write** the full Implementation Review Summary (format at end of document) to:
-   `.claude/reviews/implementation-reviewer-{YYYY-MM-DD-HHmmss}.md`
-4. **Return** only this compact summary to the dispatcher:
+3. **Initialize report file** at `.claude/reviews/implementation-reviewer-{YYYY-MM-DD-HHmmss}.md` with:
+   ```markdown
+   ## Implementation Review Summary
+   **Status:** in-progress
+   **Plan:** {plan file path}
+   **Started:** {timestamp}
+   ```
+4. **Incremental writes**: After completing each section (1-13.1 in Part 1, 14-18 in Part 2), **append** that section's findings to the report file immediately. Do not accumulate results in memory.
+5. When all sections are done, **append** the Summary Output (format at end of document) and update the header: change `**Status:** in-progress` to `**Status:** complete`.
+6. **Return** only this compact summary to the dispatcher:
 
 ```
 Report: .claude/reviews/implementation-reviewer-{timestamp}.md

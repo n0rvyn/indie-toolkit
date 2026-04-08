@@ -35,7 +35,18 @@ You will receive:
 2. Count total tasks
 3. Collect all file paths from `**Files:**` sections across all tasks
 4. Read all referenced files in parallel to understand current state
-5. If plan header contains `**Threat model:** included`: read the `## Threat Model` section and note its requirements (attack surface, failure modes, resource lifecycle, input validation) as additional constraints for the failure-path self-check in Step 2
+5. If plan header contains `**Threat model:** included`: read the `## Threat Model` section and note its requirements (attack surface, failure modes, resource lifecycle, input validation) as additional constraints for the failure-path scan in Step 3
+6. **Initialize report file:** Write `docs/06-plans/execution-report.md` with the header:
+
+```markdown
+## Execution Report
+
+**Plan:** {plan file path}
+**Status:** in-progress
+**Tasks:** 0/{total} completed, 0 blocked, 0 failed
+
+### Task Results
+```
 
 ### Step 2: Execute Tasks
 
@@ -49,53 +60,48 @@ For each task in order:
    - Run verification Grep to confirm all targets updated
 4. Follow steps exactly as written — do not replace with mocks, stubs, or "simpler" alternatives
 5. Run all verification commands specified in the task's `**Verify:**` section
-6. **Failure-path self-check** — after writing code, verify before recording the task:
-   - Every process-spawning call has error and exit handlers
-   - Every `try/catch` has a meaningful catch body (not empty, not just `console.warn`)
-   - Every temp file/directory has a cleanup path (finally block, on-exit hook, defer, or equivalent)
-   - Every external input embedded into a structured format (SQL, shell, regex, SBPL, template strings) is validated/escaped before embedding
-   **Behavior:**
-   - If the plan's Threat Model or task steps specified these and the code is missing them → implement them (plan compliance)
-   - If the plan did not specify them → do NOT add unrequested code; record `⚠️ Missing failure path: {description}` in the task result so it is visible in the execution report
-7. Record result: task number, status (done/blocked/failed), any notes
+6. **Append result to report file** immediately after each task completes:
+   - `- Task {N}: {title} ✅` (done)
+   - `- Task {N}: {title} ❌ — {reason with evidence}` (failed)
+   - `- Task {N}: {title} ⏭️ skipped (depends on Task M)` (blocked)
+   Also update the header counters (completed/blocked/failed) in the report file.
 
 **When blocked or failed:**
-- Record the blocker with evidence (error output, missing dependency, etc.)
+- Append the blocker with evidence to the report file
 - Skip the task
 - Continue to next task UNLESS it depends on the blocked task (check `depends on` references)
 - Do NOT attempt to fix failures; do NOT guess at workarounds
 
-### Step 3: State Updates
+### Step 3: Failure-Path Scan
+
+After all tasks are attempted (or if maxTurns is close), run a single scan across all files modified during execution:
+
+1. Collect the list of files you created or modified during Step 2
+2. Read each file and check:
+   - Every process-spawning call has error and exit handlers
+   - Every `try/catch` has a meaningful catch body (not empty, not just `console.warn`)
+   - Every temp file/directory has a cleanup path (finally block, on-exit hook, defer, or equivalent)
+   - Every external input embedded into a structured format (SQL, shell, regex, SBPL, template strings) is validated/escaped before embedding
+3. **Behavior:**
+   - If the plan's Threat Model or task steps specified these and the code is missing them → implement them (plan compliance)
+   - If the plan did not specify them → do NOT add unrequested code; append `⚠️ Missing failure path: {description}` to the report file
+
+### Step 4: State Updates
 
 If `.claude/dev-workflow-state.yml` exists and `phase_step` is `execute`:
 - After every 5 tasks, update the state file:
   - `task_progress`: `"{completed}/{total}"` (e.g., `"8/15"`)
   - `last_updated`: current timestamp
 
-### Step 4: Return Report
+### Step 5: Finalize Report
 
-When all tasks are attempted, return a structured report:
-
+1. Append `### Files Modified` section to the report file:
 ```
-## Execution Report
-
-**Plan:** {plan file path}
-**Tasks:** {completed}/{total} completed, {blocked} blocked, {failed} failed
-
-### Completed Tasks
-- Task 1: {title} ✅
-- Task 2: {title} ✅
-...
-
-### Blocked/Failed Tasks
-- Task N: {title} ❌ — {reason with evidence}
-- Task M: {title} ⏭️ skipped (depends on Task N)
-...
-
-### Files Modified
 - {file path} (created/modified by Task N)
 ...
 ```
+2. Update the header: change `**Status:** in-progress` to `**Status:** complete`
+3. Return the report file path: `Report written to: docs/06-plans/execution-report.md`
 
 ## Safety Rules
 

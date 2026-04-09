@@ -1,29 +1,23 @@
 # Indie Toolkit
 
-Indie Toolkit is a mono-repo of AI-facing plugins, skills, agents, and local tooling for indie app development workflows.
+Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` marketplace. Contains production plugins, development workflow tools, and macOS automation.
 
-The current codebase contains:
+## Plugins
 
-- 11 top-level modules
-- 57 skill folders with `SKILL.md`
-- 22 agent files
-- 1 local MCP server (`rag-server`)
-
-## Modules
-
-| Module | Type | What is in the repo |
-|---|---|---|
-| `dev-workflow` | Claude Code plugin | Cross-stack workflow system with 24 skills, 10 agents, hooks, and a persisted phase state flow |
-| `apple-dev` | Claude Code plugin + Codex/OpenCode skills | iOS/macOS/iPadOS development workflows, reviews, design-token checks, CI/CD, localization, App Store review prep |
-| `mactools` | Claude Code plugin + Codex/OpenCode skills | macOS automation for Notes, Calendar, Mail, Safari, Spotlight, Reminders, OCR, Photos, Contacts, OmniFocus |
-| `product-lens` | Claude Code plugin | Product evaluation workflows such as `/evaluate`, `/compare`, `/demand-check`, `/teardown`, `/feature-assess` |
-| `rag-server` | Local MCP server | Offline-first hybrid search server using SQLite FTS5 + `sqlite-vec` + Apple `NLContextualEmbedding` |
-| `skill-audit` | Claude Code plugin | Auditor for plugins, skills, agents, hooks, commands, and trigger quality |
-| `domain-intel` | Claude Code plugin | Domain intelligence engine with automated collection, AI analysis, trend synthesis, and evolving LENS profiles |
-| `session-intel` | Claude Code plugin | AI session analytics: extract, analyze, and correlate Claude Code and Codex sessions with git history |
-| `youtube-scout` | Claude Code plugin | YouTube video intelligence: scrape, transcript extraction, AI scoring, TOP-5 recommendations + IEF-compliant export |
-| `pkos` | Claude Code plugin | Personal Knowledge Operating System: inbox processing, signal aggregation, digest generation, vault operations |
-| `x-api` | Claude Code plugin + MCP server | X (Twitter) API v2 — exposes 120+ API operations as MCP tools with Bearer Token and OAuth2 PKCE support |
+| Plugin | Category | Description |
+|--------|----------|-------------|
+| `dev-workflow` | development | Cross-stack workflow system with plan-execute-review lifecycle, phase orchestration, and session state persistence |
+| `apple-dev` | development | iOS/macOS/iPadOS development workflows, reviews, design-token checks, CI/CD, localization, App Store review prep |
+| `mactools` | productivity | macOS automation for Notes, Calendar, Mail, Safari, Spotlight, Reminders, OCR, Photos, Contacts, OmniFocus |
+| `product-lens` | product | Product evaluation: demand validation, market analysis, moat assessment, feature assessment, comparison matrix |
+| `skill-master` | development | Unified plugin lifecycle: brainstorm, create, eval, review, iterate, package Claude Code plugins |
+| `skill-audit` | development | [DEPRECATED — use skill-master] Plugin auditor from AI executor perspective |
+| `domain-intel` | intelligence | Domain intelligence engine: GitHub, RSS, changelogs, figures, companies, deep research with evolving LENS profiles |
+| `session-reflect` | coaching | AI collaboration coach: analyze sessions, improve prompting, workflow, and AI collaboration skills |
+| `youtube-scout` | intelligence | YouTube video intelligence: scrape, transcript extraction, AI scoring, IEF-compliant export |
+| `pkos` | productivity | Personal Knowledge Operating System: inbox, harvest, signal, digest, lint, vault operations, ripple compilation |
+| `wechat-bridge` | integration | WeChat message bridge via MCP `--channels` protocol: permission relay, push messages, reply |
+| `x-api` | integration | X (Twitter) API v2 MCP server: 131+ tools with Bearer Token and OAuth2 PKCE support |
 
 ## Repository Layout
 
@@ -33,12 +27,13 @@ The current codebase contains:
 ├── apple-dev/
 ├── mactools/
 ├── product-lens/
-├── rag-server/
+├── skill-master/
 ├── skill-audit/
 ├── domain-intel/
-├── session-intel/
+├── session-reflect/
 ├── youtube-scout/
 ├── pkos/
+├── wechat-bridge/
 ├── x-api/
 ├── docs/
 ├── .claude-plugin/   # marketplace manifest
@@ -54,98 +49,61 @@ Add the marketplace:
 /plugin marketplace add n0rvyn/indie-toolkit
 ```
 
-Install any plugin you want:
+Install plugins:
 
 ```bash
 /plugin install dev-workflow@indie-toolkit
 /plugin install apple-dev@indie-toolkit
 /plugin install mactools@indie-toolkit
 /plugin install product-lens@indie-toolkit
-/plugin install rag-server@indie-toolkit
-/plugin install skill-audit@indie-toolkit
+/plugin install skill-master@indie-toolkit
 /plugin install domain-intel@indie-toolkit
-/plugin install session-intel@indie-toolkit
+/plugin install session-reflect@indie-toolkit
 /plugin install youtube-scout@indie-toolkit
 /plugin install pkos@indie-toolkit
+/plugin install wechat-bridge@indie-toolkit
 /plugin install x-api@indie-toolkit
 ```
 
 Current marketplace entries from `.claude-plugin/marketplace.json`:
 
-| Plugin | Version | Description | Docs |
-|---|---|---|---|
-| `dev-workflow` | `2.9.0` | Planning, execution, review, debugging, design analysis, commits, session management | `dev-workflow/README.md` |
-| `apple-dev` | `1.5.0` | iOS/macOS/iPadOS development workflow plugin | `apple-dev/README.md` |
-| `mactools` | `1.0.1` | macOS automation toolkit for Apple apps and local workflows | `mactools/README.md` |
-| `product-lens` | `1.0.0` | Product evaluation, market analysis, moat assessment, feature assessment, comparison | `product-lens/README.md` |
-| `rag-server` | `1.1.1` | Local hybrid search MCP server for project documentation | `rag-server/README.md` |
-| `skill-audit` | `1.1.1` | Audit plugins, skills, agents, hooks, commands, and trigger quality | `skill-audit/README.md` |
-| `domain-intel` | `1.1.0` | Domain intelligence: collection, analysis, trends, evolving LENS profiles | `domain-intel/README.md` |
-| `session-intel` | `1.1.0` | AI session analytics: extract, analyze, correlate sessions with git history | `session-intel/README.md` |
-| `youtube-scout` | `1.0.0` | YouTube video intelligence: scrape, transcript extraction, AI scoring, recommendations + IEF export | `youtube-scout/README.md` |
-| `pkos` | `0.1.0` | Personal Knowledge OS: inbox, signals, digests, vault, profiles, serendipity | — |
-| `x-api` | `1.0.0` | X (Twitter) API v2 MCP server with Bearer Token and OAuth2 PKCE support | `x-api/README.md` |
+| Plugin | Version | Description |
+|---|---|---|
+| `dev-workflow` | `2.23.0` | Cross-stack workflow with plan-execute-review |
+| `apple-dev` | `1.10.2` | iOS/macOS/iPadOS development workflows |
+| `mactools` | `1.0.1` | macOS automation for Apple apps |
+| `product-lens` | `1.0.0` | Product evaluation and market analysis |
+| `skill-master` | `1.0.0` | Unified plugin lifecycle management |
+| `skill-audit` | `1.1.3` | [DEPRECATED] Plugin auditor |
+| `domain-intel` | `1.4.0` | Domain intelligence and trend analysis |
+| `session-reflect` | `2.0.0` | AI collaboration coaching |
+| `youtube-scout` | `1.0.1` | YouTube video intelligence |
+| `pkos` | `0.6.0` | Personal Knowledge OS |
+| `wechat-bridge` | `1.0.3` | WeChat message bridge |
+| `x-api` | `1.0.0` | X (Twitter) API v2 MCP server |
 
-Note:
+## Codex / OpenCode
 
-- `rag-server` is not just a prompt-only plugin; it requires extra setup in `rag-server/README.md`, including compiling the Swift embed binary and creating a Python virtual environment.
+Both Codex and OpenCode use file-based installation. The sources of truth are:
 
-## Codex
+- Codex: `.codex/INSTALL.md`
+- OpenCode: `.opencode/INSTALL.md`
 
-Codex installation is file-based, not marketplace-based. The source of truth is:
+Skills for each platform are linked via these install guides. Each plugin's `skills/` folder contains its skill definitions.
 
-```text
-.codex/INSTALL.md
-```
+## Plugin Docs
 
-If you want Codex to bootstrap itself in-chat:
+Each plugin has its own `README.md`:
 
-```text
-Fetch and follow instructions from https://raw.githubusercontent.com/n0rvyn/indie-toolkit/main/.codex/INSTALL.md
-```
-
-What the current install guide actually links:
-
-- `dev-workflow/skills`
-- `apple-dev/skills`
-- `mactools/skills`
-- `product-lens/skills`
-- `skill-audit/skills`
-
-Additional Codex notes:
-
-- `rag-server` is separate MCP infrastructure, not a Codex skill folder.
-- Role and structure notes live in `docs/README.codex.md`.
-
-## OpenCode
-
-OpenCode installation is also file-based. The source of truth is:
-
-```text
-.opencode/INSTALL.md
-```
-
-If you want OpenCode to bootstrap itself in-chat:
-
-```text
-Fetch and follow instructions from https://raw.githubusercontent.com/n0rvyn/indie-toolkit/main/.opencode/INSTALL.md
-```
-
-The current OpenCode installer links only:
-
-- `apple-dev/skills`
-- `mactools/skills`
-
-Detailed notes live in `docs/README.opencode.md`.
-
-## Module Docs
-
-- `dev-workflow/README.md`
-- `apple-dev/README.md`
-- `mactools/README.md`
-- `product-lens/README.md`
-- `rag-server/README.md`
-- `skill-audit/README.md`
-- `domain-intel/README.md`
-- `session-intel/README.md`
-- `x-api/README.md`
+- `dev-workflow/README.md` — Cross-stack workflow system
+- `apple-dev/README.md` — iOS/macOS/iPadOS development
+- `mactools/README.md` — macOS automation
+- `product-lens/README.md` — Product evaluation
+- `skill-master/README.md` — Plugin lifecycle management
+- `skill-audit/README.md` — Plugin audit (deprecated)
+- `domain-intel/README.md` — Domain intelligence engine
+- `session-reflect/README.md` — AI collaboration coach
+- `youtube-scout/README.md` — YouTube intelligence
+- `pkos/README.md` — Personal Knowledge OS
+- `wechat-bridge/README.md` — WeChat bridge
+- `x-api/README.md` — X API v2 MCP server

@@ -10,8 +10,17 @@ intel_sources:
     insights_path: ""
     # Only import insights with significance >= this threshold
     significance_threshold: 3
+    # Source identifier used in PKOS frontmatter
+    source_name: domain-intel
     # Maximum insights to import per sync run (prevents ripple overload)
     max_per_sync: 10
+
+  session_reflect:
+    insights_path: ~/.claude/session-reflect/insights/
+    significance_threshold: 3
+    max_per_sync: 10
+    category: pattern
+    source_name: session-reflect
 
 # Ripple compilation settings
 ripple:

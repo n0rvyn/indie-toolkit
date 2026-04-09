@@ -143,3 +143,17 @@ Invoke the `harvest` skill:
 - `--project {name}` → single project
 - `--force` → re-import all
 - `--skip-ripple` → skip MOC compilation (faster for bulk)
+
+### Route: migrate
+
+Trigger: user says "migrate", "import vault", "迁移", "migrate --scan-only"
+
+Invoke the `migrate` skill:
+- `--scan-only` (or `--dry-run`) → scan source vault and present migration report without writing files
+- `--source-name {name}` → use a named source from `migrate-sources.yaml`
+- `--source-vault {path}` → specify source vault path directly
+- `--force` → re-migrate all files (skip state file check)
+- `--skip-ripple` → skip ripple compilation after import
+- `--resume` → resume from interruption point
+
+To add a new source vault, edit `~/Obsidian/PKOS/.state/migrate-sources.yaml`.

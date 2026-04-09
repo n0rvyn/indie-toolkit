@@ -1,0 +1,37 @@
+# Health Insights Plugin — Default Configuration
+# All paths are configurable; override in ~/.adam/config/health-insights.yaml
+
+vault_path: "~/Obsidian/HealthVault"
+notion_workspace: "Health"
+icloud_watch_folder: "~/Library/Mobile Documents/com~apple~CloudDocs/HealthSync/delta/"
+adam_state_dir: "~/.adam/state/health-insights/"
+adam_tmp_dir: "~/.adam/tmp/health-insights-ingest/"
+
+# Ingestion
+chunk_size_mb: 10
+
+# AI Models
+haiku_model: "haiku"
+sonnet_model: "sonnet"
+
+# Notion (API key read from NOTION_API_KEY env var)
+notion_api_key: "${NOTION_API_KEY}"
+notion_database_ids:
+  trends: null       # populated after first run
+  alerts: null
+  reports: null
+  lab_results: null
+
+# Baseline computation
+min_data_points_required: 30
+baseline_window_days: 90
+drift_threshold_pct: 10
+
+# Alert thresholds
+alert_rules:
+  hrv_low_days: 3
+  hrv_low_deviation_pct: 30
+  resting_hr_high_deviation_pct: 15
+  sleep_debt_days: 5
+  sleep_debt_hours: 6
+  blood_glucose_post_threshold: 11

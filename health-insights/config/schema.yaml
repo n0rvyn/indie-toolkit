@@ -1,0 +1,72 @@
+# Health Insights Plugin — Configuration Schema
+# This file documents all configurable fields and their types.
+
+fields:
+  vault_path:
+    type: string
+    description: "Path to the Obsidian HealthVault directory"
+    required: true
+
+  notion_workspace:
+    type: string
+    description: "Name of the Notion workspace for health data"
+    default: "Health"
+
+  icloud_watch_folder:
+    type: string
+    description: "iCloud Drive path watched for new HealthKit delta files"
+    default: "~/Library/Mobile Documents/com~apple~CloudDocs/HealthSync/delta/"
+
+  adam_state_dir:
+    type: string
+    description: "Adam state directory for health-insights processing state"
+    default: "~/.adam/state/health-insights/"
+
+  adam_tmp_dir:
+    type: string
+    description: "Temp directory for ingest buffer files"
+    default: "~/.adam/tmp/health-insights-ingest/"
+
+  chunk_size_mb:
+    type: integer
+    description: "XML parsing chunk size in MB for resumable ingestion"
+    default: 10
+
+  haiku_model:
+    type: string
+    description: "Model used for structural data extraction"
+    default: "haiku"
+
+  sonnet_model:
+    type: string
+    description: "Model used for narrative insight generation"
+    default: "sonnet"
+
+  notion_api_key:
+    type: string
+    description: "Notion API key (read from NOTION_API_KEY env var)"
+    default: "${NOTION_API_KEY}"
+
+  notion_database_ids:
+    type: object
+    description: "Notion database IDs (populated after first run)"
+    properties:
+      trends: { type: string, nullable: true }
+      alerts: { type: string, nullable: true }
+      reports: { type: string, nullable: true }
+      lab_results: { type: string, nullable: true }
+
+  min_data_points_required:
+    type: integer
+    description: "Minimum days of data before computing a baseline"
+    default: 30
+
+  baseline_window_days:
+    type: integer
+    description: "Rolling window size for baseline computation"
+    default: 90
+
+  drift_threshold_pct:
+    type: integer
+    description: "Deviation threshold (%) to trigger baseline rebuild"
+    default: 10

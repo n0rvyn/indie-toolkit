@@ -1,0 +1,6 @@
+{
+  "name": "health-insights",
+  "version": "0.1.0",
+  "description": "Personal health intelligence: ingest Apple Health data, establish baselines, generate AI-driven narrative insights",
+  "author": { "name": "Norvyn" }
+}

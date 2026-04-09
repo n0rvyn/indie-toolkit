@@ -33,13 +33,16 @@ Count sessions. If more than 30, suggest narrowing with `--project`.
 
 ### Step 2: Filter Already-Analyzed Sessions
 
-Read `~/.claude/session-reflect/analyzed_sessions.json` (if it exists).
+Query `~/.claude/session-reflect/sessions.db` for already-analyzed session IDs:
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/sessions_db.py --query-ids
+```
 
 - For `--days 1` (default): **skip filtering** — always re-analyze today's sessions for fresh feedback
-- For `--days >1`: filter out session IDs already in `analyzed_sessions.json`, unless `--profile` flag is set (profile benefits from full history)
+- For `--days >1`: filter out session IDs already in sessions.db, unless `--profile` flag is set (profile benefits from full history)
 - If all sessions filtered out: "All sessions in this range have been analyzed. Use `--days {larger N}` for more sessions, or re-run with `--days 1` for today."
 
-If `analyzed_sessions.json` doesn't exist, proceed with all discovered sessions.
+If sessions.db doesn't exist yet, proceed with all discovered sessions (sessions_db.py --init will create it on first use).
 
 ### Step 3: Parse Each Session
 
@@ -47,10 +50,10 @@ For each discovered session, run the appropriate parser based on `source` field:
 
 ```bash
 # For claude-code sessions:
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_claude_session.py --input {file_path}
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_claude_session.py --input {file_path} --sqlite-db ~/.claude/session-reflect/sessions.db
 
 # For codex sessions:
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_codex_session.py --input {file_path}
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_codex_session.py --input {file_path} --sqlite-db ~/.claude/session-reflect/sessions.db
 ```
 
 Collect all parsed JSON results. If a parser fails on a session, log the error and continue.
@@ -87,10 +90,11 @@ Dispatch `session-reflect:session-parser` agent with parsed session data.
 3. Save feedback to `~/.claude/session-reflect/reflections/{YYYY-MM-DD}.md`:
    - Create directory if it doesn't exist: `mkdir -p ~/.claude/session-reflect/reflections`
    - If file already exists for today, append with `---` separator
-4. Update `~/.claude/session-reflect/analyzed_sessions.json`:
-   - Read existing file (or start with `{}`)
-   - Add each newly analyzed session ID with today's date: `{session_id: "YYYY-MM-DD"}`
-   - Write back
+4. Upsert all analyzed sessions into sessions.db:
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_claude_session.py --input {file_path} --sqlite-db ~/.claude/session-reflect/sessions.db
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_codex_session.py --input {file_path} --sqlite-db ~/.claude/session-reflect/sessions.db
+   ```
 5. Present coaching feedback to user
 
 #### --profile mode:
@@ -123,10 +127,10 @@ After Step 5 (default mode only), check if growth tracking is possible:
 - **growth-tracker failure**: skip growth section, show coaching feedback only
 - **/insights facets missing**: silent (not an error)
 - **profile.yaml missing**: profiler creates from scratch
-- **analyzed_sessions.json missing**: treat as empty, create on first write
+- **sessions.db missing**: sessions_db.py --init auto-creates on first upsert
 
 ## Completion Criteria
 
 - Coaching feedback (or profile) generated and displayed
 - Reflection saved to `~/.claude/session-reflect/reflections/{date}.md` (default mode)
-- `analyzed_sessions.json` updated with newly analyzed session IDs (default mode)
+- sessions.db updated with newly analyzed sessions via parse script upsert (default mode)

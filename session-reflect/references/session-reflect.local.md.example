@@ -11,6 +11,9 @@ include_codex: true
 # Filter to specific projects (empty = all projects)
 projects: []
 
+# Ignore project directories matching these substrings (e.g. internal Adam test roles)
+ignore_patterns: ["adam-roles"]
+
 # Enable SessionEnd hook for auto-summaries (default: true)
 auto_summary: true
 

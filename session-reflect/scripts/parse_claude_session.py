@@ -7,6 +7,7 @@ import os
 import re
 import sys
 from collections import Counter
+from pathlib import Path
 from datetime import datetime
 
 BUILD_PATTERNS = re.compile(
@@ -264,9 +265,38 @@ def main():
     parser.add_argument(
         "--output", default=None, help="Output JSON file (default: stdout)"
     )
+    parser.add_argument(
+        "--sqlite-db",
+        default=None,
+        help="Path to sessions.db to upsert results",
+    )
     args = parser.parse_args()
 
     result = parse_claude_session(args.input)
+
+    if args.sqlite_db:
+        import sys
+        sys.path.insert(0, str(Path(__file__).parent))
+        import sessions_db
+        sessions_db.init_db()
+        # Flatten session data for upsert
+        flat = dict(result)
+        flat["time_start"] = result.get("time", {}).get("start")
+        flat["time_end"] = result.get("time", {}).get("end")
+        flat["duration_min"] = result.get("time", {}).get("duration_min")
+        flat["turns_user"] = result.get("turns", {}).get("user")
+        flat["turns_asst"] = result.get("turns", {}).get("assistant")
+        flat["tokens_in"] = result.get("tokens", {}).get("input")
+        flat["tokens_out"] = result.get("tokens", {}).get("output")
+        flat["cache_read"] = result.get("tokens", {}).get("cache_read")
+        flat["cache_create"] = result.get("tokens", {}).get("cache_create")
+        flat["cache_hit_rate"] = result.get("tokens", {}).get("cache_hit_rate")
+        sessions_db.upsert_session(result["session_id"], flat)
+        # Build tool call list with tool_name and file_path
+        tool_list = []
+        for idx, name in enumerate(result.get("tools", {}).get("sequence", [])):
+            tool_list.append({"tool_name": name, "file_path": None, "is_error": 0})
+        sessions_db.upsert_tool_calls(result["session_id"], tool_list)
 
     output = json.dumps(result, indent=2, ensure_ascii=False)
     if args.output:

@@ -9,15 +9,30 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 
-def discover_claude_sessions(projects_dir, cutoff_ts):
+def get_session_ids_from_db(db_path):
+    """Return set of session_ids already in sessions.db."""
+    import sqlite3
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        rows = conn.execute("SELECT session_id FROM sessions").fetchall()
+        conn.close()
+        return {r[0] for r in rows}
+    except Exception:
+        return set()
+
+
+def discover_claude_sessions(projects_dir, cutoff_ts, ignore_patterns=None):
     """Discover Claude Code session JSONL files newer than cutoff."""
     sessions = []
     projects_path = Path(projects_dir).expanduser()
     if not projects_path.is_dir():
         return sessions
 
+    ignore_patterns = ignore_patterns or []
     for project_dir in projects_path.iterdir():
         if not project_dir.is_dir():
+            continue
+        if any(pat in project_dir.name for pat in ignore_patterns):
             continue
         for jsonl_file in project_dir.glob("*.jsonl"):
             mtime = jsonl_file.stat().st_mtime
@@ -168,6 +183,11 @@ def main():
         help="Number of days to look back (default: 7)",
     )
     parser.add_argument(
+        "--ignore-patterns",
+        default=None,
+        help="Comma-separated list of project_dir substrings to skip (e.g. 'adam-roles,private-tmp')",
+    )
+    parser.add_argument(
         "--project",
         default=None,
         help="Filter by project name (substring match)",
@@ -189,16 +209,29 @@ def main():
         default="json",
         help="Output format (default: json)",
     )
+    parser.add_argument(
+        "--sqlite-db",
+        default=None,
+        help="Path to sessions.db for deduplication (skip already-analyzed sessions)",
+    )
     args = parser.parse_args()
 
     cutoff = datetime.now() - timedelta(days=args.days)
     cutoff_ts = cutoff.timestamp()
 
+    ignore_patterns = None
+    if args.ignore_patterns:
+        ignore_patterns = [p.strip() for p in args.ignore_patterns.split(",") if p.strip()]
+
     sessions = []
     if args.source in ("claude-code", "all"):
-        sessions.extend(discover_claude_sessions(args.claude_projects, cutoff_ts))
+        sessions.extend(discover_claude_sessions(args.claude_projects, cutoff_ts, ignore_patterns))
     if args.source in ("codex", "all"):
         sessions.extend(discover_codex_sessions(args.codex_sessions, cutoff_ts))
+
+    if args.sqlite_db:
+        existing = get_session_ids_from_db(args.sqlite_db)
+        sessions = [s for s in sessions if s["session_id"] not in existing]
 
     if args.project:
         sessions = [

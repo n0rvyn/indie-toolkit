@@ -1,0 +1,17 @@
+# session-reflect configuration
+
+# Storage
+storage_dir: ~/.claude/session-reflect/
+
+# Session filtering
+ignore_patterns:
+  - adam-roles
+
+# PKOS IEF export
+insights_path: ~/.claude/session-reflect/insights/
+significance_threshold: 3
+max_insights_per_export: 20
+
+# Analysis
+include_codex: true
+auto_summary: true

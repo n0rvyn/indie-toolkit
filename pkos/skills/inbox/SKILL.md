@@ -243,14 +243,14 @@ If Get笔记 credentials are missing or save_note fails, log warning and continu
 NO_PROXY="*" python3 ~/.claude/skills/notion-with-api/scripts/notion_api.py create-db-item \
   32a1bde4-ddac-81ff-8f82-f2d8d7a361d7 \
   "{title}" \
-  --props '{"Status": "inbox", "Source": "{source}", "Type": "{classification}", "Topics": "{tags_csv}", "Priority": "{urgency}"}'
+  --props '{"status": "inbox", "source": "{source}", "type": "{classification}", "topics": "{tags_csv}", "priority": "{urgency}"}'
 ```
 
 4. Update Notion status after Obsidian note written:
 ```bash
 NO_PROXY="*" python3 ~/.claude/skills/notion-with-api/scripts/notion_api.py update-db-item-properties \
   {notion_page_id} \
-  --props '{"Status": "processed", "Obsidian Link": "obsidian://open?vault=PKOS&file={obsidian_path_encoded}"}'
+  --props '{"status": "processed", "obsidian_link": "obsidian://open?vault=PKOS&file={obsidian_path_encoded}"}'
 ```
 
 **B. task → Notion only (no Obsidian note)**

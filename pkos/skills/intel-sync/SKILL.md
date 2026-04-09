@@ -83,7 +83,8 @@ for source_key, source_cfg in config.get('intel_sources', {}).items():
 
     for fp in files:
         all_insight_files.append((str(fp), source_key, source_cfg))
-    sources_with_files.append(source_key)
+    if files:
+        sources_with_files.append(source_key)
 
 print(f'Sources: {len(sources_with_files)}, Files: {len(all_insight_files)}')
 "
@@ -122,7 +123,7 @@ For each candidate:
    related: []
    status: seed
    ief_id: "{IEF id}"
-   ief_source: "{IEF source}"
+   source: "{IEF source}"
    aliases: []
    ---
 
@@ -153,7 +154,7 @@ For each candidate:
    NO_PROXY="*" python3 ~/.claude/skills/notion-with-api/scripts/notion_api.py create-db-item \
      32a1bde4-ddac-81ff-8f82-f2d8d7a361d7 \
      "{title}" \
-     --props '{"Status": "processed", "Source": "domain-intel", "Type": "{classification}", "Topics": "{tags_csv}"}'
+     --props '{"status": "processed", "source": "domain-intel", "type": "{classification}", "topics": "{tags_csv}"}'
    ```
 
 5. Dispatch `pkos:ripple-compiler` for each imported note (sequentially).

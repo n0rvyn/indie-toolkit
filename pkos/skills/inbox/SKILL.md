@@ -12,7 +12,7 @@ Process all pending items in the PKOS inbox. Reads from Reminders "PKOS Inbox" l
 
 Parse from user input:
 - `--dry-run`: Show what would be processed without making changes
-- `--source SOURCE`: Process only from specific source (reminders | notes | voice | all). Default: all
+- `--source SOURCE`: Process only from specific source (reminders | notes | voice | getnote | all). Default: all
 
 ## Process
 
@@ -42,6 +42,52 @@ ls ~/Library/Mobile\ Documents/com~apple~CloudDocs/PKOS/voice/*.m4a 2>/dev/null 
 ```
 Each unprocessed .m4a file becomes an inbox item with `source: voice_memo`, `raw_type: audio`.
 
+**Get笔记:**
+```bash
+GETNOTE_SCRIPT="${CLAUDE_PLUGIN_ROOT}/../../pkos/skills/getnote/scripts/getnote.sh"
+
+# 读取 sync state
+SYNC_FILE=~/Obsidian/PKOS/.state/getnote-sync.yaml
+if [ -f "$SYNC_FILE" ]; then
+  SYNC_MODE=$(python3 -c "import yaml; d=yaml.safe_load(open('$SYNC_FILE')); print(d.get('sync_mode','tag'))" 2>/dev/null || echo "tag")
+  LAST_SINCE_ID=$(python3 -c "import yaml; d=yaml.safe_load(open('$SYNC_FILE')); print(d.get('since_id','0'))" 2>/dev/null || echo "0")
+else
+  SYNC_MODE="tag"
+  LAST_SINCE_ID="0"
+fi
+
+if [ "$SYNC_MODE" = "tag" ]; then
+  # Tag 模式：列出所有笔记，由 add_tags 标记已处理
+  NOTES_JSON=$($GETNOTE_SCRIPT list_notes 0 2>/dev/null)
+else
+  # Cursor 模式：用 since_id 增量拉取
+  NOTES_JSON=$($GETNOTE_SCRIPT list_notes "$LAST_SINCE_ID" 2>/dev/null)
+fi
+
+# 解析 notes[]，过滤 #pkos-synced，并填充 PROCESSED_GETNOTE_IDS 数组
+PROCESSED_GETNOTE_IDS=()
+GETNOTE_TEMP_FILE=~/Obsidian/PKOS/.state/getnote-collect-temp.txt
+: > "$GETNOTE_TEMP_FILE"  # 截断 temp 文件
+
+while IFS= read -r line; do
+  NOTE_ID=$(echo "$line" | cut -f1)
+  NOTE_TITLE=$(echo "$line" | cut -f2)
+  NOTE_TYPE=$(echo "$line" | cut -f3)
+  if [[ -n "$NOTE_ID" ]]; then
+    PROCESSED_GETNOTE_IDS+=("$NOTE_ID")
+    echo -e "${NOTE_ID}\t${NOTE_TITLE}\t${NOTE_TYPE}" >> "$GETNOTE_TEMP_FILE"
+  fi
+done < <(echo "$NOTES_JSON" | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+for note in data.get('notes', []):
+    tag_names = [t.get('name','') for t in note.get('tags', [])]
+    if 'pkos-synced' not in tag_names:
+        print(f\"{note['id']}\t{note.get('title','Untitled')}\t{note.get('note_type','plain_text')}\")
+" 2>/dev/null || true)
+```
+Each untagged note becomes an inbox item with `source: getnote`, `raw_type: text`. Link/img types: extract task_id, poll_task until completed (max 30 retries, 2s interval).
+
 Present a summary to the user:
 ```
 📥 PKOS Inbox: {N} items pending
@@ -49,6 +95,7 @@ Present a summary to the user:
   📝 Notes: {count}
   🎤 Voice: {count}
   🌐 Web (cleaned): {count}
+  📓 Get笔记: {count}
 ```
 
 If zero items found, report "Inbox is empty." and stop.
@@ -150,6 +197,36 @@ aliases: []
 {If inbox-processor identified a matching MOC topic, add: `- See also: [[MOC-{topic}]]`}
 ```
 
+2. Write to Get笔记 (for cross-tool sync — only if Get笔记 credentials are configured):
+```bash
+GETNOTE_SCRIPT="${CLAUDE_PLUGIN_ROOT}/../../pkos/skills/getnote/scripts/getnote.sh"
+GETNOTE_NOTE_ID=""
+TOPIC_MAP=$(python3 -c "import yaml; d=yaml.safe_load(open('~/.claude/pkos/config.yaml')); print(d.get('getnote_api',{}).get('topic_map',''))" 2>/dev/null || echo "")
+if [ -n "$TOPIC_MAP" ] && [ -n "$GETNOTE_SCRIPT" ]; then
+  TAGS_ARG=""
+  [[ -n "{tags_csv}" ]] && TAGS_ARG="{tags_csv}"
+  SAVE_RESULT=$($GETNOTE_SCRIPT save_note "{title}" "{raw_content}" "$TAGS_ARG" 2>/dev/null)
+  GETNOTE_NOTE_ID=$(echo "$SAVE_RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('note',{}).get('id',''))" 2>/dev/null || echo "")
+  if [ -n "$GETNOTE_NOTE_ID" ] && [ -n "$TOPIC_MAP" ]; then
+    python3 -c "
+import yaml, sys, subprocess, os
+topic_map = yaml.safe_load(open(os.path.expanduser('~/.claude/pkos/config.yaml')))
+tag_map = topic_map.get('getnote_api', {}).get('topic_map', {})
+tags = '{tags}'.split(',') if '{tags}' else []
+script = os.environ.get('GETNOTE_SCRIPT', '')
+note_id = os.environ.get('GETNOTE_NOTE_ID', '')
+for tag in tags:
+    tag = tag.strip()
+    topic_id = tag_map.get(tag, '')
+    if topic_id and script and note_id:
+        subprocess.run([script, 'batch_add_to_topic', topic_id, note_id], capture_output=True)
+" GETNOTE_SCRIPT="$GETNOTE_SCRIPT" GETNOTE_NOTE_ID="$GETNOTE_NOTE_ID" && \
+      echo "[inbox] Get笔记: wrote note ${GETNOTE_NOTE_ID}" || true
+  fi
+fi
+```
+If Get笔记 credentials are missing or save_note fails, log warning and continue (graceful degradation — Obsidian note is already written).
+
 > Format reference: see `references/obsidian-format.md` for wikilink and callout conventions.
 
 **Conflict handling:** If the inbox-processor returned `conflict_status: needs-reconciliation` for this item:
@@ -161,16 +238,15 @@ aliases: []
 > [!warning] Conflict Detected
 > Conflicts with [[{conflicts_with note title}]]: {conflict_description}
 
-2. Create Notion Pipeline DB entry via Python API (token and proxy from env):
+3. Create Notion Pipeline DB entry via Python API (token and proxy from env):
 ```bash
 NO_PROXY="*" python3 ~/.claude/skills/notion-with-api/scripts/notion_api.py create-db-item \
   32a1bde4-ddac-81ff-8f82-f2d8d7a361d7 \
   "{title}" \
   --props '{"Status": "inbox", "Source": "{source}", "Type": "{classification}", "Topics": "{tags_csv}", "Priority": "{urgency}"}'
 ```
-Note the returned page ID from output.
 
-3. Update Notion status after Obsidian note written:
+4. Update Notion status after Obsidian note written:
 ```bash
 NO_PROXY="*" python3 ~/.claude/skills/notion-with-api/scripts/notion_api.py update-db-item-properties \
   {notion_page_id} \
@@ -219,6 +295,17 @@ mkdir -p ~/Library/Mobile\ Documents/com~apple~CloudDocs/PKOS/voice/processed/
 mv "{voice_file_path}" ~/Library/Mobile\ Documents/com~apple~CloudDocs/PKOS/voice/processed/
 ```
 
+**Get笔记:**
+```bash
+# Get笔记 — 标记已处理
+# 调用 add_tags(note_id, ['#pkos-synced']) 标记笔记已被 PKOS 处理
+for NOTE_ID in "${PROCESSED_GETNOTE_IDS[@]}"; do
+  $GETNOTE_SCRIPT add_tags "$NOTE_ID" "pkos-synced" 2>/dev/null && \
+    echo "[inbox] Get笔记 note ${NOTE_ID} marked pkos-synced" || \
+    echo "[inbox] Get笔记 tag write failed for ${NOTE_ID}" >&2
+done
+```
+
 ### Step 5.5: Ripple Compilation
 
 For each item that was routed to Obsidian (classification: knowledge, idea, or reference):
@@ -253,6 +340,12 @@ Wiki compilation:
   Conflicts flagged: {count} (need human reconciliation)
 
 All items synced to Notion Pipeline DB.
+
+Get笔记 sync:
+  New notes captured: {count}
+  Written back to Get笔记: {count}
+  Marked pkos-synced: {count}
+  Async tasks pending: {count}
 ```
 
 ## Error Handling
@@ -260,7 +353,11 @@ All items synced to Notion Pipeline DB.
 - If mactools scripts fail (Reminders/Notes not found), log warning and continue with other sources
 - If Notion API fails, log error but keep the Obsidian note (data is not lost)
 - If voice transcription fails, skip that file and log warning
-- Never block the entire pipeline for a single item failure
+- If Get笔记 API returns 401/403 → log `[inbox] Get笔记 auth failed` → skip Get笔记 source
+- If Get笔记 API returns 429 (quota exceeded) → log `[inbox] Get笔记 quota exceeded` → skip source, do not update since_id
+- If Get笔记 API returns 5xx → log `[inbox] Get笔记 API error {code}` → wait 5s retry once; if still fails, skip
+- If add_tags fails → log warning, note still captured to Obsidian (graceful degradation)
+- Never block the entire pipeline for Get笔记 failure
 
 ## Notion Configuration
 

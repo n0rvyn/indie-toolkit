@@ -4,6 +4,8 @@ description: |
   Propagates a new source note's knowledge across the wiki.
   Updates or creates MOC pages, adds cross-references between related notes,
   updates entity pages. Turns 1:1 filing into 1:N knowledge compilation.
+  Also calls Get笔记 semantic recall API to discover cross-tool knowledge
+  from Get笔记 and adds those references as external cross-links.
 
 model: sonnet
 tools: [Read, Write, Edit, Grep, Glob]
@@ -37,6 +39,84 @@ Glob(pattern="**/*.md", path="~/Obsidian/PKOS/80-MOCs")
 ```
 
 Read each MOC's frontmatter `topic` field. Build a map: `{topic → moc_path}`.
+
+### 2b. Get笔记 Semantic Recall (Cross-tool Knowledge Discovery)
+
+Check if Get笔记 API credentials are configured in `~/.claude/pkos/config.yaml`:
+
+```yaml
+getnote_api:
+  api_key: ""       # REQUIRED
+  client_id: ""     # REQUIRED
+  base_url: "https://openapi.biji.com/open/api/v1"
+  max_recall_results: 5
+  include_external_types: false
+```
+
+**2b.0. Credential validation:**
+If `api_key` or `client_id` is empty, log:
+```
+[ripple-compiler] Get笔记 API credentials not configured.
+Skipping cross-tool recall.
+```
+Then skip to Step 3.
+
+**2b.1. Construct query:**
+Build the recall query from: first 200 chars of note content + title + top 3 tags (from `tags` array). Truncate at 500 chars total.
+
+**2b.2. Call recall API:**
+```
+POST https://openapi.biji.com/open/api/v1/resource/recall
+Headers:
+  Authorization: Bearer {api_key}
+  X-Client-ID: {client_id}
+  Content-Type: application/json
+Body:
+{
+  "query": "{constructed query}",
+  "top_k": {max_recall_results, default 5}
+}
+```
+
+On success (200): parse `results` array.
+On 429 (rate limit): log warning, skip 2b entirely this run.
+On 5xx or network error: log error, skip 2b entirely this run.
+
+**2b.3. Filter results:**
+- If `include_external_types: false` (default): only keep results where `note_type == "NOTE"` or `note_type == "FILE"`.
+- If `include_external_types: true`: include all types.
+- Deduplicate against existing `related_notes` array and any Get笔记 links already added this run.
+- Keep top 5 after filtering.
+
+**2b.4. Format cross-tool references:**
+For each qualifying result, generate a markdown link:
+```
+- [{title}](https://biji.com/note/{note_id}) — {first 80 chars of content}... (Get笔记 {note_type}, {YYYY-MM-DD})
+```
+
+Store these in a `getnote_recalls` list for use in Step 2b.5.
+
+**2b.5. Add to source note:**
+If Step 2b.3 returned any results:
+
+1. Ensure the source note has a `## Connections` section (create if missing, before end of file).
+2. Add a subsection header:
+   ```
+   ### From Get笔记
+   ```
+3. Append each Get笔记 result as a markdown link:
+   ```
+   - [{title}](https://biji.com/note/{note_id}) — {excerpt} (Get笔记 {note_type}, {YYYY-MM-DD})
+   ```
+4. Do NOT add Get笔记 results to the note's `related:` frontmatter array (those are for Obsidian notes only).
+
+**2b.6. Log to ripple-log.yaml:**
+```yaml
+getnote_recalls_included: {count of results added}
+getnote_recalls_found: {count of raw results from API}
+```
+
+**Note:** Get笔记 API errors are non-fatal — log and continue. Cross-tool recall is best-effort.
 
 ### 3. Decide Update Actions
 

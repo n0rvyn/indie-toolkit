@@ -208,3 +208,69 @@ templates:
       plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/pkos"]
       maxBudgetUsd: 0.5
       maxTurns: 30
+
+  # ═══════ Get笔记 Integration ═══════
+
+  - id: pkos-getnote-inbox
+    name: "PKOS Inbox — Get笔记 Source"
+    description: "PKOS inbox — Get笔记 source (双向读写 + 语义召回)"
+    trigger:
+      type: cron
+      cron: "0 */6 * * *"
+    steps:
+      - id: process-inbox
+        prompt: "/inbox --source getnote"
+    tags: [pkos, inbox, getnote]
+    config:
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/pkos"]
+      maxBudgetUsd: 2.0
+      maxTurns: 50
+      fileAccess:
+        allowedPaths:
+          - "~/Obsidian/PKOS"
+          - "~/Library/Mobile Documents"
+    env:
+      GETNOTE_API_KEY: "{{getnote_api.api_key}}"
+      GETNOTE_CLIENT_ID: "{{getnote_api.client_id}}"
+
+  - id: pkos-getnote-intel-blogger
+    name: "PKOS Get笔记 Intel — Blogger"
+    description: "Get笔记 博主订阅情报摄取"
+    trigger:
+      type: cron
+      cron: "0 */4 * * *"
+    steps:
+      - id: intel-bloggers
+        prompt: "/intel --source blogger"
+    tags: [pkos, getnote, intel, blogger]
+    config:
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/pkos"]
+      maxBudgetUsd: 2.0
+      maxTurns: 60
+      fileAccess:
+        allowedPaths:
+          - "~/Obsidian/PKOS"
+    env:
+      GETNOTE_API_KEY: "{{getnote_api.api_key}}"
+      GETNOTE_CLIENT_ID: "{{getnote_api.client_id}}"
+
+  - id: pkos-getnote-intel-live
+    name: "PKOS Get笔记 Intel — Live"
+    description: "Get笔记 直播订阅情报摄取"
+    trigger:
+      type: cron
+      cron: "0 9 * * *"
+    steps:
+      - id: intel-lives
+        prompt: "/intel --source live"
+    tags: [pkos, getnote, intel, live]
+    config:
+      plugins: ["/Users/norvyn/Code/Skills/indie-toolkit/pkos"]
+      maxBudgetUsd: 2.0
+      maxTurns: 60
+      fileAccess:
+        allowedPaths:
+          - "~/Obsidian/PKOS"
+    env:
+      GETNOTE_API_KEY: "{{getnote_api.api_key}}"
+      GETNOTE_CLIENT_ID: "{{getnote_api.client_id}}"

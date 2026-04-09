@@ -18,6 +18,7 @@ Parse from user input (natural language routing):
 - `ingest <url|text>` → Manual Ingest
 - `review` → Today's Wiki Changes
 - `lint` → Latest Health Report
+- `intel [getnote]` → Get笔记 Intelligence Feed
 
 ## Routes
 
@@ -132,6 +133,12 @@ Show the latest lint report:
 
 2. If found: read and display the summary + high-severity items.
 3. If not found: report "No lint data. Lint runs automatically every Sunday, or invoke internally."
+
+### Route: Get笔记 Intelligence Feed
+
+Trigger: user says "intel getnote", "getnote intel", "刷新博主"
+
+Invoke `getnote-intel` skill with optional `--source blogger|live`.
 
 ### Route: harvest
 

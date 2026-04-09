@@ -70,7 +70,7 @@ keyword_re = re.compile(
 )
 value_re = re.compile(r'''(?:=|:)\s*[\"']([^\"']{2,})[\"']''')
 safe_value_re = re.compile(
-    r'(test|mock|fake|dummy|sample|demo|example|changeme|placeholder|xxx|your_|process\.env|\.env|\\\$\{|type=|TODO|FIXME)',
+    r'(test|mock|fake|dummy|sample|demo|example|changeme|placeholder|xxx|your_|process\.env|\.env|\\\$\{|type=|TODO|FIXME|\{\{.*\}\})',
     re.IGNORECASE
 )
 # Identifiers are not secrets: dotted config paths (anthropic.apiKey) and env var names (ANTHROPIC_API_KEY)

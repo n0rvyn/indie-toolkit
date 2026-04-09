@@ -20,7 +20,7 @@ Collect behavioral signals from the PKOS ecosystem for feedback loop analysis. A
 Query Notion Pipeline DB for items in the collection window:
 
 ```bash
-NO_PROXY="*" python3 ~/.claude/skills/notion/scripts/notion_api.py query-db \
+NO_PROXY="*" python3 ~/.claude/skills/notion-with-api/scripts/notion_api.py query-db \
   32a1bde4-ddac-81ff-8f82-f2d8d7a361d7 \
   --filter '{"and": [{"property": "Created", "date": {"on_or_after": "{start_date}"}}]}'
 ```

@@ -115,7 +115,7 @@ For each candidate:
 
 4. Create Notion Pipeline DB entry:
    ```bash
-   NO_PROXY="*" python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item \
+   NO_PROXY="*" python3 ~/.claude/skills/notion-with-api/scripts/notion_api.py create-db-item \
      32a1bde4-ddac-81ff-8f82-f2d8d7a361d7 \
      "{title}" \
      --props '{"Status": "processed", "Source": "domain-intel", "Type": "{classification}", "Topics": "{tags_csv}"}'

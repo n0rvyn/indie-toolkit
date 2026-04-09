@@ -85,7 +85,7 @@ disable-model-invocation: true
   1. 读取 `.claude/notion-sync.local.md` 获取 token 和配置
   2. 对每个更新的文件，调用：
   ```bash
-  NOTION_TOKEN="<token>" python3 ~/.claude/skills/notion/scripts/notion_api.py update-page --file <filepath> <page_id>
+  NOTION_TOKEN="<token>" python3 ~/.claude/skills/notion-with-api/scripts/notion_api.py update-page --file <filepath> <page_id>
   ```
   3. 输出同步结果汇总表
 - 不存在：跳过，输出提示：

@@ -163,7 +163,7 @@ aliases: []
 
 2. Create Notion Pipeline DB entry via Python API (token and proxy from env):
 ```bash
-NO_PROXY="*" python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item \
+NO_PROXY="*" python3 ~/.claude/skills/notion-with-api/scripts/notion_api.py create-db-item \
   32a1bde4-ddac-81ff-8f82-f2d8d7a361d7 \
   "{title}" \
   --props '{"Status": "inbox", "Source": "{source}", "Type": "{classification}", "Topics": "{tags_csv}", "Priority": "{urgency}"}'
@@ -172,7 +172,7 @@ Note the returned page ID from output.
 
 3. Update Notion status after Obsidian note written:
 ```bash
-NO_PROXY="*" python3 ~/.claude/skills/notion/scripts/notion_api.py update-db-item-properties \
+NO_PROXY="*" python3 ~/.claude/skills/notion-with-api/scripts/notion_api.py update-db-item-properties \
   {notion_page_id} \
   --props '{"Status": "processed", "Obsidian Link": "obsidian://open?vault=PKOS&file={obsidian_path_encoded}"}'
 ```
@@ -181,7 +181,7 @@ NO_PROXY="*" python3 ~/.claude/skills/notion/scripts/notion_api.py update-db-ite
 
 1. Create Notion Pipeline DB entry with Status "actionable":
 ```bash
-NO_PROXY="*" python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item \
+NO_PROXY="*" python3 ~/.claude/skills/notion-with-api/scripts/notion_api.py create-db-item \
   32a1bde4-ddac-81ff-8f82-f2d8d7a361d7 \
   "{title}" \
   --props '{"Status": "actionable", "Source": "{source}", "Type": "task", "Topics": "{tags_csv}", "Priority": "{urgency}"}'
@@ -265,6 +265,6 @@ All items synced to Notion Pipeline DB.
 ## Notion Configuration
 
 - Pipeline DB ID: `32a1bde4-ddac-81ff-8f82-f2d8d7a361d7`
-- Access method: Python API (`~/.claude/skills/notion/scripts/notion_api.py`)
+- Access method: Python API (`~/.claude/skills/notion-with-api/scripts/notion_api.py`)
 - Token + proxy: provided via Adam template env (`NOTION_TOKEN`, `NO_PROXY`)
 - Topics multi_select: use existing options from DB schema

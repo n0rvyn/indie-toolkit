@@ -70,5 +70,5 @@ iOS 相当于一个采集终端，通过 iCloud 发到 macOS，macOS 上 Claude 
   - /Users/norvyn/Code/Projects/Adam/src/worker/worker-entry.ts
   - /Users/norvyn/Code/Projects/Adam/src/scheduler/bree-engine.ts
   - /Users/norvyn/Code/Projects/Adam/adam.config.yaml
-  - /Users/norvyn/.claude/skills/notion/scripts/notion_api.py
+  - /Users/norvyn/.claude/skills/notion-with-api/scripts/notion_api.py
   - /Users/norvyn/Code/Skills/indie-toolkit/mactools/skills/reminders/scripts/reminders.swift

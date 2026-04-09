@@ -200,6 +200,21 @@
         "social"
       ],
       "strict": true
+    },
+    {
+      "name": "health-insights",
+      "source": "./health-insights",
+      "description": "Personal health intelligence: ingest Apple Health data, establish baselines, generate AI-driven narrative insights",
+      "version": "0.1.0",
+      "category": "health",
+      "tags": [
+        "health",
+        "apple-health",
+        "baselines",
+        "insights",
+        "obsidian"
+      ],
+      "strict": true
     }
   ]
 }

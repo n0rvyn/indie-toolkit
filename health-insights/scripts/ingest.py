@@ -1,25 +1,28 @@
 #!/usr/bin/env python3
 """
 Streaming XML ingestion script for Apple Health export data.
-Supports resumable processing via checkpoint files.
+Supports resumable processing via MongoDB checkpoint.
 
 Usage:
-    python ingest.py --source <file> --checkpoint-dir <dir> --vault-dir <dir> [--finalize]
-    python ingest.py --source <dir> --checkpoint-dir <dir> --vault-dir <dir> [--finalize]
-    python ingest.py --resume --checkpoint-dir <dir> --vault-dir <dir> [--finalize]
+    python ingest.py --source <file> [--database health] [--batch-size 1000]
+    python ingest.py --source <dir> [--database health]
+    python ingest.py --resume [--database health]
+    python ingest.py --source <file> --start-date 2025-04-01 --end-date 2026-03-30
 """
 
 import argparse
 import os
+import re
 import sys
 import xml.sax
-import yaml
-from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
+from io import StringIO
 from pathlib import Path
-from typing import TextIO, Optional
+from typing import Optional
 
-# Record type normalization: Apple Health type → vault file name
+import pymongo
+
+# Record type normalization: Apple Health type → metric key
 TYPE_MAP = {
     "HKQuantityTypeIdentifierHeartRate": "heart_rate",
     "HKQuantityTypeIdentifierHeartRateVariabilitySDNN": "hrv_sdnn",
@@ -78,59 +81,109 @@ TYPE_MAP = {
     "HKQuantityTypeIdentifierPhysicalEffort": "physical_effort",
     "HKQuantityTypeIdentifierAppleSleepingWristTemperature": "sleep_wrist_temp",
     "HKDataTypeSleepDurationGoal": "sleep_goal",
-    "HKQuantityTypeIdentifierBloodGlucose": "blood_glucose",
 }
 
 
 def normalize_type(hk_type: str) -> str:
-    """Normalize Apple Health type string to vault key name."""
+    """Normalize Apple Health type string to metric key."""
     return TYPE_MAP.get(hk_type, hk_type.lower().replace("hkquantitytypeidentifier", "").replace("hkcategorytypeidentifier", "").replace("hkdtype", ""))
 
 
+def _sanitize_unit(unit: str) -> str:
+    """Remove garbage from malformed unit strings (e.g. 'mmol<180.155>/L')."""
+    if unit and "<" in unit:
+        unit = re.sub(r"<[^>]+>", "", unit)
+    return unit
+
+
+def _parse_date(date_str: str) -> Optional[datetime]:
+    """Parse an Apple Health ISO 8601 date string to a UTC-aware datetime.
+
+    Handles Z suffix and +HH:MM offsets by converting to UTC-aware datetime.
+    """
+    if not date_str:
+        return None
+    try:
+        dt = datetime.fromisoformat(date_str)
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+    except (ValueError, AttributeError):
+        return None
+
+
+def _device_short(device: str) -> Optional[str]:
+    """Extract model identifier from full device string."""
+    if not device:
+        return None
+    # Device strings look like "Device/<model>,<variant>/<details>"
+    parts = device.split("/")
+    if len(parts) >= 2:
+        return parts[1].split(",")[0] if "," in parts[1] else parts[1]
+    return device[:64]
+
+
 class HealthRecordHandler(xml.sax.ContentHandler):
-    """SaxParser handler that accumulates records into daily buckets."""
+    """SAX handler that writes records directly to MongoDB in batches."""
 
-    def __init__(self, buffer_dir: Path, chunk_size_bytes: int = 10 * 1024 * 1024):
-        self.buffer_dir = Path(buffer_dir)
-        self.chunk_size_bytes = chunk_size_bytes
-        self.bytes_processed = 0
+    def __init__(self, db, batch_size: int = 1000):
+        self.db = db
+        self.batch_size = batch_size
+        self.batch: list[dict] = []
+        # In-batch deduplication set: (timestamp, metric, value) keys already in batch
+        self._seen_keys: set[tuple] = set()
         self.records_processed = 0
-        self.last_byte_processed = 0
-        self.last_record_date = None
-        self.current_bucket = None  # YYYY-MM-DD
+        self.last_record_date: Optional[str] = None
+        self.bytes_processed = 0
+        # Date filter bounds (set by IngestEngine)
+        self.start_date_filter: Optional[datetime] = None
+        self.end_date_filter: Optional[datetime] = None
 
-        # Per-type accumulators: { date -> { type -> list[records] } }
-        self.buckets = defaultdict(lambda: defaultdict(list))
-        # Open file handles for append mode
-        self._handles = {}
+    def _flush_batch(self):
+        """Insert accumulated batch to MongoDB. Uses insert_many (time-series collections do not support UpdateOne upsert)."""
+        if not self.batch:
+            return
+        try:
+            self.db.metrics.insert_many(self.batch, ordered=False)
+        except pymongo.errors.BulkWriteError as e:
+            # Ignore duplicate key errors (code 11000) for idempotent re-runs
+            for err in e.details.get("writeErrors", []):
+                if err.get("code") != 11000:
+                    raise
+        self.batch.clear()
+        self._seen_keys.clear()  # Free memory; cross-batch dupes near-impossible in chronological exports
 
-    def _get_handle(self, date: str, rec_type: str) -> TextIO:
-        """Get or create an append handle for a date/type combination."""
-        key = (date, rec_type)
-        if key not in self._handles:
-            date_dir = self.buffer_dir / date
-            date_dir.mkdir(parents=True, exist_ok=True)
-            f = open(date_dir / f"{rec_type}.tmp", "a")
-            self._handles[key] = f
-        return self._handles[key]
+    def _update_checkpoint(self, file: str, byte_offset: int):
+        """Persist checkpoint state to MongoDB singleton."""
+        self.db.checkpoint.replace_one(
+            {"_id": "ingest_checkpoint"},
+            {
+                "_id": "ingest_checkpoint",
+                "file": file,
+                "byte_offset": byte_offset,
+                "last_record_date": self.last_record_date,
+                "records_processed": self.records_processed,
+                "status": "in_progress",
+                "updated_at": datetime.now(timezone.utc),
+            },
+            upsert=True,
+        )
 
-    def _close_all_handles(self):
-        """Close all open file handles."""
-        for f in self._handles.values():
-            f.close()
-        self._handles = {}
-
-    def _flush_bucket(self, date: str):
-        """Flush all handles for a specific date."""
-        for (d, _), f in list(self._handles.items()):
-            if d == date:
-                f.flush()
-                os.fsync(f.fileno())
-
-    def _get_date_from_pos(self, pos: int, f: TextIO) -> int:
-        """Seek to position and return the byte offset of the next <Record."""
-        # This is called during resume; we seek to the byte and scan for next Record start
-        return pos
+    def _mark_complete(self, file: str, file_size: int):
+        """Mark ingest as completed in checkpoint."""
+        self.db.checkpoint.replace_one(
+            {"_id": "ingest_checkpoint"},
+            {
+                "_id": "ingest_checkpoint",
+                "file": file,
+                "byte_offset": file_size,
+                "last_record_date": self.last_record_date,
+                "records_processed": self.records_processed,
+                "status": "completed",
+                "updated_at": datetime.now(timezone.utc),
+            },
+            upsert=True,
+        )
 
     # xml.sax ContentHandler interface
 
@@ -140,110 +193,142 @@ class HealthRecordHandler(xml.sax.ContentHandler):
 
         hk_type = attrs.get("type", "")
         rec_type = normalize_type(hk_type)
+        # Skip unknown types
         if rec_type not in TYPE_MAP.values() and rec_type not in TYPE_MAP:
-            # Unknown type — skip writing but count it
             self.records_processed += 1
             return
 
-        value = attrs.get("value", "")
-        unit = attrs.get("unit", "")
-        # Sanitize unit: Apple Health export sometimes has malformed values like
-        # "mmol<180.1558800000541>/L" where a float leaked into the unit field.
-        # Keep only the first space-delimited token group that looks like a unit.
-        if unit and "<" in unit:
-            # Apple Health sometimes puts a float in the unit field (e.g. "mmol<180.155>/L")
-            # Remove the garbage embedded in angle brackets
-            import re
-            unit = re.sub(r'<[^>]+>', '', unit)
+        value_str = attrs.get("value", "")
+        if not value_str:
+            self.records_processed += 1
+            return
+
+        try:
+            value = float(value_str)
+        except (ValueError, TypeError):
+            self.records_processed += 1
+            return
+
+        unit = _sanitize_unit(attrs.get("unit", ""))
         start_date = attrs.get("startDate", "")
         end_date = attrs.get("endDate", "")
         source = attrs.get("sourceName", "")
-        device = attrs.get("device", "")
-        creation_date = attrs.get("creationDate", "")
+        device = _device_short(attrs.get("device", ""))
 
-        # Parse date to get YYYY-MM-DD bucket
-        try:
-            dt = datetime.fromisoformat(start_date.replace("Z", "+00:00").replace("+08:00", ""))
-            date_str = dt.strftime("%Y-%m-%d")
-        except (ValueError, AttributeError):
-            date_str = "unknown"
+        start_dt = _parse_date(start_date)
+        if start_dt is None:
+            self.records_processed += 1
+            return
 
-        if self.current_bucket is None:
-            self.current_bucket = date_str
-        elif date_str != self.current_bucket:
-            # Date changed — flush previous bucket
-            self._flush_bucket(self.current_bucket)
-            self.current_bucket = date_str
+        # Apply date filters
+        if self.start_date_filter and start_dt < self.start_date_filter:
+            self.records_processed += 1
+            return
+        if self.end_date_filter and start_dt > self.end_date_filter:
+            self.records_processed += 1
+            return
 
-        # Write to append-only tmp file
-        record = {
-            "type": rec_type,
+        end_dt = _parse_date(end_date) if end_date else None
+
+        doc = {
+            "timestamp": start_dt,
+            "metadata": {
+                "metric": rec_type,
+                "source": source or "unknown",
+                "unit": unit,
+            },
             "value": value,
-            "unit": unit,
-            "start_date": start_date,
-            "end_date": end_date,
-            "source": source,
             "device": device,
-            "creation_date": creation_date,
+            "end_date": end_dt,
         }
 
-        try:
-            f = self._get_handle(date_str, rec_type)
-            f.write(yaml.safe_dump(record, allow_unicode=True))
-            f.write("---\n")
-        except Exception as e:
-            print(f"Error writing record: {e}", file=sys.stderr)
+        # In-batch deduplication: skip if same (timestamp, metric, value) already in batch
+        key = (start_dt, rec_type, value)
+        if key in self._seen_keys:
+            self.records_processed += 1
+            return
+        self._seen_keys.add(key)
 
-        self.last_record_date = date_str
-        self.records_processed += 1
+        self.batch.append(doc)
+        self.last_record_date = start_date[:10] if start_date else None
 
-        if self.records_processed % 10000 == 0:
+        if len(self.batch) >= self.batch_size:
+            self._flush_batch()
+
+        if self.records_processed > 0 and self.records_processed % 10000 == 0:
             print(f"  {self.records_processed:,} records processed...", flush=True)
 
+        self.records_processed += 1
+
     def endDocument(self):
-        self._close_all_handles()
+        self._flush_batch()
 
     def characters(self, content):
         self.bytes_processed += len(content)
 
 
 class IngestEngine:
-    """Streaming XML ingestion engine with checkpoint support."""
+    """Streaming XML ingestion engine with MongoDB checkpoint support."""
 
-    def __init__(self, vault_dir: str, checkpoint_dir: str, chunk_size_mb: int = 10):
-        self.vault_dir = Path(vault_dir).expanduser()
-        self.checkpoint_dir = Path(checkpoint_dir).expanduser()
-        self.chunk_size_bytes = chunk_size_mb * 1024 * 1024
-        self.buffer_dir = self.vault_dir / ".ingest_buffer"
-        self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
-        self.buffer_dir.mkdir(parents=True, exist_ok=True)
+    def __init__(self, mongo_uri: str, database: str, batch_size: int = 1000):
+        self.mongo_uri = mongo_uri
+        self.database_name = database
+        self.batch_size = batch_size
+        self.client: Optional[pymongo.MongoClient] = None
+        self.db = None
 
-        # Import checkpoint manager
-        from checkpoint import CheckpointManager
-        self.ckpt = CheckpointManager(str(self.checkpoint_dir))
+    def _connect(self):
+        if self.client is None:
+            self.client = pymongo.MongoClient(self.mongo_uri)
+            self.db = self.client[self.database_name]
+            # Ensure ingest_log collection has unique index on (file, chunk_start)
+            self.db.ingest_log.create_index(
+                [("file", 1), ("chunk_start", 1)],
+                unique=True,
+                background=True,
+            )
+
+    def close(self):
+        if self.client:
+            self.client.close()
+            self.client = None
+            self.db = None
+
+    def _load_checkpoint(self) -> Optional[dict]:
+        """Load ingest checkpoint from MongoDB, or None if no checkpoint exists."""
+        self._connect()
+        return self.db.checkpoint.find_one({"_id": "ingest_checkpoint"})
+
+    def _get_handler(self) -> HealthRecordHandler:
+        """Create a configured SAX handler with MongoDB connection."""
+        self._connect()
+        handler = HealthRecordHandler(self.db, self.batch_size)
+        return handler
 
     def ingest_file(
         self,
         filepath: str,
         resume_from_byte: int = 0,
-        total_estimate: Optional[int] = None,
-        finalize: bool = True,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
     ) -> dict:
         """Ingest a single XML file, optionally resuming from a byte offset."""
         filepath = Path(filepath).expanduser()
+        if not filepath.exists():
+            raise FileNotFoundError(f"File not found: {filepath}")
+
         file_size = filepath.stat().st_size
 
-        handler = HealthRecordHandler(str(self.buffer_dir), self.chunk_size_bytes)
+        handler = self._get_handler()
+
+        # Configure date filters on handler (UTC-aware)
+        if start_date:
+            handler.start_date_filter = datetime.fromisoformat(start_date).replace(tzinfo=timezone.utc)
+        if end_date:
+            handler.end_date_filter = datetime.fromisoformat(end_date).replace(tzinfo=timezone.utc)
 
         # Save initial checkpoint
-        self.ckpt.create_checkpoint(
-            file=str(filepath),
-            last_byte_processed=resume_from_byte,
-            last_record_date="unknown",
-            current_daily_bucket="unknown",
-            records_processed=0,
-            total_records_estimate=total_estimate,
-        )
+        handler._update_checkpoint(str(filepath), resume_from_byte)
 
         parser = xml.sax.make_parser()
         parser.setContentHandler(handler)
@@ -256,168 +341,128 @@ class IngestEngine:
             if resume_from_byte > 0:
                 f.seek(resume_from_byte)
 
+            chunk_size_bytes = 10 * 1024 * 1024  # 10 MB chunks
             chunk_num = 0
+
             while True:
-                # Read chunk
-                chunk = f.read(self.chunk_size_bytes)
+                chunk = f.read(chunk_size_bytes)
                 if not chunk:
                     break
 
                 chunk_start = f.tell() - len(chunk)
+                chunk_end = f.tell()
                 chunk_num += 1
-                print(f"Chunk {chunk_num}: bytes {chunk_start:,} – {f.tell():,} ({f.tell()/file_size*100:.1f}%)", flush=True)
+                pct = chunk_end / file_size * 100
 
-                # Parse this chunk
-                from io import StringIO
+                # Cross-run idempotency: skip chunks already ingested
+                already = self.db.ingest_log.find_one({"file": str(filepath), "chunk_start": chunk_start})
+                if already:
+                    print(f"Chunk {chunk_num}: bytes {chunk_start:,} – {chunk_end:,} ({pct:.1f}%) — skipped (already ingested)", flush=True)
+                    continue
+
+                print(f"Chunk {chunk_num}: bytes {chunk_start:,} – {chunk_end:,} ({pct:.1f}%)", flush=True)
+
                 sax_input = xml.sax.InputSource(StringIO(chunk))
-                sax_input.setSystemId(filepath)
+                sax_input.setSystemId(str(filepath))
                 try:
                     parser.parse(sax_input)
                 except xml.sax.SAXException as e:
                     print(f"  SAX warning (continuing): {e}", file=sys.stderr)
 
+                # Log this chunk as ingested (cross-run dedup)
+                try:
+                    self.db.ingest_log.insert_one({
+                        "file": str(filepath),
+                        "chunk_start": chunk_start,
+                        "chunk_end": chunk_end,
+                        "records_at": handler.records_processed,
+                        "ingested_at": datetime.now(timezone.utc),
+                    })
+                except pymongo.errors.DuplicateKeyError:
+                    pass  # Already logged by a concurrent run
+
                 # Update checkpoint mid-chunk
-                self.ckpt.create_checkpoint(
-                    file=str(filepath),
-                    last_byte_processed=f.tell(),
-                    last_record_date=handler.last_record_date or "unknown",
-                    current_daily_bucket=handler.current_bucket or "unknown",
-                    records_processed=handler.records_processed,
-                    total_records_estimate=total_estimate,
-                )
+                handler._update_checkpoint(str(filepath), chunk_end)
 
                 if f.tell() >= file_size:
                     break
 
-        print(f"Done: {handler.records_processed:,} records across {len(handler.buckets)} days")
-
-        if finalize:
-            self.finalize()
+        # Final flush (endDocument already calls _flush_batch, but guard here too)
+        handler._flush_batch()
 
         # Mark complete
-        self.ckpt.create_checkpoint(
-            file=str(filepath),
-            last_byte_processed=file_size,
-            last_record_date=handler.last_record_date,
-            current_daily_bucket=handler.current_bucket,
-            records_processed=handler.records_processed,
-            total_records_estimate=total_estimate,
-        )
+        handler._mark_complete(str(filepath), file_size)
 
+        print(f"Done: {handler.records_processed:,} records")
         return {
             "records_processed": handler.records_processed,
-            "days": sorted(handler.buckets.keys()),
+            "last_record_date": handler.last_record_date,
         }
 
-    def ingest_directory(self, dirpath: str, finalize: bool = True) -> dict:
+    def ingest_directory(self, dirpath: str) -> dict:
         """Ingest all XML files in a directory."""
         dirpath = Path(dirpath).expanduser()
         xml_files = sorted(dirpath.glob("*.xml"))
         total_records = 0
-        all_days = set()
 
         for xml_file in xml_files:
-            result = self.ingest_file(str(xml_file), resume_from_byte=0, finalize=False)
+            result = self.ingest_file(str(xml_file), resume_from_byte=0)
             total_records += result["records_processed"]
-            all_days.update(result["days"])
-
-        if finalize:
-            self.finalize()
 
         return {
             "records_processed": total_records,
-            "days": sorted(all_days),
+            "files_processed": len(xml_files),
         }
 
-    def finalize(self) -> None:
-        """Convert buffer/*.tmp files into daily/*.yaml vault files."""
-        if not self.buffer_dir.exists():
-            return
-
-        daily_dir = self.vault_dir / "daily"
-        daily_dir.mkdir(exist_ok=True)
-
-        for date_dir in sorted(self.buffer_dir.iterdir()):
-            if not date_dir.is_dir():
-                continue
-            date_str = date_dir.name
-            target_date_dir = daily_dir / date_str
-            target_date_dir.mkdir(exist_ok=True)
-
-            for tmp_file in sorted(date_dir.glob("*.tmp")):
-                rec_type = tmp_file.stem  # e.g. "heart_rate"
-                output_file = target_date_dir / f"{rec_type}.yaml"
-
-                # Read all records from tmp
-                records = []
-                with open(tmp_file, "r") as f:
-                    content = f.read()
-
-                # Split on yaml document separator
-                parts = content.split("---\n")
-                for part in parts:
-                    part = part.strip()
-                    if not part:
-                        continue
-                    try:
-                        records.append(yaml.safe_load(part))
-                    except yaml.YAMLError:
-                        continue
-
-                # Write structured daily file
-                data = {
-                    "type": "daily",
-                    "source": "apple-health-export",
-                    "date": date_str,
-                    "records": records,
-                }
-
-                with open(output_file, "w") as f:
-                    f.write("---\n")
-                    f.write(yaml.safe_dump(data, allow_unicode=True, sort_keys=False))
-
-                print(f"  Written: {output_file.relative_to(self.vault_dir)} ({len(records)} records)")
-
-        # Clean up buffer
-        import shutil
-        shutil.rmtree(self.buffer_dir)
-        print("Buffer finalized and cleared.")
+    def resume(self, start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:
+        """Resume from the last MongoDB checkpoint."""
+        ckpt = self._load_checkpoint()
+        if not ckpt:
+            raise RuntimeError("No checkpoint found. Use --source to specify a file.")
+        return self.ingest_file(
+            ckpt["file"],
+            resume_from_byte=ckpt.get("byte_offset", 0),
+            start_date=start_date,
+            end_date=end_date,
+        )
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Apple Health XML ingestion")
+    default_uri = os.environ.get("MDB_MCP_CONNECTION_STRING", "")
+
+    parser = argparse.ArgumentParser(description="Apple Health XML ingestion to MongoDB")
     parser.add_argument("--source", help="XML file or directory of XML files to ingest")
-    parser.add_argument("--checkpoint-dir", default="~/.adam/state/health-insights/checkpoints", help="Checkpoint directory")
-    parser.add_argument("--vault-dir", default="~/Obsidian/HealthVault", help="HealthVault directory")
-    parser.add_argument("--resume", action="store_true", help="Resume from last checkpoint")
-    parser.add_argument("--finalize", action="store_true", help="Finalize buffer to vault YAML files")
-    parser.add_argument("--chunk-size-mb", type=int, default=10, help="Chunk size in MB for streaming")
+    parser.add_argument("--mongo-uri", default=default_uri, help=f"MongoDB connection string (default: $MDB_MCP_CONNECTION_STRING)")
+    parser.add_argument("--database", default="health", help="MongoDB database name (default: health)")
+    parser.add_argument("--batch-size", type=int, default=1000, help="Batch size for MongoDB writes (default: 1000)")
+    parser.add_argument("--resume", action="store_true", help="Resume from last MongoDB checkpoint")
+    parser.add_argument("--start-date", help="Filter records starting from this date (YYYY-MM-DD)")
+    parser.add_argument("--end-date", help="Filter records up to this date (YYYY-MM-DD)")
     args = parser.parse_args()
 
-    engine = IngestEngine(args.vault_dir, args.checkpoint_dir, args.chunk_size_mb)
-
-    if args.resume:
-        ckpt = engine.ckpt.load()
-        if ckpt:
-            result = engine.ingest_file(
-                ckpt["file"],
-                resume_from_byte=ckpt["last_byte_processed"],
-                total_estimate=ckpt.get("total_records_estimate"),
-                finalize=args.finalize,
-            )
-        else:
-            print("No checkpoint found. Use --source to specify a file.")
-            sys.exit(1)
-    elif args.source:
-        source_path = Path(args.source).expanduser()
-        if source_path.is_dir():
-            result = engine.ingest_directory(str(source_path), finalize=args.finalize)
-        else:
-            result = engine.ingest_file(str(source_path), finalize=args.finalize)
-        print(f"Ingestion complete: {result['records_processed']:,} records, {len(result['days'])} days")
-    else:
-        parser.print_help()
+    if not args.mongo_uri:
+        print("Error: --mongo-uri required or MDB_MCP_CONNECTION_STRING env var must be set", file=sys.stderr)
         sys.exit(1)
+
+    engine = IngestEngine(args.mongo_uri, args.database, args.batch_size)
+
+    try:
+        if args.resume:
+            result = engine.resume(start_date=args.start_date, end_date=args.end_date)
+            print(f"Resume complete: {result['records_processed']:,} records")
+        elif args.source:
+            source_path = Path(args.source).expanduser()
+            if source_path.is_dir():
+                result = engine.ingest_directory(str(source_path))
+                print(f"Ingestion complete: {result['records_processed']:,} records, {result['files_processed']} files")
+            else:
+                result = engine.ingest_file(str(source_path), start_date=args.start_date, end_date=args.end_date)
+                print(f"Ingestion complete: {result['records_processed']:,} records")
+        else:
+            parser.print_help()
+            sys.exit(1)
+    finally:
+        engine.close()
 
 
 if __name__ == "__main__":

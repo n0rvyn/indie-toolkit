@@ -17,30 +17,22 @@ fields:
     description: "iCloud Drive path watched for new HealthKit delta files"
     default: "~/Library/Mobile Documents/com~apple~CloudDocs/HealthSync/delta/"
 
-  adam_state_dir:
-    type: string
-    description: "Adam state directory for health-insights processing state"
-    default: "~/.adam/state/health-insights/"
-
-  adam_tmp_dir:
-    type: string
-    description: "Temp directory for ingest buffer files"
-    default: "~/.adam/tmp/health-insights-ingest/"
-
-  chunk_size_mb:
-    type: integer
-    description: "XML parsing chunk size in MB for resumable ingestion"
-    default: 10
-
-  haiku_model:
-    type: string
-    description: "Model used for structural data extraction"
-    default: "haiku"
-
-  sonnet_model:
-    type: string
-    description: "Model used for narrative insight generation"
-    default: "sonnet"
+  mongodb:
+    type: object
+    description: "MongoDB Atlas connection configuration"
+    properties:
+      connection_string:
+        type: string
+        description: "MongoDB connection string (use ${MDB_MCP_CONNECTION_STRING} env var)"
+        default: "${MDB_MCP_CONNECTION_STRING}"
+      database:
+        type: string
+        description: "MongoDB database name"
+        default: "health"
+      batch_size:
+        type: integer
+        description: "Batch size for MongoDB writes during ingestion"
+        default: 1000
 
   notion_api_key:
     type: string
@@ -70,3 +62,24 @@ fields:
     type: integer
     description: "Deviation threshold (%) to trigger baseline rebuild"
     default: 10
+
+  grafana:
+    type: object
+    description: "Grafana dashboard integration (optional; used by scripts/grafana_dashboard.py)"
+    properties:
+      url:
+        type: string
+        description: "Grafana instance base URL (env: GRAFANA_URL)"
+        default: "${GRAFANA_URL}"
+        required: false
+      api_key:
+        type: string
+        description: "Grafana API key with dashboard write scope (env: GRAFANA_API_KEY)"
+        default: "${GRAFANA_API_KEY}"
+        required: false
+        secret: true
+      datasource_uid:
+        type: string
+        description: "MongoDB datasource UID in Grafana (env: GRAFANA_DS_UID)"
+        default: "${GRAFANA_DS_UID}"
+        required: false

@@ -1,0 +1,8 @@
+{
+  "name": "shared-utils",
+  "version": "0.1.0",
+  "description": "Reusable utility scripts and skills shared across indie-toolkit plugins: Notion API, MongoDB queries, and other cross-plugin primitives",
+  "author": {
+    "name": "Norvyn"
+  }
+}

@@ -58,7 +58,7 @@
     {
       "name": "product-lens",
       "source": "./product-lens",
-      "description": "Product evaluation plugin for indie developers: demand validation, market analysis, moat assessment, feature assessment, and portfolio comparison",
+      "description": "Product evaluation plugin for indie developers: demand validation, market/moat assessment, portfolio scans, progress pulses, verdict refresh, recent feature review, repo reprioritization, and PKOS exchange publishing",
       "version": "1.0.0",
       "category": "product",
       "tags": [
@@ -66,7 +66,9 @@
         "evaluation",
         "indie",
         "market-analysis",
-        "comparison"
+        "comparison",
+        "portfolio",
+        "exchange"
       ],
       "strict": true
     },
@@ -159,7 +161,7 @@
     {
       "name": "pkos",
       "source": "./pkos",
-      "description": "Personal Knowledge Operating System: inbox processing, signal aggregation, digest generation, vault operations, profile evolution, and serendipity discovery",
+      "description": "Personal Knowledge Operating System: inbox processing, signal aggregation, digest generation, vault operations, profile evolution, serendipity discovery, and IEF-compliant exchange ingestion from producer plugins",
       "version": "0.6.1",
       "category": "productivity",
       "tags": [
@@ -167,7 +169,8 @@
         "obsidian",
         "notion",
         "automation",
-        "intelligence"
+        "intelligence",
+        "exchange"
       ],
       "strict": true
     },
@@ -204,15 +207,17 @@
     {
       "name": "health-insights",
       "source": "./health-insights",
-      "description": "Personal health intelligence: ingest Apple Health data, establish baselines, generate AI-driven narrative insights",
-      "version": "0.1.0",
+      "description": "Personal health intelligence: ingest Apple Health data, establish baselines, generate AI-driven narrative insights, render annual heatmaps, and publish Grafana dashboards",
+      "version": "1.0.0",
       "category": "health",
       "tags": [
         "health",
         "apple-health",
         "baselines",
         "insights",
-        "obsidian"
+        "obsidian",
+        "grafana",
+        "heatmap"
       ],
       "strict": true
     },
@@ -243,6 +248,21 @@
         "cloud-drive",
         "cookiecloud",
         "cli"
+      ],
+      "strict": true
+    },
+    {
+      "name": "shared-utils",
+      "source": "./shared-utils",
+      "description": "Reusable utility scripts and skills shared across indie-toolkit plugins: Notion API helpers, MongoDB queries, and other cross-plugin primitives",
+      "version": "0.1.0",
+      "category": "development",
+      "tags": [
+        "shared",
+        "utilities",
+        "notion",
+        "mongodb",
+        "cross-plugin"
       ],
       "strict": true
     }

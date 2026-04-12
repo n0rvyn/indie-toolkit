@@ -15,8 +15,14 @@ __pycache__/
 # Playwright MCP
 .playwright-mcp/
 /.claude
-/.codex
+/.codex/*
+!/.codex/
+!/.codex/INSTALL.md
 VALIDATION_REPORT.md
 pkos/scripts/.voice-transcribe-bin
 /.remember/
 minimax-output/
+
+# User secrets: never commit .env files (only .env.example)
+**/.env
+!**/.env.example

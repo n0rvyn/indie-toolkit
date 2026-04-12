@@ -13,6 +13,7 @@
 - "Evaluate my entire product"
 - "Compare these products"
 - "Fix this bug"
+- "Review the recent features we already built"
 
 ## Output Assertions
 <!-- What must be true in the skill's output -->
@@ -23,6 +24,7 @@
 - [ ] Output dispatches app-context-scanner and market-scanner in parallel
 - [ ] Output evaluates 4 dimensions: demand-fit, journey-contribution, build-cost, strategic-value
 - [ ] Output produces GO/DEFER/KILL verdict with integration map (GO) or alternative directions (DEFER/KILL)
+- [ ] Output is for proposed features, not recent-feature-review of already-built slices
 
 ## Redundancy Risk
 Baseline comparison: Base model can discuss features but lacks systematic 4-dimension evaluation with build cost analysis from actual code and GO/DEFER/KILL verdict framework

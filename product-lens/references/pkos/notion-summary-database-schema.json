@@ -1,0 +1,55 @@
+{
+  "Title": { "title": {} },
+  "source_note_id": { "rich_text": {} },
+  "row_type": {
+    "select": {
+      "options": [
+        { "name": "project" },
+        { "name": "feature" }
+      ]
+    }
+  },
+  "project": { "rich_text": {} },
+  "decision": { "select": {} },
+  "confidence": {
+    "select": {
+      "options": [
+        { "name": "high" },
+        { "name": "medium" },
+        { "name": "low" }
+      ]
+    }
+  },
+  "priority": { "select": {} },
+  "biggest_risk": { "rich_text": {} },
+  "next_actions": { "rich_text": {} },
+  "source_note_path": { "url": {} },
+  "source_note_type": {
+    "select": {
+      "options": [
+        { "name": "signal" },
+        { "name": "verdict" },
+        { "name": "feature-review" },
+        { "name": "crystal" }
+      ]
+    }
+  },
+  "updated_at": { "date": {} },
+  "sync_status": {
+    "select": {
+      "options": [
+        { "name": "current" },
+        { "name": "stale" },
+        { "name": "pending" },
+        { "name": "failed" }
+      ]
+    }
+  },
+  "project_state": { "select": {} },
+  "window_days": { "number": {} },
+  "project_root": { "rich_text": {} },
+  "producer_intent": { "select": {} },
+  "feature_name": { "rich_text": {} },
+  "feature_state": { "select": {} },
+  "commit_window_days": { "number": {} }
+}

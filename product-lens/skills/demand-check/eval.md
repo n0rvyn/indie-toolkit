@@ -8,11 +8,13 @@
 ## Negative Trigger Tests
 - "Full product evaluation"
 - "Compare multiple products"
+- "Run a portfolio scan on ~/Code"
 
 ## Output Assertions
 - [ ] Output runs only Demand Authenticity dimension (not full 6 dimensions)
 - [ ] Output includes Elevator Pitch test
 - [ ] Output is fast (5-minute filter, not full evaluation)
+- [ ] Output does not turn into repo monitoring or portfolio reprioritization
 
 ## Redundancy Risk
 Baseline comparison: Base model can assess demand but lacks structured Elevator Pitch test framework

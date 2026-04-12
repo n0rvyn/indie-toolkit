@@ -8,6 +8,7 @@
 ## Negative Trigger Tests
 - "Fix this bug"
 - "Write a plan"
+- "Scan all repos under ~/Code"
 
 ## Output Assertions
 - [ ] Output covers 6 dimensions: demand, journey, market, moat, business, execution
@@ -15,6 +16,7 @@
 - [ ] Output includes weighted total score across 6 dimensions
 - [ ] Dimension scores computed and weighted total calculated
 - [ ] Report saved to docs/08-product-evaluation/
+- [ ] Output stays single-product and does not replace portfolio-scan or repo-reprioritize
 
 ## Redundancy Risk
 Baseline comparison: Base model can analyze products but lacks structured 6-dimension framework with indie calibration

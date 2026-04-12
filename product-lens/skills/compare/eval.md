@@ -7,12 +7,14 @@
 - "比较这几个产品的市场潜力"
 - "Evaluate and compare my app with competitors"
 - "Create a scoring matrix for these products"
+- "Do a deliberate comparison of these named products"
 
 ## Negative Trigger Tests
 <!-- Prompts that should NOT trigger this skill -->
 - "Evaluate this single product"
 - "Teardown the moat dimension"
 - "Fix this bug"
+- "Run a weekly scan of everything under ~/Code"
 
 ## Output Assertions
 <!-- What must be true in the skill's output -->
@@ -24,6 +26,7 @@
 - [ ] Output validates dimension results and re-dispatches failing dimensions once
 - [ ] Output generates extras (kill criteria, feature audit, elevator pitch, pivot directions) in parallel
 - [ ] Output produces comparison matrix with scores and recommendations
+- [ ] Output remains a deliberate comparison workflow, not a periodic portfolio monitoring substitute
 
 ## Redundancy Risk
 Baseline comparison: Base model can compare products but lacks systematic 6-dimension scoring with calibrated anchors and parallel evaluation pipeline

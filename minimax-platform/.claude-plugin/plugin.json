@@ -1,0 +1,8 @@
+{
+  "name": "minimax-platform",
+  "version": "0.1.0",
+  "description": "MiniMax platform helper for coding-plan quota checks with browser-session based authentication",
+  "author": {
+    "name": "Norvyn"
+  }
+}

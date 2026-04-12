@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Indie toolkit with iOS development, macOS tooling, and more",
-    "version": "1.34.2"
+    "version": "1.34.4"
   },
   "plugins": [
     {
@@ -213,6 +213,36 @@
         "baselines",
         "insights",
         "obsidian"
+      ],
+      "strict": true
+    },
+    {
+      "name": "minimax-platform",
+      "source": "./minimax-platform",
+      "description": "MiniMax platform helper: check coding-plan quota and manage browser-session based authentication with HERTZ-SESSION",
+      "version": "0.1.0",
+      "category": "integration",
+      "tags": [
+        "minimax",
+        "quota",
+        "browser-session",
+        "automation",
+        "internal-tools"
+      ],
+      "strict": true
+    },
+    {
+      "name": "netease-cloud-music",
+      "source": "./netease-cloud-music",
+      "description": "NetEase Cloud Music helper built around the maintained ncmctl CLI for cloud uploads and cookie-based login flows",
+      "version": "0.1.0",
+      "category": "integration",
+      "tags": [
+        "netease",
+        "music",
+        "cloud-drive",
+        "cookiecloud",
+        "cli"
       ],
       "strict": true
     }

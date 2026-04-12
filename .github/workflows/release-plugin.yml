@@ -22,6 +22,8 @@ on:
           - wechat-bridge
           - x-api
           - health-insights
+          - minimax-platform
+          - netease-cloud-music
           - all
       bump:
         description: "Semver bump type"
@@ -86,7 +88,7 @@ jobs:
           }
 
           if [[ "$TARGET" == "all" ]]; then
-            PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-audit" "skill-master" "domain-intel" "session-reflect" "youtube-scout" "pkos" "wechat-bridge" "x-api" "health-insights")
+            PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-audit" "skill-master" "domain-intel" "session-reflect" "youtube-scout" "pkos" "wechat-bridge" "x-api" "health-insights" "minimax-platform" "netease-cloud-music")
           else
             PLUGINS=("$TARGET")
           fi

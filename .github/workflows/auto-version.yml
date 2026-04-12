@@ -17,6 +17,8 @@ on:
       - "wechat-bridge/**"
       - "x-api/**"
       - "health-insights/**"
+      - "minimax-platform/**"
+      - "netease-cloud-music/**"
 
 permissions:
   contents: write
@@ -44,7 +46,7 @@ jobs:
           set -euo pipefail
 
           MARKET_FILE=".claude-plugin/marketplace.json"
-          ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-audit" "skill-master" "domain-intel" "session-reflect" "youtube-scout" "pkos" "wechat-bridge" "x-api" "health-insights")
+          ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-audit" "skill-master" "domain-intel" "session-reflect" "youtube-scout" "pkos" "wechat-bridge" "x-api" "health-insights" "minimax-platform" "netease-cloud-music")
 
           bump_semver() {
             local version="$1"

@@ -1,0 +1,8 @@
+{
+  "name": "netease-cloud-music",
+  "version": "0.1.0",
+  "description": "NetEase Cloud Music helper built around the maintained ncmctl CLI for cloud uploads and cookie-based login flows",
+  "author": {
+    "name": "Norvyn"
+  }
+}

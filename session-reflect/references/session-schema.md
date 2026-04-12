@@ -44,6 +44,10 @@ Both `parse_claude_session.py` and `parse_codex_session.py` produce this identic
     "build_attempts": "int — count of build/compile commands detected",
     "build_failures": "int — count of failed build commands"
   },
+  "assistant_turns": "array — [{turn, timestamp, text, tool_uses}], compact assistant-turn trace for audit",
+  "plugin_events": "array — [{session_id, tool_use_id, component_type, plugin, component, input_text, result_text, post_dispatch_signals, ...}]",
+  "ai_behavior_audit": "array — [{turn, rule_category, rule_id, hit, evidence}], empty before enrichment",
+  "analyzer_version": "string — shared parser/backfill analyzer version",
   "session_dna": "explore | build | fix | chat | mixed — placeholder, set by LLM agent in Phase 2",
   "user_prompts": "string[] — first N user message texts (truncated to 500 chars each)",
   "task_summary": "string — placeholder, set by LLM agent in Phase 2",
@@ -75,6 +79,10 @@ Both `parse_claude_session.py` and `parse_codex_session.py` produce this identic
 | tokens.cache_create | sum of `message.usage.cache_creation_input_tokens` |
 | tools | from `tool_use` content blocks: `block.name`, `block.input` |
 | files | from tool inputs: Read(`file_path`), Edit(`file_path`), Write(`file_path`) |
+| assistant_turns | grouped by `message.id`; text + tool summaries + correlated tool results |
+| plugin_events | subset of `tool_use` where `name in {"Skill", "Agent"}` |
+| ai_behavior_audit | empty before enrichment; populated by session-parser |
+| analyzer_version | shared `ANALYZER_VERSION` constant |
 
 ### Codex → Unified
 
@@ -95,6 +103,10 @@ Both `parse_claude_session.py` and `parse_codex_session.py` produce this identic
 | tokens.cache_create | `input_tokens - cached_input_tokens` (last event) |
 | tools | from `response_item` with `payload.type=function_call`: `payload.name` |
 | files | limited; extracted from `exec_command` arguments when file paths detectable |
+| assistant_turns | empty array in Phase 2 (schema parity placeholder) |
+| plugin_events | empty array in Phase 2 |
+| ai_behavior_audit | empty array before/after enrichment unless future Codex audit support is added |
+| analyzer_version | shared `ANALYZER_VERSION` constant |
 
 ## Placeholder Fields
 

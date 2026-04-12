@@ -18,6 +18,8 @@ You analyze AI coding session data. You receive a parsed session JSON (statistic
 
 You receive a session summary JSON with these key fields:
 - `user_prompts`: array of user message texts (truncated)
+- `assistant_turns`: compact assistant turn trace with text, tool uses, and correlated tool results
+- `plugin_events`: normalized Skill/Agent invocation rows (Claude sessions only; Codex may send empty array)
 - `tools.distribution`: map of tool_name → call count
 - `tools.total_calls`: total tool calls
 - `tools.sequence`: ordered list of tool names
@@ -64,6 +66,15 @@ Return ONLY a JSON block with these six fields:
       "type": "skipped_exploration",
       "evidence": "First tool call was Edit without prior Read on target file",
       "suggestion": "改代码前先 Read 相关文件确认上下文"
+    }
+  ],
+  "ai_behavior_audit": [
+    {
+      "turn": 1,
+      "rule_category": "core",
+      "rule_id": "core-2-verify-before-conclusion",
+      "hit": 1,
+      "evidence": "Assistant said it was fixed before any verification tool call"
     }
   ]
 }
@@ -162,6 +173,7 @@ Your output must be a JSON block with the following top-level structure:
   "emotion_signals": [...],
   "prompt_assessments": [...],
   "process_gaps": [...],
+  "ai_behavior_audit": [...],
   "dimensions": {
     "context_gaps": [...],
     "token_audit": {...},
@@ -176,6 +188,16 @@ Your output must be a JSON block with the following top-level structure:
 ```
 
 All 10 new dimensions must appear under the `dimensions` key. The `significance` field (integer 3-5) is required at the top level. The six coaching fields (`task_summary`, `session_dna`, `corrections`, `emotion_signals`, `prompt_assessments`, `process_gaps`) are required at the top level for coach agent consumption.
+
+## AI Behavior Audit
+
+For Claude sessions, classify every item in `assistant_turns` against the rule contract appended to the system prompt under `## AI Behavior Audit Rule Reference`.
+
+- Use the appended `rule_id` values exactly as written.
+- Emit one row per `(turn, rule_id)` only when there is enough evidence to say the rule was followed or violated.
+- `hit = 1` means the rule was violated.
+- `hit = 0` means the turn provides affirmative evidence the rule was followed.
+- When the input session is not Claude Code or `assistant_turns` is empty, return `ai_behavior_audit: []`.
 
 ## Dimension Extraction
 

@@ -3,9 +3,15 @@
 # Storage
 storage_dir: ~/.claude/session-reflect/
 
-# Session filtering
-ignore_patterns:
-  - adam-roles
+# Session filtering — path-prefix matching against project_path path components
+# Default excludes .adam (AI agent automation, not real human sessions).
+excluded_projects:
+  - .adam
+
+# DEPRECATED — old ignore_patterns substring-on-dirname matching kept readable
+# for one release cycle. Will be removed in a future version. Use excluded_projects above.
+# ignore_patterns:
+#   - adam-roles
 
 # PKOS IEF export
 insights_path: ~/.claude/session-reflect/insights/

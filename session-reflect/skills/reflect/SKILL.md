@@ -16,6 +16,17 @@ Parse from user input:
 - `--project NAME`: Filter by project name (optional)
 - `--profile`: Output/update user collaboration profile instead of coaching feedback
 - `--auto`: (Reserved for future scheduled execution — not implemented yet, note if user tries it)
+- `--backfill`: Run full historical backfill via the standalone orchestrator (`scripts/backfill.py`). When present, skips Steps 1-9 and dispatches to backfill mode (see new section below).
+- `--full`: When combined with `--backfill`, force all-time discovery (`/reflect --backfill --full`).
+- `--dry-run`: When combined with `--backfill`, only reports session count + cost estimate without analyzing.
+- `--limit N`: When combined with `--backfill`, process at most N sessions in this invocation.
+- `--force-all`: When combined with `--backfill`, re-analyze every discovered session ignoring checkpoints.
+- `--task-trace SESSION_ID`: Return the linked multi-session task chain for one session instead of coaching feedback.
+- `--baselines`: Query current plugin/component baseline rows instead of coaching feedback.
+- `--rebaseline`: Recompute baseline rows without re-running parse/backfill.
+- `--window SPEC`: When combined with `--rebaseline`, choose the baseline window (`30d`, `60d`, `all`; default `60d`).
+- `--enrich`: Finish LLM-based enrichment on sessions marked `enrichment_pending=1` by backfill/parse. Dispatches the `session-reflect:session-parser` agent in the host session (no CLI subprocess). Skip coaching output.
+- `--enrich-limit N`: When combined with `--enrich`, cap the number of sessions enriched this invocation (default 20). Keeps per-run cost bounded.
 
 Also check `~/.claude/session-reflect.local.md` for configuration overrides (YAML frontmatter with `default_days`, `include_codex`, `projects` fields). If file doesn't exist, use defaults.
 
@@ -26,13 +37,99 @@ Query mode is triggered when any of these flags are present:
 - `--min-significance N`: Return sessions with significance >= N
 - `--outcome VALUE`: Return sessions with specific outcome (completed, interrupted, failed)
 - `--project-complexity OP:VALUE`: Return sessions by complexity threshold (e.g., gt:0.8, lt:0.3, eq:0.5)
+- `--task-trace SESSION_ID`: Return the linked task chain and show each session's outcome/time
+- `--baselines`: Return baseline rows as a markdown table
 
 When query flags are present, Steps 1-7 are skipped and the skill goes directly to Step 9 (Query Execution).
 
 ## Query Mode Routing
 
-If any query flag is present (`--dimension`, `--min-significance`, `--outcome`, `--project-complexity`):
+If any query flag is present (`--dimension`, `--min-significance`, `--outcome`, `--project-complexity`, `--task-trace`, `--baselines`):
 Skip to Step 9 (Query Execution)
+
+## Backfill Mode Routing
+
+If `--backfill` flag is present:
+- Skip all standard process steps
+- Dispatch to the Backfill Mode section below
+- Only backfill-supported args are forwarded to backfill.py (`--days`, `--full`, `--dry-run`, `--limit`, `--force-all`)
+
+## Rebaseline Mode Routing
+
+If `--rebaseline` flag is present:
+- Skip all standard process steps
+- Run `scripts/compute_baselines.py` directly
+- Forward only rebaseline-supported args (`--window`, `--plugin`)
+
+## Enrich Mode Routing
+
+If `--enrich` flag is present:
+- Skip all standard process steps
+- Dispatch to the Enrich Mode section below
+- Only `--enrich-limit` is honored here
+
+## Backfill Mode
+
+Invoke the standalone backfill orchestrator. The skill is a thin wrapper — actual work runs in `scripts/backfill.py` so that the same engine works under cron/launchd/external scheduler.
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/backfill.py \
+  {--days N if specified} \
+  {--full if specified} \
+  {--dry-run if specified} \
+  {--limit N if specified} \
+  {--force-all if specified}
+```
+
+Stream the script's stdout to the user; do not transform.
+
+If `--dry-run` was used: present a confirmation prompt before suggesting the user re-run without `--dry-run`. Do not auto-proceed — backfill on a 6-month corpus is multi-hour and multi-dollar.
+
+After completion (non-dry-run): suggest the user run `/reflect --rebaseline` next (Phase 4 capability; if not yet implemented, note this and skip).
+
+## Rebaseline Mode
+
+Run baseline recomputation without re-running session parse:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/compute_baselines.py \
+  --window {window or 60d} \
+  {--plugin NAME if specified} \
+  --replace-existing
+```
+
+Stream stdout to the user and then suggest `/reflect --baselines`.
+
+## Enrich Mode
+
+Incrementally finish LLM-based enrichment on sessions marked `enrichment_pending=1`
+by prior backfill/parse runs. This is the deferred half of the two-stage backfill
+architecture: scripts populate structured data and run heuristic audit; this mode
+dispatches the `session-reflect:session-parser` agent to fill in LLM-classified
+dimensions, `task_summary`, and remaining `ai_behavior_audit` rules.
+
+Steps:
+
+1. Query pending count and the next batch:
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/sessions_db.py --query pending-enrichment --limit {enrich_limit or 20}
+   ```
+   If the returned list is empty, print "No sessions awaiting enrichment." and stop.
+
+2. For each session in the batch, load the parsed JSON (re-parse if no cached JSON file exists) and dispatch the agent via the Task tool:
+   - `subagent_type`: `session-reflect:session-parser`
+   - `description`: brief, e.g. "Enrich session {short_id}"
+   - `prompt`: the parsed session JSON plus an instruction to return the schema documented in `${CLAUDE_PLUGIN_ROOT}/agents/session-parser.md` (`session_dna`, `task_summary`, `corrections`, `emotion_signals`, `prompt_assessments`, `process_gaps`, `ai_behavior_audit`, `dimensions`, `significance`).
+
+3. Parse each agent response. If valid JSON matching the expected shape, persist via:
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/sessions_db.py --mark-enriched --session-id {id} --payload {json}
+   ```
+   (pipe JSON via stdin if the CLI supports `--payload -`). On failure, leave the session `enrichment_pending=1` and log the error line.
+
+4. Report progress: total enriched, remaining pending. Suggest re-running `/reflect --enrich` until the pending count reaches zero.
+
+Do not spawn `claude -p` or any CLI; all LLM work happens in the current Claude Code session via the agent dispatch mechanism.
 
 ## Process
 
@@ -65,13 +162,13 @@ For each discovered session, run the appropriate parser based on `source` field:
 
 ```bash
 # For claude-code sessions:
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_claude_session.py --input {file_path} --sqlite-db ~/.claude/session-reflect/sessions.db
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_claude_session.py --input {file_path} --sqlite-db ~/.claude/session-reflect/sessions.db --enrich
 
 # For codex sessions:
-python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_codex_session.py --input {file_path} --sqlite-db ~/.claude/session-reflect/sessions.db
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_codex_session.py --input {file_path} --sqlite-db ~/.claude/session-reflect/sessions.db --enrich
 ```
 
-Collect all parsed JSON results. If a parser fails on a session, log the error and continue.
+Collect all parsed JSON results. Each parser run writes the base session row, plugin telemetry (when present), and enrichment/audit data in one path. If a parser fails on a session, log the error and continue.
 
 ### Step 3b: Merge /insights Facets (optional)
 
@@ -85,16 +182,25 @@ If found: add `insights_facets` field to the parsed session JSON. This gives ses
 
 If not found: proceed without it. This is not an error.
 
-### Step 4: Enrich via session-parser agent
+### Step 4: Enrichment behavior
 
-Dispatch `session-reflect:session-parser` agent with parsed session data.
+`parse_claude_session.py` and `parse_codex_session.py` with `--enrich` run local
+**rule-based** audit only (style bannwords, tool-sequence heuristics). They do
+NOT call any LLM or the `claude` CLI. Each processed session is stored with
+`enrichment_pending = 1`.
 
-**Batching**: combine up to 10 sessions per agent call to reduce dispatches.
-**Parallelism**: launch multiple batch agent calls in parallel when possible.
-**Failure handling**: if an agent call fails, use placeholder values:
-- `session_dna`: "mixed"
-- `task_summary`: "Unable to analyze"
-- `corrections`, `emotion_signals`, `prompt_assessments`, `process_gaps`: `[]`
+For the current `/reflect` flow this is enough to produce coaching feedback on
+recent sessions. LLM-classified dimensions arrive later, after the user runs
+`/reflect --enrich` which dispatches the `session-reflect:session-parser` agent
+for each pending session.
+
+**Failure handling**: if the audit step fails, keep the base parse result and
+continue. Empty arrays/defaults are acceptable for:
+- `ai_behavior_audit`
+- `corrections`
+- `emotion_signals`
+- `prompt_assessments`
+- `process_gaps`
 
 ### Step 5: Route by Mode
 
@@ -107,10 +213,16 @@ Dispatch `session-reflect:session-parser` agent with parsed session data.
    - If file already exists for today, append with `---` separator
 4. Upsert all analyzed sessions into sessions.db:
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_claude_session.py --input {file_path} --sqlite-db ~/.claude/session-reflect/sessions.db
-   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_codex_session.py --input {file_path} --sqlite-db ~/.claude/session-reflect/sessions.db
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_claude_session.py --input {file_path} --sqlite-db ~/.claude/session-reflect/sessions.db --enrich
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/parse_codex_session.py --input {file_path} --sqlite-db ~/.claude/session-reflect/sessions.db --enrich
    ```
 5. Present coaching feedback to user
+6. Before presenting the final coaching feedback, look up the newest analyzed session:
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/sessions_db.py --query unfinished --session-id {latest_session_id}
+   ```
+   - If a row is returned: prepend one short line such as `Previous unfinished linked session: {session_id} ({outcome}) at {time_start}` before the coaching bullets
+   - If the query returns `null`: skip silently
 
 #### --profile mode:
 
@@ -166,6 +278,8 @@ When query flags are present (bypass Steps 1-7):
    - `--min-significance`: call `sessions_db.py --query significance --min-significance {N}`
    - `--outcome`: call `sessions_db.py --query outcomes --outcome {val}`
    - `--project-complexity gt:0.8`: call `sessions_db.py --query complexity --op gt --value 0.8`
+   - `--task-trace SESSION_ID`: call `sessions_db.py --query task-trace --session-id {id}`
+   - `--baselines`: call `sessions_db.py --query baselines {--plugin} {--component} {--window-days 60 if unspecified}`
 
 2. Build and execute the sessions_db.py command:
    ```bash
@@ -177,6 +291,8 @@ When query flags are present (bypass Steps 1-7):
    - For `--outcome`: show session list with outcome details
    - For `--project-complexity`: sort by complexity descending, show top sessions
    - For `--min-significance`: show sessions with significance scores
+   - For `--task-trace`: render a markdown table with `session_id | project | outcome | time`
+   - For `--baselines`: render a markdown table with `plugin | component | metric | value | sample | window | commits`
 
 4. Present formatted table to user. No coaching feedback in query mode.
 

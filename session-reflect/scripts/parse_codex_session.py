@@ -4,11 +4,13 @@
 import argparse
 import json
 import os
-import subprocess
 import sys
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
+
+from analyzer_version import ANALYZER_VERSION
+from session_enrichment import apply_enrichment
 
 
 def parse_codex_session(filepath):
@@ -41,20 +43,20 @@ def parse_codex_session(filepath):
                 timestamps.append(ts)
 
             if rtype == "session_meta":
-                payload = record.get("payload", {})
+                payload = record.get("payload") or {}
                 session_id = payload.get("id")
                 cwd = payload.get("cwd")
-                git_info = payload.get("git", {})
+                git_info = payload.get("git") or {}
                 if isinstance(git_info, dict):
                     branch = git_info.get("branch")
 
             elif rtype == "turn_context":
-                payload = record.get("payload", {})
+                payload = record.get("payload") or {}
                 if not model and payload.get("model"):
                     model = payload["model"]
 
             elif rtype == "response_item":
-                payload = record.get("payload", {})
+                payload = record.get("payload") or {}
                 ptype = payload.get("type", "")
 
                 if ptype == "message":
@@ -78,9 +80,9 @@ def parse_codex_session(filepath):
                     tool_sequence.append(tool_name)
 
             elif rtype == "event_msg":
-                payload = record.get("payload", {})
+                payload = record.get("payload") or {}
                 if payload.get("type") == "token_count":
-                    info = payload.get("info", {})
+                    info = payload.get("info") or {}
                     total = info.get("total_token_usage")
                     if total:
                         last_token_usage = total
@@ -127,6 +129,10 @@ def parse_codex_session(filepath):
             "build_attempts": 0,
             "build_failures": 0,
         },
+        "assistant_turns": [],
+        "plugin_events": [],
+        "ai_behavior_audit": [],
+        "analyzer_version": ANALYZER_VERSION,
         "session_dna": "mixed",
         "user_prompts": user_prompts,
         "task_summary": "",
@@ -222,6 +228,7 @@ def main():
     if args.sqlite_db:
         sys.path.insert(0, str(Path(__file__).parent))
         import sessions_db
+        sessions_db.DB_PATH = Path(args.sqlite_db)
         sessions_db.init_db()
         # Flatten session data for upsert
         flat = dict(result)
@@ -235,6 +242,7 @@ def main():
         flat["cache_read"] = result.get("tokens", {}).get("cache_read")
         flat["cache_create"] = result.get("tokens", {}).get("cache_create")
         flat["cache_hit_rate"] = result.get("tokens", {}).get("cache_hit_rate")
+        flat["analyzer_version"] = result.get("analyzer_version", ANALYZER_VERSION)
         sessions_db.upsert_session(result["session_id"], flat)
         # Build tool call list with tool_name and file_path
         tool_list = []
@@ -243,40 +251,9 @@ def main():
         sessions_db.upsert_tool_calls(result["session_id"], tool_list)
 
     if args.enrich:
-        # sessions_db needed for enrich_session
-        sys.path.insert(0, str(Path(__file__).parent))
-        import sessions_db
-        # Read session-parser.md as system prompt
-        agent_path = Path(__file__).parent.parent / "agents" / "session-parser.md"
-        with open(agent_path) as f:
-            system_prompt = f.read()
-
-        # Invoke LLM with session JSON as user input
-        user_input = json.dumps(result, ensure_ascii=False)
-        proc = subprocess.run(
-            ["claude", "-p", "--system", system_prompt, user_input],
-            capture_output=True,
-            text=True,
-        )
-        if proc.returncode != 0:
-            print(f"Warning: LLM enrichment failed: {proc.stderr}", file=sys.stderr)
-        else:
-            # Parse enriched response JSON
-            try:
-                enriched = json.loads(proc.stdout.strip())
-                if "dimensions" in enriched:
-                    sessions_db.init_db()
-                    sessions_db.enrich_session(result["session_id"], enriched.get("dimensions", {}))
-                # Update sessions.session_dna if enriched provides it
-                if enriched.get("session_dna"):
-                    sessions_db.update_session_dna(result["session_id"], enriched["session_dna"])
-                # Merge enriched top-level fields back into flat for complete output
-                for key in ("session_dna", "task_summary", "corrections", "emotion_signals", "prompt_assessments", "process_gaps"):
-                    if key in enriched:
-                        flat[key] = enriched[key]
-                result = flat
-            except json.JSONDecodeError as e:
-                print(f"Warning: failed to parse enriched JSON: {e}", file=sys.stderr)
+        result, warning = apply_enrichment(result, db_path=args.sqlite_db)
+        if warning:
+            print(f"Warning: {warning}", file=sys.stderr)
 
     output = json.dumps(result, indent=2, ensure_ascii=False)
     if args.output:

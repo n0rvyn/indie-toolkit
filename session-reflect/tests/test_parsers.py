@@ -4,6 +4,7 @@
 import json
 import os
 import sys
+import tempfile
 import unittest
 
 # Add scripts directory to path for imports
@@ -19,6 +20,7 @@ CODEX_SAMPLE = os.path.join(TEST_DATA_DIR, "codex-sample.jsonl")
 REQUIRED_TOP_KEYS = {
     "session_id", "source", "project", "project_path", "branch", "model",
     "time", "turns", "tokens", "tools", "files", "quality",
+    "assistant_turns", "plugin_events", "ai_behavior_audit", "analyzer_version",
     "session_dna", "user_prompts", "task_summary", "corrections",
     "prompt_assessments", "process_gaps",
 }
@@ -59,6 +61,10 @@ class TestSchemaCompliance(unittest.TestCase):
         self.assertIsInstance(result["files"]["read"], list)
         self.assertIsInstance(result["files"]["edited"], list)
         self.assertIsInstance(result["files"]["created"], list)
+        self.assertIsInstance(result["assistant_turns"], list)
+        self.assertIsInstance(result["plugin_events"], list)
+        self.assertIsInstance(result["ai_behavior_audit"], list)
+        self.assertIsInstance(result["analyzer_version"], str)
         self.assertIsInstance(result["user_prompts"], list)
         self.assertIsInstance(result["corrections"], list)
         self.assertIsInstance(result["prompt_assessments"], list)
@@ -140,6 +146,11 @@ class TestClaudeParser(unittest.TestCase):
         self.assertGreater(len(self.result["user_prompts"]), 0)
         self.assertIn("login bug", self.result["user_prompts"][0])
 
+    def test_phase2_defaults(self):
+        self.assertEqual(self.result["plugin_events"], [])
+        self.assertEqual(self.result["ai_behavior_audit"], [])
+        self.assertGreater(len(self.result["assistant_turns"]), 0)
+
 
 class TestCodexParser(unittest.TestCase):
     """Codex parser produces correct values from sample data."""
@@ -187,6 +198,42 @@ class TestCodexParser(unittest.TestCase):
     def test_user_prompts(self):
         self.assertGreater(len(self.result["user_prompts"]), 0)
         self.assertIn("error handling", self.result["user_prompts"][0])
+
+    def test_phase2_schema_defaults(self):
+        self.assertEqual(self.result["plugin_events"], [])
+        self.assertEqual(self.result["assistant_turns"], [])
+        self.assertEqual(self.result["ai_behavior_audit"], [])
+
+    def test_token_count_info_null_does_not_crash(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as handle:
+            handle.write(json.dumps({
+                "timestamp": "2026-04-12T04:17:06.829Z",
+                "type": "session_meta",
+                "payload": {
+                    "id": "codex-null-info",
+                    "cwd": "/Users/test/project-beta",
+                    "git": {"branch": "main"},
+                },
+            }))
+            handle.write("\n")
+            handle.write(json.dumps({
+                "timestamp": "2026-04-12T04:17:08.385Z",
+                "type": "event_msg",
+                "payload": {
+                    "type": "token_count",
+                    "info": None,
+                },
+            }))
+            handle.write("\n")
+            path = handle.name
+        try:
+            result = parse_codex_session(path)
+        finally:
+            os.unlink(path)
+
+        self.assertEqual(result["session_id"], "codex-null-info")
+        self.assertIsNone(result["tokens"]["input"])
+        self.assertIsNone(result["tokens"]["output"])
 
 
 if __name__ == "__main__":

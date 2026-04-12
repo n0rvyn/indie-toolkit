@@ -11,6 +11,10 @@ Analyze recent sessions and get coaching feedback.
 /reflect --days 7         # weekly reflection
 /reflect --profile        # view/update your collaboration profile
 /reflect --project myapp  # filter by project
+/reflect --task-trace abc123  # show the linked task chain for one session
+/reflect --backfill --full    # run full historical backfill
+/reflect --baselines          # show current baseline metrics
+/reflect --rebaseline --plugin dev-workflow  # recompute one plugin's baselines
 ```
 
 ## What It Analyzes
@@ -29,6 +33,7 @@ Analyze recent sessions and get coaching feedback.
 
 ## Storage
 
+- SQLite data: `~/.claude/session-reflect/sessions.db`
 - Reflections: `~/.claude/session-reflect/reflections/{date}.md`
 - User profile: `~/.claude/session-reflect/profile.yaml`
 - Analyzed sessions: `~/.claude/session-reflect/analyzed_sessions.json`
@@ -41,8 +46,9 @@ Copy `references/session-reflect.local.md.example` to `~/.claude/session-reflect
 
 ```
 Session JSONL + /insights facets
-  → Python scripts (parse)
-  → session-parser agent (enrich + assess prompt quality)
+  → Python scripts (parse + plugin telemetry extraction)
+  → session-parser agent (enrich + ai behavior audit)
+  → SQLite persistence (`sessions`, `plugin_events`, `ai_behavior_audit`, ...)
   → coach agent (coaching feedback) / profiler agent (user profile)
   → growth-tracker agent (cross-time comparison)
   → reflections/{date}.md + profile.yaml
@@ -51,3 +57,45 @@ Session JSONL + /insights facets
 - **Scripts**: Python stdlib only, no external dependencies
 - **Agents**: session-parser (sonnet), coach (sonnet), profiler (sonnet), growth-tracker (sonnet)
 - **Hook**: SessionEnd auto-summarization
+
+## Phase 3 Operations
+
+Scan plugin commits into `plugin_changes`:
+```bash
+python3 session-reflect/scripts/scan_plugin_changes.py --since 2026-01-01
+```
+
+Query a linked task chain from sqlite:
+```bash
+python3 session-reflect/scripts/sessions_db.py --query task-trace --session-id abc123
+```
+
+Check a before/after metric window for one plugin change:
+```bash
+python3 session-reflect/scripts/sessions_db.py \
+  --query before-after \
+  --plugin dev-workflow \
+  --component verify-plan \
+  --commit-hash 9f88532 \
+  --metric-name correction_rate \
+  --window-days 14
+```
+
+`/reflect` can also show a short unfinished-session hint when the latest analyzed session links back to an earlier `interrupted` or `failed` session.
+
+## Phase 4 Operations
+
+Run a full backfill with report output:
+```bash
+python3 session-reflect/scripts/backfill.py --full
+```
+
+Query current baselines from sqlite:
+```bash
+python3 session-reflect/scripts/sessions_db.py --query baselines --window-days 60 --plugin dev-workflow
+```
+
+Recompute baselines without re-parsing sessions:
+```bash
+python3 session-reflect/scripts/compute_baselines.py --window 60d --plugin dev-workflow --replace-existing
+```

@@ -13,9 +13,10 @@ Locate/Resume Phase
   → write plan (main context — opus, full conversation context)
   → UX review checkpoint (main context — if design has UX Assertions)
   → verify plan (dispatch opus agent — unbiased review)
-  → execute plan (dispatch sonnet agent — mechanical, follows verified plan)
+  → execute plan (dispatch sonnet agent — chunked, 5 tasks per batch)
+  → test changes (dispatch sonnet agent — build/test/lint suite)
   → dispatch feature-spec + review agents in parallel (separate contexts)
-  → fix all issues (main context — opus: execution failures + review gaps)
+  → fix all issues (main context — opus: execution + test + review failures)
   → Phase done
 ```
 
@@ -29,12 +30,13 @@ This file tracks progress across sessions. Update it **before** starting each st
 project: <name>
 current_phase: 2
 phase_name: "Phase Name"
-phase_step: plan    # plan | ux-review | verify | execute | review | fix | done
+phase_step: plan    # plan | ux-review | verify | execute | test | review | fix | done
 dev_guide: docs/06-plans/YYYY-MM-DD-project-dev-guide.md
 plan_file: null  # set to docs/06-plans/YYYY-MM-DD-<name>-plan.md after Step 2
 verification_report: null
 task_progress: null
 review_reports: []
+test_report: null   # set to .claude/test-reports/test-run-*.md path after Step 5
 gaps_remaining: 0
 last_updated: "YYYY-MM-DDTHH:MM:SS"
 ```
@@ -47,8 +49,8 @@ last_updated: "YYYY-MM-DDTHH:MM:SS"
    !`cat .claude/dev-workflow-state.yml 2>/dev/null || echo "NO_STATE_FILE"`
    If output is "NO_STATE_FILE": proceed to step 2 (starting fresh).
    Otherwise: parse the YAML content from the output.
-   - If `phase_step` is `spec` (legacy): treat as `review` and proceed to Step 5
-   - If `phase_step` is `build-test` (legacy): treat as `review` and proceed to Step 5. Note: build/test from the old separate step was not run; finalize will catch any issues via full test suite.
+   - If `phase_step` is `spec` (legacy): treat as `review` and proceed to Step 6
+   - If `phase_step` is `build-test` (legacy): treat as `test` and proceed to Step 5
    - If `phase_step` is not `done`:
      - Present: "Phase {N} ({name}) in progress — step: {phase_step}. Resume?"
      - If user accepts:
@@ -297,16 +299,32 @@ Present the remaining issues to the user:
 
 Wait for user choice. If A: stop. If B: mark state `verification_report: "partial"` and continue.
 
-### Step 4: Execute (sonnet agent dispatch)
+### Step 4: Execute (chunked sonnet agent dispatch)
 
 1. Update state: `phase_step: execute`, `last_updated: <now>`
-2. Dispatch the `dev-workflow:execute-plan` agent (sonnet) with the plan file path and project root
-3. When the agent returns: read the report file at `docs/06-plans/execution-report.md` (or the path from the agent's `Report written to:` line). If the file shows `**Status:** in-progress`, the agent was truncated — treat the partial results as the execution report.
+2. Invoke `dev-workflow:execute-plan` to handle execution. The skill manages the full dispatch lifecycle:
+   - Creates `.claude/execute-plan-state.json` with batch size 5
+   - Dispatches the sonnet agent in batches of 5 tasks
+   - Auto-resumes on truncation (reads state file, re-dispatches next batch)
+   - Loops until all tasks complete or are blocked/failed
+   - Cleans up the state file on completion
+3. When execute-plan returns: read the report file at `docs/06-plans/execution-report.md` (or the path from the return message's `Report written to:` line). If the file shows `**Status:** in-progress`, the execution was interrupted — treat the partial results as the execution report.
 4. Present summary: completed/blocked/failed task counts
-5. If blocked or failed tasks exist: note them for Step 6 (Fix)
+5. If blocked or failed tasks exist: note them for Step 7 (Fix)
 6. Update state: `last_updated: <now>`
 
-### Step 5: Document Features & Reviews (parallel agent dispatch)
+### Step 5: Test Changes (sonnet agent dispatch)
+
+1. Update state: `phase_step: test`, `last_updated: <now>`
+2. Invoke `dev-workflow:test-changes` with:
+   - Project root
+   - Plan file path (from state `plan_file`)
+3. When the skill returns: read the test report path from its output
+4. Present test summary: Build (pass/fail), Tests (X/Y passed), Lint (pass/fail)
+5. If test failures exist: note them for Step 7 (Fix)
+6. Update state: `test_report: <report path>`, `last_updated: <now>`
+
+### Step 6: Document Features & Reviews (parallel agent dispatch)
 
 1. Update state: `phase_step: review`, `last_updated: <now>`
 
@@ -384,7 +402,7 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
    > - [ ] {item}
    > - [ ] ⚠️ 需真机：{animation/transition items}
 
-   This is informational — do not block with AskUserQuestion. The user can raise issues during Step 6 (Fix Gaps).
+   This is informational — do not block with AskUserQuestion. The user can raise issues during Step 7 (Fix Gaps).
 
 8. **Surface test coverage summary:** If implementation-reviewer's compact return includes a `Tests:` line:
    - Extract: required, exist, pass, shell counts
@@ -393,19 +411,24 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 
 9. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
 
-### Step 6: Fix Issues
+### Step 7: Fix Issues
 
-If any of the following have issues: execution report (blocked/failed tasks) or review reports (gaps):
+If any of the following have issues: execution report (blocked/failed tasks), test report (build/test/lint failures), or review reports (gaps):
 
 1. Update state: `phase_step: fix`, `last_updated: <now>`
-2. Collect all issues from two sources:
-   a. **Execution failures** (from Step 4): blocked/failed tasks from the execute-plan agent report (includes build/test failures from the plan's final verification task)
-   b. **Review gaps** (from Step 5): plan-vs-code gaps, pre-existing issues
+2. Collect all issues from three sources:
+   a. **Execution failures** (from Step 4): blocked/failed tasks from the execute-plan agent report
+   b. **Test failures** (from Step 5): build errors, test failures, lint errors from the test-changes report
+   c. **Review gaps** (from Step 6): plan-vs-code gaps, pre-existing issues
    Read the relevant report files for full details. Skip entries that are not file paths (e.g., `"user-override"` sentinel values).
 3. List all issues sorted by severity (critical first, then warnings)
    Separate by origin:
    - **执行阻塞（{N} 个）：**
-   > - {blocked/failed tasks with reasons, including build/test failures}
+   > - {blocked/failed tasks with reasons}
+   - **测试失败（{N} 个）：**
+   > - Build: {errors if any}
+   > - Tests: {failing test names + assertion messages}
+   > - Lint: {errors if any}
    - **Review 问题（{N} 个）：**
    > - {plan-vs-code gaps}
    - **已有问题（{M} 个）：**
@@ -421,7 +444,7 @@ If any of the following have issues: execution report (blocked/failed tasks) or 
         > - {category}: {count}
         > 代码/UI 问题（{M} 个）：
         > - {summary}
-   b. Fix all issues (design + code), then re-run only the reviews that had failures
+   b. Fix all issues (design + code), then re-run test-changes if it had failures, and re-run only the reviews that had failures
    c. **Design re-verification limit**: If design-reviewer still fails after 1 fix cycle,
       report remaining design issues and proceed — do not loop.
       Other reviewers (implementation, UI, feature) follow existing behavior.
@@ -433,21 +456,21 @@ If any of the following have issues: execution report (blocked/failed tasks) or 
    - For `recommended` decisions: present as a group via a single AskUserQuestion. **Critical:** all DP content must be inside the `question` field — text printed before AskUserQuestion gets visually covered by the question widget. Read each recommended DP's full block (heading + Context + Options + Recommendation) from the report file and concatenate them verbatim in the question field, separated by `\n---\n`. End with: `\n\n全部接受推荐，还是逐个审查？`
    - If the user does NOT choose to accept all: present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it
    - Record user choices: edit the report file, replace the `**Recommendation:**` or `**Recommendation (unverified):**` line with `**Chosen:** {user's choice}`
-   - Then proceed to Step 7
+   - Then proceed to Step 8
 
-### Step 7: Phase Completion
+### Step 8: Phase Completion
 
 0. **Pre-completion gate** (structural enforcement):
-   - Read `review_reports` from state file
-   - If `review_reports` is empty (no reports):
-     **BLOCK**: "Cannot complete phase: no review reports found. Run Step 5 before marking phase as done."
+   - Read `review_reports` and `test_report` from state file
+   - If `review_reports` is empty AND `test_report` is null (no reports):
+     **BLOCK**: "Cannot complete phase: no test or review reports found. Run Step 5 and Step 6 before marking phase as done."
      Do NOT proceed. Use AskUserQuestion:
      - Option A: "Run Step 5 now" → return to Step 5
-     - Option B: "Skip review and complete phase" → add `review_reports: ["user-override"]`, log override, proceed
+     - Option B: "Skip test and review, complete phase" → add `review_reports: ["user-override"]`, `test_report: "user-override"`, log override, proceed
    - If any review report has verdict ❌ AND `gaps_remaining` > 0:
      **BLOCK**: "Cannot complete phase: {gaps_remaining} unresolved gaps."
      Do NOT proceed. Use AskUserQuestion:
-     - Option A: "Fix gaps (Step 6)" → return to Step 6
+     - Option A: "Fix gaps (Step 7)" → return to Step 7
      - Option B: "Mark as known issues and complete" → proceed with gaps noted
 
 1. Update state: `phase_step: done`, `last_updated: <now>`
@@ -480,7 +503,7 @@ If any of the following have issues: execution report (blocked/failed tasks) or 
 
 ## Rules
 
-- **Never skip Step 5.** Reviews are not optional.
+- **Never skip Step 5 or Step 6.** Testing and reviews are not optional.
 - **Never skip verification.** Step 3 must run before Step 4.
 - **Phase order matters.** Don't start Phase N+1 if Phase N has unchecked acceptance criteria (unless user explicitly overrides).
 - **Consolidate review output.** Merge all review results into one summary with sections.

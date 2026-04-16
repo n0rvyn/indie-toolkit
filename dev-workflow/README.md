@@ -41,7 +41,8 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 
 | Agent | Model | Tools | Purpose |
 |-------|-------|-------|---------|
-| execute-plan | sonnet | Glob, Grep, Read, Write, Edit, Bash, LSP | Mechanical plan execution — follows verified plan tasks (includes full build/test via final verification task) |
+| execute-plan | sonnet | Glob, Grep, Read, Write, Edit, Bash, LSP | Chunked plan execution — follows verified plan tasks in batches of 5, with per-task state file for auto-resume |
+| test-runner | sonnet | Glob, Grep, Read, Write, Bash | Runs build/test/lint suite, filters output to errors + summary, writes structured report |
 | design-analyzer | opus | Glob, Grep, Read, Write | Multi-modal design prototype analysis (dual-channel image+code) |
 | design-drift-auditor | opus | Glob, Grep, Read | Design document vs codebase drift detection (read-only) |
 | flow-tracer | opus | Glob, Grep, Read | End-to-end call chain tracing with break detection (read-only) |
@@ -64,8 +65,9 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 
 | Skill | Type | Description |
 |-------|------|-------------|
-| run-phase | orchestrator | Phase lifecycle: write plan, dispatch agents, coordinate sequence, manage state |
-| execute-plan | dispatcher | Dispatches sonnet execute-plan agent for mechanical plan execution |
+| run-phase | orchestrator | Phase lifecycle: plan → verify → execute (chunked) → test → review → fix → done |
+| execute-plan | dispatcher | Chunked plan execution — dispatch loop with auto-resume on truncation |
+| test-changes | dispatcher | Dispatches test-runner agent for build/test/lint suite execution |
 | brainstorm | interactive | Design exploration before implementation |
 | design-decision | interactive | Trade-off analysis with essential/accidental complexity |
 | fix-bug | interactive | Systematic diagnosis with value domain tracing |

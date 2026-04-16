@@ -169,7 +169,7 @@ These fields are optional per-task. Use them when the task has design-critical d
 1. **Complete file paths** — always absolute from project root
 2. **Actual code** — not pseudocode, not "implement X here"
 3. **Exact commands** — copy-pasteable verification commands with expected output
-   - **Task-level `Verify:` scope**: each task's Verify should contain only that task's specific checks (grep for expected strings, type-check a single file, run a single test file). Full build/test suite belongs exclusively in the final verification task (guideline 11). Do not put `npm run build`, `npm test`, `swift build`, `xcodebuild test`, or equivalent full-suite commands in intermediate task Verify sections.
+   - **Task-level `Verify:` scope**: each task's Verify should contain only that task's specific checks (grep for expected strings, type-check a single file, run a single test file). Full build/test suite execution is handled by the `test-changes` skill after plan execution completes; do not include full-suite commands (`npm run build`, `npm test`, `swift build`, `xcodebuild test`, or equivalent) in any plan task.
 4. **Dependencies explicit** — if Task 3 depends on Task 1, say so
 5. **Test coverage required, ordering flexible** — every plan must include tests for logic and user journeys (see item 10). Test-first vs test-after is the author's choice; test absence is not
 6. **Reasonable task size** — self-contained and independently verifiable; not artificially split
@@ -190,21 +190,7 @@ These fields are optional per-task. Use them when the task has design-critical d
       - E2E/Snapshot/A11y → `apple-dev:xc-ui-test`
       - Performance → `apple-dev:profiling`
     - Plans missing UT for business logic tasks or E2E for user journey tasks will be flagged as **must-revise** by plan-verifier
-11. **Final verification task** — Every plan must end with a verification task that runs the project's full build and test suite. Before writing this task:
-    a. Scan project root for build system files (`package.json`, `Package.swift`, `*.xcodeproj`, `Cargo.toml`, `go.mod`, `pyproject.toml`, `Makefile`)
-    b. For each build system found: read the file and extract all build/test commands (e.g., `scripts` in package.json, targets in Makefile)
-    c. Detect sub-projects: scan for nested directories with their own build system files (e.g., `web/package.json`, `packages/*/package.json`). Include their test commands too.
-    d. Detect package manager: check for lockfiles (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm, `bun.lockb` → bun)
-    e. Write the final task with ALL discovered commands in `**Verify:**`. Group by project/sub-project:
-       ```
-       ### Task N: Full verification
-       **Verify:**
-       Run: `pnpm typecheck`
-       Run: `pnpm test`
-       Run: `cd web && pnpm test`
-       Expected: All pass with zero failures
-       ```
-    f. If the project has separate test categories (unit, e2e, integration), list each command. Do NOT collapse to a single generic command unless that single command truly runs everything.
+11. **No final verification task** — Plans do NOT include a final "run everything" task. The `test-changes` skill handles full build/test/lint execution as a separate step after plan execution completes. Plans still include test-writing tasks (per guideline 10) — tests are written as code during execution, then run by test-changes afterward. Per-task `**Verify:**` commands remain lightweight: type-check (`tsc --noEmit`, `swift build`), grep for expected strings, or single-file compilation only. **Backward compatibility:** Old plans with a `### Task N: Full verification` task still execute correctly — execute-plan runs all tasks literally. The suite runs twice (once in plan, once in test-changes); redundant but not harmful.
 
 ### Security Assessment
 

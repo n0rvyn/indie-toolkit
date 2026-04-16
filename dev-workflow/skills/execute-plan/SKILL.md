@@ -1,11 +1,11 @@
 ---
 name: execute-plan
-description: "Use when the user says 'execute the plan', 'run the plan', 'implement the plan', or has a verified plan file ready for execution. Executes plan tasks mechanically without judgment calls; reports blocked/failed tasks for the user to fix. Not needed when run-phase is active — run-phase calls this internally at Step 4."
+description: "Use when the user says 'execute the plan', 'run the plan', 'implement the plan', or has a verified plan file ready for execution. Executes plan tasks mechanically in chunked batches (5 tasks per batch) without judgment calls; auto-resumes on truncation. Reports blocked/failed tasks for the user to fix. Also invoked by run-phase at Step 4."
 ---
 
 ## Overview
 
-This skill dispatches the `dev-workflow:execute-plan` agent (sonnet) to execute a verified plan. The agent follows plan tasks precisely without making judgment calls. The plan's final verification task runs the full build/test suite. Failure fixes happen after the agent returns, in main context.
+This skill dispatches the `dev-workflow:execute-plan` agent (sonnet) to execute a verified plan in batches of 5 tasks. A JSON state file tracks per-task progress, enabling automatic resume on truncation. The plan's final verification task is no longer required — full test suite execution is handled separately by `dev-workflow:test-changes`.
 
 ## Process
 
@@ -21,30 +21,51 @@ This skill dispatches the `dev-workflow:execute-plan` agent (sonnet) to execute 
    - If the user does NOT choose to accept all: present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it
    - Record user choices: edit the plan file, replace the `**Recommendation:**` or `**Recommendation (unverified):**` line with `**Chosen:** {user's choice}`
 
-### Step 2: Dispatch Agent
+### Step 2: Initialize and Dispatch
 
-Use the Agent tool to dispatch the `dev-workflow:execute-plan` agent:
+1. Read the plan file and count total tasks (count `### Task N:` headings)
+2. Check for existing state file at `.claude/execute-plan-state.json`:
+   - If exists and `status` is `in_progress`: resume from `last_completed + 1`
+   - If exists and `status` is `complete`: skip execution, proceed to Step 3
+   - If does not exist: create with initial state:
+     ```json
+     {
+       "plan_file": "{plan file path}",
+       "total": {N},
+       "batch_size": 5,
+       "last_completed": 0,
+       "status": "in_progress"
+     }
+     ```
+3. **Dispatch loop:**
+   - Read state file: `start = last_completed + 1`, `end = min(last_completed + batch_size, total)`
+   - Dispatch `dev-workflow:execute-plan` agent:
+     ```
+     Execute tasks {start} through {end} of the implementation plan.
 
-```
-Execute the implementation plan.
-
-Plan file: {plan file path}
-Project root: {project root}
-```
+     Plan file: {plan file path}
+     Project root: {project root}
+     State file: .claude/execute-plan-state.json
+     ```
+   - When agent returns: read `.claude/execute-plan-state.json`
+     - If `last_completed < total`: loop back (re-dispatch next batch)
+     - If `last_completed >= total`: update state `status: "complete"`, exit loop
+   - **Truncation recovery:** If the agent was truncated mid-batch, the state file still has the last successfully completed task number. The next loop iteration dispatches from wherever `last_completed` stopped — no manual intervention needed.
+4. Delete `.claude/execute-plan-state.json` after successful completion (cleanup)
 
 ### Step 3: Process Results
 
-When the agent returns:
+When execution completes (all batches done):
 
 1. Read the report file at `docs/06-plans/execution-report.md`
    - If the agent's return message contains `Report written to:`, use that path
-   - If the file exists but `**Status:**` is `in-progress`, the agent was truncated — the file still contains all completed task results up to the truncation point
    - If the file does not exist: fall back to parsing the agent's return message
 2. Present summary to the user: completed/blocked/failed counts
 3. If blocked or failed tasks exist: list them with reasons
 
 **Standalone mode** (not within run-phase):
 - If failures: fix in main context (opus)
+- Suggest `dev-workflow:test-changes` to run the full test suite
 - Suggest `dev-workflow:implementation-reviewer` for plan-vs-code audit
 - Suggest `dev-workflow:finish-branch` for branch integration
 
@@ -53,12 +74,13 @@ When the agent returns:
 When running within a phase orchestrated by `run-phase`:
 
 If `.claude/dev-workflow-state.yml` exists and `phase_step` is `execute`:
-- After agent returns, do NOT update `phase_step` (orchestrator owns state transitions)
+- After all batches complete, do NOT update `phase_step` (orchestrator owns state transitions)
 - Output: "Execution complete. Returning to run-phase."
 
 ## Completion Criteria
 
-- All plan tasks attempted by the agent
+- All plan tasks attempted by the agent across all batches
 - Execution report reviewed and presented to user
+- State file cleaned up (deleted after successful completion)
 - When in run-phase context: handoff signal output
 - When standalone: wrap-up suggestions presented

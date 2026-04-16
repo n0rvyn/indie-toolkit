@@ -45,11 +45,15 @@ After collecting plan and design doc paths, extract technical keywords from the 
 
 The plan-verifier agent reads supporting files (`design-faithfulness.md`, `crystal-fidelity.md`, `architecture-review.md`) from this plugin's `agents/` directory.
 
-Set `{plugin_agents_dir}` to the literal value: `${CLAUDE_PLUGIN_ROOT}/agents`
+Resolve the absolute path by invoking the Bash tool with this exact command (it does not reference any environment variable — it searches the Claude Code plugin install tree directly):
 
-Claude Code substitutes `${CLAUDE_PLUGIN_ROOT}` inline in skill content before this skill is read, so the dispatched agent receives the absolute plugin path. No Bash call or shell expansion is needed. (This matches the pattern used by other plugins in this repo, e.g., `domain-intel/skills/intel/SKILL.md`.)
+```
+d=$(ls -d "$HOME"/.claude/plugins/marketplaces/*/dev-workflow/agents 2>/dev/null | head -1); if [ -z "$d" ]; then d=$(ls -d "$HOME"/.claude/plugins/cache/*/dev-workflow/*/agents 2>/dev/null | sort -V | tail -1); fi; echo "$d"
+```
 
-Do NOT use inline `` !`...` `` auto-substitution or the Bash tool to resolve this — both fail. `!\`...\`` is rejected by the permission checker for any pattern with shell expansion. The Bash tool's environment does not export `CLAUDE_PLUGIN_ROOT` (it is only exported to hook processes and MCP/LSP subprocesses). Bash parameter-expansion forms like `${CLAUDE_PLUGIN_ROOT:?...}` also defeat the substitution engine, which only matches the bare `${CLAUDE_PLUGIN_ROOT}` token.
+Set `{plugin_agents_dir}` to the command's stdout (one absolute path). If stdout is empty, report: `⚠️ Unable to locate dev-workflow plugin agents directory` and abort — the agent cannot run DF/CF/AR strategies without those files.
+
+Rationale: `${CLAUDE_PLUGIN_ROOT}` is only expanded in `hooks.json` command fields and `.mcp.json` args — not in skill markdown content. Earlier attempts to rely on inline expansion or on the variable being exported into the Bash tool environment both fail (the variable is unset in the Bash tool's shell, and no text-level substitution runs over skill content).
 
 ### Step 2: Dispatch Agent
 

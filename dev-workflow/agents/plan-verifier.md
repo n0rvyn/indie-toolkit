@@ -20,7 +20,7 @@ description: |
 
 model: opus
 tools: Glob, Grep, Read, Bash, Write
-allowed-tools: Bash(mkdir*) Bash(date*) Write(*/.claude/reviews/*)
+allowed-tools: Bash(mkdir*) Bash(date*) Bash(ls*) Bash(find*) Write(*/.claude/reviews/*)
 maxTurns: 80
 color: yellow
 memory: project
@@ -41,9 +41,9 @@ Before starting, confirm you have:
 4. **Crystal file path** — the crystal file with `[D-xxx]` decisions (if exists)
 5. **Previously resolved decisions** — list of `DP-xxx: Title → Chosen Option X` entries that have already been decided by the user; do not generate new decision points for these
 6. **Project root path** — for resolving file paths and searching code
-7. **Plugin agents dir** (optional) — absolute path to this plugin's `agents/` directory, for resolving supporting file references below.
-   - **Fallback resolution**: If this value is missing, contains an unresolved `${...}` token, or the path does not exist, locate the directory yourself by running this Bash command:
-     `find "$HOME/.claude/plugins" -type d -path "*/dev-workflow/agents" -not -path "*/repos/*" 2>/dev/null | head -1`
+7. **Plugin agents dir** — absolute path to this plugin's `agents/` directory, for resolving supporting file references below. The dispatching skill resolves this and passes a concrete path.
+   - **Fallback resolution**: If the value is missing, contains an unresolved `${...}` token, or the path does not exist, locate the directory yourself by running this Bash command:
+     `d=$(ls -d "$HOME"/.claude/plugins/marketplaces/*/dev-workflow/agents 2>/dev/null | head -1); if [ -z "$d" ]; then d=$(ls -d "$HOME"/.claude/plugins/cache/*/dev-workflow/*/agents 2>/dev/null | sort -V | tail -1); fi; echo "$d"`
      Use the returned path as the agents dir. If output is empty, report the failure in the verification report and skip the DF/CF/AR sections that depend on these supporting files.
 
 Read the plan file, design doc, design analysis, and crystal file (if provided) before proceeding.

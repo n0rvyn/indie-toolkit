@@ -91,7 +91,7 @@ Also read these for cross-reference checking:
 - Eval files: {comma-separated paths or "none"} — for trigger plausibility checking
 
 Supporting files to load: none
-Plugin agents dir: !`echo "${CLAUDE_PLUGIN_ROOT}/agents"`
+Plugin agents dir: ${CLAUDE_PLUGIN_ROOT}/agents
 (D1/D2 structural checks and baseline trigger/description checks are handled by plugin-dev agents.)
 
 Focus on: workflow logic, execution feasibility, edge cases, dispatch loops, spec compliance, metadata & docs, eval.md consumption, deep trigger conflict detection, and Trigger Health Score.
@@ -116,7 +116,7 @@ Also read these for cross-reference checking:
 - Eval files: {comma-separated paths or "none"} — for trigger plausibility checking
 
 Supporting files to load: structural-validation.md, trigger-baseline.md
-Plugin agents dir: !`echo "${CLAUDE_PLUGIN_ROOT}/agents"`
+Plugin agents dir: ${CLAUDE_PLUGIN_ROOT}/agents
 
 Focus on: logic bugs, trigger mechanism issues, execution feasibility, and edge cases.
 Do NOT review code style or formatting — only functional correctness.

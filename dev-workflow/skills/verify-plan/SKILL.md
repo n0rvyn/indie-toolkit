@@ -43,13 +43,13 @@ After collecting plan and design doc paths, extract technical keywords from the 
 
 ### Step 1.7: Resolve Plugin Agents Directory
 
-The plan-verifier agent reads supporting files (`design-faithfulness.md`, `crystal-fidelity.md`, `architecture-review.md`) from this plugin's `agents/` directory. Resolve the absolute path before dispatching:
+The plan-verifier agent reads supporting files (`design-faithfulness.md`, `crystal-fidelity.md`, `architecture-review.md`) from this plugin's `agents/` directory.
 
-1. Run via the Bash tool: `echo "${CLAUDE_PLUGIN_ROOT:?CLAUDE_PLUGIN_ROOT is not set}/agents"`
-2. Trim trailing newline; store the output as `{plugin_agents_dir}`
-3. If the Bash call fails (variable unset), stop and report the error to the user — do not dispatch the agent with an empty path
+Set `{plugin_agents_dir}` to the literal value: `${CLAUDE_PLUGIN_ROOT}/agents`
 
-Do NOT use inline `` !`...` `` auto-substitution here; Claude Code's permission checker rejects any `` !`...` `` pattern containing shell expansion.
+Claude Code substitutes `${CLAUDE_PLUGIN_ROOT}` inline in skill content before this skill is read, so the dispatched agent receives the absolute plugin path. No Bash call or shell expansion is needed. (This matches the pattern used by other plugins in this repo, e.g., `domain-intel/skills/intel/SKILL.md`.)
+
+Do NOT use inline `` !`...` `` auto-substitution or the Bash tool to resolve this — both fail. `!\`...\`` is rejected by the permission checker for any pattern with shell expansion. The Bash tool's environment does not export `CLAUDE_PLUGIN_ROOT` (it is only exported to hook processes and MCP/LSP subprocesses). Bash parameter-expansion forms like `${CLAUDE_PLUGIN_ROOT:?...}` also defeat the substitution engine, which only matches the bare `${CLAUDE_PLUGIN_ROOT}` token.
 
 ### Step 2: Dispatch Agent
 

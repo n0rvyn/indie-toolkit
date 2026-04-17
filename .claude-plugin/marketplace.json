@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Indie toolkit with iOS development, macOS tooling, and more",
-    "version": "1.35.1"
+    "version": "1.36.0"
   },
   "plugins": [
     {
@@ -225,7 +225,7 @@
       "name": "minimax-quota",
       "source": "./minimax-quota",
       "description": "MiniMax coding plan quota checker — only requires MINIMAX_API_KEY",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "integration",
       "tags": [
         "minimax",

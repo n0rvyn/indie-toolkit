@@ -22,7 +22,7 @@ on:
           - wechat-bridge
           - x-api
           - health-insights
-          - minimax-platform
+          - minimax-quota
           - netease-cloud-music
           - shared-utils
           - all
@@ -89,7 +89,7 @@ jobs:
           }
 
           if [[ "$TARGET" == "all" ]]; then
-            PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-audit" "skill-master" "domain-intel" "session-reflect" "youtube-scout" "pkos" "wechat-bridge" "x-api" "health-insights" "minimax-platform" "netease-cloud-music" "shared-utils")
+            PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-audit" "skill-master" "domain-intel" "session-reflect" "youtube-scout" "pkos" "wechat-bridge" "x-api" "health-insights" "minimax-quota" "netease-cloud-music" "shared-utils")
           else
             PLUGINS=("$TARGET")
           fi

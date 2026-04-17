@@ -10,7 +10,7 @@ const currentDir = path.dirname(currentFile);
 const target = path.join(
   currentDir,
   "..",
-  "minimax-platform",
+  "minimax-quota",
   "skills",
   "minimax-coding-plan",
   "scripts",

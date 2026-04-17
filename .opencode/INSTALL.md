@@ -35,7 +35,7 @@ ln -sfn ~/.config/opencode/indie-toolkit/youtube-scout/skills ~/.config/opencode
 ln -sfn ~/.config/opencode/indie-toolkit/pkos/skills ~/.config/opencode/skills/indie-toolkit-pkos
 ln -sfn ~/.config/opencode/indie-toolkit/wechat-bridge/skills ~/.config/opencode/skills/indie-toolkit-wechat-bridge
 ln -sfn ~/.config/opencode/indie-toolkit/health-insights/skills ~/.config/opencode/skills/indie-toolkit-health-insights
-ln -sfn ~/.config/opencode/indie-toolkit/minimax-platform/skills ~/.config/opencode/skills/indie-toolkit-minimax-platform
+ln -sfn ~/.config/opencode/indie-toolkit/minimax-quota/skills ~/.config/opencode/skills/indie-toolkit-minimax-quota
 ln -sfn ~/.config/opencode/indie-toolkit/netease-cloud-music/skills ~/.config/opencode/skills/indie-toolkit-netease-cloud-music
 ```
 
@@ -56,7 +56,7 @@ ls -la ~/.config/opencode/skills/indie-toolkit-youtube-scout
 ls -la ~/.config/opencode/skills/indie-toolkit-pkos
 ls -la ~/.config/opencode/skills/indie-toolkit-wechat-bridge
 ls -la ~/.config/opencode/skills/indie-toolkit-health-insights
-ls -la ~/.config/opencode/skills/indie-toolkit-minimax-platform
+ls -la ~/.config/opencode/skills/indie-toolkit-minimax-quota
 ls -la ~/.config/opencode/skills/indie-toolkit-netease-cloud-music
 ```
 
@@ -83,6 +83,6 @@ rm ~/.config/opencode/skills/indie-toolkit-youtube-scout
 rm ~/.config/opencode/skills/indie-toolkit-pkos
 rm ~/.config/opencode/skills/indie-toolkit-wechat-bridge
 rm ~/.config/opencode/skills/indie-toolkit-health-insights
-rm ~/.config/opencode/skills/indie-toolkit-minimax-platform
+rm ~/.config/opencode/skills/indie-toolkit-minimax-quota
 rm ~/.config/opencode/skills/indie-toolkit-netease-cloud-music
 ```

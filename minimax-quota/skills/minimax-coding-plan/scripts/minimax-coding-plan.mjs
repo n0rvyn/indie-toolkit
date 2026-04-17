@@ -5,7 +5,7 @@ import process from "node:process";
 import { execFileSync } from "node:child_process";
 
 const DEFAULT_URL =
-  "https://www.minimaxi.com/v1/api/openplatform/coding_plan/remains";
+  "https://www.minimaxi.com/v1/token_plan/remains";
 
 function main() {
   const args = parseArgs(process.argv.slice(2));

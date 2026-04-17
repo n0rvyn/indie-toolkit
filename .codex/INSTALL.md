@@ -35,7 +35,7 @@ ln -sfn ~/.codex/indie-toolkit/youtube-scout/skills ~/.codex/skills/indie-toolki
 ln -sfn ~/.codex/indie-toolkit/pkos/skills ~/.codex/skills/indie-toolkit-pkos
 ln -sfn ~/.codex/indie-toolkit/wechat-bridge/skills ~/.codex/skills/indie-toolkit-wechat-bridge
 ln -sfn ~/.codex/indie-toolkit/health-insights/skills ~/.codex/skills/indie-toolkit-health-insights
-ln -sfn ~/.codex/indie-toolkit/minimax-platform/skills ~/.codex/skills/indie-toolkit-minimax-platform
+ln -sfn ~/.codex/indie-toolkit/minimax-quota/skills ~/.codex/skills/indie-toolkit-minimax-quota
 ln -sfn ~/.codex/indie-toolkit/netease-cloud-music/skills ~/.codex/skills/indie-toolkit-netease-cloud-music
 ```
 
@@ -56,7 +56,7 @@ ls -la ~/.codex/skills/indie-toolkit-youtube-scout
 ls -la ~/.codex/skills/indie-toolkit-pkos
 ls -la ~/.codex/skills/indie-toolkit-wechat-bridge
 ls -la ~/.codex/skills/indie-toolkit-health-insights
-ls -la ~/.codex/skills/indie-toolkit-minimax-platform
+ls -la ~/.codex/skills/indie-toolkit-minimax-quota
 ls -la ~/.codex/skills/indie-toolkit-netease-cloud-music
 
 find ~/.codex/skills/indie-toolkit-dev-workflow -name SKILL.md | wc -l
@@ -71,7 +71,7 @@ find ~/.codex/skills/indie-toolkit-youtube-scout -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-pkos -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-wechat-bridge -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-health-insights -name SKILL.md | wc -l
-find ~/.codex/skills/indie-toolkit-minimax-platform -name SKILL.md | wc -l
+find ~/.codex/skills/indie-toolkit-minimax-quota -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-netease-cloud-music -name SKILL.md | wc -l
 ```
 
@@ -98,7 +98,7 @@ rm ~/.codex/skills/indie-toolkit-youtube-scout
 rm ~/.codex/skills/indie-toolkit-pkos
 rm ~/.codex/skills/indie-toolkit-wechat-bridge
 rm ~/.codex/skills/indie-toolkit-health-insights
-rm ~/.codex/skills/indie-toolkit-minimax-platform
+rm ~/.codex/skills/indie-toolkit-minimax-quota
 rm ~/.codex/skills/indie-toolkit-netease-cloud-music
 ```
 
@@ -106,5 +106,5 @@ rm ~/.codex/skills/indie-toolkit-netease-cloud-music
 
 - Codex directly loads `skills/`; `agents/` and `hooks/` are plugin internals and are not linked directly.
 - `x-api` does not expose a `skills/` folder, so there is no Codex symlink for it here. Install its MCP server separately if needed.
-- `minimax-platform` uses browser-session auth around `HERTZ-SESSION`; set env vars before invoking the skill.
+- `minimax-quota` uses `MINIMAX_API_KEY` (Bearer token) for the official OpenAPI endpoint.
 - `netease-cloud-music` depends on a separately installed `ncmctl` binary.

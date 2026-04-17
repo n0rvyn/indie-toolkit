@@ -20,7 +20,7 @@ allowed-tools: Bash(*skills/minimax-coding-plan/scripts/*)
 ```bash
 BASE="${CLAUDE_PLUGIN_ROOT:-${CODEX_HOME:-$HOME/.codex}}"
 SKILLS_ROOT="$BASE/skills"
-[ -d "$SKILLS_ROOT/minimax-coding-plan/scripts" ] || SKILLS_ROOT="$BASE/indie-toolkit/minimax-platform/skills"
+[ -d "$SKILLS_ROOT/minimax-coding-plan/scripts" ] || SKILLS_ROOT="$BASE/indie-toolkit/minimax-quota/skills"
 ```
 
 ## 工具

@@ -19,7 +19,7 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 | `wechat-bridge` | integration | WeChat message bridge via MCP `--channels` protocol: permission relay, push messages, reply |
 | `x-api` | integration | X (Twitter) API v2 MCP server: 131+ tools with Bearer Token and OAuth2 PKCE support |
 | `health-insights` | health | Personal health intelligence: ingest Apple Health data, establish baselines, generate AI-driven narrative insights |
-| `minimax-platform` | integration | MiniMax platform helper: coding-plan quota checks and browser-session based auth management |
+| `minimax-quota` | integration | MiniMax coding plan quota checker: only requires MINIMAX_API_KEY |
 | `netease-cloud-music` | integration | NetEase Cloud Music helper: cookie-based login flows and cloud-drive upload via maintained CLI |
 | `shared-utils` | development | Reusable utility scripts and skills shared across plugins: Notion API, MongoDB queries, cross-plugin primitives |
 
@@ -40,7 +40,7 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 ├── wechat-bridge/
 ├── x-api/
 ├── health-insights/
-├── minimax-platform/
+├── minimax-quota/
 ├── netease-cloud-music/
 ├── shared-utils/
 ├── docs/
@@ -107,7 +107,7 @@ Install plugins:
 /plugin install wechat-bridge@indie-toolkit
 /plugin install x-api@indie-toolkit
 /plugin install health-insights@indie-toolkit
-/plugin install minimax-platform@indie-toolkit
+/plugin install minimax-quota@indie-toolkit
 /plugin install netease-cloud-music@indie-toolkit
 /plugin install shared-utils@indie-toolkit
 ```
@@ -129,7 +129,7 @@ Current marketplace entries from `.claude-plugin/marketplace.json`:
 | `wechat-bridge` | `1.0.3` | WeChat message bridge |
 | `x-api` | `1.0.0` | X (Twitter) API v2 MCP server |
 | `health-insights` | `1.0.0` | Personal health intelligence |
-| `minimax-platform` | `0.1.0` | MiniMax platform helper |
+| `minimax-quota` | `0.1.0` | MiniMax coding plan quota checker |
 | `netease-cloud-music` | `0.1.0` | NetEase Cloud Music helper |
 | `shared-utils` | `0.1.0` | Reusable cross-plugin utility scripts and skills |
 
@@ -159,6 +159,6 @@ Each plugin has its own `README.md`:
 - `wechat-bridge/README.md` — WeChat bridge
 - `x-api/README.md` — X API v2 MCP server
 - `health-insights/README.md` — Personal health intelligence
-- `minimax-platform/README.md` — MiniMax platform helper
+- `minimax-quota/README.md` — MiniMax coding plan quota checker
 - `netease-cloud-music/README.md` — NetEase Cloud Music helper
 - `shared-utils/README.md` — Reusable cross-plugin utility scripts and skills

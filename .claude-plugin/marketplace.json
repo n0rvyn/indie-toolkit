@@ -222,9 +222,9 @@
       "strict": true
     },
     {
-      "name": "minimax-platform",
-      "source": "./minimax-platform",
-      "description": "MiniMax platform helper: check coding-plan quota and manage browser-session based authentication with HERTZ-SESSION",
+      "name": "minimax-quota",
+      "source": "./minimax-quota",
+      "description": "MiniMax coding plan quota checker — only requires MINIMAX_API_KEY",
       "version": "0.1.0",
       "category": "integration",
       "tags": [

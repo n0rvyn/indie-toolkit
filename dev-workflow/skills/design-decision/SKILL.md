@@ -1,6 +1,6 @@
 ---
 name: design-decision
-description: "Use when facing multiple design or product options, the user is stuck between approaches, or asks 'how should I design this'. Analyzes trade-offs by separating essential from accidental complexity."
+description: "Use when facing multiple design or product options, the user is stuck between approaches, or asks '选哪个', '怎么设计', 'how should I design this', 'which is better'. Analyzes trade-offs by separating essential from accidental complexity and presents a structured comparison. Not when: options are not yet identified — use brainstorm first to surface candidates."
 ---
 
 ## Input
@@ -15,7 +15,9 @@ Required context:
 - Who is the user?
 - What are the constraints?
 
-If context is missing, ask before analyzing.
+If any required context is missing, use `AskUserQuestion` with a single batch of 1–3 questions covering: (a) the options to compare, (b) constraints/deadlines, (c) tentative preference. Do not ask these one at a time — batching gets the full picture in one turn.
+
+**Fallback**: if `AskUserQuestion` is not available in the current invocation context (e.g., skill invoked via hook or programmatic dispatch), ask in prose as a single consolidated message instead — do not split into sequential turns.
 
 ## Analysis Framework
 

@@ -1,6 +1,6 @@
 ---
 name: write-plan
-description: "Use when the user says 'write a plan', 'plan this', 'break this into tasks', or has requirements/specs for a multi-step task before touching code. Creates structured implementation plans with self-contained, verifiable tasks. Not for single-step changes. For phase-driven development, run-phase calls this internally."
+description: "Use when the user says 'write a plan', 'plan this', 'break this into tasks', '写计划', '拆分任务', or has requirements/specs for a multi-step task before touching code. Creates structured implementation plans with self-contained, verifiable tasks — each task lists files to touch, steps to take, and verification commands. Not when: trivial single-file change (just do it), plan file already exists (use verify-plan), or requirements still unclear (use brainstorm). For phase-driven development, run-phase calls this internally."
 ---
 
 ## Behavior Note

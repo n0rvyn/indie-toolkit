@@ -1,6 +1,6 @@
 ---
 name: run-phase
-description: "Use when the user says 'run phase', 'start phase N', 'next phase', '继续开发', '跑下一阶段', '开始第N阶段', or when continuing development guided by a dev-guide. Orchestrates the plan-execute-review cycle for one phase of a development guide."
+description: "Use when the user says 'run phase', 'start phase N', 'next phase', '继续开发', '跑下一阶段', '开始第N阶段', or when continuing development guided by a dev-guide. Orchestrates the plan-execute-review cycle for one phase of a development guide: write-plan → verify-plan → execute-plan → test-changes → review agents in parallel → fix issues. Produces: phase completion report + updated workflow state in .claude/dev-workflow-state.yml. Not when: no dev-guide exists — run write-dev-guide first."
 ---
 
 ## Overview

@@ -22,6 +22,7 @@ description: |
 model: opus
 tools: Glob, Grep, Read, Write
 maxTurns: 50
+effort: high
 color: yellow
 ---
 

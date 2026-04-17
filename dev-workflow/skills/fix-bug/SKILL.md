@@ -1,6 +1,6 @@
 ---
 name: fix-bug
-description: "Use when the user reports an error with stack trace or screenshot, describes unexpected behavior, or build/test failures occur. Systematically diagnoses through reproduction, hypothesis, value domain tracing, and parallel path detection."
+description: "Use when the user reports an error with stack trace or screenshot, describes unexpected behavior, or build/test failures occur. Triggers: '修 bug', '报错', '不work', '为什么', 'fix this', stack trace pasted. Systematically diagnoses through reproduction, hypothesis, value domain tracing, and parallel path detection. Not when: user only wants an explanation of behavior (answer directly) or wants a feature added (use brainstorm or write-plan)."
 ---
 
 ## Input
@@ -10,10 +10,14 @@ Trigger this command when:
 - User describes unexpected behavior
 - Build/test failures occur
 
-If input is incomplete, ask for:
+If input is incomplete, use `AskUserQuestion` with a single batch covering the missing pieces:
 1. Steps to reproduce
 2. Expected vs actual behavior
 3. Full error message or stack trace
+
+Ask in one turn, not three. Only include questions for fields you don't already have.
+
+**Fallback**: if `AskUserQuestion` is not available in the current invocation context (e.g., skill invoked via hook or programmatic dispatch), ask in prose as a single consolidated message instead — do not split into sequential turns.
 
 ## Process
 

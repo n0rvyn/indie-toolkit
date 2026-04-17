@@ -1,6 +1,6 @@
 ---
 name: write-dev-guide
-description: "Use when starting a new project's development after design is approved, or the user says 'write dev guide', 'break down this project into phases', or '写开发指南'. Creates a phased, project-level development guide that serves as the cornerstone document for all subsequent /write-plan and /run-phase cycles. Not for single-feature plans (use write-plan) or design exploration (use brainstorm)."
+description: "Use when starting a new project's development after design is approved, or the user says 'write dev guide', 'break down this project into phases', or '写开发指南'. Creates a phased, project-level development guide that serves as the cornerstone document for all subsequent /write-plan and /run-phase cycles. Produces: docs/04-dev-guide/dev-guide.md with a phased task tree, dependency graph, and acceptance criteria per phase. Not for single-feature plans (use write-plan) or design exploration (use brainstorm)."
 ---
 
 ## Overview

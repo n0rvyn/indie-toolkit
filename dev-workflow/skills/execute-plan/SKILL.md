@@ -1,6 +1,6 @@
 ---
 name: execute-plan
-description: "Use when the user says 'execute the plan', 'run the plan', 'implement the plan', or has a verified plan file ready for execution. Executes plan tasks mechanically in chunked batches (5 tasks per batch) without judgment calls; auto-resumes on truncation. Reports blocked/failed tasks for the user to fix. Also invoked by run-phase at Step 4."
+description: "Use when the user says 'execute the plan', 'run the plan', 'implement the plan', '执行计划', '跑计划', or has a verified plan file ready for execution. Executes plan tasks mechanically in chunked batches (5 tasks per batch) without judgment calls; auto-resumes on truncation via per-task state file. Reports blocked/failed tasks for the user to fix — does not attempt fixes itself. Not when: plan has not been verified (run verify-plan first). Also invoked by run-phase at Step 4."
 ---
 
 ## Overview

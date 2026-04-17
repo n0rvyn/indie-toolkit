@@ -111,3 +111,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 - Bug fix, plan verification, and design decision skills use universal methodology (value domain tracing, reverse reasoning, entry point uniqueness, complexity analysis) that works across tech stacks
 - iOS-specific checks (Design Token consistency, Swift concurrency) are provided by the `apple-dev` plugin's references
 - Review agents run in separate contexts for unbiased assessment; writing tasks run in main context to benefit from full conversation history
+
+## Companion commands
+
+After installing, run `/less-permission-prompts` (built into Claude Code 2.1.111+) to scan your recent transcripts and generate a read-only Bash/MCP allowlist tailored to your usage — reduces permission prompts when running this plugin's dispatchers.

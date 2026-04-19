@@ -64,11 +64,17 @@ def entropy(s):
     length = len(s)
     return -sum((count/length) * math.log2(count/length) for count in freq.values())
 
-keyword_re = re.compile(
-    r'(password|passwd|secret|token|api_key|apikey|api[._]key|auth_token|access_token|bearer)',
+# Require keyword to be the identifier immediately preceding the = or : separator,
+# followed by a quoted value. Prevents false positives where the keyword appears in
+# prose (e.g. /etc/passwd) or inside a regex literal (e.g. /SECRET/i) while an
+# unrelated quoted string exists elsewhere on the same line.
+assignment_re = re.compile(
+    r'(?:^|[^a-zA-Z0-9_])'
+    r'(password|passwd|secret|token|api_key|apikey|api[._]key|auth_token|access_token|bearer)'
+    r'\s*[=:]\s*'
+    r'[\"\']([^\"\']{12,})[\"\']',
     re.IGNORECASE
 )
-value_re = re.compile(r'''(?:=|:)\s*[\"']([^\"']{2,})[\"']''')
 safe_value_re = re.compile(
     r'(test|mock|fake|dummy|sample|demo|example|changeme|placeholder|xxx|your_|process\.env|\.env|\\\$\{|type=|TODO|FIXME|\{\{.*\}\})',
     re.IGNORECASE
@@ -81,20 +87,15 @@ schema_re = re.compile(
 )
 
 ENTROPY_THRESHOLD = 3.5
-MIN_LENGTH = 12
 
 for line in sys.stdin:
     line = line.rstrip('\n')
-    if not keyword_re.search(line):
-        continue
     if schema_re.search(line):
         continue
-    m = value_re.search(line)
+    m = assignment_re.search(line)
     if not m:
         continue
-    value = m.group(1)
-    if len(value) < MIN_LENGTH:
-        continue
+    value = m.group(2)
     if safe_value_re.search(value):
         continue
     if identifier_re.match(value):

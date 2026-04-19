@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Indie toolkit with iOS development, macOS tooling, and more",
-    "version": "1.36.3"
+    "version": "1.36.4"
   },
   "plugins": [
     {
@@ -165,7 +165,7 @@
       "name": "shared-utils",
       "source": "./shared-utils",
       "description": "Reusable utility scripts and skills shared across indie-toolkit plugins: Notion API helpers, MongoDB queries, and other cross-plugin primitives",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "category": "development",
       "tags": [
         "shared",

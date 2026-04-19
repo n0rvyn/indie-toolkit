@@ -33,11 +33,13 @@ python3 "${CLAUDE_PLUGIN_ROOT}/../shared-utils/scripts/mongo_query.py" \
   --limit 100
 ```
 
-Fallback absolute path (works even when `CLAUDE_PLUGIN_ROOT` is unset, e.g. during local dev):
+Hard-coded absolute path (useful for local dev outside the plugin runtime, where render-time substitution does not apply):
 
 ```bash
 python3 ~/.claude/plugins/cache/indie-toolkit/shared-utils/scripts/mongo_query.py ...
 ```
+
+Note: `${CLAUDE_PLUGIN_ROOT}` is resolved by Claude Code via text substitution when rendering skill/agent/hook content — it is not a shell environment variable exported to the Bash tool. Inside skill bodies the substituted form always works; outside that context (manual invocation from a terminal), use the absolute path above.
 
 ## Dependency
 

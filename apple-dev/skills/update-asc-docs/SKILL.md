@@ -81,16 +81,20 @@ disable-model-invocation: true
 ### 4. 同步到 Notion（可选）
 
 检查 `.claude/notion-sync.local.md` 是否存在：
-- 存在：使用 `/notion-page-sync` 的逻辑同步更新后的文件：
-  1. 读取 `.claude/notion-sync.local.md` 获取 token 和配置
-  2. 对每个更新的文件，调用：
-  ```bash
-  NOTION_TOKEN="<token>" python3 ~/.claude/skills/notion-with-api/scripts/notion_api.py update-page --file <filepath> <page_id>
+
+- **存在**：调用 `notion-page-sync` skill，将 Step 3 中实际修改的文件路径作为 args 传入。具体形式：
   ```
-  3. 输出同步结果汇总表
-- 不存在：跳过，输出提示：
+  Skill(skill="notion-page-sync", args="<space-separated paths of files modified in Step 3>")
+  ```
+  例如修改了 privacy-policy.md 和 market.md：
+  ```
+  Skill(skill="notion-page-sync", args="docs/10-app-store-connect/privacy-policy.md docs/10-app-store-connect/market.md")
+  ```
+  该 skill 负责 token 验证、parent 可达性检查、page-ID 映射、update/create、汇总报告，并原子写回 `.claude/notion-sync.local.md`。本步骤不再内嵌任何 `notion_api.py` 调用。
+
+- **不存在**：跳过，输出提示：
   "⚠️ Notion sync skipped — .claude/notion-sync.local.md not found.
-   To enable: install the notion-page-sync skill and configure .claude/notion-sync.local.md."
+   To enable: configure .claude/notion-sync.local.md (the notion-page-sync skill ships with shared-utils@indie-toolkit)."
 
 ### 5. 输出 App Store Connect 操作清单
 

@@ -7,6 +7,7 @@ Reusable utility scripts and skills shared across `indie-toolkit` plugins. Curre
 ### Skills
 
 - **notion-with-api** — Skill and scripts for authenticated Notion API operations (create/update pages, query databases). Migrated from the previous global `~/.claude/skills/notion-with-api`.
+- **notion-page-sync** — Generic markdown-to-Notion sync workflow. Reads project config from `.claude/notion-sync.local.md` (token, parent page, file→page-ID map) and delegates API calls to `notion-with-api`. Replaces the previous global `/notion-page-sync` slash command.
 
 ### Scripts
 

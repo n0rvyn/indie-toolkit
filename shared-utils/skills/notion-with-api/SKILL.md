@@ -23,8 +23,10 @@ Before first use, complete the setup:
    ```
    Default load paths (first match wins):
    - `$NOTION_ENV_PATH` if set
-   - `${plugin_install_dir}/skills/notion-with-api/.env`
+   - `${CLAUDE_SKILL_DIR}/.env` (the skill's own directory in the plugin install)
    - `~/.claude/skills/notion-with-api/.env` (legacy global-skill location; kept for back-compat)
+
+   Note: `${CLAUDE_SKILL_DIR}` is render-time substitution applied by Claude Code when rendering this skill body, not a shell environment variable. See `shared-utils/README.md` for the cross-plugin substitution pattern.
 4. In Notion, add the integration connection to pages/databases that need access:
    - Open the page/database in Notion
    - Click `...` → `Connect to` → Select your integration
@@ -34,19 +36,19 @@ Before first use, complete the setup:
 ### Verify Token
 
 ```bash
-python3 ~/.claude/skills/notion/scripts/notion_api.py verify
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py verify
 ```
 
 ### Search Content
 
 ```bash
-python3 ~/.claude/skills/notion/scripts/notion_api.py search "keyword"
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py search "keyword"
 ```
 
 ### List All Databases
 
 ```bash
-python3 ~/.claude/skills/notion/scripts/notion_api.py list-databases
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py list-databases
 ```
 
 ### Get Database Schema
@@ -54,7 +56,7 @@ python3 ~/.claude/skills/notion/scripts/notion_api.py list-databases
 **IMPORTANT: Always run this first before creating database items to understand available properties and their types.**
 
 ```bash
-python3 ~/.claude/skills/notion/scripts/notion_api.py get-db-schema DATABASE_ID
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py get-db-schema DATABASE_ID
 ```
 
 Example output:
@@ -73,7 +75,7 @@ Properties:
 ### Read Page
 
 ```bash
-python3 ~/.claude/skills/notion/scripts/notion_api.py read-page PAGE_ID
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py read-page PAGE_ID
 ```
 
 ### Update Page (Replace Content)
@@ -82,10 +84,10 @@ Deletes all existing blocks, then appends new blocks from markdown. Page title i
 
 ```bash
 # From file
-python3 ~/.claude/skills/notion/scripts/notion_api.py update-page PAGE_ID --file /path/to/content.md
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py update-page PAGE_ID --file /path/to/content.md
 
 # From string
-python3 ~/.claude/skills/notion/scripts/notion_api.py update-page PAGE_ID --content "## New content"
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py update-page PAGE_ID --content "## New content"
 ```
 
 Leading `# H1` lines are stripped (page title is separate from body content in Notion).
@@ -93,7 +95,7 @@ Leading `# H1` lines are stripped (page title is separate from body content in N
 ### Query Database
 
 ```bash
-python3 ~/.claude/skills/notion/scripts/notion_api.py query-db DATABASE_ID
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py query-db DATABASE_ID
 ```
 
 ### Create Page (under a page)
@@ -101,7 +103,7 @@ python3 ~/.claude/skills/notion/scripts/notion_api.py query-db DATABASE_ID
 Use this when the parent is a **page** (not a database):
 
 ```bash
-python3 ~/.claude/skills/notion/scripts/notion_api.py create-page PARENT_PAGE_ID "Page Title" "Page content"
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py create-page PARENT_PAGE_ID "Page Title" "Page content"
 ```
 
 ### Create Database Item
@@ -110,12 +112,12 @@ Use this when creating an item in a **database**:
 
 ```bash
 # From string
-python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item DATABASE_ID "Item Title" \
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py create-db-item DATABASE_ID "Item Title" \
   --props '{"PropertyName": "value"}' \
   --content "Optional page content"
 
 # From file (overrides --content)
-python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item DATABASE_ID "Item Title" \
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py create-db-item DATABASE_ID "Item Title" \
   --props '{"PropertyName": "value"}' \
   --file /path/to/content.md
 ```
@@ -141,7 +143,7 @@ python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item DATABASE_ID
 
 **Create document with category:**
 ```bash
-python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item \
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py create-db-item \
   2f4fd878-f624-8057-a70e-deaaf68d71ae \
   "Q1 Marketing Plan" \
   --props '{"Category": "Strategy doc"}' \
@@ -150,7 +152,7 @@ python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item \
 
 **Create todo item:**
 ```bash
-python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item \
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py create-db-item \
   2b0fd878-f624-8011-98c2-ed0babd6beb4 \
   "Review pull requests" \
   --props '{"Due Date": "2026-01-27", "Done": false}'
@@ -158,7 +160,7 @@ python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item \
 
 **Create item with multiple categories:**
 ```bash
-python3 ~/.claude/skills/notion/scripts/notion_api.py create-db-item \
+python3 ${CLAUDE_SKILL_DIR}/scripts/notion_api.py create-db-item \
   DATABASE_ID \
   "Research Report" \
   --props '{"Category": "Customer research, Strategy doc"}'

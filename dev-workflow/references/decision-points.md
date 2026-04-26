@@ -44,12 +44,56 @@ The `question` field of `AskUserQuestion` is **a conversation, not a spec dump**
 
 ### `full`
 
-For DPs representing real architectural, scope, product, or design tradeoffs the user must weigh. Rewrite each DP inside the `question` field as four lines:
+For DPs representing real architectural, scope, product, or design tradeoffs the user must weigh, rewrite each DP inside the `question` field using the structure below.
 
-1. **Why this choice matters** — one line on the user-visible or operational consequence, not the technical context.
-2. **Each option** — one line per option describing what concretely happens, prefixed with the original `A:` / `B:` / `C:` label. **Always preserve the label** so the user's answer maps back to the source file.
-3. **Recommended + why** — one line of practical reason, not architectural reasoning.
-4. **Tradeoff** — one line on what is given up if the recommendation is accepted.
+**Core requirement:** Use product / user-observable vocabulary throughout. **Do not** use code identifiers (type names, file names, enum cases, variable names, method names) anywhere in the question field. The user did not write the code; `PagodaSwitcherCard.scoreBadge` does not map to anything they recognize in the running app.
+
+**Reference — use the left, never the right:**
+
+| User-observable | Do not use |
+|------|-------|
+| "膳食宝塔卡片右上角的 65 分按钮" | `PagodaSwitcherCard.scoreBadge` |
+| "经典视图模式" / "金字塔模式" / "盛开模式" | `.legacy` / `.pyramid` / `.bloom` mode |
+| "弹出评分详情" | `showScoreSheet = true` |
+| "卡片标题栏" | `headerRow` |
+| "添加食物的按钮" | `AddFoodButton` |
+
+**Structure (keep all four fields and the A/B/C bullets — only the language inside changes):**
+
+1. **Why this choice matters** — describe the current state and what breaks or changes if no choice is made. Length follows content density: short when the situation is simple, longer when it needs context. Do not impose an arbitrary sentence limit.
+2. **Each option** — one bullet per option, prefixed with the original `A:` / `B:` / `C:` label. **Always preserve the label** so the user's answer maps back to the source file. Each bullet describes what the user will see, do, or lose if this option is chosen — not what the code will do.
+3. **Recommended + why** — which option is recommended, with a practical user-facing reason (not architectural reasoning like "lower coupling" or "extends the existing pattern").
+4. **Tradeoff** — what the user gives up if the recommendation is accepted, described in terms the user can perceive.
+
+**Worked example — the same DP, before and after:**
+
+**Before (code-language — what triggers "说人话" pushback):**
+
+> ### [DP-006] PagodaSwitcherCard 在 .legacy mode 下 score badge 入口位置 (blocking)
+>
+> **Context:** 原计划中，.legacy 模式下叠入 PyramidCardContent 时，`showInternalHeader: false` 会跳过整个 headerRow，而 PagodaSwitcherCard 自己的 headerRow 不含 scoreBadge—— 用户会丢失 PyramidScoreSheet 入口（可见回归）。
+>
+> **Options:**
+> - A: PagodaSwitcherCard.headerRow 内追加 scoreBadge，仅在 mode=.legacy 时可见，wire 到 PagodaSwitcherCard 自己的 showScoreSheet = true
+> - B: PagodaSwitcherCard.headerRow 始终显示 scoreBadge（三模式共享）
+> - C: 接受 .legacy 下 score badge 缺失，依赖 "问 AI" 按钮替代
+>
+> **Recommendation:** B — `PyramidCardView.swift:148-165` 展示 scoreBadge 是现有用户路径
+
+**After (user-language — what to put in the `question` field):**
+
+> **背景：** 膳食宝塔卡片右上角现在有一个圆圈写着 "65 分"，点它可以弹出评分详情。加了视图切换器之后，在经典视图模式下这个评分按钮会消失，用户会丢失一个本来一直能用的入口。怎么处理？
+>
+> **选项：**
+> - **A:** 只在切到经典视图模式时显示这个评分按钮，金字塔和盛开模式下藏起来
+> - **B:** 三个模式都显示这个评分按钮，统一行为
+> - **C:** 不放回来，让用户改用旁边的 "问 AI" 按钮获取评分反馈
+>
+> **推荐 B：** 三个模式都能看到评分按钮，不会因为切换模式就丢失功能；用户也不需要记住"哪个模式才能看评分"。
+>
+> **代价：** 盛开模式已经在大字 32pt 显示总分，再加一个评分按钮圆圈会有视觉重复。
+
+The After version preserves all four field labels and the three independent A/B/C bullets — what changed is *only the words inside*. Code identifiers were replaced with names the user recognizes from the actual running app.
 
 ### `short`
 

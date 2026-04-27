@@ -267,6 +267,25 @@ current: true
 
 If any planning finding requires a user choice before the dev-guide can be finalized, output a `## Decisions` section in the dev-guide document. If no decisions needed, output `## Decisions\nNone.`
 
+**Decision Point Necessity Gate** (apply before writing any DP-xxx):
+
+A decision point is only valid when **all** of these hold:
+
+1. The dev-guide cannot be finalized without the user picking an option (choice gates downstream phases)
+2. **Project-brief, design doc, architecture docs, and CLAUDE.md together do not determine the answer** — if they do, state the chosen approach inline with a one-line rationale citing the source
+3. There are **2+ genuinely distinct options** with different trade-offs at the phase or architecture level (not just naming/internal-detail)
+
+**Forbidden patterns**:
+
+- ❌ **Single-option DP**: only one viable option, or A vs "skip A" with no reason to skip
+- ❌ **Pseudo-choice with obvious recommendation**: options that are strictly worse on every axis. Recommendation in 95%+ of contexts = not a decision.
+- ❌ **Phase-level naming or ordering DP that does not affect dependencies or user-visible delivery**
+- ❌ **Re-asking a settled question**: a previous dev-guide's `**Chosen:**` covers it, or a crystal `[D-xxx]` answers it
+
+**Self-check**: Remove the `**Recommendation:**` line. If a competent reader can determine the answer from the cited brief/design context, this is not a DP — convert to inline statement.
+
+**Concrete anti-pattern from past sessions**: shipped a DP with three options that turned out architecturally identical. User reported this as wasted attention. Avoid.
+
 Format per decision:
 
 ```

@@ -19,6 +19,16 @@ Ask in one turn, not three. Only include questions for fields you don't already 
 
 **Fallback**: if `AskUserQuestion` is not available in the current invocation context (e.g., skill invoked via hook or programmatic dispatch), ask in prose as a single consolidated message instead — do not split into sequential turns.
 
+## Hard Gate: "Why does X behave this way" Questions
+
+When the bug report includes a "why does X happen" / "how is X supposed to work" / "what's the design intent of Y" sub-question (separate from "fix the error"), resolve it via primary sources before generating hypotheses:
+
+- **Required first action**: Read the relevant files (or dispatch `Explore`) and locate the actual behavior. Then `git log -p {file}` or `git blame` if intent over time matters.
+- **Forbidden**: Inferring "what was intended" from function names, comments alone, or training-data patterns. Step 2.5 (Understand intent) already enforces this for non-trivial logic, but the gate also applies the moment the user asks the question — do not answer from memory and then dive into hypotheses.
+- **Self-check**: Did I read or grep at least one specific file in this turn before stating what the code "is supposed to" do? If no, do that first.
+
+The user's friction reports show speculative architecture answers are a top frustration mode; this gate prevents starting a fix-bug flow with a wrong premise.
+
 ## Process
 
 0. **Parse input and read GitHub Issue (if reference provided)**

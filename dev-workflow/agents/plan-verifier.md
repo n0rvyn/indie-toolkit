@@ -371,6 +371,25 @@ Gap 数：{M} 项
 
 If any verification finding requires a user choice before plan revision can proceed, output a `## Decisions` section in the verification report. If no decisions needed, output `## Decisions\nNone.`
 
+**Decision Point Necessity Gate** (apply before writing any DP-xxx):
+
+A verification-stage decision point is only valid when **all** of these hold:
+
+1. The plan cannot be revised correctly without user choice (the verifier identified a real gap, not a stylistic preference)
+2. **Plan, design doc, crystal file, and code together do not determine the answer** — if they do, write a revision instruction in the "必须修订" section, not a DP
+3. There are **2+ genuinely distinct options** with different trade-offs
+
+**Forbidden patterns**:
+
+- ❌ **Single-option DP**: only one viable option, or A vs "skip A" with no reason to skip
+- ❌ **Pseudo-choice with obvious recommendation**: options that are strictly worse on every axis. Recommendation in 95%+ of contexts = not a decision; emit a revision instruction instead
+- ❌ **Re-raising a settled question**: in "Previously resolved decisions" or in plan's `**Chosen:**` entries
+- ❌ **Style-only DP**: naming, file split, code organization that doesn't affect correctness or user-visible behavior
+
+**Self-check**: Remove the `**Recommendation:**` line. If a competent reader can determine the answer from the cited code/design references in `**Context:**`, this is not a DP — emit revision instruction instead.
+
+**Concrete anti-pattern**: a verifier once raised DP-008 with three options that were architecturally identical. The user reported this as wasted attention. Single-option or pseudo-choice DPs erode trust in the verifier — when in doubt, prefer a revision instruction.
+
 **Before creating a new decision point**, check the "Previously resolved decisions" list passed in the dispatch prompt. If a matching resolved decision already exists (same title or issue), reference it instead of creating a duplicate. Format reference as:
 ```
 ### [DP-001] {title} — Already resolved

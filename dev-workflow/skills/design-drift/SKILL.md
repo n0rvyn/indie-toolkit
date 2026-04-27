@@ -1,6 +1,6 @@
 ---
 name: design-drift
-description: "Use when you need to check whether the codebase has drifted from its design documents, or the user says 'check drift', 'design drift', 'audit docs vs code'. Targets projects with standardized docs from project-kickoff. Supports full scan or focused mode."
+description: "Use when auditing alignment across multiple project docs (project-brief, AI-CONTEXT, architecture, ADRs, feature specs, dev-guide) vs the codebase, or the user says 'check drift', 'design drift', 'audit docs vs code'. Extracts assertions from doc structures and verifies each against code. Not for: DESIGN.md ↔ DesignSystem.swift token sync (use apple-dev:sync-design-md), per-View token compliance scan (use apple-dev:validate-design-tokens)."
 ---
 
 # Design Drift Detection

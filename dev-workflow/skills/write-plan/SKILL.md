@@ -219,6 +219,29 @@ When a design analysis is provided: read it and incorporate token mappings, plat
 
 If any planning finding requires a user choice before execution can proceed, output a `## Decisions` section in the plan document. If no decisions needed, output `## Decisions\nNone.`
 
+**Decision Point Necessity Gate** (apply before writing any DP-xxx):
+
+A decision point is only valid when **all** of these hold:
+
+1. The plan cannot proceed without the user picking an option (choice gates execution)
+2. **Code, config, brief, design doc, and crystal file together do not determine the answer** — if they do, you must state the chosen approach inline with a one-line rationale citing the source, not as a DP
+3. There are **2+ genuinely distinct options** with different trade-offs (different cost, risk, downstream impact, or user-visible behavior)
+
+**Forbidden patterns** (these are not decisions, do not write them as DPs):
+
+- ❌ **Single-option DP**: Options A only, or A vs "skip A" with no reason to skip
+- ❌ **Pseudo-choice with obvious recommendation**: Three options where two are strictly worse on every axis. If you would recommend the same option in 95%+ of contexts, it is not a decision — state it as a choice with rationale.
+- ❌ **Implementation-detail DP**: Internal variable naming, file split granularity, code structure that doesn't affect user/architecture
+- ❌ **Re-asking a settled question**: A `**Chosen:**` entry already exists, or a crystal `[D-xxx]` covers it
+
+**Self-check before writing each DP**:
+
+Remove the `**Recommendation:**` line. If a competent reader can determine the answer by reading only the code/brief/design references in `**Context:**`, this is not a DP — convert to inline statement of the form:
+
+> Chose {approach} ({reason in one line, citing file:line or brief section}).
+
+**Concrete anti-pattern from past sessions**: a plan once shipped DP-008 with three options that were really one — same architecture, same files touched, only naming differed. User reported this as wasted attention. Avoid.
+
 Format per decision:
 
 ```

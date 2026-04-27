@@ -19,6 +19,16 @@ If any required context is missing, use `AskUserQuestion` with a single batch of
 
 **Fallback**: if `AskUserQuestion` is not available in the current invocation context (e.g., skill invoked via hook or programmatic dispatch), ask in prose as a single consolidated message instead — do not split into sequential turns.
 
+## Hard Gate: Verify Existing-Code Claims
+
+When any option refers to behavior of existing code in this project (e.g., "Option A: extend the current Router pattern", "Option B: replace the current sync logic"), you MUST verify those claims by reading the cited files before recommending. Do not infer current behavior from naming, conversation history, or training data.
+
+- **Required first action**: For each option that cites existing code, locate and read the referenced file/function. Cite `file:line` in the comparison table.
+- **Forbidden**: "Based on typical patterns…", "this codebase probably…", or any claim about current behavior without a file citation.
+- **Self-check**: Remove the recommendation line. Can a reader confirm each option's claim about existing code by following only your file citations? If not, the verification is insufficient.
+
+The user's friction reports show speculative answers about codebase architecture are the #1 cause of repeated frustration; this gate exists to prevent that mode.
+
 ## Analysis Framework
 
 ### Step 1: Understand the Complexity Source

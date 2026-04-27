@@ -7,6 +7,15 @@ description: "Use before any creative work — creating features, building compo
 
 Do NOT invoke any implementation skill, write code, or take implementation action until design is presented and user-approved.
 
+## Hard Gate: Architecture/Behavior Questions
+
+If the user's request includes a "how does X work" / "why is X designed this way" / "what does Y do" question about existing code (X, Y refer to symbols, files, or systems in the current project), you MUST resolve the question via primary sources before proposing any design:
+
+- **Required first action**: Read the relevant files directly, OR dispatch the `Explore` agent for a codebase question, OR run `grep`/`rg` to locate definitions and call sites.
+- **Forbidden**: Answering from conversation memory, training data, identifier-name inference, or "in my experience this usually works like X". The user's friction reports show this is the #1 cause of "speculative answer" frustration.
+- **Self-check before answering**: Did I read or grep at least one specific file in this turn? If no, stop and do that first.
+- This gate also applies inside Step 1 below; it's stated up here because the violation typically happens at the moment the user's question lands, before Step 1 starts.
+
 ## Division of Responsibility
 
 - **brainstorm** = from zero to design (exploring, shaping, deciding)

@@ -1,6 +1,6 @@
 ---
 name: validate-design-tokens
-description: "Use when the user says 'validate tokens', 'check design tokens', or after modifying design-related code. Validates SwiftUI code compliance with Design Token standards for spacing, colors, fonts, and corner radius."
+description: "Use when scanning per-View SwiftUI files for Design Token compliance, or the user says 'validate tokens', 'check design tokens', 'check view files for hardcoded values'. Reports hardcoded spacing/colors/fonts/corner-radius in View files, plus an optional DesignSystem.swift ↔ DESIGN.md cross-check (read-only). Not for: applying fixes (use sync-design-md for token sync), doc-vs-code drift across architecture docs (use design-drift)."
 compatibility: Requires macOS and Xcode
 ---
 
@@ -13,6 +13,14 @@ Check SwiftUI code for Design Token compliance.
 - `filePaths`: List of View files to check
 
 ## Validation Rules
+
+### Pre-check: DESIGN.md Source-of-Truth Detection
+
+Before running compliance checks, locate the design source of truth:
+
+1. Read `docs/02-architecture/design-source.md` if it exists. Use the recorded `Path` field as DESIGN.md location.
+2. Otherwise Glob `**/DESIGN.md` (excluding `node_modules/`, `.build/`, `DerivedData/`). If exactly one result, use it. If multiple, skip Section 7 (DESIGN.md cross-check) and emit `ℹ️ Multiple DESIGN.md candidates found — DESIGN.md cross-check skipped. Run /sync-design-md to declare authoritative source.`
+3. If no DESIGN.md found: skip Section 7 entirely, run only Sections 0-6.
 
 **Pre-check: Read deployment target**
 
@@ -198,6 +206,43 @@ struct ExpenseCard: View {
             // no .frame(maxWidth:)    // hugging vs expanding
 }
 ```
+
+### 7. DESIGN.md Cross-Check (when DESIGN.md is present)
+
+**Purpose**: Detect drift between Swift token literal values (`AppColor`, `AppSpacing`, `AppShadow`, plus `AppFont` enum if present) and the project's DESIGN.md as source of truth.
+
+**Scope**: This section validates the **token definitions in DesignSystem.swift**, not the View files. View-level Design Token compliance is covered by Sections 1-6.
+
+**Process**:
+
+1. Locate `DesignSystem.swift` (Glob `**/DesignSystem/DesignSystem.swift`). If not found: skip with `ℹ️ DesignSystem.swift not found — DESIGN.md cross-check skipped`.
+2. Verify DESIGN.md is Stitch 9-section format (≥6 of: Visual Theme / Color Palette / Typography / Component Stylings / Layout / Depth / Do's and Don'ts / Responsive / Agent Prompt). If not: skip with `ℹ️ DESIGN.md is not Stitch 9-section format — cross-check skipped`.
+3. Apply the mapping from `apple-dev:project-kickoff` references/doc-templates.md "DESIGN.md → Swift Token 映射".
+4. For each token:
+
+| Dimension | Swift source | DESIGN.md source | Drift threshold |
+|-----------|--------------|------------------|----------------|
+| Color | Asset Catalog hex (`Primary500.colorset/Contents.json`) or `Color(red:green:blue:)` literals | Section 2 hex values | per-channel max-delta > 4 of 256 (RGB 8-bit, computable via `python3 -c` one-liner — see sync-design-md "Color match rule") |
+| Spacing | `AppSpacing._4xs..._2xl` numeric literals | Section 5 spacing scale | exact (no tolerance) |
+| Shadow | `AppShadow.subtle/.../.large` (y, radius, opacity) | Section 6 elevation values | y/radius exact, opacity ±0.01 |
+| Typography | `AppFont` enum (if exists) or `docs/02-architecture/typography-rules.md` (fallback) — skip if neither exists | Section 3 typography table | size exact, weight exact |
+
+5. Emit drift findings as 🔴 Must Fix entries with both values cited.
+
+**Example drift output**:
+
+```
+🔴 Must Fix:
+- DesignSystem.swift:118 - AppColor.primary500 = #4080D0
+  DESIGN.md § 2 Color Palette specifies: #4A90E2 (per-channel max-delta = 18, > threshold 4)
+  Suggestion: Run /sync-design-md mode=to-swift to align, or revise DESIGN.md if Swift value is correct.
+
+- DesignSystem.swift:191 - AppSpacing.sm = 16 ✅ matches DESIGN.md § 5
+- DesignSystem.swift:243 - AppShadow.small radius = 4
+  DESIGN.md § 6 Depth specifies radius = 6 (drift)
+```
+
+**Note**: Do not auto-fix. This skill reports only. Use `apple-dev:sync-design-md` to apply changes.
 
 ## Output Format
 

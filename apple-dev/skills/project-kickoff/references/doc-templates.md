@@ -164,9 +164,56 @@
 
 ## Design System 初始化
 
-**设计输入处理**：如果 CP4 中用户提供了设计文件（Stitch 生成或已有设计稿），先读取设计文件提取颜色、字体、间距等 token 值，以提取值为准初始化 DesignSystem.swift。如果 CP4 选择了「跳过设计」，使用下方默认模板值。
+**设计输入处理**：如果 CP4 中用户提供了设计文件，按以下顺序识别 token 来源：
+
+1. **优先读取 Stitch DESIGN.md**（9 节标准格式，2026-04 由 Google Labs 开源）— 用「DESIGN.md → Swift Token 映射」段进行结构化映射。
+2. 否则读取 `tokens.json` / `design-tokens.json`（W3C DTCG 格式）。
+3. 否则读取 HTML/CSS 提取计算值。
+4. 否则纯图片，仅做近似估值并标注 `~`。
+
+如果 CP4 选择了「跳过设计」，使用下方默认模板值。
 
 > 完整设计原则参考 `~/.claude/docs/ui-design-principles.md`
+
+### DESIGN.md (Stitch 9-section) 识别
+
+读取设计目录下 `DESIGN.md`（顶层）。判定为 Stitch 9 节格式的条件：至少包含以下 6 个 section heading（不区分大小写、允许标题前缀变体）：
+
+- `Visual Theme` / `Atmosphere`
+- `Color Palette` / `Colors`
+- `Typography`
+- `Component Stylings` / `Components`
+- `Layout Principles` / `Layout`
+- `Depth` / `Elevation` / `Shadows`
+
+如果识别成功：写入 `docs/02-architecture/design-source.md`，记录：
+
+```markdown
+# Design Source of Truth
+
+- Format: Stitch DESIGN.md (9-section)
+- Path: {绝对路径}
+- Detected sections: [list]
+- Last sync: {YYYY-MM-DD}
+```
+
+后续 token 漂移以 DESIGN.md 为准。
+
+### DESIGN.md → Swift Token 映射
+
+| DESIGN.md Section | Swift 目标 | 提取规则 |
+|-------------------|----------|---------|
+| 2. Color Palette & Roles | `AppColor.primaryNNN` 阶梯 + `Color.appPrimary/Secondary/...` 语义别名 | 表格里 `semantic-name + hex + role`：role 含 "primary/brand/cta" → `appPrimary`；含 "background/surface" → `appBackground`；含 "danger/error" → `appError`。9 级 hex 阶梯（50/100/200/.../900）一一对应 `primary50…primary900`。Asset Catalog 命名按 `Primary50` 等。**缺档处理**：若 DESIGN.md 仅声明部分阶梯（如 50/300/500/700/900），未声明档位用 HSL 空间在相邻已声明值之间线性插值生成，注释标 `// interpolated from DESIGN.md`，Last sync 时这些值不参与 drift check。 |
+| 3. Typography Rules | View 中使用 inline `.font(.largeTitle/.title/.headline/.body/.callout/.caption)`（默认约定，无中央 enum） — 如果项目自建 `AppFont` enum，按 enum 形式生成；否则记录到 `docs/02-architecture/typography-rules.md` 供 plan-writer 在每个 View 实现时引用 | 表格列 `level + family + size + weight + lineHeight`：用 size 区间映射到 Apple Type Scale (largeTitle 34 / title 28 / headline 17 / body 17 / callout 16 / caption 12)。系统字号外的自定义值标注 `⚠️ 自定义字号 X — 建议落到最近系统级`，并写入 typography-rules.md。 |
+| 4. Component Stylings | 不直接生成 token，记录到 `docs/02-architecture/component-styles.md` 供 plan-writer 参考 | 整段 verbatim 抄录 |
+| 5. Layout Principles | `AppSpacing._4xs..._2xl`（2/4/8/12/16/24/32/48/64） + `AppLayout.marginCompact/Regular/maxContentWidth` | DESIGN.md 中 spacing scale 数值匹配到最近的 AppSpacing 档位；不在 8pt 网格的值标注 `⚠️ 偏离 8pt 网格 — 已 round 到 X` |
+| 6. Depth & Elevation | `AppShadow.flat/subtle/small/medium/large` (5 级) | DESIGN.md shadow 列表按 y-offset 升序排序（y 相同时按 radius 升序），依次映射到 5 级。**少于 5 级**：按 y-offset 落到最近的语义档（y=0 → flat；y≤2 → subtle；y≤4 → small；y≤8 → medium；y>8 → large），未填档位用相邻档位的中值。**超过 5 级**：在标准化 (y, radius, opacity) 空间（各维 z-score 归一化）计算 Euclidean 距离矩阵，迭代合并距离最小的两条（合并时取均值），直到剩 5 条；同距离时优先合并 y-offset 较小的两条。 |
+| 1/7/8/9 (Theme/Don'ts/Responsive/Agent) | 不进入代码，写入 `docs/02-architecture/design-rules.md` | verbatim 抄录，供 review/audit 使用 |
+
+**冲突处理**：
+
+- DESIGN.md 中明确给的 hex/数值 与 `ui-design-principles.md` 默认值冲突时：以 DESIGN.md 为准，将差异记入 `design-rules.md` 顶部 `## Deviations from House Style`。
+- DESIGN.md 缺失某 section（如无 Depth）：该维度走默认模板值，标注 `⚠️ DESIGN.md 未声明，使用默认`。
 
 新项目应在早期建立 Design System：
 

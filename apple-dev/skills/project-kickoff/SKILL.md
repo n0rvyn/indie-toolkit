@@ -427,10 +427,22 @@ disable-model-invocation: true
 
 读取设计目录下的全部文件，以顶尖视觉设计师视角完成评审。
 
-**文件类型处理**：
-- **HTML/CSS + DESIGN.md**：可读取精确的间距、颜色、字体值，评审结论引用具体数值
+**文件类型处理**（按识别优先级）：
+- **Stitch DESIGN.md（9 节标准格式）**：顶层 `DESIGN.md` 包含 Visual Theme / Color Palette / Typography / Component Stylings / Layout / Depth 等 section（≥6 个匹配 = 判定为 Stitch 格式）。直接从 section 表格读取语义化 token，结论引用 `DESIGN.md § N` 而非数值。Read `references/doc-templates.md` 的「DESIGN.md (Stitch 9-section) 识别」段执行结构化识别。
+- **W3C DTCG `tokens.json` / `design-tokens.json`**：解析 JSON token tree，结论引用 `tokens.json#path/to/value`
+- **HTML/CSS + 自定义 design-spec.md**：可读取精确的间距、颜色、字体值，评审结论引用具体数值
 - **纯图片（PNG/JPG/PDF）**：只能做视觉观察，间距和颜色值标注为 `~近似值`，不做精确度量声称
-- 优先读取 HTML/CSS 和 Markdown 文件；图片文件作为视觉参照补充
+- 优先级：Stitch DESIGN.md > DTCG JSON > HTML/CSS + Markdown > 图片
+
+#### 7.5.0 Source of Truth 标定
+
+如果识别到 Stitch DESIGN.md：
+
+1. 在 `docs/02-architecture/design-source.md` 写入：format、绝对路径、识别到的 sections、识别日期（参考 `references/doc-templates.md`「DESIGN.md (Stitch 9-section) 识别」段的模板）
+2. 把 DESIGN.md 中 section 7（Do's and Don'ts）和 section 9（Agent Prompt Guide）的内容 verbatim 抄到 `docs/02-architecture/design-rules.md`，作为后续 design-review / ui-review 的判据来源
+3. 把 section 4（Component Stylings）抄到 `docs/02-architecture/component-styles.md`，供 plan-writer 实现各组件时引用
+
+如果未识别到 Stitch DESIGN.md：跳过本步，按原文件类型处理逻辑评审。
 
 #### 7.5.1 逐屏点评
 
@@ -637,9 +649,18 @@ Read `references/doc-templates.md` 的「docs/05-features/README.md 模板」段
 
 #### 9.6 Design System 初始化
 
-Read `references/doc-templates.md` 的「Design System 初始化」段，按指引创建 DesignSystem.swift。如果 CP4 中用户提供了设计文件，优先从设计文件提取 token 值；否则使用默认模板值。
+Read `references/doc-templates.md` 的「Design System 初始化」段。Token 来源识别顺序与步骤 7.5 一致：
 
-询问用户是否生成完整版 Design System。如果用户确认，直接调用 `Skill("apple-dev:generate-design-system")` 执行，不中断流程。
+1. 如果步骤 7.5.0 已记录 `docs/02-architecture/design-source.md` 且 format 为 Stitch DESIGN.md：
+   - Read `references/doc-templates.md` 的「DESIGN.md → Swift Token 映射」段
+   - 按映射表把 DESIGN.md 各 section 翻译为 Swift token 值，生成 `[项目名]/DesignSystem/DesignSystem.swift`
+   - 不复制 DESIGN.md 内容到 Swift 注释；DESIGN.md 是 source of truth，Swift 是消费侧
+   - 记录映射结果到 `docs/02-architecture/design-source.md` 的「Last sync」字段
+2. 否则（DTCG JSON / HTML+CSS / 图片 / 跳过设计）：按映射段中对应的回退路径处理，未声明的维度走默认模板值
+
+询问用户是否生成完整版 Design System（含 Component styles、 Animation tokens 等扩展）。如果用户确认，直接调用 `Skill("apple-dev:generate-design-system")` 执行，不中断流程。
+
+完成后建议用户在迭代过程中通过 `Skill("apple-dev:sync-design-md")` 保持 DESIGN.md ↔ DesignSystem.swift 同步。
 
 #### 9.7 不要预建的目录
 

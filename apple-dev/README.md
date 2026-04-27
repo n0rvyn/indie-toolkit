@@ -10,7 +10,7 @@ Complete iOS/macOS/iPadOS development workflow plugin.
 
 For Codex/OpenCode: see `.codex/INSTALL.md` or `.opencode/INSTALL.md`.
 
-## Skills (19)
+## Skills (20)
 
 | Skill | Trigger | Description |
 |-------|---------|-------------|
@@ -29,6 +29,7 @@ For Codex/OpenCode: see `.codex/INSTALL.md` or `.opencode/INSTALL.md`.
 | localization-setup | `/localization-setup` | String Catalogs + localization guidance |
 | fetch-swift-api-updates | `/fetch-swift-api-updates` | Fetch latest WWDC API changes |
 | generate-design-system | `/generate-design-system` | Generate SwiftUI design system from tokens |
+| sync-design-md | `/sync-design-md` | Bidirectional sync between Stitch DESIGN.md and DesignSystem.swift |
 | generate-stitch-prompts | `/generate-stitch-prompts` | Generate UI prompts from requirements |
 | project-kickoff | `/project-kickoff` | New project feasibility + requirements |
 | setup-ci-cd | `/setup-ci-cd` | Fastlane + GitHub Actions for TestFlight |

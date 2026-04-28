@@ -25,9 +25,12 @@ This skill dispatches the `dev-workflow:execute-plan` agent (sonnet) to execute 
 
 ### Step 2: Initialize and Dispatch
 
-1. Read the plan file and count total tasks (count `### Task N:` headings)
+1. Read the plan file and count total tasks (count `### Task N:` headings).
+   - **If state file exists and references a `plan_file` path that no longer exists** (file moved, renamed, or deleted between resumes): surface a clear error — "State file references {path} which no longer exists. Either restore the plan file at this path, or delete `.claude/execute-plan-state.json` to start fresh." Abort. Do not silently fall through.
+   - **If state file exists but `state.plan_file` differs from the plan path being invoked on** (stale state from a previous plan, user is now starting work on a new plan): surface — "State file references {state.plan_file} but you're invoking on {current path}. Delete `.claude/execute-plan-state.json` to start fresh, or invoke on {state.plan_file} to resume that plan." Abort. Do not silently resume the wrong plan.
 2. Check for existing state file at `.claude/execute-plan-state.json`:
    - If exists and `status` is `in_progress`: resume from `last_completed + 1`
+     - **Plan-edit reconciliation** (always run on resume): re-count `### Task N:` headings in the plan file. If `actual_total != state.total`: update `state.total = actual_total` and surface "ℹ️ Plan now has {N} tasks (was {M}); resuming with updated total." This catches cases where the user added/removed tasks while paused.
    - If exists and `status` is `complete`: skip execution, proceed to Step 3
    - If does not exist: create with initial state:
      ```json

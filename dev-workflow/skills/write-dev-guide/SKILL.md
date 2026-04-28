@@ -1,6 +1,6 @@
 ---
 name: write-dev-guide
-description: "Use when starting a new project's development after design is approved, or the user says 'write dev guide', 'break down this project into phases', or '写开发指南'. Creates a phased, project-level development guide that serves as the cornerstone document for all subsequent /write-plan and /run-phase cycles. Produces: docs/04-dev-guide/dev-guide.md with a phased task tree, dependency graph, and acceptance criteria per phase. Not for single-feature plans (use write-plan) or design exploration (use brainstorm)."
+description: "Use when starting a new project's development after design is approved, OR when scoping a multi-unit refactor/migration that spans multiple independent components (e.g., 'refactor 6 cards across 4 tabs', 'migrate auth across 4 layers'), or the user says 'write dev guide', 'break down this project into phases', or '写开发指南'. Creates a phased development guide that serves as the cornerstone document for all subsequent /write-plan and /run-phase cycles. Each phase represents one conceptual unit (one component, one layer, one migration step) — phase size is determined by review boundary, not workload. Produces: docs/04-dev-guide/dev-guide.md with a phased task tree, dependency graph, and acceptance criteria per phase. Not for single-feature plans (use write-plan) or design exploration (use brainstorm)."
 ---
 
 ## Overview
@@ -180,6 +180,8 @@ After user confirms:
 - Middle Phases: main features
 - Late Phases: secondary features, polish, submission prep
 - No MVP splits — each Phase builds a part of the complete product, not a "minimum viable" version
+- **Phase size is determined by conceptual unit, not workload.** A Phase can be small — one component, one card, one settings sheet — as long as it is independently reviewable and verifiable. The trigger for splitting is "this is a separate conceptual unit the user wants to review on its own", not "this is a lot of work". Six small phases (one per UI component on a tab) is a valid dev-guide structure if the user wants real-device review between each component. Do NOT compress multiple conceptual units into one Phase to make Phases feel "substantive enough".
+- **When to use multiple small Phases instead of one big Phase**: when each unit produces its own user-visible state that the user wants to verify independently (e.g., 6 cards on a tab, each independently reviewable on device). The natural review pause between Phases (user re-invokes `/run-phase`) replaces any need for in-plan review checkpoints.
 
 ### Document Format
 

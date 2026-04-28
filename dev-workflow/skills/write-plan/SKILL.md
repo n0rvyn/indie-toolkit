@@ -11,6 +11,14 @@ to `dev-workflow:verify-plan` at Step 4 — plan writing and verification happen
 When invoked via **`run-phase`** orchestration: run-phase writes the plan in main context
 using the Plan Writing Reference below, and manages verification as a separate explicit step.
 
+## Skill Scope: one plan = one conceptual unit
+
+A plan covers **one** conceptual unit of work — a single feature, a single component refactor, a single migration phase. Review pauses happen *between* plans / phases (each `/run-phase` or `/execute-plan` invocation is a natural checkpoint), not within them.
+
+If the scope spans multiple independent units (e.g., "refactor 6 cards across 4 tabs", "migrate auth across 4 layers"), do **not** write a single multi-unit plan. Stop and invoke `/write-dev-guide` instead — break the work into phases, then `/run-phase` each phase. Each phase has its own plan, its own execute cycle, and an implicit review pause between phases (the user re-invokes `/run-phase`).
+
+Heuristic: if the scope items naturally produce **multiple feature specs** at the end, it's multiple phases. If **one feature spec** covers it, it's one plan.
+
 ## Overview
 
 This skill writes an implementation plan directly in the main context, benefiting from full conversation history and user intent.
@@ -37,6 +45,13 @@ Collect the following before writing:
 5. **Design analysis reference** — path to design analysis if one exists (search `docs/06-plans/*-design-analysis.md`). If found, read it: it contains validated token mappings, platform translations, and UX assertion validation from a visual prototype.
 6. **Crystal file reference** — path to crystallized decisions file if one exists (search `docs/11-crystals/*-crystal.md`). If found, read it: it contains settled architectural and UX decisions with machine-readable D-xxx assertions the plan must respect.
 7. **Project root** — current working directory
+8. **Pre-flight Audit** (conditional — apply when plan modifies any of: existing model field, component public API, design token name/semantic, shared component, or user-facing flow):
+   - Grep all callers of items to be modified (schema + handler + test + doc + client)
+   - Scan for legacy/new dual token systems on the same semantic (e.g., `proteinOrange` vs `Macro.protein`, `AuroraPaperCard` vs `AdaptiveCardBackground`)
+   - Identify optional fields lacking explicit fallback paths (service layer or view layer)
+   - Verify the design covers all user states (boundary cases like "maintain mode" when design only shows "lose weight" mode)
+   - Findings → write into plan header as `**Pre-flight risks:**` block, OR convert each into an explicit migration/handling task. Skipping this step for refactor-style plans causes silent failures (semantic field drift, dual-token visual inconsistency, missed callers in renames).
+   - If the plan creates new files only and does not touch existing fields/APIs/tokens, Pre-flight Audit is not required; set `**Pre-flight risks:** none`.
 
 If any of these are unclear, ask the user before writing.
 
@@ -87,6 +102,11 @@ Write plans assuming the implementing engineer has zero context. Document everyt
    - OUT items: plan tasks must NOT touch these areas. If a task would need to modify an OUT item to complete an IN item, add a `**Scope conflicts:**` subsection after `**Crystal file:**` in the plan header: `IN: {item} requires modifying OUT: {item} — {why}`. Do not create the conflicting task; let the verifier and user resolve it.
 
 3. **No scope inference**: Decomposing a scope item into implementation steps is expected (e.g., "migrate color tokens" → one task per token category). But adding work that addresses a DIFFERENT concern not in the scope items is prohibited, even if it seems like a natural extension (e.g., scope says "migrate color tokens" → adding a font migration task is scope inference). If you believe additional work is necessary, note it in the plan header as "Recommended additions (not in scope)" — do not create tasks for it.
+   - **Exception — Pre-flight Audit findings (Step 1 item 8)**: when a finding surfaces a dependency risk of an in-scope item, apply this 2-question test:
+     1. *Does the dependency risk cause the in-scope item to fail or visibly drift?* → in scope, create a task
+     2. *Or does it merely surface unrelated debt that the in-scope change incidentally exposes?* → out of scope, note as "Recommended additions"
+   - Examples that pass test 1 (in scope): "rename includes 7 callers; rename them atomically", "legacy/new dual token system on the same semantic; migrate the 3 remaining legacy callers", "optional field used at view layer needs explicit fallback path"
+   - Examples that fail test 1 / pass test 2 (out of scope, recommend only): "while migrating colors, noticed font inconsistencies in the same files" — the colors don't fail because of fonts; "while renaming a method, noticed test names are inconsistent across the file" — the rename works regardless of test naming
 
 4. **Quality fidelity** — If the design doc specifies a concrete approach for a feature (e.g., "LLM analysis", "Bree cron scheduler", "WordPiece tokenizer"), the plan task MUST implement that exact approach. If the specified approach is not feasible in this phase (missing dependency, API not available, infrastructure not ready), the task must:
    - Mark the task title with `⚠️ SIMPLIFIED:`
@@ -120,6 +140,8 @@ refs: []
 **Crystal file:** [path to crystal file, if one exists — links to verify-plan CF strategy]
 
 **Threat model:** [included / not applicable]
+
+**Pre-flight risks:** [list any dual-token systems, missed callers, optional-field fallback gaps, or design coverage gaps found in Step 1 item 8 — one per line; OR `none` if Pre-flight Audit was not applicable]
 
 ---
 ```

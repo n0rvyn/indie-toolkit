@@ -62,6 +62,7 @@ The user's friction reports show speculative architecture answers are a top frus
    - Read the complete error message and stack trace
    - Identify the exact location where the error occurs
    - Note any relevant context (user action, data state)
+   - **Native crash without stack trace** (iOS/Android, simulator, or device): apply user-level CLAUDE.md "Native crash → stack trace gate" before generating any hypothesis at Step 3. If user-level CLAUDE.md is not present, the inline fallback is: get stack trace before any hypothesis — iOS device `idevicecrashreport -e -k <path>` then read the .ips file; Android `adb logcat -b crash`; simulator stderr stream. Hypothesis must reference a specific frame (image symbol + osVersion) from the stack trace before being voiced. Hypothesis switches without a stack trace (e.g., guessing "double sheet" → "detents" → "FocusState") are instances of the same "guess known SDK bug" framework, not a framework switch under the 3-Strike Rule.
 
 2.5. **Understand intent** (trigger: bug location involves non-trivial logic — conditional branches, state machines, multi-step transformations)
 

@@ -43,16 +43,41 @@ You will receive:
    env:                          # optional env vars
      NODE_ENV: test
    ```
-   Use configured commands. If a field is missing, auto-detect that field (step 2).
+   Use configured commands. If a field is missing, auto-detect that field (step 3).
    Default `context_lines` to 5 if not specified.
 
-2. If no config file (or fields missing), auto-detect by scanning project root:
+2. **Apple-project guard (mandatory pre-check)**: if the project root contains any `*.xcodeproj` or `*.xcworkspace` file, **abort immediately**. Write a report with these fields, in order, so any caller can programmatically distinguish this refusal from other failures:
+
+   ```markdown
+   ## Test Report
+
+   **Status:** FAIL
+   **Reason code:** APPLE_PROJECT_REFUSED
+   **Recommended action:** Use the `dev-workflow:test-changes` skill instead.
+
+   ### Detail
+
+   This agent refuses to run `xcodebuild test`. The constraint is single-process serialization:
+   only one `xcodebuild test` process can run at a time. Concurrent runs hit DerivedData
+   `build.db` SQLite locks, race on global `simctl` state, and trigger CoreSimulator daemon
+   contention — under multi-sim CPU load the simulator's system apps (SpringBoard, MobileCal)
+   can't finish launching within 30 seconds and the FRONTBOARD process-launch watchdog
+   SIGKILLs them, aborting the test run.
+
+   The agent framework can dispatch sub-agents in parallel and provides no cross-agent mutex,
+   so allowing this agent to run `xcodebuild test` would break the single-process invariant.
+   The `test-changes` skill executes from the main session, which is single-threaded and
+   serializes naturally.
+   ```
+
+   Do not run any `xcodebuild` command. Return.
+
+3. If no config file (or fields missing), auto-detect by scanning project root:
 
    | File found | Build | Test | Lint |
    |---|---|---|---|
    | `package.json` | `{pm} run build` (if `build` script exists) | `{pm} test` | `{pm} run lint` (if `lint` script exists) |
    | `Package.swift` | `swift build` | `swift test` | skip |
-   | `*.xcodeproj` or `*.xcworkspace` | `xcodebuild build -scheme {scheme} -destination 'platform=iOS Simulator,name=iPhone 16'` | `xcodebuild test -scheme {scheme} -destination 'platform=iOS Simulator,name=iPhone 16'` | skip |
    | `Cargo.toml` | `cargo build` | `cargo test` | `cargo clippy` (if installed) |
    | `go.mod` | `go build ./...` | `go test ./...` | `golangci-lint run` (if installed) |
    | `pyproject.toml` | skip | `pytest` | `ruff check .` (if installed) |
@@ -64,11 +89,9 @@ You will receive:
    - `package-lock.json` → npm
    - None found → npm
 
-   **Xcode scheme detection**: run `xcodebuild -list -json`, parse the first scheme from the output.
-
    If no recognized project file is found: report error in the report file and return.
 
-3. **Plan supplementary commands** (optional): If a plan file is provided, read it and check for a final task matching `### Task N: Full verification` or `### Task N: Verification`. If found, extract its `**Verify:**` `Run:` commands. Add any commands not already in the detected set (deduplicate by command string).
+4. **Plan supplementary commands** (optional): If a plan file is provided, read it and check for a final task matching `### Task N: Full verification` or `### Task N: Verification`. If found, extract its `**Verify:**` `Run:` commands. Add any commands not already in the detected set (deduplicate by command string).
 
 ### Step 2: Run Commands
 

@@ -76,6 +76,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | parallel-agents | guide | Pattern for concurrent agent dispatch |
 | use-worktree | guide | Git worktree setup and safety |
 | commit | fork (haiku) | Conventional commit analysis and execution |
+| review-before-commit | interactive | Pre-commit semantic review: classify changes, detect breaking changes, interactive risk confirmation |
 | handoff | fork (sonnet) | Cold-start prompt generation for cross-day/cross-person session transfer |
 | generate-design-prompt | interactive | Generate Stitch/Figma prompts from project features; supports initial and refinement modes |
 | understand-design | dispatcher | Dual-channel design prototype analysis, token extraction, platform translation |

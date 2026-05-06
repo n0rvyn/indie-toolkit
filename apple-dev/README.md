@@ -10,7 +10,7 @@ Complete iOS/macOS/iPadOS development workflow plugin.
 
 For Codex/OpenCode: see `.codex/INSTALL.md` or `.opencode/INSTALL.md`.
 
-## Skills (20)
+## Skills (21)
 
 | Skill | Trigger | Description |
 |-------|---------|-------------|
@@ -18,6 +18,7 @@ For Codex/OpenCode: see `.codex/INSTALL.md` or `.opencode/INSTALL.md`.
 | ui-review | `/ui-review` | SwiftUI UI + interaction compliance review |
 | design-review | `/design-review` | Visual hierarchy, color, spacing quality review |
 | feature-review | `/feature-review` | Product + UX completeness from user journey perspective |
+| audit-finishing-touches | `/audit-finishing-touches` | Mechanical §17–§20 polish-gap scan (border / default-style / undecorated card / hero) |
 | execution-review | `/execution-review` | Plan-vs-code verification + Swift code scan |
 | validate-design-tokens | `/validate-design-tokens` | Design token compliance check |
 | submission-preview | `/submission-preview` | App Review Guidelines pre-check |

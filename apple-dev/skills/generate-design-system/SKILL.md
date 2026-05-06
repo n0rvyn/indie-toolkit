@@ -19,6 +19,37 @@ From calling command or user:
 - `projectPath`: Path to Xcode project root
 - `generateComponents`: true / false (optional)
 
+### Personality file pre-read (added 2026-05-05)
+
+Before prompting for `primaryColor`, `colorRelationship`, or font-related inputs, check for `docs/02-architecture/design-personality.md` at the project root.
+
+- If present: parse it per the spec below and seed inputs from the file. Skip prompting for the three fields that parsed successfully.
+- If absent: proceed with the existing prompts as before.
+
+This hook is upstream-only — the rest of the Process below is unchanged. The personality file is produced by `dev-workflow:choose-personality`; consumers of this skill should run `/choose-personality` first when starting a new project.
+
+#### Parse spec (consumer contract — keep in sync with `dev-workflow:choose-personality` Step 5)
+
+Read `docs/02-architecture/design-personality.md` line-by-line and extract the following fields by literal heading + line pattern. All regex matches are case-sensitive and require the heading line to appear **before** the value line.
+
+| Field | Heading | Line pattern | Example |
+|-------|---------|--------------|---------|
+| `primaryColor` | `## Picked Primary Color` | `^- Hex:\s*(#[0-9A-Fa-f]{6})\s*$` | `- Hex: #1E3A8A` |
+| `fontFamily` | `## Picked Font` | `^- Family:\s*(.+?)\s*$` | `- Family: Inter` |
+| `fontIsSystem` | `## Picked Font` | `^- System font:\s*(yes\|no)\s*$` | `- System font: yes` |
+| `radiusSmall` | `## Derived Radius Scale` | `^- small:\s*(\d+)pt\s*$` | `- small: 4pt` |
+| `radiusMedium` | `## Derived Radius Scale` | `^- medium:\s*(\d+)pt\s*$` | `- medium: 8pt` |
+| `radiusLarge` | `## Derived Radius Scale` | `^- large:\s*(\d+)pt\s*$` | `- large: 12pt` |
+
+**Pill case:** if all three radius lines read `999pt` (or `9999pt`), treat as pill scale — set all three to 9999.
+
+**Per-field fallback rules:**
+
+- If a heading is missing, OR the line pattern does not match, OR the captured value fails its format check (e.g. hex must match `^#[0-9A-Fa-f]{6}$`, radius must be a positive integer): **fall back to the existing prompt for that field only**. Do not abort the whole skill.
+- Print one line per fallback so the user knows what was re-prompted: `[personality file] Could not parse {field}, asking interactively.`
+
+**Schema mismatch ≠ fatal:** the producer side lives in a different plugin and may evolve. Per-field graceful degradation is required — never read garbage into the design-system pipeline.
+
 ## Process
 
 ### 1. Read Token Specification (section-targeted)

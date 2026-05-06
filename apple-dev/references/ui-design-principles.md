@@ -273,6 +273,8 @@ Apple 推荐正文最小 17pt，绝对最小 11pt。
    - 需要区分层级的有色背景：浅色模式 opacity 0.08-0.12，深色模式 0.15-0.20
    - 实现方式：根据 `colorScheme` 动态调整（参考模式：`Color.X.opacity(scheme == .dark ? 0.15 : 0.08)`）
 
+6. **饱和灰（Saturated Greys）**：工具型 App 的中性灰可带品牌色调（saturation 5–15%，hue 取自 primary），比纯 HSL 灰更有"性格"。SwiftUI: `Color(hue: brandHue, saturation: 0.08, brightness: 0.95)` 用作浅色模式中性背景。
+
 ### 3.5 对比度标准（WCAG 2.1）
 
 | 级别 | 正文文字 | 大字（18pt+ 粗体，或 24pt+） | UI 组件/图形 |
@@ -286,6 +288,11 @@ Apple 推荐正文最小 17pt，绝对最小 11pt。
 - 白色文字在品牌蓝 `#4A90D9` 上 = 需验证（可能不够）
 
 **iOS 实践**：使用 `.primary`（对比度最高）、`.secondary`（已验证 AA）、`.tertiary`（仅用于最次要信息）。
+
+**可访问而不丑（Accessible Without Going Ugly）**：当品牌色对白底文字达不到 AA 时，不要把品牌色调暗——
+- 翻转方案：白字 + 全饱和品牌底（白色对深品牌色通常 >= 4.5:1）
+- 转色族方案：色相旋转 15–30°（red → burgundy / sky-blue → indigo）保持品牌识别但通过对比度
+- 示例：`#4A90D9` 对 `#FFF` = 3.0:1（不达标）→ 翻转为 `#FFF` 对 `#1E5C9E`（饱和加深 hue 微调）= 7.2:1（AAA）
 
 ### 3.6 品牌色应用
 
@@ -504,7 +511,13 @@ A B C    D E F
 
 大脑会补完不完整的形状。
 
-- 卡片不需要完整边框，阴影或背景色即可暗示容器
+- 卡片不需要完整边框，按场景选用以下任一替代：
+  - 阴影抬起：`.shadow(... level 2)`（§17.2 elevation 系统）
+  - 背景色阶：父容器用 `Color(.systemGroupedBackground)`，卡片用 `Color(.systemBackground)`
+  - 留白 + spacing：靠间距分组，无任何边框/背景
+  - Section 容器：Form / List 内嵌 Section，由系统提供分组样式
+  - 单侧 accent border：`.overlay(alignment: .leading) { Rectangle().fill(.accent).frame(width: 3) }`（§19.2 模式）
+  - 完整对照表与反例见 §19.5
 - Tab 选中指示器不需要包围整个 Tab，底部线条即可
 
 ### 7.5 共同区域（Common Region）
@@ -1099,6 +1112,554 @@ Liquid Glass = 导航/控制层的透光材质，**不用于内容层**。
 6. 不同页面有不同密度节奏（设置=紧凑，引导=宽松）
 
 ---
+
+<!-- section: 17. 深度与层级（Depth & Elevation） keywords: depth, elevation, shadow, layering, overlap -->
+## 17. 深度与层级（Depth & Elevation）
+
+**本节适用范围**：非 Glass 内容层（卡片、按钮、Modal 内容、浮动元素）。Glass 元素（Tab Bar、Navigation Bar、Sheet chrome）的阴影由系统管理，规则参见 §15.4，不要套用本节内容。
+
+### 17.1 光从上方（Light Comes from Above）
+
+**Refactoring UI 原则**：所有 UI 阴影应假设光源在上方，因此阴影向下偏移且上缘可能有高光（如果有上缘高光，意味着该元素浮得更高）。
+
+自然光从上方照射时，高处物体在上侧留下阴影，下侧被遮挡。这决定了 UI 阴影的默认方向：向下偏移（y 为正值）。
+
+```swift
+// 向上浮起的元素：阴影向下偏移
+Text("浮层文字")
+    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+```
+
+### 17.2 五级阴影系统（Elevation System）
+
+5 个 token 覆盖从平面到浮层的全部场景。数字越大，浮得越高。
+
+| Level | offset(x,y) | radius | opacity | use case |
+|-------|-------------|--------|---------|----------|
+| level 0 | (0, 0) | 0 | 0 | 平面元素（不浮起） |
+| level 1 | (0, 1) | 2 | 0.04 | 微妙抬起（hover, focus） |
+| level 2 | (0, 2) | 6 | 0.08 | 卡片、Section |
+| level 3 | (0, 6) | 16 | 0.12 | Modal 内容、浮动按钮 |
+| level 4 | (0, 12) | 32 | 0.16 | Popover、深层浮层 |
+
+> **列名为英文是为了精确对齐 dev-guide 的验收字符串（DP-005 选 A）；表内描述继续使用中文与文件风格一致。**
+
+```swift
+extension View {
+    func elevation(_ level: Int) -> some View {
+        switch level {
+        case 0: return self.shadow(color: .clear, radius: 0, x: 0, y: 0)
+        case 1: return self.shadow(color: .black.opacity(0.04), radius: 2, x: 0, y: 1)
+        case 2: return self.shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 2)
+        case 3: return self.shadow(color: .black.opacity(0.12), radius: 16, x: 0, y: 6)
+        case 4: return self.shadow(color: .black.opacity(0.16), radius: 32, x: 0, y: 12)
+        default: return self
+        }
+    }
+}
+```
+
+### 17.3 两段式阴影（Two-Part Shadows）
+
+**Refactoring UI 原则**：自然阴影由两层叠加而成——大而软的阴影（表示整体轮廓）+ 小而紧的阴影（表示与接触面的关系）。
+
+两层阴影叠加产生更自然的深度感，适用于 level 3+ 的场景。level 1–2 使用单层阴影即可。
+
+```swift
+// 两段式阴影：外层大而软 + 内层小而紧
+Text("深层浮层")
+    .shadow(color: .black.opacity(0.12), radius: 24, x: 0, y: 8)  // 大而软
+    .shadow(color: .black.opacity(0.08), radius: 6,  x: 0, y: 2)  // 小而紧
+```
+
+**何时用**：Modal 内容、Popover、浮层警告框等 level 3+ 元素。普通卡片 level 2 单层即可。
+
+### 17.4 平面设计也有深度（Even Flat Designs Have Depth）
+
+**Refactoring UI 原则**：放弃阴影时，使用背景色阶替代阴影来建立层次——不是用同一颜色填充背景。
+
+iOS 系统通过 `Color(.systemGroupedBackground)` 和 `Color(.systemBackground)` 的明度差异隐式表达层级，不依赖阴影。
+
+```swift
+VStack(spacing: 0) {
+    // 父容器：分组背景（较暗）
+    Color(.systemGroupedBackground)
+        .frame(height: 80)
+        .overlay(Text("分区标题").font(.headline))
+
+    // 子容器：系统背景（较亮）= 视觉浮起
+    Color(.systemBackground)
+        .frame(height: 120)
+        .overlay(Text("卡片内容"))
+}
+```
+
+### 17.5 重叠创造层次（Overlap to Create Layers）
+
+**Refactoring UI 原则**：z 轴上的重叠是强烈的层级信号，比阴影更直观。
+
+通过负偏移（向上推）和阴影叠加，可以在相邻元素间明确建立前后关系。
+
+```swift
+ZStack {
+    // 底层卡片
+    RoundedRectangle(cornerRadius: 12)
+        .fill(Color(.systemBackground))
+        .elevation(2) // level 2 阴影
+
+    // 顶层元素：向上偏移 + 更强阴影 = 明确的"压在上面"感
+    RoundedRectangle(cornerRadius: 12)
+        .fill(Color.accentColor.opacity(0.15))
+        .offset(y: -20)
+        .elevation(2)
+}
+```
+
+**反例**：纯并排卡片无重叠，深度感弱。即使加了阴影，视觉上仍是"同一平面上的不同物体"而非"前后关系"。
+
+---
+
+<!-- section: 18. 图像与摄影（Images & Photography） keywords: image, photo, asyncimage, contrast, intrinsic-size -->
+## 18. 图像与摄影（Images & Photography）
+
+### 18.1 用好的照片（Use Good Photos）
+
+**Refactoring UI 原则**：好照片的三个要素——单一主体、良好构图、充足留白。避免堆叠多个主体在同一画面中。
+
+用户上传的照片往往不满足这些条件，需要在展示层做保护。
+
+```swift
+AsyncImage(url: imageURL) { phase in
+    switch phase {
+    case .empty:
+        // 使用 blur hash 或纯色占位，不用 spinner（spinner 占用注意力）
+        Rectangle()
+            .fill(Color.gray.opacity(0.2))
+            .overlay {
+                Image(systemName: "photo")
+                    .foregroundStyle(.tertiary)
+            }
+    case .success(let image):
+        image
+            .resizable()
+            .scaledToFill()
+            .clipped()
+    case .failure:
+        // 失败时显示占位而非错误空白
+        Rectangle()
+            .fill(Color(.systemGray5))
+            .overlay {
+                Image(systemName: "photo.badge.exclamationmark")
+                    .foregroundStyle(.secondary)
+            }
+    @unknown default:
+        EmptyView()
+    }
+}
+```
+
+### 18.2 文字叠图保持对比度（Text on Image — Consistent Contrast）
+
+**Refactoring UI 原则**：文字直接叠放在照片上时，对比度不可控——必须主动控制。有 4 种常用方案。
+
+| 方案 | 实现 | 适用 |
+|------|------|------|
+| Overlay scrim | `.overlay(Color.black.opacity(0.4))` | 大面积文字（hero） |
+| Colorize tint | `.overlay(Color.brand.opacity(0.6).blendMode(.multiply))` | 品牌一致性场景 |
+| Contrast down | `.brightness(-0.2).saturation(0.7)` | 维持原图色彩，仅降反差 |
+| Text shadow | `.shadow(color: .black.opacity(0.5), radius: 4)` | 短文字（caption），不适合长文 |
+
+```swift
+// 方案 1：Overlay scrim（hero 场景）
+ZStack {
+    AsyncImage(url: heroURL) { $0 .resizable() .scaledToFill() }
+    Color.black.opacity(0.4)
+    VStack {
+        Text("大标题文字").font(.title)
+        Text("副标题").font(.subheadline)
+    }
+}
+```
+
+```swift
+// 方案 4：Text shadow（caption 场景）
+Text("@username")
+    .font(.caption)
+    .foregroundStyle(.white)
+    .shadow(color: .black.opacity(0.5), radius: 2)
+```
+
+### 18.3 一切都有固有尺寸（Everything Has Intended Size）
+
+**Refactoring UI 原则**：不要把小图标放大到大尺寸，也不要把照片缩小到 icon 大小——每个视觉元素都有它本来的用途和尺寸。
+
+`.scaledToFit()` 优先于 `.scaledToFill()` 用于大多数场景。后者会拉伸内容产生模糊或截断。
+
+```swift
+// 正例：图标保持原尺寸
+Image(systemName: "star.fill")
+    .font(.title3) // 指定字号，控制图标大小
+    .foregroundStyle(.yellow)
+
+// 反例：把 SF Symbol 拉到 200pt，看起来像低分辨率图
+Image(systemName: "star.fill")
+    .font(.system(size: 200)) // ❌ 拉伸失真
+```
+
+```swift
+// 照片的 ContentMode 选择规则
+AsyncImage(url: photoURL) { $0
+    .resizable()
+    .scaledToFit() // 优先：保持宽高比，留白显示背景
+}
+// 内容裁切型（如头像）：
+//     .scaledToFill() + .clipShape(Circle()) 组合使用
+```
+
+### 18.4 用户上传内容防呆（Beware User-Uploaded Content）
+
+**Refactoring UI 原则**：用户上传的照片尺寸、比例、方向都无法控制。必须在展示层做保护性设计。
+
+使用 `AsyncImage` 的 `phase` 切换处理空/成功/失败三种状态；用 `aspectRatio` 守护比例；用 `.frame(maxWidth:)` 钳制最大尺寸。
+
+```swift
+AsyncImage(url: userUploadURL) { phase in
+    switch phase {
+    case .empty, .success:
+        phase.image?
+            .resizable()
+            .aspectRatio(contentMode: .fill) // 守护比例
+            .frame(maxWidth: 400)            // 钳制最大宽度
+            .clipped()
+    case .failure:
+        Rectangle()
+            .fill(Color(.systemGray5))
+            .aspectRatio(4/3, contentMode: .fit) // 失败时仍占位
+            .overlay {
+                Image(systemName: "photo.badge.exclamationmark")
+                    .foregroundStyle(.secondary)
+            }
+    @unknown default:
+        EmptyView()
+    }
+}
+```
+
+---
+
+<!-- section: 19. 收尾打磨（Finishing Touches） keywords: polish, accent-border, custom-style, decorate, empty-state, fewer-borders -->
+## 19. 收尾打磨（Finishing Touches）
+
+### 19.1 增强默认控件（Supercharge the Defaults）
+
+**Refactoring UI 原则**：默认的 Toggle / Picker / DatePicker 看起来"系统感"十足——专业产品通过定制 ToggleStyle / PickerStyle / DatePickerStyle 体现品牌一致性。
+
+核心交互中频繁出现的控件（设置首选项、表单提交按钮）值得投入定制；一次性弹窗中的控件维持系统默认即可。
+
+```swift
+struct BrandToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack {
+            configuration.label
+            Spacer()
+            RoundedRectangle(cornerRadius: 12)
+                .fill(configuration.isOn ? Color.accentColor : Color(.systemGray4))
+                .frame(width: 44, height: 26)
+                .overlay {
+                    Circle()
+                        .fill(Color.white)
+                        .padding(2)
+                        .offset(x: configuration.isOn ? 9 : -9)
+                }
+                .onTapGesture { configuration.isOn.toggle() }
+        }
+    }
+}
+
+// 使用：Toggle("深色模式", isOn: $isDark)
+    .toggleStyle(BrandToggleStyle())
+```
+
+```swift
+// 自定义 PickerStyle：分段控件 → 品牌色胶囊
+struct BrandSegmentedPickerStyle<T: Hashable & CustomStringConvertible>: View {
+    @Binding var selection: T
+    let options: [T]
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(options, id: \.self) { option in
+                Text(option.description)
+                    .font(.subheadline.weight(selection == option ? .semibold : .regular))
+                    .foregroundStyle(selection == option ? Color.white : .primary)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background {
+                        if selection == option {
+                            Capsule().fill(Color.accentColor)
+                        }
+                    }
+                    .onTapGesture { selection = option }
+            }
+        }
+        .padding(4)
+        .background(Capsule().fill(Color(.systemGray6)))
+    }
+}
+```
+
+```swift
+// 自定义 DatePicker 触发器：替换系统默认的下拉框 → 卡片样式入口
+struct BrandDatePickerTrigger: View {
+    @Binding var date: Date
+    @State private var showSheet = false
+
+    var body: some View {
+        Button {
+            showSheet = true
+        } label: {
+            HStack {
+                Image(systemName: "calendar")
+                    .foregroundStyle(Color.accentColor)
+                Text(date.formatted(date: .long, time: .omitted))
+                    .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "chevron.down")
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(Color.accentColor.opacity(0.3), lineWidth: 1)
+            }
+        }
+        .sheet(isPresented: $showSheet) {
+            DatePicker("", selection: $date, displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .padding()
+                .presentationDetents([.medium])
+        }
+    }
+}
+```
+
+### 19.2 强调色边框（Accent Borders）
+
+**Refactoring UI 原则**：1pt 左侧或顶部的强调色边框是极低成本的视觉锚点——在不改变整体布局的情况下，引导用户注意力到关键信息。
+
+```swift
+// 左侧 accent border 模式
+HStack(spacing: 12) {
+    Rectangle()
+        .fill(Color.accentColor)
+        .frame(width: 3)
+        .frame(maxHeight: .infinity) // 撑满高度
+
+    VStack(alignment: .leading, spacing: 4) {
+        Text("重要通知")
+            .font(.headline)
+        Text("需要您注意的事项")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+    }
+
+    Spacer()
+}
+.frame(maxWidth: .infinity)
+.padding()
+.background(Color(.systemBackground))
+.elevation(2)
+```
+
+**适用场景**：通知卡片、Section 头、警示条、重要状态提示。
+
+### 19.3 装饰背景（Decorate Backgrounds）
+
+**Refactoring UI 原则**：纯色背景太"工程师感"——加 gradient / pattern / illustration 提升视觉密度，让界面更有性格。
+
+三种常用实现方式：
+
+```swift
+// 仪表盘头部：径向渐变（柔和的光晕感，从一个焦点向外散开）
+RadialGradient(
+    gradient: Gradient(colors: [
+        Color.accentColor.opacity(0.3),
+        Color.accentColor.opacity(0.05)
+    ]),
+    center: .topLeading,
+    startRadius: 0,
+    endRadius: 600
+)
+.frame(height: 200)
+```
+
+```swift
+// 图案背景：Canvas 绘制重复 pattern
+Canvas { context, size in
+    let dotSize: CGFloat = 4
+    let spacing: CGFloat = 20
+    for x in stride(from: 0, to: size.width, by: spacing) {
+        for y in stride(from: 0, to: size.height, by: spacing) {
+            context.fill(
+                Circle().path(in: CGRect(x: x, y: y, width: dotSize, height: dotSize)),
+                with: .color(.secondary.opacity(0.2))
+            )
+        }
+    }
+}
+```
+
+```swift
+// 插画背景：illustration 作为 .background 资源（登录页、空状态、营销卡片）
+RoundedRectangle(cornerRadius: 16)
+    .fill(Color(.systemBackground))
+    .frame(height: 240)
+    .background(
+        Image("hero-illustration")
+            .resizable()
+            .scaledToFill()
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .opacity(0.9)
+    )
+```
+
+**适用场景**：仪表盘头部、空状态插图区、登录页背景。不要在大面积内容区使用，以免干扰阅读。
+
+### 19.4 不要忽略空状态（Don't Overlook Empty States）
+
+空状态完整规范见 `dev-workflow:feature-review` 的 B3 检查项与 `apple-dev:ui-review`。本节不重复，仅强调 Refactoring UI 视角：空状态是"零数据时的引导机会"，不是"错误页面降级版"——文案应聚焦"接下来该做什么"，不是"为什么没有数据"。
+
+### 19.5 减少边框使用（Use Fewer Borders）
+
+**Refactoring UI 原则**：1px 边框是最弱的容器暗示——往往是其他更好方案在它之上层叠的结果。
+
+| 替代方案 | 适用 | SwiftUI |
+|---------|------|---------|
+| 阴影 | 浮起卡片 | `.shadow(... level 2)` (§17.2) |
+| 背景色阶 | 平面分区 | `.background(Color(.systemGroupedBackground))` |
+| 留白 + spacing | 列表分组 | `Section` + 间距（§2.2） |
+| Section 容器 | Form / List | 系统自动样式 |
+| Accent border | 强调单侧 | §19.2 模式 |
+
+**反例**：4 边都用 1pt 灰色 stroke 的卡片 → 视觉拥挤。改为 level 2 阴影或背景色阶即可消除边框。
+
+---
+
+<!-- section: 20. 层级战术（Hierarchy Tactics） keywords: hierarchy, grey-on-color, labels, weight-contrast-balance, baseline-alignment -->
+## 20. 层级战术（Hierarchy Tactics）
+
+本节是 §4 视觉层级的细化战术，全部来自 Refactoring UI 的具体原则。
+
+### 20.1 别在彩色背景上用灰字（Don't Use Grey Text on Colored Backgrounds）
+
+**Refactoring UI 原则**：灰字（`.gray.secondary`）在白底上 OK，在品牌色底上会变浑浊——应使用半透明白或半透明黑。
+
+```swift
+// 反例：在品牌底卡片上用灰色
+VStack {
+    Text("标题").font(.headline)
+    Text("描述文字").foregroundStyle(.secondary) // ❌ 品牌底上浑浊
+}
+.background(Color.accentColor)
+```
+
+```swift
+// 正例：在品牌底卡片上用半透明白
+VStack {
+    Text("标题").font(.headline).foregroundStyle(.white)
+    Text("描述文字")
+        .foregroundStyle(.white.opacity(0.7)) // ✅ 品牌底上清晰
+}
+.background(Color.accentColor)
+```
+
+### 20.2 标签是最后选项（Labels Are a Last Resort）
+
+**Refactoring UI 原则**：能不加 label 就不加——把 label 和 value 合并成有意义的短语，减少界面元素数量。
+
+**反例**：
+- `Created: 2025-04-15`
+- `Author: Norvyn`
+（4 个元素，各自独立）
+
+**正例**：
+- `由 Norvyn 创建于 4 月 15 日`
+（1 个有意义的短语，信息密度更高）
+
+**何时必须加 label**：表单输入控件（无障碍标签必须存在）、跨语言场景（某些语言无法消解歧义时）。
+
+### 20.3 平衡字重与对比度（Balance Weight and Contrast）
+
+**Refactoring UI 原则**：视觉权重 = 字号 x 字重 x 对比度，三者互为代偿。高对比度时可用更轻字重；低对比度时需加重字重来维持层次。
+
+```swift
+// 高对比度（黑字白底）→ 轻字重即可
+Text("正文内容")
+    .font(.body) // 字重 Regular
+    .foregroundStyle(.primary) // 对比度最高
+
+// 低对比度（灰字白底）→ 加重字重维持可读性
+Text("次要说明")
+    .font(.body.weight(.medium)) // 字重 Medium
+    .foregroundStyle(.secondary) // 对比度较低
+```
+
+### 20.4 语义 ≠ 视觉层级（Semantics ≠ Visual Hierarchy）
+
+**Refactoring UI 原则**：HTML 的 h1/h2/h3 是文档结构（无障碍 / SEO），视觉层级是另一回事——不要因为某段文字"语义上是标题"就盲目使用 `.title` 样式。
+
+SwiftUI 中 `accessibilityAddTraits(.header)` 是结构语义；`.font(.title)` 是视觉权重。两者应独立决策。
+
+```swift
+// 语义标题（无障碍）≠ 视觉最大标题
+Text("章节导航")
+    .font(.subheadline)      // 视觉权重：次要
+    .accessibilityAddTraits(.header) // 结构语义：章节标题（无障碍树）
+
+Text("当前页面标题")
+    .font(.title)            // 视觉权重：主级
+    // 不需要 accessibilityAddTraits，因为它是视图层级的最高层级
+```
+
+**避免**：用 `.title` 样式仅仅因为某段文字"语义上是标题"——视觉权重应基于其在该屏幕中的相对重要性。
+
+### 20.5 基线对齐（Baseline Alignment）
+
+**Refactoring UI 原则**：图标 + 文字、数字 + 单位等组合元素应基线对齐而非默认的中心对齐——默认 `HStack` 中心对齐会导致文字偏下，视觉上不整齐。
+
+```swift
+// 默认中心对齐（反例）
+HStack(spacing: 8) {
+    Image(systemName: "arrow.up.right")
+    Text("趋势上升")
+}
+// 文字在视觉上偏下，与图标对不齐
+
+// 基线对齐（正例）
+HStack(alignment: .firstTextBaseline, spacing: 8) {
+    Image(systemName: "arrow.up.right")
+    Text("趋势上升")
+}
+// 文字基线与图标对齐，视觉整齐
+```
+
+```swift
+// 数字 + 单位的基线对齐
+HStack(alignment: .firstTextBaseline, spacing: 4) {
+    Text("37.5")
+        .font(.title2.weight(.medium))
+    Text("°C")
+        .font(.body)
+        .foregroundStyle(.secondary)
+}
+// "37.5" 的数字基线与 "°C" 的基线对齐，数字和单位在同一水平线上
+```
+
+---
+
+
 
 ## 引用来源
 

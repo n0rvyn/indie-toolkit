@@ -69,6 +69,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | execute-plan | dispatcher | Chunked plan execution — dispatch loop with auto-resume on truncation |
 | test-changes | dispatcher | Dispatches test-runner agent for build/test/lint suite execution |
 | brainstorm | interactive | Design exploration before implementation |
+| choose-personality | interactive | Lock 6-dimension visual + linguistic personality before design-system generation |
 | design-decision | interactive | Trade-off analysis with essential/accidental complexity |
 | fix-bug | interactive | Systematic diagnosis with value domain tracing |
 | issue | interactive | GitHub Issue unified entry point: list, read, create with prior hypotheses |
@@ -101,6 +102,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | SessionStart | check-workflow-state.sh | Detects in-progress phase, prompts resume |
 | PreToolUse (Bash) | scan-secrets.sh | Intercepts git commit, blocks if secrets detected in staged content |
 | UserPromptSubmit | suggest-skills.sh | Pattern-matches user prompt and suggests relevant skills |
+| PostToolUse (Agent) | verify-agent-output.py | Detects "wrote/saved/created PATH" claims in sub-agent responses; warns the main session if those files are missing or empty on disk |
 
 ## Workflow State
 

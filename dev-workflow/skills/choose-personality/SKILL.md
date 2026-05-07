@@ -1,6 +1,6 @@
 ---
 name: choose-personality
-description: Use when starting a new project's design phase, before /generate-design-system. Asks 6 personality dimensions interactively and writes docs/02-architecture/design-personality.md. Not when: project already has a design system locked, or user is mid-implementation.
+description: "Use when starting a new project's design phase, before /generate-design-system. Asks 6 personality dimensions interactively and writes docs/02-architecture/design-personality.md. Not when: project already has a design system locked, or user is mid-implementation."
 ---
 
 # Choose Personality Skill

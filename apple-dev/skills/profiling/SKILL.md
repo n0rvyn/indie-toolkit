@@ -1,6 +1,6 @@
 ---
 name: profiling
-description: "Use when the user asks about performance profiling, os_signpost instrumentation, MetricKit integration, Instruments workflow, performance anti-patterns, hitch detection, or the user says 'profiling', 'performance analysis', '性能分析'. Provides interactive guidance on iOS/macOS profiling based on the reference guide."
+description: "Use when the user asks about iOS/macOS performance instrumentation — os_signpost / OSSignposter, MetricKit, Instruments workflow, XCTMetric / XCTest measure, hitch detection, signpost→test→metric workflow, or says 'profiling', '性能分析'. For pure SwiftUI runtime audit (slow rendering, janky scrolling, excessive view updates, layout thrash) without instrumentation setup, use apple-skills:guide-swiftui-performance-audit instead. Provides interactive guidance on iOS/macOS profiling based on the reference guide."
 compatibility: Requires macOS and Xcode
 ---
 
@@ -113,5 +113,9 @@ For anti-pattern scanning, scan the user's code and output findings with severit
 
 ## 串联提示
 
+**本仓 skill**：
 - `/testing-guide` — Unit Test、Mock/DI、TDD 基础
 - `/xc-ui-test` — XCUITest 高级用法（多屏幕旅程、网络 stub、snapshot）
+
+**vabole/apple-skills**：
+- `apple-skills:guide-swiftui-performance-audit` — SwiftUI 运行时性能从代码审查 + 架构层面诊断慢渲染、卡顿、过度 view update、layout thrash，并给 Instruments 配套指引

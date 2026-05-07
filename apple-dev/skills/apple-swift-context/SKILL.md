@@ -91,3 +91,13 @@ If the task is not clearly scoped (e.g., the task description is very broad or c
 ### Step 4: Apply the loaded rules
 
 Follow the rules from the loaded sections strictly. Do not infer rules from memory about sections that were not read.
+
+## External API References
+
+For Apple framework API details NOT covered by `references/apple-swift-rules.md`, route to vabole/apple-skills:
+
+- **Entry**: `apple-skills:ios-dev` — coordinator + SwiftUI correctness checklist + topic router for SwiftUI/UIKit/SwiftData/Concurrency/Testing/Liquid Glass
+- **Framework refs**: `apple-skills:swiftui` `apple-skills:swiftdata` `apple-skills:storekit` `apple-skills:widgetkit` `apple-skills:appintents` `apple-skills:healthkit` `apple-skills:mapkit` `apple-skills:eventkit` `apple-skills:photosui` `apple-skills:corehaptics` `apple-skills:usernotifications` `apple-skills:backgroundtasks` `apple-skills:tipkit` `apple-skills:combine` `apple-skills:uikit` `apple-skills:swift-concurrency` `apple-skills:swift-testing` `apple-skills:xcuitest` `apple-skills:ios-liquid-glass` `apple-skills:hig`
+- **Tooling**: `apple-skills:simulator-utils` (截图 + sim 管理), `apple-skills:apple-docs-index` (查 API 在哪 framework), `apple-skills:apple-aso` (ASO 优化)
+
+**Rule**: Don't guess Apple APIs from memory. If task involves an API not loaded from `apple-swift-rules.md` → grep the matching apple-skills ref first; or route through `apple-skills:ios-dev` if unsure which ref applies.

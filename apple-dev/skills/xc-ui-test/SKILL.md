@@ -115,5 +115,10 @@ Extract relevant patterns from the guide and adapt to user's existing test struc
 
 ## 串联提示
 
+**本仓 skill**：
 - `/testing-guide` — Unit Test、Mock/DI、TDD 基础、Page Object 入门
 - `/profiling` — 性能测试（XCTMetric、XCTOSSignpostMetric、hitch 检测）
+
+**vabole/apple-skills**：
+- `apple-skills:xcuitest` — XCUITest API ref（element queries / waiting patterns / Swift 6 @MainActor / launch arguments / screenshots）
+- `apple-skills:simulator-utils` — Simulator 截图与设备管理（CI 截图工作流可参考）

@@ -266,6 +266,26 @@ This enables the staleness reminder in `dev-workflow/hooks/suggest-skills.sh`. A
 3. **No false positives over completeness**: skip ambiguous patterns rather than flag noise. Developers ignore noisy audit reports.
 4. **Severity means impact**: 🔴 = security vulnerability or crash risk; 🟡 = code quality or maintainability issue; 🟢 = category passed.
 
+## 串联提示
+
+✅ 代码审计完成。按发现的问题类别可调用以下技能深入：
+
+**并发问题**（3.x 发现的安全性、actor isolation、Sendable 违规等）：
+- `apple-skills:guide-swift-concurrency` — actor / structured concurrency / cancellation / GCD 迁移 / strict-concurrency 诊断 / 常见 bug 模式
+- `apple-skills:swift-concurrency` — async/await/Task/Actor API ref
+
+**性能问题**（5.x 发现的渲染、滚动、视图更新等）：
+- `apple-skills:guide-swiftui-performance-audit` — SwiftUI 运行时性能诊断与改进
+- `/profiling` — 本仓 profiling skill（OSSignposter、MetricKit、XCTMetric 插桩）
+
+**SwiftUI 反模式**（6.x 发现的 state/observation/AnyView/body business logic 等）：
+- `apple-skills:ios-dev` — SwiftUI correctness checklist
+- `apple-skills:guide-swiftui-ui-patterns` — 导航/状态/sheet/list/component 模式
+- `apple-skills:guide-swiftui-view-refactor` — view 拆分、long body 重构
+
+**API ref 查询**（不确定 API 是否存在/签名是什么）：
+- 见 `apple-swift-context` 末尾的路由表（自动加载，不需要手动调用）
+
 ## Completion Criteria
 
 - All 5 audit categories scanned with grep-based evidence

@@ -1,6 +1,6 @@
 ---
 name: swiftdata-patterns
-description: "Use when the user asks about SwiftData usage, designing data models, or has questions about relationships, queries, migrations, or concurrency issues with SwiftData. Provides interactive guidance on SwiftData best practices based on the reference guide."
+description: "Use when the user asks about SwiftData usage, designing data models, or has questions about relationships, queries, migrations, or concurrency issues with SwiftData. Provides interactive guidance based on this project's local SwiftData reference guide. For community-sourced patterns and pitfalls (autosave, dangerous predicates, CloudKit constraints, indexing, class inheritance), use apple-skills:guide-swiftdata instead. For raw @Model / ModelContext / @Query API reference, use apple-skills:swiftdata instead."
 compatibility: Requires macOS and Xcode
 ---
 
@@ -96,6 +96,18 @@ Extract relevant code examples from the guide and adapt to user's context.
   - iOS 18+ (minimum deployment target): autosave behavior is stable and reliable
 - Overusing relationships (performance)
 - Not handling migration for schema changes
+
+## 串联提示
+
+✅ SwiftData 模式咨询完成。
+
+**深度模式**（autosave、predicates 危险点、CloudKit 约束、indexing、class inheritance）：
+- `apple-skills:guide-swiftdata` — 详尽 patterns + agent 常踩的坑
+
+**API ref**（@Model、ModelContext、@Query、schema migration 的具体 API）：
+- `apple-skills:swiftdata` — 全 API ref，grepable
+
+跟本仓 swiftdata-patterns 互补：我们基于本项目 reference guide 给交互式建议；apple-skills:guide-swiftdata 给社区沉淀的常见 pitfall 与 production-grade 模式。
 
 ## Success Criteria
 

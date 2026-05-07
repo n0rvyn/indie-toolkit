@@ -67,6 +67,14 @@ Read the following sections by their marker line offsets:
 
 Read each section individually with offset and limit derived from the Grep output.
 
+**iOS 26+ deployment target 检测**：
+
+读取项目 deployment target（从 Xcode project 或用户输入）。
+- 若 ≥ iOS 26：在 Step 2 派生色板前，先调 `apple-skills:ios-liquid-glass` 与 `apple-skills:hig` 取 Liquid Glass token 模式与 Apple HIG 当前规范
+- 若 < iOS 26：跳过此步
+
+**Fallback if `apple-skills` plugin is not installed**：搜索本仓 `references/swift-api-changes-ios26.md` 的 `glassEffect` / `Liquid Glass` 段（`Grep "glassEffect" references/swift-api-changes-ios26.md`），读取该段作为替代来源；输出一行说明 `[apple-skills 未安装] 回退到本地 iOS 26 reference`，再继续 Step 2。不要因为 plugin 缺失而中止生成。
+
 ### 2. Derive Color Palette from Primary Color
 
 **Step 2a: Extract primary hue H₀**
@@ -308,6 +316,18 @@ Return:
 - [ProjectName]/DesignSystem/Typography+Tokens.swift
 - [ProjectName]/DesignSystem/Components/ (if requested)
 ```
+
+## 串联提示
+
+✅ Design System 生成完成。
+
+**复审建议**：
+- iOS 26+ 项目可调用 `apple-skills:ios-design-consultant` 取 Liquid Glass UX 建议（特别是色彩对比度、glass effect 是否过度使用）
+- 想用 screenshot-driven 视觉迭代生成具体 view：`apple-skills:ios-ui-craft`
+
+**实施时**：
+- 应用 token 到具体 view → `/sync-design-md` 双向同步
+- 检测 hardcoded value → `/validate-design-tokens`
 
 ## Success Criteria
 

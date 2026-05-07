@@ -1,7 +1,6 @@
 ---
 name: generate-stitch-prompts
 description: "Use when the user wants to generate UI with Google Stitch for the current project, or needs a Stitch prompt based on actual project functionality."
-disable-model-invocation: true
 ---
 
 ## 定位

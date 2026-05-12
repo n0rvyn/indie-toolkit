@@ -2,6 +2,8 @@
 name: sync-design-md
 description: "Use when applying writes between a Stitch DESIGN.md and SwiftUI DesignSystem.swift, or the user says 'sync design', 'update design tokens to match', 'design.md 同步', 'apply DESIGN.md changes to swift', 'reflect swift tokens back to DESIGN.md'. Runs bidirectional to-swift / from-swift modes that modify files; check mode reports drift only. Not for: per-View token compliance scan (use validate-design-tokens), doc-vs-code drift across multiple doc types (use design-drift), or projects without a Stitch 9-section DESIGN.md."
 compatibility: Requires macOS and Xcode
+user-invocable: false
+paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**", "**/DESIGN.md"]
 ---
 
 # Sync DESIGN.md ↔ DesignSystem.swift

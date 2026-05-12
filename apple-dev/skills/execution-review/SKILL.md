@@ -2,11 +2,15 @@
 name: execution-review
 description: "Use after executing a plan, or when the user says 'execution review', 'review implementation', 'check implementation completeness'. Compares plan vs code execution results, verifies implementation completeness and identifies deviations. Performs Apple platform Swift code scan (localization, concurrency, abstraction, error handling) and doc update checks."
 compatibility: Requires macOS and Xcode
+user-invocable: false
+paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 
 # Execution Review
 
 Verify implementation matches plan. Use **after execution**.
+
+Preferred caller: usually invoked by dev-workflow implementation review.
 
 ## Step 0: Retrieve Known Issues (if search tool available)
 

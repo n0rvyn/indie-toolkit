@@ -23,6 +23,9 @@
 - [ ] Pluralization: explains pluralization rules and variable handling
 - [ ] Output provides interactive guidance rather than static documentation dump
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model can explain localization concepts but lacks structured reference-based interactive guidance
 Last tested model: Opus 4.6

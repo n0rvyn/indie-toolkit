@@ -24,6 +24,9 @@
 - [ ] Concurrency: explains @ModelActor isolation and main actor boundaries
 - [ ] Output provides interactive guidance rather than static documentation dump
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model can explain SwiftData concepts but lacks structured reference-based interactive guidance with section-targeted loading
 Last tested model: Opus 4.6

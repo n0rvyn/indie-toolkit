@@ -2,6 +2,8 @@
 name: generate-design-system
 description: "Use when the user needs to generate SwiftUI Design System code from token specifications, or says 'generate design system'. Creates Apple HIG-compliant design tokens and component styles."
 compatibility: Requires macOS and Xcode
+user-invocable: false
+paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**", "**/DESIGN.md"]
 ---
 
 # Generate Design System Skill
@@ -326,8 +328,8 @@ Return:
 - 想用 screenshot-driven 视觉迭代生成具体 view：`apple-skills:ios-ui-craft`
 
 **实施时**：
-- 应用 token 到具体 view → `/sync-design-md` 双向同步
-- 检测 hardcoded value → `/validate-design-tokens`
+- 应用 token 到具体 view → `sync-design-md` 双向同步（run-phase auto-routes）
+- 检测 hardcoded value → `validate-design-tokens` skill（run-phase review step auto-routes）
 
 ## Success Criteria
 

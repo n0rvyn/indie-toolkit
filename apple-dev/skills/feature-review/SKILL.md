@@ -1,16 +1,20 @@
 ---
 name: feature-review
 description: "Use after completing a feature implementation, or when the user says 'feature review', 'review user journey'. Performs product+UX comprehensive review validating feature completeness from user journey perspective. Complements /ui-review (code compliance) and /design-review (visual quality)."
+user-invocable: false
+paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 
 # Feature Review
 
 从产品经理和 UX 设计师视角审查功能实现。关注用户旅程完整性、操作反馈、空状态处理。
 
+Preferred caller: usually invoked by `run-phase` when a full user journey is completed.
+
 ## 触发时机
 
 - 完成一个完整用户旅程后（如"用户可以从创建到查看到编辑到删除"）
-- `/run-phase` 中 Phase 的 Review checklist 包含 /feature-review
+- `run-phase` 中 Phase 的 Review checklist 自动调用 feature-review skill
 - 用户说"review feature"、"check the user flow"、"产品审查"
 
 ## 流程
@@ -95,7 +99,7 @@ description: "Use after completing a feature implementation, or when the user sa
 | 失败 | 是否有 error handling + 用户可见提示？ |
 | 进行中 | 异步操作是否有 loading/disabled 状态？ |
 
-**与 /ui-review B1 的区别**：/ui-review 从单文件角度检查四态完整性；这里从用户旅程角度检查——用户做了一个操作后，是否知道发生了什么。
+**与 ui-review B1 的区别**：ui-review 从单文件角度检查四态完整性；这里从用户旅程角度检查——用户做了一个操作后，是否知道发生了什么。
 
 ### B2. 关键操作确认流程
 
@@ -184,7 +188,7 @@ description: "Use after completing a feature implementation, or when the user sa
 
 1. **有 spec 才能审**：没有预期行为描述就无法判断"是否完整"，不猜测
 2. **代码可验证的先验证**：Part A/B 的结论基于代码证据（file:line）
-3. **与其他 review 不重复**：不检查 UI 合规（/ui-review）、视觉质量（/design-review）、代码质量（apple-reviewer）
+3. **与其他 review 不重复**：不检查 UI 合规（ui-review skill）、视觉质量（design-review skill）、代码质量（apple-reviewer）
 4. **针对性检查清单**：Part C 根据代码分析定制，不照搬模板
 
 ## Completion Criteria

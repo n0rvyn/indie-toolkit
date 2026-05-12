@@ -23,6 +23,9 @@
 - [ ] Output generates complete design token code for platform (iOS/macOS/both)
 - [ ] Output optionally generates component styles if generateComponents=true
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model can write design tokens but lacks systematic OKLCH derivation from primary color and Apple HIG compliance
 Last tested model: Opus 4.6

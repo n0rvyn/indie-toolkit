@@ -3,9 +3,12 @@ name: apple-swift-context
 description: "Use when working on Swift, iOS, macOS, iPadOS, SwiftUI, or SwiftData code, editing .swift files, planning Apple platform features, fixing Swift bugs, or reviewing Swift code. Provides essential development rules including build cycle, constraints, concurrency, UI rules, and plan execution principles."
 compatibility: Requires macOS and Xcode
 user-invocable: false
+paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 
 ## Purpose
+
+This is a context loader, not a daily user entry. `dev-workflow` should call it internally when Swift, iOS, macOS, iPadOS, SwiftUI, or SwiftData file markers are present.
 
 Load the relevant sections of `references/apple-swift-rules.md` based on the current task. Do not read the entire file unless the task requires rules from every section.
 

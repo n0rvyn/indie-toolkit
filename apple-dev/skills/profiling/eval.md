@@ -32,6 +32,9 @@
 - [ ] Anti-pattern scanning references user's actual code, not generic examples
 - [ ] Output provides interactive guidance rather than static documentation dump
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model knows os_signpost basics but lacks OSSignposter struct API details, XCTHitchMetric (iOS 26), and the signpost→XCTest→MetricKit integration pattern
 Last tested model: claude-sonnet-4-6

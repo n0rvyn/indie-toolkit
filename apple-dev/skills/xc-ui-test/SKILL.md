@@ -2,11 +2,15 @@
 name: xc-ui-test
 description: "Use when the user asks about advanced XCUITest patterns, E2E testing, multi-screen user journey tests, network stubbing for UI tests, snapshot/visual regression testing, accessibility testing with performAccessibilityAudit, or CI integration for UI tests. Provides interactive guidance based on the reference guide."
 compatibility: Requires macOS and Xcode
+user-invocable: false
+paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 
 # XC UI Test Skill
 
 Provide interactive guidance on advanced XCUITest patterns based on `references/xc-ui-test-guide.md`.
+
+Preferred caller: expert reference surfaced by `write-plan` or `test-changes`.
 
 ## When to Use
 
@@ -116,8 +120,8 @@ Extract relevant patterns from the guide and adapt to user's existing test struc
 ## 串联提示
 
 **本仓 skill**：
-- `/testing-guide` — Unit Test、Mock/DI、TDD 基础、Page Object 入门
-- `/profiling` — 性能测试（XCTMetric、XCTOSSignpostMetric、hitch 检测）
+- `testing-guide` — Unit Test、Mock/DI、TDD 基础、Page Object 入门
+- `profiling` — 性能测试（XCTMetric、XCTOSSignpostMetric、hitch 检测）
 
 **vabole/apple-skills**：
 - `apple-skills:xcuitest` — XCUITest API ref（element queries / waiting patterns / Swift 6 @MainActor / launch arguments / screenshots）

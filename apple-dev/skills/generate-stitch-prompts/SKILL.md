@@ -1,6 +1,8 @@
 ---
 name: generate-stitch-prompts
 description: "Use when the user wants to generate UI with Google Stitch for the current project, or needs a Stitch prompt based on actual project functionality."
+user-invocable: false
+paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 
 ## 定位

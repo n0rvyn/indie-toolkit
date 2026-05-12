@@ -23,6 +23,9 @@
 - [ ] Output appends new sections to swift-api-changes-{iosVersion}.md reference file
 - [ ] Output handles fetch failures gracefully with search snippet fallback
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model cannot fetch real-time WWDC updates; this skill provides automated research and reference updates
 Last tested model: Opus 4.6

@@ -10,29 +10,55 @@ Complete iOS/macOS/iPadOS development workflow plugin.
 
 For Codex/OpenCode: see `.codex/INSTALL.md` or `.opencode/INSTALL.md`.
 
-## Skills (22)
+## Daily entry points
 
 | Skill | Trigger | Description |
 |-------|---------|-------------|
-| apple-swift-context | Auto (Swift files) | Loads platform-specific rules from reference docs |
-| ui-review | `/ui-review` | SwiftUI UI + interaction compliance review |
-| design-review | `/design-review` | Visual hierarchy, color, spacing quality review |
-| feature-review | `/feature-review` | Product + UX completeness from user journey perspective |
-| audit-finishing-touches | `/audit-finishing-touches` | Mechanical §17–§20 polish-gap scan (border / default-style / undecorated card / hero) |
-| execution-review | `/execution-review` | Plan-vs-code verification + Swift code scan |
-| validate-design-tokens | `/validate-design-tokens` | Design token compliance check |
+| project-kickoff | `/project-kickoff` | New project feasibility + requirements |
+| design-parity-build | `/design-parity-build` | Audit Claude Design ↔ iOS parity, produce classified Gap List, hand off to /write-dev-guide |
 | submission-preview | `/submission-preview` | App Review Guidelines pre-check |
 | appstoreconnect-review | `/appstoreconnect-review` | ASC submission material check |
-| testing-guide | `/testing-guide` | Interactive testing best practices guidance |
-| profiling | `/profiling` | Performance profiling (OSSignposter, MetricKit, XCTMetric, anti-patterns) |
-| xc-ui-test | `/xc-ui-test` | Advanced XCUITest (flow tests, network stub, snapshot, a11y, CI) |
-| swiftdata-patterns | `/swiftdata-patterns` | SwiftData best practices guidance |
-| localization-setup | `/localization-setup` | String Catalogs + localization guidance |
-| fetch-swift-api-updates | `/fetch-swift-api-updates` | Fetch latest WWDC API changes |
-| generate-design-system | `/generate-design-system` | Generate SwiftUI design system from tokens |
-| sync-design-md | `/sync-design-md` | Bidirectional sync between Stitch DESIGN.md and DesignSystem.swift |
+| code-audit | `/code-audit` | Code quality and security assessment |
+
+## Called by dev-workflow
+
+These capabilities are usually called by dev-workflow after a plan, phase, or changed surface makes them relevant.
+
+| Skill | Preferred caller | Description |
+|-------|------------------|-------------|
+| apple-swift-context | Swift/iOS/macOS work | Loads platform-specific rules from reference docs |
+| ui-review | dev-workflow review step | SwiftUI UI + interaction compliance review |
+| design-review | dev-workflow review step | Visual hierarchy, color, spacing quality review |
+| feature-review | dev-workflow review step | Product + UX completeness from user journey perspective |
+| execution-review | called by dev-workflow | Plan-vs-code verification + Swift code scan |
+| validate-design-tokens | dev-workflow review step | Design token compliance check |
+| testing-guide | write-plan / fix-bug / test-changes | Interactive testing guidance |
+| profiling | write-plan / fix-bug / test-changes | Performance profiling guidance |
+| xc-ui-test | write-plan / test-changes | Advanced XCUITest guidance |
+
+## Full Capability Inventory (22)
+
+| Skill | Route | Description |
+|-------|---------|-------------|
+| apple-swift-context | Auto (Swift files) | Loads platform-specific rules from reference docs |
+| ui-review | dev-workflow review step | SwiftUI UI + interaction compliance review |
+| design-review | dev-workflow review step | Visual hierarchy, color, spacing quality review |
+| feature-review | dev-workflow review step | Product + UX completeness from user journey perspective |
+| audit-finishing-touches | internal route | Mechanical §17–§20 polish-gap scan (border / default-style / undecorated card / hero) |
+| execution-review | called by dev-workflow | Plan-vs-code verification + Swift code scan |
+| validate-design-tokens | dev-workflow review step | Design token compliance check |
+| submission-preview | `/submission-preview` | App Review Guidelines pre-check |
+| appstoreconnect-review | `/appstoreconnect-review` | ASC submission material check |
+| testing-guide | write-plan / fix-bug / test-changes | Interactive testing guidance |
+| profiling | write-plan / fix-bug / test-changes | Performance profiling guidance |
+| xc-ui-test | write-plan / test-changes | Advanced XCUITest guidance |
+| swiftdata-patterns | internal route | SwiftData best practices guidance |
+| localization-setup | internal route | String Catalogs + localization guidance |
+| fetch-swift-api-updates | internal route | Fetch latest WWDC API changes |
+| generate-design-system | internal route | Generate SwiftUI design system from tokens |
+| sync-design-md | internal route | Bidirectional sync between Stitch DESIGN.md and DesignSystem.swift |
 | design-parity-build | `/design-parity-build` | Audit Claude Design ↔ iOS parity, produce classified Gap List, hand off to /write-dev-guide |
-| generate-stitch-prompts | `/generate-stitch-prompts` | Generate UI prompts from requirements |
+| generate-stitch-prompts | internal route | Generate UI prompts from requirements |
 | project-kickoff | `/project-kickoff` | New project feasibility + requirements |
 | setup-ci-cd | `/setup-ci-cd` | Fastlane + GitHub Actions for TestFlight |
 | update-asc-docs | `/update-asc-docs` | Audit and update ASC legal/marketing documents |

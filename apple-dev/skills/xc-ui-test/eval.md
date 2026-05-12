@@ -33,6 +33,9 @@
 - [ ] CI examples include xcodebuild and xcresulttool commands
 - [ ] Output provides interactive guidance rather than static documentation dump
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model knows XCUITest basics but lacks Flow Object pattern, URLProtocol stubbing details, performAccessibilityAudit API, xcresulttool usage, and multi-matrix snapshot testing patterns
 Last tested model: claude-sonnet-4-6

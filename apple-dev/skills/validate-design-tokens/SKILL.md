@@ -2,6 +2,8 @@
 name: validate-design-tokens
 description: "Use when scanning per-View SwiftUI files for Design Token compliance, or the user says 'validate tokens', 'check design tokens', 'check view files for hardcoded values'. Reports hardcoded spacing/colors/fonts/corner-radius in View files, plus an optional DesignSystem.swift ↔ DESIGN.md cross-check (read-only). Not for: applying fixes (use sync-design-md for token sync), doc-vs-code drift across architecture docs (use design-drift)."
 compatibility: Requires macOS and Xcode
+user-invocable: false
+paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**", "**/DESIGN.md"]
 ---
 
 # Validate Design Tokens Skill
@@ -19,7 +21,7 @@ Check SwiftUI code for Design Token compliance.
 Before running compliance checks, locate the design source of truth:
 
 1. Read `docs/02-architecture/design-source.md` if it exists. Use the recorded `Path` field as DESIGN.md location.
-2. Otherwise Glob `**/DESIGN.md` (excluding `node_modules/`, `.build/`, `DerivedData/`). If exactly one result, use it. If multiple, skip Section 7 (DESIGN.md cross-check) and emit `ℹ️ Multiple DESIGN.md candidates found — DESIGN.md cross-check skipped. Run /sync-design-md to declare authoritative source.`
+2. Otherwise Glob `**/DESIGN.md` (excluding `node_modules/`, `.build/`, `DerivedData/`). If exactly one result, use it. If multiple, skip Section 7 (DESIGN.md cross-check) and emit `ℹ️ Multiple DESIGN.md candidates found — DESIGN.md cross-check skipped. Run sync-design-md to declare authoritative source.`
 3. If no DESIGN.md found: skip Section 7 entirely, run only Sections 0-6.
 
 **Pre-check: Read deployment target**
@@ -235,7 +237,7 @@ struct ExpenseCard: View {
 🔴 Must Fix:
 - DesignSystem.swift:118 - AppColor.primary500 = #4080D0
   DESIGN.md § 2 Color Palette specifies: #4A90E2 (per-channel max-delta = 18, > threshold 4)
-  Suggestion: Run /sync-design-md mode=to-swift to align, or revise DESIGN.md if Swift value is correct.
+  Suggestion: Run sync-design-md mode=to-swift to align, or revise DESIGN.md if Swift value is correct.
 
 - DesignSystem.swift:191 - AppSpacing.sm = 16 ✅ matches DESIGN.md § 5
 - DesignSystem.swift:243 - AppShadow.small radius = 4

@@ -7,6 +7,7 @@
 - "审查一下我的 UI 代码"
 - "UI review before I submit this PR"
 - "Check if my UI follows platform conventions"
+- "run-phase review step found changed SwiftUI files"
 
 ## Negative Trigger Tests
 <!-- Prompts that should NOT trigger this skill -->
@@ -24,6 +25,8 @@
 - [ ] Output validates all state coverage: loading, empty, error, success
 - [ ] Output verifies interaction guards: disabled states, haptic feedback, undo support
 - [ ] Output complements design-review (visual quality) and feature-review (user journey)
+- [ ] Internal route terms from `run-phase` can select this skill without user slash-command wording
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
 
 ## Redundancy Risk
 Baseline comparison: Base model can review UI code but lacks systematic checklist-based compliance verification

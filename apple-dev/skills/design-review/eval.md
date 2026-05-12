@@ -23,6 +23,9 @@
 - [ ] Output provides per-page design quality findings with specific code references
 - [ ] Output complements ui-review (code compliance) rather than duplicating
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model can give subjective design feedback but lacks systematic rule-based design quality checks
 Last tested model: Opus 4.6

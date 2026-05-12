@@ -22,6 +22,7 @@
 - [ ] Output presents project concept confirmation table within 20 lines
 - [ ] Output uses AskUserQuestion with Continue / Customized / Adjust options
 - [ ] Output skips market research for customized projects where client confirmed requirements
+- [ ] All 5 checkpoints (CP1, CP2, CP3, CP4, CP5) must contain an [Expectation Recap] block immediately before AskUserQuestion.
 
 ## Redundancy Risk
 Baseline comparison: Base model can discuss ideas but lacks structured AI-era feasibility validation and iterative clarification flow

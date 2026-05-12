@@ -7,6 +7,8 @@
 - "Explain mocking and dependency injection"
 - "如何编写 iOS 测试？"
 - "What should my test coverage strategy be?"
+- "write-plan needs Apple test strategy for this Swift feature"
+- "test-changes needs Xcode test guidance"
 
 ## Negative Trigger Tests
 <!-- Prompts that should NOT trigger this skill -->
@@ -23,6 +25,8 @@
 - [ ] UI tests: explains recording vs programmatic approaches, accessibility identifiers
 - [ ] Mocking: demonstrates protocol-based mocking and DI patterns
 - [ ] Output provides interactive guidance rather than static documentation dump
+- [ ] Internal route terms from `write-plan`, `fix-bug`, and `test-changes` can select this skill without user slash-command wording
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
 
 ## Redundancy Risk
 Baseline comparison: Base model can explain testing concepts but lacks structured reference-based interactive guidance

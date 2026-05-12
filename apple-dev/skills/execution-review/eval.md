@@ -23,6 +23,9 @@
 - [ ] Output combines agent summary with Swift-specific findings
 - [ ] Output presents plan vs code gaps with file:line references
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model can compare plan vs code manually but lacks systematic Swift-specific checks and known issue integration
 Last tested model: Opus 4.6

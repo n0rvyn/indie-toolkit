@@ -276,7 +276,7 @@ This enables the staleness reminder in `dev-workflow/hooks/suggest-skills.sh`. A
 
 **性能问题**（5.x 发现的渲染、滚动、视图更新等）：
 - `apple-skills:guide-swiftui-performance-audit` — SwiftUI 运行时性能诊断与改进
-- `/profiling` — 本仓 profiling skill（OSSignposter、MetricKit、XCTMetric 插桩）
+- `profiling` — 本仓 profiling skill（OSSignposter、MetricKit、XCTMetric 插桩；run-phase / fix-bug / write-plan 自动路由）
 
 **SwiftUI 反模式**（6.x 发现的 state/observation/AnyView/body business logic 等）：
 - `apple-skills:ios-dev` — SwiftUI correctness checklist

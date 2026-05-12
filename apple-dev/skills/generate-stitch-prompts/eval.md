@@ -23,6 +23,9 @@
 - [ ] Output supports parameterized targets: empty=main screen, screen name, all for batch generation
 - [ ] Output is formatted for copy-paste into Stitch
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model can describe UIs but lacks systematic extraction from code and translation to Stitch prompt language
 Last tested model: Opus 4.6

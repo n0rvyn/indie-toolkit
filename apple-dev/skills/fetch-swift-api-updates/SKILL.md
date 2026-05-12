@@ -1,7 +1,8 @@
 ---
 name: fetch-swift-api-updates
 description: "Use when the user wants to check for latest Swift/SwiftUI API changes, or says 'fetch API updates', 'check WWDC changes'. Fetches latest Swift/SwiftUI API changes from WWDC session notes and updates project references."
-user-invocable: true
+user-invocable: false
+paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 
 ## Overview
@@ -14,8 +15,8 @@ Fetches Swift/SwiftUI API changes for a given year and appends new sections to t
 ### Step 1: Determine Target
 
 Extract the target year from the invocation:
-- If `/fetch-swift-api-updates 2025` → year = 2025, target file = `swift-api-changes-ios26.md`
-- If `/fetch-swift-api-updates 2024` → year = 2024, target file = `swift-api-changes-ios18.md`
+- If invoked with arg `2025` → year = 2025, target file = `swift-api-changes-ios26.md`
+- If invoked with arg `2024` → year = 2024, target file = `swift-api-changes-ios18.md`
 - If no argument → use current year
 
 Map year to iOS version:

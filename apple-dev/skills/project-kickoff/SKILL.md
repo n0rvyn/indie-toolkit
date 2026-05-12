@@ -51,6 +51,11 @@ disable-model-invocation: true
 | AI 时代判定 | 值得开发 / 不需要开发 / AI 替代风险高 |
 | AI 难以替代的部分 | {irreplaceable} |
 
+**[Expectation Recap]** (用人话给用户复述一遍，避免表格化沟通)
+
+用一句话告诉用户：「我这边理解你的项目是 {one-sentence project summary}，主要解决 {problem in user's words}，AI 时代评估结论是 {verdict}。下一步我打算 {next step}。」
+再问：「这样理解对吗? 如果框架就不对，我们停下来重新澄清；如果是细节调整，回答下面的选项。」
+
 **询问用户**（使用 AskUserQuestion）：
 
 > 以上是项目概念和 AI 时代可行性判定。
@@ -120,6 +125,11 @@ disable-model-invocation: true
 3. {finding3}
 
 **推荐差异化方向**：{direction}
+
+**[Expectation Recap]**
+
+告诉用户：「调研下来 {N} 个竞品，主要矛盾是 {one-line summary of competitive landscape}，我建议你的差异化点是 {direction in user's words}。如果按这个方向走，你需要在 {key area} 上比竞品做得明显更好。」
+再问：「这个差异化方向你认吗? 觉得不对的话，告诉我哪里没抓住。」
 
 **询问用户**（使用 AskUserQuestion）：
 
@@ -378,6 +388,11 @@ disable-model-invocation: true
 |----------|----------|-----------|
 | {scenario} | {mitigation} | ✅/⚠️ |
 
+**[Expectation Recap]**
+
+告诉用户：「定位是 {differentiation in 1 sentence}，会做 {N} 个核心功能，明确不做 {M} 个相邻功能，技术上选了 {tech stack one-line}，关键风险是 {top risk}。开发完成后用户应该能 {one-sentence user outcome}。」
+再问：「这个范围你认吗? 任何一项不对，告诉我具体是哪个。」
+
 **询问用户**（使用 AskUserQuestion）：
 
 > 以上是产品定位、功能范围、技术选型、AI 集成评估、平台 API 验证和关键风险。
@@ -392,7 +407,7 @@ disable-model-invocation: true
 
 基于步骤 1-6 的分析结果，使用 Stitch 生成 UI 设计稿。
 
-1. 提示用户运行 `/generate-stitch-prompts all`，为项目生成主界面及各屏幕的 Stitch prompt
+1. 调用 `generate-stitch-prompts` skill（参数 `all`，run-phase 自动路由）为项目生成主界面及各屏幕的 Stitch prompt
 2. 对每个包含列表/内容区域的屏幕，标记需要空状态设计。空状态是新用户首次看到的界面，优先级不低于填充态
 3. 从 skill 输出中提取：屏幕清单（名称 + 功能一句话）、每个屏幕的核心 UI 区域列表、需要空状态的屏幕标记
 4. 将提取结果填入 CP4 展示模板
@@ -410,6 +425,11 @@ disable-model-invocation: true
 | ... | ... | ... | ... |
 
 **Stitch prompt 数量**：主 prompt 1 条 + follow-up {N} 条
+
+**[Expectation Recap]**
+
+告诉用户：「Stitch 已经按你的产品逻辑生成了 {N} 个屏幕的 prompt，覆盖 {key flows in user's words}。接下来你要么用 Stitch 出图，要么提供已有设计稿，要么先跳过设计直接开发。」
+再问：「这几个屏幕的覆盖范围你认吗? 如果还差关键屏幕，告诉我补哪个。」
 
 **询问用户**（使用 AskUserQuestion）：
 
@@ -554,6 +574,11 @@ disable-model-invocation: true
 | `[项目名]/DesignSystem/DesignSystem.swift` | Design System 代码 |
 | `docs/10-app-store-connect/` | ASC 文档模板（4 个文件） |
 | `.github/ISSUE_TEMPLATE/` | GitHub Issue 模板和自定义 labels（如选择初始化） |
+
+**[Expectation Recap]**
+
+告诉用户：「我准备帮你建项目骨架：写一份 project-brief、建 docs 目录、生成 CLAUDE.md、初始化 Design System {如果有 Stitch 设计}、设置 ASC 文档模板{、初始化 GitHub Issue 模板如果你要}。这些一次性创建好之后，开发阶段就直接 /run-phase 推进。」
+再问：「这套初始化范围你认吗? 不要的项告诉我跳过。」
 
 **询问用户**（使用 AskUserQuestion）：
 

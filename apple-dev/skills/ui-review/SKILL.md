@@ -1,11 +1,15 @@
 ---
 name: ui-review
 description: "Use after completing a module, or when the user says 'ui review', 'check UI compliance'. Performs Apple platform SwiftUI UI and interaction compliance review for quality checks. Validates accessibility, state completeness, interaction guards, and platform conventions."
+user-invocable: false
+paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 
 # UI Review
 
 Apple platform SwiftUI 代码的 UI + UX 专项审查。在功能模块完成后手动触发。
+
+Preferred caller: usually invoked by `run-phase` after SwiftUI UI files changed.
 
 ## 触发时机
 
@@ -45,9 +49,9 @@ Apple platform SwiftUI 代码的 UI + UX 专项审查。在功能模块完成后
 
 **Token 检查**：搜索硬编码 `.padding(N)` 或 `.spacing(N)`，N 不是 8pt 倍数即标记。
 
-> 💡 如需完整 Token 合规扫描，单独运行 `/validate-design-tokens`。
+> 💡 如需完整 Token 合规扫描，让 run-phase review step 自动路由到 `validate-design-tokens` skill。
 
-#### A2. 颜色合规性（色彩策略归 `/design-review`）
+#### A2. 颜色合规性（色彩策略归 `design-review` skill）
 - [ ] 是否使用语义颜色？（`Color.primary` 而非 `Color.black`）
 - [ ] 是否避免硬编码颜色？（`Color(hex:)` 应定义在 Design System）
 - [ ] 自定义颜色是否有 light/dark 变体？
@@ -363,7 +367,7 @@ TextField("Email", text: $email)
 💡 代码合规检查完成。
 
 下一步可选：
-- 视觉层级、色彩策略、间距节奏等设计质量审查 → `/design-review`
+- 视觉层级、色彩策略、间距节奏等设计质量审查 → `design-review` skill (run-phase auto-routes)
 - 深度 SwiftUI correctness 检查 → `apple-skills:ios-dev`（覆盖 @State / @FocusState privacy、@Observable @MainActor、@AppStorage / @Query in @Observable 必 @ObservationIgnored、ForEach stable identity、AnyView 避免、body purity 等硬规则）
 
 跟本仓 ui-review 互补：我们查视觉规范、可访问性、状态完整性、平台规范；apple-skills:ios-dev 补 Observation 系列硬规则。

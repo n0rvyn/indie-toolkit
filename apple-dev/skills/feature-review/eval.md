@@ -24,6 +24,9 @@
 - [ ] Output verifies feedback for every user action
 - [ ] Output complements ui-review (code compliance) and design-review (visual quality)
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model can review features but lacks systematic user journey tracing from spec to code entry points
 Last tested model: Opus 4.6

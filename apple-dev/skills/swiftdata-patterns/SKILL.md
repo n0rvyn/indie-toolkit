@@ -2,6 +2,8 @@
 name: swiftdata-patterns
 description: "Use when the user asks about SwiftData usage, designing data models, or has questions about relationships, queries, migrations, or concurrency issues with SwiftData. Provides interactive guidance based on this project's local SwiftData reference guide. For community-sourced patterns and pitfalls (autosave, dangerous predicates, CloudKit constraints, indexing, class inheritance), use apple-skills:guide-swiftdata instead. For raw @Model / ModelContext / @Query API reference, use apple-skills:swiftdata instead."
 compatibility: Requires macOS and Xcode
+user-invocable: false
+paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 
 # SwiftData Patterns Skill

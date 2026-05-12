@@ -24,6 +24,9 @@
 - [ ] Output flags corner radius not using tokens
 - [ ] Output produces compliance report with file:line references and suggested fixes
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model can spot hardcoded values but lacks systematic token compliance scanning across multiple dimensions
 Last tested model: Opus 4.6

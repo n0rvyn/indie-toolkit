@@ -23,6 +23,9 @@
 - [ ] Output is formatted as a copy-paste prompt (does not execute verification)
 - [ ] Output merges multiple strategies into one unified prompt
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model can generate generic checks but lacks systematic VF/DF strategy selection and egocentric bias override through role separation
 Last tested model: Opus 4.6

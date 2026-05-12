@@ -24,6 +24,9 @@
 - [ ] Output presents Decision Points via AskUserQuestion and records user choices in spec file
 - [ ] Output offers follow-up actions: context recovery, changelog use, external review dispatch
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model can write feature descriptions but lacks systematic deviation detection against design docs and user journey mapping
 Last tested model: Opus 4.6

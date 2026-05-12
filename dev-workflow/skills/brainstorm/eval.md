@@ -17,6 +17,9 @@
 - [ ] 2-3 approaches proposed with comparison table
 - [ ] Design document saved to docs/06-plans/
 
+- [ ] Step 2 must require per-question recommended answer + reasoning.
+- [ ] Step 2.5 Expectation Alignment Check must exist as a mandatory gate before Step 3 (Propose 2-3 Approaches).
+
 ## Redundancy Risk
 Baseline comparison: Base model can brainstorm but lacks explicit hard gate separating design from implementation
 Last tested model: Opus 4.6

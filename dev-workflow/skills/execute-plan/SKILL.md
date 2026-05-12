@@ -1,6 +1,7 @@
 ---
 name: execute-plan
 description: "Use when the user says 'execute the plan', 'run the plan', 'implement the plan', '执行计划', '跑计划', or has a verified plan file ready for execution. Executes plan tasks mechanically in chunked batches (5 tasks per batch) without judgment calls; auto-resumes on truncation via per-task state file. Reports blocked/failed tasks for the user to fix — does not attempt fixes itself. Not when: plan has not been verified (run verify-plan first). Also invoked by run-phase at Step 4."
+user-invocable: false
 ---
 
 ## Overview
@@ -15,8 +16,12 @@ This skill dispatches the `dev-workflow:execute-plan` agent (sonnet) to execute 
 2. **Verification pre-check**: Look for a `## Verification` section with `Verdict: Approved` in the plan file
    - If found: verification is done, continue
    - If not found: invoke `dev-workflow:verify-plan` before proceeding. If verify-plan returns "must-revise", apply revisions and re-verify before continuing
+3. **Task Contract pre-check**:
+   - If plan frontmatter has `contract_version: 1` or later, every task in the execution range must include `**Task Contract:**`.
+   - If any selected task lacks `Task Contract`, mark that task failed in `.claude/execute-plan-state.json`, append the evidence to the execution report, and stop before editing files for that task.
+   - If `contract_version` is missing, treat the plan as legacy mode: warn once in the execution report and continue.
 <!-- Inline short-form DP handling. Full ruleset at ${CLAUDE_PLUGIN_ROOT}/references/decision-points.md §"Note on inline variant" — sync on rule changes. -->
-3. **Decision Points:** If the plan file contains a `## Decisions` section with unresolved decisions (no `**Chosen:**` line), present them before dispatching:
+4. **Decision Points:** If the plan file contains a `## Decisions` section with unresolved decisions (no `**Chosen:**` line), present them before dispatching:
    - For each DP, write a short-form translation in the `question` field: one-line summary of what the decision controls + each option prefixed with its original `A:` / `B:` / `C:` label describing what concretely happens. Do NOT paste the full DP block (Context / Options / Recommendation headings) verbatim. The plan file's DP body stays unchanged.
    - For each `blocking` decision: present via AskUserQuestion (one call per DP).
    - For `recommended` decisions: batch via a single AskUserQuestion; all content inside the `question` field, DPs separated by `\n---\n`, ending with `\n\n全部接受推荐，还是逐个审查？`.

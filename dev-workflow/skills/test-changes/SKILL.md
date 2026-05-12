@@ -1,6 +1,7 @@
 ---
 name: test-changes
 description: "Use when the user says 'test changes', 'run tests', 'test the build', or after execute-plan completes in a run-phase. Runs the project's build/test/lint suite and returns a filtered report with errors only. Branches on project type: Apple projects (.xcodeproj/.xcworkspace) run xcodebuild from the main session with diff-scoped -only-testing; other projects dispatch the dev-workflow:test-runner sub-agent."
+user-invocable: false
 ---
 
 ## Overview

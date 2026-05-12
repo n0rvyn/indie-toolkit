@@ -82,6 +82,18 @@ last_updated: "<now>"
 
 If the user specifies a different Phase number, use that instead.
 
+### Step 1.4: Project Health Preflight
+
+Before Step 1.5, read `.claude/dev-workflow-health.json` if present.
+
+- If state is missing, OR `last_health` has any red signal, OR state's `updated_at` is older than 7 days, run `dev-workflow/scripts/project_health_scan.py --mode full --reason plan --check-staleness 7 --max-ms 5000 --format markdown --write-state` and use the fresh report.
+- Otherwise reuse cached `last_health` from state (no scan invocation).
+- Summarize red/yellow Project Health signals before planning.
+- Feed those signals into the write-plan context so the plan header includes `**Project health:**`.
+- Do not change orchestration order: Project Health adds context only; it cannot skip scope confirmation, verify-plan, execute-plan, test-changes, or review.
+
+The generated plan must still include `## Impact Map` and per-task `Task Contract` fields when `contract_version: 1` is used.
+
 ### Step 1.5: Scope & Visual Expectation Confirmation
 
 Before writing the plan, present the Phase scope and visual expectations for explicit user confirmation.

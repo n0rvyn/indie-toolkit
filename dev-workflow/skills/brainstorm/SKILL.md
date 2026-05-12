@@ -37,15 +37,42 @@ Then:
 - Read relevant code, configs, and docs
 - Understand what exists before proposing anything new
 
-### 2. Ask Clarifying Questions
+### 2. Grill-Loop: Ask Clarifying Questions with Recommended Answers
 
-Ask **one question at a time**. Wait for the answer before asking the next.
+Ask **one question at a time**. Wait for the answer before asking the next. **Each question MUST be paired with your recommended answer + 1-sentence reason.** Format:
+
+```
+Q: {your question}
+推荐答案: {your tentative answer based on context}
+理由: {1-sentence why you lean this way}
+你的回答?
+```
 
 Focus on:
 - What problem are we solving?
 - Who is the user? What do they care about?
 - What constraints exist (tech stack, timeline, compatibility)?
 - What does success look like?
+
+**Why this format:** users repeatedly report (see `~/.claude/usage-data/report.html`) that AI clarifying questions feel like interrogation when they arrive without a recommended answer. Pairing each question with your best guess + reason inverts the dynamic — the user reviews and corrects, instead of generating answers from scratch.
+
+#### 2.5. Expectation Alignment Check (mandatory gate before Step 3)
+
+After all critical questions are answered, write a 2–3 sentence recap in plain language (no technical jargon, no file paths, no API names) of what you understand the user wants to build:
+
+```
+[Expectation Recap]
+我以为你想要的是: {1-sentence outcome}
+你的核心约束是: {1-sentence constraint set}
+你真正在意的是: {1-sentence underlying motivation, often the "why behind the why"}
+
+哪里和你的预期不一样? (回复 "对齐了" 进入方案设计;
+或指出哪一行需要修正)
+```
+
+You CANNOT proceed to Step 3 until the user replies with explicit alignment ("对齐了" / "yes, proceed" / equivalent) OR until you have integrated their corrections and re-presented the recap with their confirmation.
+
+This addresses the recurring "让 AI 说人话" friction: users want to see the AI restate the problem in *their* language before any solution work.
 
 ### 3. Propose 2-3 Approaches
 
@@ -178,7 +205,7 @@ After design is approved, inform the user based on the design type:
 >
 > Or skip prototyping and go directly to `/write-plan`.
 >
-> **Personality not yet locked?** If this is a fresh project and the visual + linguistic personality (vibe / audience / radius / font character / language tone) has not been pinned down, run `/choose-personality` before any design-system or component work — it writes `docs/02-architecture/design-personality.md` so downstream generators (e.g. `/generate-design-system`) skip re-asking those questions.
+> **Personality not yet locked?** If this is a fresh project and the visual + linguistic personality (vibe / audience / radius / font character / language tone) has not been pinned down, run `/choose-personality` before any design-system or component work — it writes `docs/02-architecture/design-personality.md` so downstream generators (e.g. `generate-design-system` skill, auto-routed) skip re-asking those questions.
 
 **If the design is infrastructure-only (no UX Assertions):**
 

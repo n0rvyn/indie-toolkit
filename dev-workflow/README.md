@@ -63,27 +63,34 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 
 ## Skills
 
+### Daily entry points
+
 | Skill | Type | Description |
 |-------|------|-------------|
 | run-phase | orchestrator | Phase lifecycle: plan → verify → execute (chunked) → test → review → fix → done |
+| fix-bug | interactive | Systematic diagnosis with value domain tracing |
+| write-plan | interactive | Writes implementation plan with Impact Map and Task Contract |
+| write-dev-guide | interactive | Writes phased dev-guide for multi-unit work |
+| commit | fork (haiku) | Conventional commit analysis and execution |
+| issue | interactive | GitHub Issue unified entry point |
+| finish-branch | interactive | Test, document, merge/PR/discard |
+
+### Advanced / internally routed capabilities
+
+| Skill | Type | Description |
+|-------|------|-------------|
 | execute-plan | dispatcher | Chunked plan execution — dispatch loop with auto-resume on truncation |
 | test-changes | dispatcher | Dispatches test-runner agent for build/test/lint suite execution |
 | brainstorm | interactive | Design exploration before implementation |
 | choose-personality | interactive | Lock 6-dimension visual + linguistic personality before design-system generation |
 | design-decision | interactive | Trade-off analysis with essential/accidental complexity |
-| fix-bug | interactive | Systematic diagnosis with value domain tracing |
-| issue | interactive | GitHub Issue unified entry point: list, read, create with prior hypotheses |
-| finish-branch | interactive | Test, document, merge/PR/discard |
 | parallel-agents | guide | Pattern for concurrent agent dispatch |
 | use-worktree | guide | Git worktree setup and safety |
-| commit | fork (haiku) | Conventional commit analysis and execution |
 | review-before-commit | interactive | Pre-commit semantic review: classify changes, detect breaking changes, interactive risk confirmation |
 | handoff | fork (sonnet) | Cold-start prompt generation for cross-day/cross-person session transfer |
 | generate-design-prompt | interactive | Generate Stitch/Figma prompts from project features; supports initial and refinement modes |
 | understand-design | dispatcher | Dual-channel design prototype analysis, token extraction, platform translation |
-| write-plan | interactive | Writes implementation plan in main context (full conversation context) |
 | verify-plan | dispatcher | Gathers context, dispatches plan-verifier agent |
-| write-dev-guide | interactive | Writes phased dev-guide in main context, dispatches verifier agent |
 | next-increment | interactive | Proposes 3-5 archetype-diverse next-step candidates for mature codebases, writes mini-spec for chosen one |
 | write-feature-spec | dispatcher | Gathers context, dispatches feature-spec-writer agent |
 | audit-rules | dispatcher | Gathers context, dispatches rules-auditor agent |

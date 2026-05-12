@@ -132,7 +132,7 @@ Format:
 After writing the file, print:
 
 > Personality locked at `docs/02-architecture/design-personality.md`.
-> Next: invoke `/generate-design-system` to produce the platform-specific design system code grounded in these inputs.
+> Next: the `generate-design-system` skill will be auto-invoked (when triggered via run-phase or design-related prompts) to produce the platform-specific design system code grounded in these inputs.
 
 ## Completion Criteria
 

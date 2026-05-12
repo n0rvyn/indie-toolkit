@@ -93,6 +93,7 @@ Before starting, identify:
 1. **Plan file** — the implementation plan that was executed (ask user if unclear)
 2. **Design doc** — the design document the plan was derived from (may not exist; ask user)
 3. **Scope** — which plan tasks to audit (default: all)
+4. **Project Context Contract** — if `docs/00-AI-CONTEXT.md` exists, read it for product language, user-visible names, module map, and validation commands. `CLAUDE.md` and `AGENTS.md` remain execution-rule files. Do not request or create `CONTEXT.md`.
 
 ## Part 1: Plan-vs-Code Verification (always run)
 
@@ -176,6 +177,10 @@ When the plan renames or deprecates a component:
 - List old terms that should no longer appear in active code/docs
 - Grep for old terms, excluding changelogs and historical sections
 - Each hit in active code = **Gap**
+
+When `docs/00-AI-CONTEXT.md` exists:
+- Verify user-visible names in the implementation and report output come from the Project Context Contract or real UI/source text.
+- If `CLAUDE.md` and `AGENTS.md` disagree on process requirements that affect the reviewed change, report a blocking decision instead of judging silently.
 
 ### 11. ADR Action Completeness
 

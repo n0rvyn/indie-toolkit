@@ -1,6 +1,7 @@
 ---
 name: review-before-commit
 description: "Use when the user says 'review changes', 'review-before-commit', '审查变更', '检查改动', '提交前审查', 'pre-commit review', or wants a semantic review of uncommitted changes before committing. Classifies changes into enhancements, fixes, refactors, and removals; explains what each does; detects breaking changes; and flags risks interactively. Not when: user only wants to commit (use commit skill) or wants to fix a bug (use fix-bug)."
+user-invocable: false
 argument-hint: "[path or empty — optional path scopes review to matching files]"
 allowed-tools: Bash(git diff:*, git status:*, git log:*, grep:*, wc:*, find:*, ls:*, mkdir:*) AskUserQuestion
 ---
@@ -38,6 +39,17 @@ git diff --staged
 ```
 
 Track separately: which changes are staged vs unstaged.
+
+### Step 1.5: Task Contract Awareness
+
+If `.claude/dev-workflow-state.yml` or the current session references a plan file:
+
+1. Read the plan file.
+2. If it has `## Impact Map`, extract `Shared surfaces`, `Existing consumers`, `Must remain unchanged`, and task `Touched surface` fields.
+3. Compare changed files and removed symbols against the Impact Map.
+4. Flag any changed surface that is outside the plan as a risk item unless the diff clearly documents why it is required.
+
+For legacy plans without Impact Map, continue normal review and note that contract comparison was skipped.
 
 ### Step 2: Choose Depth Strategy
 

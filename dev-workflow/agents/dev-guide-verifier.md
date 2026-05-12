@@ -323,10 +323,10 @@ Steps:
    - Keywords present (3-5 per section)
    - Opening and closing markers paired correctly
 4. **Review checklist consistency**: verify checklist matches Phase type:
-   - Phase has UI scope → checklist includes `/ui-review`
-   - Phase has new pages/screens → checklist includes `/design-review`
-   - Phase completes a full user journey → checklist includes `/feature-review`
-   - All Phases → checklist includes `/execution-review`
+   - Phase has UI scope → checklist includes `ui-review (run-phase auto-invokes when SwiftUI files changed)`
+   - Phase has new pages/screens → checklist includes `design-review (run-phase auto-invokes for new pages)`
+   - Phase completes a full user journey → checklist includes `feature-review (run-phase auto-invokes for completed user journey)`
+   - All Phases → checklist includes `run-phase review step (auto-invokes implementation-reviewer)`
 
 **Gap output:**
 
@@ -340,8 +340,8 @@ Steps:
 [V7 - Marker Error] [C:100] Phase {N} section markers malformed: {description}
    Action: fix to <!-- section: phase-{N} keywords: {kw1}, {kw2} --> ... <!-- /section -->
 
-[V7 - Checklist Mismatch] [C:{score}] Phase {N} has UI scope but Review checklist omits /ui-review
-   Action: add /ui-review to Review checklist
+[V7 - Checklist Mismatch] [C:{score}] Phase {N} has UI scope but Review checklist omits ui-review (auto-invoked by run-phase)
+   Action: add `ui-review (run-phase auto-invokes)` to Review checklist
 ```
 
 ---

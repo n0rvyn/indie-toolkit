@@ -1,7 +1,7 @@
 ---
 name: crystallize
 description: "Use before /write-plan or when the session has settled significant design decisions. Extracts the decision history from the current conversation into a persistent crystal file that /write-plan and plan-verifier consume."
-user-invocable: true
+user-invocable: false
 ---
 
 ## Overview

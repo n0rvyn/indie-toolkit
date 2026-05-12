@@ -42,6 +42,40 @@ fi
 # Lowercase for matching
 lower=$(echo "$prompt" | tr '[:upper:]' '[:lower:]')
 
+# Project health hint (bounded, non-blocking; at most one line)
+if echo "$lower" | grep -qE 'commit|提交|write.*plan|计划|dev.?guide|开发指南|bug|报错|crash|fix.*error|error.*fix'; then
+  _hook_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+  _scanner="${_hook_dir}/../scripts/project_health_scan.py"
+  if [ -f "$_scanner" ]; then
+    _reason="plan"
+    if echo "$lower" | grep -qE 'commit|提交'; then
+      _reason="commit"
+    elif echo "$lower" | grep -qE 'dev.?guide|开发指南'; then
+      _reason="dev-guide"
+    elif echo "$lower" | grep -qE 'bug|报错|crash|fix.*error|error.*fix'; then
+      _reason="fix"
+    fi
+    _health=$(python3 "$_scanner" --project-root "$(pwd)" --mode light --reason "$_reason" --format json --max-ms 250 2>/dev/null)
+    _hint=$(printf '%s' "$_health" | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+signals = data.get("signals", {})
+bad = [(name, info) for name, info in signals.items() if info.get("status") in {"red", "yellow"}]
+if bad:
+    name, info = bad[0]
+    ev = (info.get("evidence") or ["check project health"])[0]
+    status = info.get("status")
+    print(f"[health-hint] {name}: {status} — {ev}")
+' 2>/dev/null)
+    if [ -n "$_hint" ]; then
+      echo "$_hint"
+    fi
+  fi
+fi
+
 # Pattern → skill mapping (first match wins)
 if echo "$lower" | grep -qE 'commit|提交|save progress'; then
   echo "[skill-hint] Related: /commit — analyzes changes and commits with conventional format"
@@ -70,7 +104,11 @@ elif echo "$lower" | grep -qE 'kickoff|新项目|init.*project|project.*init'; t
 elif echo "$lower" | grep -qE 'dev.?guide|开发指南|development guide'; then
   echo "[skill-hint] Related: /write-dev-guide — creates phased development guide"
 elif echo "$lower" | grep -qE 'review.*(code|impl)|代码审查|审查.*实现'; then
-  echo "[skill-hint] Related: /execution-review — plan-vs-code verification + iOS scan"
+  if echo "$lower" | grep -qE 'phase|plan|计划|阶段|执行'; then
+    echo "[skill-hint] Related: /run-phase — orchestrates plan-execute-review cycle"
+  else
+    echo "[skill-hint] Related: /review-before-commit — semantic diff review before commit"
+  fi
 fi
 
 exit 0

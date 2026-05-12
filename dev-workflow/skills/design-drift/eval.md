@@ -23,6 +23,9 @@
 - [ ] Output provides fix recommendations for drifted items (doc update / code fix / decision needed)
 - [ ] Output presents Decision Points via AskUserQuestion if any blocking decisions exist
 
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
+
 ## Redundancy Risk
 Baseline comparison: Base model can compare docs vs code manually but lacks systematic assertion extraction and flow-trace integration
 Last tested model: Opus 4.6

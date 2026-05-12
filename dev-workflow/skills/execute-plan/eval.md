@@ -11,9 +11,14 @@
 
 ## Output Assertions
 - [ ] Output checks for Verification section in plan before executing
+- [ ] `contract_version: 1` plans require every selected task to include Task Contract before file edits
+- [ ] Legacy plans without `contract_version` warn once and continue
 - [ ] Output includes batch progress tracking
 - [ ] Output suggests implementation-reviewer for plan-vs-code audit (standalone mode)
 - [ ] Each task's Verify command is run before marking task complete
+
+- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
+- [ ] Internal route phrases trigger this skill without user slash-command wording
 
 ## Redundancy Risk
 Baseline comparison: Base model can execute tasks but lacks batch execution with review checkpoint methodology

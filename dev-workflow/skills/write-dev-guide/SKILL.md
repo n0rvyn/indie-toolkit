@@ -23,6 +23,8 @@ Collect the following before writing:
 2. **Design doc path** — search `docs/06-plans/*-design.md`
 3. **Project brief path** — check `docs/01-discovery/project-brief.md`
 4. **Architecture docs path** — check `docs/02-architecture/`
+5. **Project Context Contract** — read `dev-workflow/references/project-context-contract.md`; if `docs/00-AI-CONTEXT.md` exists, read it as product language, module map, and validation command source. If missing, continue and mark `Project context contract: missing`. Do not create `CONTEXT.md`.
+6. **Project Health** — if `dev-workflow/scripts/project_health_scan.py` exists, read `.claude/dev-workflow-health.json` first; if state is missing/red-signal/older-than-7-days, run scanner full mode with `--reason dev-guide --check-staleness 7 --max-ms 5000 --write-state`. Otherwise use cached `last_health`. Use red/yellow signals as guide constraints or decision candidates.
 
 If no project-brief or design doc exists, inform the user and suggest running the corresponding workflow first. Do not proceed without these inputs.
 
@@ -202,9 +204,9 @@ current: true
 
 ## Global Constraints
 
-- Tech stack: [from CLAUDE.md]
-- Coding standards: [from CLAUDE.md]
-- Project-specific constraints: [from CLAUDE.md]
+- Tech stack: [from docs/00-AI-CONTEXT.md when present; otherwise from CLAUDE.md]
+- Coding standards: [from CLAUDE.md / AGENTS.md]
+- Project-specific constraints: [from docs/00-AI-CONTEXT.md when present; otherwise from CLAUDE.md]
 
 ---
 
@@ -229,10 +231,10 @@ current: true
 - [ ] Tests pass for this Phase's scope (UT for logic, E2E for user journeys)
 
 **Review checklist:**
-- [ ] /execution-review
-- [ ] /ui-review (if Phase has UI)
-- [ ] /design-review (if Phase has new pages)
-- [ ] /feature-review (if Phase completes a full user journey)
+- [ ] run-phase review step (auto-invokes implementation-reviewer)
+- [ ] ui-review (run-phase auto-invokes when Phase has UI)
+- [ ] design-review (run-phase auto-invokes when Phase has new pages)
+- [ ] feature-review (run-phase auto-invokes when Phase completes a full user journey)
 
 <!-- /section -->
 

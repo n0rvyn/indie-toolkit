@@ -46,6 +46,10 @@ Collect the following before writing:
 6. **Crystal file reference** — path to crystallized decisions file if one exists (search `docs/11-crystals/*-crystal.md`). If found, read it: it contains settled architectural and UX decisions with machine-readable D-xxx assertions the plan must respect.
 7. **Project root** — current working directory
 8. **Pre-flight Audit** (when plan modifies existing model field / component API / design token / shared component): grep all callers + scan for legacy/new dual token systems on the same semantic (e.g., `proteinOrange` vs `Macro.protein`). Findings → `**Pre-flight risks:**` in plan header, or convert into explicit migration tasks. Greenfield plans (only new files): set `**Pre-flight risks:** none`.
+9. **Project Context Contract** — read `dev-workflow/references/project-context-contract.md`. If `docs/00-AI-CONTEXT.md` exists, read it and use it as the project language/source contract. `CLAUDE.md` and `AGENTS.md` remain rule files. If it is missing, continue and mark `Project context contract: missing`. Do not create `CONTEXT.md`.
+10. **Project Health** — if `dev-workflow/scripts/project_health_scan.py` exists, read `.claude/dev-workflow-health.json` first; if state is missing, has any red signal, or older than 7 days, run scanner full mode with `--check-staleness 7 --max-ms 5000 --reason plan --write-state`; otherwise use cached `last_health`. Include red/yellow signals as `**Project health:**` in the plan header.
+11. **Impact Map** — before task generation, write the plan-level Impact Map: user path, data path, shared surfaces, existing consumers, must remain unchanged, and regression checks.
+12. **Out-of-scope archive** — list `dev-workflow/.out-of-scope/*.md`. If any scope item the user has provided matches a rejected entry, surface this to the user before writing the plan: "{item} was previously rejected per .out-of-scope/{file} — confirm you want to revisit?". Do not auto-skip; user may have new reasons.
 
 If any of these are unclear, ask the user before writing.
 
@@ -111,6 +115,7 @@ Write plans assuming the implementing engineer has zero context. Document everyt
 ---
 type: plan
 status: active
+contract_version: 2
 tags: [tag1, tag2]
 refs: []
 ---
@@ -134,6 +139,15 @@ refs: []
 **Pre-flight risks:** [list any dual-token systems, missed callers, optional-field fallback gaps, or design coverage gaps found in Step 1 item 8 — one per line; OR `none` if Pre-flight Audit was not applicable]
 
 ---
+
+## Impact Map
+
+**User path:** [user-visible flow affected]
+**Data path:** [source → transform → destination]
+**Shared surfaces:** [shared modules, APIs, docs, hooks, agents, or skills affected]
+**Existing consumers:** [known callers/readers/users of changed surfaces]
+**Must remain unchanged:** [out-of-scope adjacent behavior]
+**Regression checks:** [checks that prove adjacent behavior remains intact]
 ```
 
 ### Task Structure
@@ -144,12 +158,31 @@ Each task should be a coherent unit of work. Don't force artificial granularity 
 <!-- section: task-N keywords: keyword1, keyword2 -->
 ### Task N: [Component/Feature Name]
 
+**Maps to Impact Map:** [list which Impact Map rows this task touches: User path / Data path / Shared surfaces / Existing consumers / Must remain unchanged / Regression checks]
+
 **Files:**
 - Create: `exact/path/to/file.ext`
 - Modify: `exact/path/to/existing.ext:line-range`
 - Test: `tests/exact/path/to/test.ext`
 
+**Expected outcome:** [concrete behavior after this task]
+
+**Non-goals:**
+- [explicitly unchanged behavior]
+
+**Touched surface:** [files/APIs/data/UI/hooks/docs changed]
+
+**Regression shield:** [guard against adjacent damage]
+
+**Task Contract:**
+- Expected behavior: [user-visible result in 1–3 sentences, no technical jargon — what does the user see/feel after this task?]
+- Automated verify: [deterministic command or fixture — write this FIRST, then make Steps satisfy it (vertical slice per Pocock TDD)]
+- Real path verify: [real user/API/tool path, or explicit reason it's impossible with manual fallback]
+- Manual/device verify: [manual step, or none]
+
 **Steps:**
+Implementation steps that make `Task Contract.Automated verify` pass — and that deliver the user-observable outcome stated in `Task Contract.Expected behavior`. Do not write Steps before Expected behavior is filled in.
+
 1. [Clear instruction with code snippet if needed]
 2. [Next step]
 3. [Verification step with exact command and expected output]

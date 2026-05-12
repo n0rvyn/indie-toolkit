@@ -48,8 +48,11 @@ Before starting, confirm you have:
    - **Fallback resolution**: If the value is missing, contains an unresolved `${...}` token, or the path does not exist, locate the directory yourself by running this Bash command:
      `d=$(ls -d "$HOME"/.claude/plugins/marketplaces/*/dev-workflow/agents 2>/dev/null | head -1); if [ -z "$d" ]; then d=$(ls -d "$HOME"/.claude/plugins/cache/*/dev-workflow/*/agents 2>/dev/null | sort -V | tail -1); fi; echo "$d"`
      Use the returned path as the agents dir. If output is empty, report the failure in the verification report and skip the DF/CF/AR sections that depend on these supporting files.
+8. **Out-of-scope archive path** — `{project_root}/dev-workflow/.out-of-scope/` (or equivalent in user-customized projects). Before generating any `DP-xxx`, list the directory and read every `*.md` file. If a candidate DP would re-raise a rejected idea, suppress it and add `Skipped DP candidate: {short title} — rejected per .out-of-scope/{filename}` to the verification report.
 
 Read the plan file, design doc, design analysis, and crystal file (if provided) before proceeding.
+
+If `docs/00-AI-CONTEXT.md` exists under the project root, read it as the Project Context Contract for product language, user-visible names, module map, and validation commands. `CLAUDE.md` and `AGENTS.md` remain execution-rule files. Do not request or create `CONTEXT.md`.
 
 ## Output Contract
 
@@ -108,6 +111,23 @@ Do NOT modify the plan file. Return revision instructions only.
 | 安全/资源敏感 | sandbox, permission, auth, RBAC, deny, allow, isolation, encrypt, token, credential, secret, certificate, injection, escape, validate, process spawn, child process, tmp/temp | S1 + S2 + S3 |
 
 ### 2. 执行适用策略
+
+---
+
+#### Contract v1+ structural checks
+
+Before strategy-specific review, inspect plan frontmatter.
+
+- If `contract_version: 1` or later is present, every non-doc task must include `Expected outcome`, `Touched surface`, `Regression shield`, and `Task Contract`.
+- Every `contract_version: 1` or later plan must include a plan-level `## Impact Map`.
+- If `docs/00-AI-CONTEXT.md` exists, the plan must cite it directly or explain why it is not relevant; user-visible naming must come from that Project Context Contract or real UI/source text.
+- Tasks whose `Touched surface` mentions API, UI, data, storage, hook, agent, or skill MUST include `Real path verify`; if a real path is genuinely impossible (e.g., docs-only with no runtime consumer), MUST explicitly state why under `Real path verify`.
+- Tasks not mapped to the plan-level Impact Map are scope pollution and must be reported as must-revise.
+- For plans with **contract_version: 2** or later, every non-doc task MUST include a `**Maps to Impact Map:**` field referencing at least one Impact Map row (User path / Data path / Shared surfaces / Existing consumers / Must remain unchanged / Regression checks). Tasks lacking this reference are scope pollution. For `contract_version: 1` plans, this field is recommended but missing it warns once and continues (legacy compatibility, same pattern as missing `contract_version` itself).
+- **Glossary check (scoped narrowly to avoid over-flagging):** If `docs/00-AI-CONTEXT.md` contains a `## Language` section, plan-verifier extracts the bolded term names from `## Language` (lines matching `**Term**:`). Then for product nouns explicitly listed in the plan's `## Impact Map` `User path` and `Data path` rows (NOT framework names like SwiftUI/JSON, NOT generic workflow nouns like Phase/Task/Plan, NOT file/symbol identifiers, NOT camelCase), check each: if a User-path/Data-path noun isn't in `## Language` bolded terms, flag as must-revise with suggestion 'Add term to docs/00-AI-CONTEXT.md ## Language section'. Implementation: only check terms that appear in those two specific Impact Map rows; everything else is advisory at most.
+- **CLAUDE.md ↔ AGENTS.md heading conflict detection:** If both `CLAUDE.md` and `AGENTS.md` exist, extract H2 headings from each (`grep -E '^## '`). If any heading text matches between files, sample first 20 lines under each occurrence; if content diverges (line-by-line difference >50%), surface a blocking decision rather than choosing silently. Currently this is a manual check the verifier performs by reading both files when both are present.
+- If `CLAUDE.md` and `AGENTS.md` state conflicting process requirements (beyond heading-overlap), the plan must surface a blocking decision instead of silently choosing one.
+- If `contract_version` is missing, treat the plan as legacy mode: warn once, continue verification, and do not hard-fail only because Task Contract fields are absent.
 
 ---
 
@@ -371,6 +391,15 @@ Gap 数：{M} 项
 
 If any verification finding requires a user choice before plan revision can proceed, output a `## Decisions` section in the verification report. If no decisions needed, output `## Decisions\nNone.`
 
+**Out-of-scope check (mandatory before DP generation):**
+
+Before writing any `### [DP-xxx]` block, list `{project_root}/dev-workflow/.out-of-scope/*.md` and read each file's `# Title` and `**Decision:**` line. If the candidate DP topic matches a rejected entry (same intent, even if worded differently), do NOT generate the DP. Instead, append to the verification report's "Skipped DP candidates" section:
+```
+- {short candidate title} — already rejected per `.out-of-scope/{filename}` on {Rejected on date}. To revisit, follow the Reopen procedure in `.out-of-scope/README.md`.
+```
+
+The verifier may surface a candidate as a non-DP observation if the user might want to revisit (e.g., "Note: this plan touches an area where /tdd skill was previously rejected; if context has changed, see .out-of-scope/standalone-tdd-skill.md"). But it must not gate execution on a re-decided question.
+
 **Decision Point Necessity Gate** (apply before writing any DP-xxx):
 
 A verification-stage decision point is only valid when **all** of these hold:
@@ -427,5 +456,5 @@ Common decision triggers for plan verification:
 1. **具体 > 抽象**：每条断言必须具体到可以通过读代码证实/证伪。"可能有问题"= 无效断言
 2. **代码锚定**：所有验证结果必须引用 file:line，不凭推测
 3. **错了也有用**：断言被证伪不是失败；验证过程本身产出的推理路径是价值所在
-4. **不替代其他 review**：本命令只验证计划完整性和正确性，不做代码质量、UI 合规审查（那些是 `/code-review`、`/ui-review`、`implementation-reviewer` agent 的职责）。AR 策略聚焦于计划中的架构变更是否完整，不审查代码实现质量
+4. **不替代其他 review**：本命令只验证计划完整性和正确性，不做代码质量、UI 合规审查（那些是 `code-review`、`ui-review` skill 和 `implementation-reviewer` agent 的职责）。AR 策略聚焦于计划中的架构变更是否完整，不审查代码实现质量
 5. **修订不执行**：本命令只输出修订建议，不直接修改计划。用户确认后再更新

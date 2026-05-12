@@ -31,6 +31,28 @@ The user's friction reports show speculative answers about codebase architecture
 
 ## Analysis Framework
 
+### Step 0: Out-of-scope check
+
+Before comparing options, list `dev-workflow/.out-of-scope/*.md` and read titles + `**Decision:**` lines. If any of the options to compare matches a rejected entry, surface this to the user: "Option {X} was previously rejected per .out-of-scope/{file} — keep in comparison or remove?" Default: remove unless user keeps explicitly.
+
+### Step 0.5: Pre-decision Expectation Check
+
+Before applying the essential-vs-accidental complexity framework, articulate your understanding of the user's situation in plain language (no jargon, no framework terms):
+
+```
+[Pre-decision Expectation Check]
+你想达成的目标: {1-sentence outcome in user's words}
+你的约束: {1-sentence constraint set — time, tech stack, team, audience}
+你真正在意的是: {1-sentence underlying concern — often different from the surface preference}
+
+这三条对吗? (回复 "对齐了" 进入选项分析;
+或指出哪一条偏了)
+```
+
+You cannot run Step 1's complexity analysis until the user confirms the framing.
+
+**Why this gate exists:** comparing options that solve the wrong problem produces a confidently-wrong recommendation. The 推荐 reason looks rigorous because it cites trade-offs, but the trade-off axes are themselves miscalibrated. This gate forces the AI to surface its framing assumption before the user spends attention on options.
+
 ### Step 1: Understand the Complexity Source
 
 Before applying simplicity principles, determine:

@@ -53,6 +53,40 @@ The user's friction reports show speculative architecture answers are a top frus
    - Do not block investigation if the search tool is slow or unresponsive
    - Note: Phase 1 searches project-level index only. Cross-scope search (project + global) will be added in Phase 2.
 
+0.7. **Project Health** — see `dev-workflow/references/project-health-scanner.md`. If scanner exists and cached state is missing/red/stale (>7 days), run full mode with `--reason fix --max-ms 5000 --write-state`. Treat red/yellow signals as regression guards for the fix plan.
+
+0.8. **Project Context Contract** — see `dev-workflow/references/project-context-contract.md`. Read `docs/00-AI-CONTEXT.md` if present; otherwise mark `Project context contract: missing` and continue. Do not create `CONTEXT.md`.
+
+## Step 0.9: Feedback Loop (mandatory before Step 3)
+
+Pick the lowest viable Feedback Loop level. Long-form rationale at `dev-workflow/references/feedback-loop-ladder.md`.
+
+| Level | Signal |
+|-------|--------|
+| 1 | Failing test (unit/integration/E2E) |
+| 2 | Curl / HTTP against running dev server |
+| 3 | CLI invocation with fixture input, diff stdout vs snapshot |
+| 4 | Headless browser script (Playwright/Puppeteer) |
+| 5 | Replay captured trace (network request/payload/event log) |
+| 6 | Throwaway harness (minimal subset, one function call) |
+| 7 | Property / fuzz loop (1000 random inputs) |
+| 8 | Bisection harness (`git bisect run`-able) |
+| 9 | Differential loop (old vs new, diff outputs) |
+| 10 | HITL bash script (drive human via structured loop, last resort) |
+
+Before Step 1, output:
+
+```
+[Feedback Loop] level={N} (1–10) — {one-line description of the signal}
+Command: {exact command to invoke the loop}
+Pass: {what stdout / exit code / state means "bug NOT present"}
+Fail: {what stdout / exit code / state means "bug PRESENT"}
+```
+
+If no level is constructable, output `[Feedback Loop] level=0 — not constructable, blocking on: {what's missing}` and either build it or escalate.
+
+**Step 3 cross-reference:** each assertion in Step 3 must declare which Feedback Loop level its `Verify:` line runs on.
+
 1. **Reproduce first**
    - Confirm the bug can be reproduced
    - If cannot reproduce: ask for more context, do not guess
@@ -89,7 +123,7 @@ The user's friction reports show speculative architecture answers are a top frus
 3. **BV: Generate falsifiable assertions**
 
    Based on error symptoms and code context, generate 3-5 specific, falsifiable assertions.
-   Each assertion must include: hypothesis + file location + verification method + expected outcome for both cases.
+   Each assertion must include: hypothesis + file location + verification method + expected outcome for both cases + which Feedback Loop level (Step 0.9) the verification runs on.
 
    **If Step 0 extracted prior hypotheses from a GitHub Issue:** prepend them to the assertion list as highest-priority items, marked with source: "Prior hypothesis from issue #N". Verify these first before generating additional assertions.
 
@@ -162,7 +196,30 @@ The user's friction reports show speculative architecture answers are a top frus
 
    ⛔ **DO NOT write any fix code until this step is completed and the user has approved the plan.**
 
+   **Expectation Gate (precedes any "how"):**
+
+   Before the Task Contract structured block below, write two plain-language preambles:
+
+   1. `[Expected behavior]` — 1–3 sentences describing what the user/reviewer will observe after the fix lands. No technical jargon. No file paths. No API names. Pure user-visible result.
+   2. `[Verifiable steps]` — a bullet list. Each bullet is a single action the user or reviewer can run independently (no AI required), paired with the output they should see when the fix works. If a step requires a device or environment the AI cannot reach, mark it `(needs-device)`.
+
+   These two blocks anchor the rest of Step 7 in user reality. The structured Task Contract below restates the same Expected behavior in machine-readable form for plan-verifier; they reinforce, not duplicate.
+
+   Do NOT proceed to the Task Contract block until `[Expected behavior]` and `[Verifiable steps]` are written.
+
    **Pre-check:** If bug symptom involves value display/transfer, verify Step 5 `[值域检查]` table was produced. If not → return to Step 5 before proceeding.
+
+   **Task Contract:** Before presenting the fix plan, write:
+   ```
+   [Task Contract]
+   - Expected behavior: {what the user should observe after the fix}
+   - Current behavior: {observed failure}
+   - Reproduction / verification method: {exact command, test, API call, or device path}
+   - Regression shield: {adjacent behavior that must remain unchanged}
+   - Project Health: {red/yellow signals from Step 0.7, or none}
+   ```
+
+   If the bug touches Swift, iOS, macOS, SwiftUI, SwiftData, `.xcodeproj`, or `.xcworkspace`, load `apple-dev:apple-swift-context` internally before the fix plan.
 
    **Consumer impact (mandatory for any fix that changes a field's value or source):**
 

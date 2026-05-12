@@ -33,6 +33,16 @@ On trigger:
      - Bug fixes vs features -> separate commits
      - Documentation -> separate commit
 
+2.5. **Conditional review-before-commit gate**
+
+   MUST invoke `dev-workflow:review-before-commit` via the Skill tool before creating commit groups when any condition is true (do NOT inline equivalent logic in commit):
+   - total diff is >= 200 changed lines
+   - public API, exported symbol, schema, config key, or route changed
+   - deletion/removal is detected
+   - Project Health reports red/yellow `module_size`
+
+   This replaces a passive suggestion with hard delegation. Keep final commit grouping and conventional commit behavior unchanged. The semantic review runs in the dispatched skill, not inline.
+
 3. **Pre-commit audit**
 
    Before committing, scan `git diff <file>` for each file in the group. This is a **blocking gate** — groups with findings are held back. Only scan added lines (lines starting with `+` in diff output).

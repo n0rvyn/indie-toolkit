@@ -14,6 +14,9 @@
 - [ ] Output presents trade-offs in structured format (Rule 13 comparison table)
 - [ ] Output makes recommendation with reasoning
 - [ ] User selected an approach before proceeding
+- [ ] Step 0 Out-of-scope check must exist before Step 1 (Understand Complexity Source); must list .out-of-scope/*.md and surface matches to user.
+- [ ] Step 0.5 Pre-decision Expectation Check must exist between Step 0 (out-of-scope check) and Step 1 (understand complexity).
+- [ ] Pre-decision Expectation Check must require user confirmation before proceeding to Step 1.
 
 ## Redundancy Risk
 Baseline comparison: Base model can analyze trade-offs but lacks structured essential vs accidental complexity framework

@@ -82,8 +82,18 @@ Do not write to disk in this step. Hold the resolved mapping (and unresolved fil
 For each file with a known page ID (from Step 3 or the existing `pages` map in config):
 
 ```bash
-NOTION_TOKEN="<token>" python3 ${CLAUDE_PLUGIN_ROOT}/skills/notion-with-api/scripts/notion_api.py update-page <page_id> --file <filepath>
+NOTION_TOKEN="<token>" python3 ${CLAUDE_PLUGIN_ROOT}/skills/notion-with-api/scripts/notion_api.py update-page <page_id> --file <filepath> --incremental
 ```
+
+`--incremental` (recommended) computes a SequenceMatcher diff between old and new blocks and only deletes/inserts the differing ones. Unchanged blocks keep their Notion IDs, which preserves comment anchors, scroll position, and page-internal links that reference specific blocks. Public URL and page ID are stable either way; this flag is about avoiding churn on unchanged content.
+
+Omit `--incremental` for full replace: deletes ALL existing blocks then re-appends from scratch. Use this when:
+
+- the existing Notion content has drifted from a different markdown parser (e.g., another tool wrote those blocks) and you want a clean reset
+- you want a guaranteed match between markdown and Notion in a single API run
+- the page is small enough that the extra API calls don't matter
+
+Note on insert-at-start: Notion API has no `before` parameter for child blocks. When a new block must appear at position 0 of a non-empty page, `--incremental` uses a clone-shift technique (insert after the original first block, clone its content after the new content, delete the original). This may need one extra run to fully converge if the first block has formatting (annotations, links) the clone preserves slightly differently than the markdown parser produces. Subsequent runs of the same content are no-ops.
 
 For each file with no matching Notion page:
 

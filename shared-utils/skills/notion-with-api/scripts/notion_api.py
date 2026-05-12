@@ -943,6 +943,253 @@ def update_page(page_id: str, content: str = "", content_file: str = ""):
         print(f"Updated {total} blocks (could not fetch page info)")
 
 
+def _block_fingerprint_existing(block: dict) -> str:
+    """Stable hash for a block returned by Notion API (has plain_text in rich_text)."""
+    btype = block.get("type", "")
+    payload = block.get(btype, {}) or {}
+    if "rich_text" in payload:
+        text = "".join(rt.get("plain_text", "") for rt in payload.get("rich_text", []))
+        if btype == "code":
+            return f"code|{payload.get('language', '')}|{text}"
+        return f"{btype}|{text}"
+    if btype == "divider":
+        return "divider"
+    if btype == "table":
+        return f"table|{payload.get('table_width', 0)}|{payload.get('has_column_header', False)}|{payload.get('has_row_header', False)}"
+    if btype == "image":
+        ext = payload.get("external", {}) or {}
+        fil = payload.get("file", {}) or {}
+        return f"image|{ext.get('url', '')}|{fil.get('url', '')}"
+    return f"{btype}|{json.dumps(payload, sort_keys=True, ensure_ascii=False)}"
+
+
+def _block_fingerprint_new(block: dict) -> str:
+    """Stable hash for a block produced by markdown_to_notion_blocks (has text.content)."""
+    btype = block.get("type", "")
+    payload = block.get(btype, {}) or {}
+    if "rich_text" in payload:
+        text = "".join((rt.get("text", {}) or {}).get("content", "") for rt in payload.get("rich_text", []))
+        if btype == "code":
+            return f"code|{payload.get('language', '')}|{text}"
+        return f"{btype}|{text}"
+    if btype == "divider":
+        return "divider"
+    if btype == "table":
+        return f"table|{payload.get('table_width', 0)}|{payload.get('has_column_header', False)}|{payload.get('has_row_header', False)}"
+    return f"{btype}|{json.dumps({k: v for k, v in payload.items() if k != 'children'}, sort_keys=True, ensure_ascii=False)}"
+
+
+def _clone_block_for_recreate(block: dict):
+    """Convert a block fetched from Notion's GET API into a creatable block payload.
+
+    Returns None for block types whose nested children cannot be safely
+    recreated without recursive fetch (table, column_list, synced_block, etc.).
+    """
+    btype = block.get("type", "")
+    if btype in ("table", "column_list", "column", "synced_block",
+                 "child_database", "child_page", "unsupported", ""):
+        return None
+    payload_in = block.get(btype, {}) or {}
+    payload_out = {}
+    for k, v in payload_in.items():
+        if k == "rich_text" and isinstance(v, list):
+            cleaned = []
+            for rt in v:
+                t = rt.get("type", "text")
+                seg = {"type": t}
+                if t == "text":
+                    txt = rt.get("text", {}) or {}
+                    seg["text"] = {"content": txt.get("content", "")}
+                    if txt.get("link"):
+                        seg["text"]["link"] = txt["link"]
+                elif t in ("mention", "equation"):
+                    seg[t] = rt.get(t, {})
+                anns = rt.get("annotations") or {}
+                kept = {}
+                for a in ("bold", "italic", "strikethrough", "underline", "code"):
+                    if anns.get(a):
+                        kept[a] = True
+                if anns.get("color") and anns["color"] != "default":
+                    kept["color"] = anns["color"]
+                if kept:
+                    seg["annotations"] = kept
+                cleaned.append(seg)
+            payload_out[k] = cleaned
+        elif k in ("color", "language", "checked", "is_toggleable", "icon", "url"):
+            payload_out[k] = v
+    return {"object": "block", "type": btype, btype: payload_out}
+
+
+def _fetch_all_children(page_id: str) -> list:
+    """Fetch all child blocks of a page, paginated."""
+    blocks = []
+    cursor = None
+    while True:
+        url = f"{BASE_URL}/v1/blocks/{page_id}/children?page_size=100"
+        if cursor:
+            url += f"&start_cursor={cursor}"
+        resp = requests.get(url, headers=HEADERS)
+        if resp.status_code != 200:
+            raise RuntimeError(f"fetch children failed: {resp.status_code} {resp.text[:200]}")
+        data = resp.json()
+        blocks.extend(data.get("results", []))
+        if not data.get("has_more"):
+            break
+        cursor = data.get("next_cursor")
+    return blocks
+
+
+def update_page_incremental(page_id: str, content: str = "", content_file: str = ""):
+    """Update a page using a minimal diff (preserves unchanged blocks).
+
+    Differs from update_page (which deletes all blocks then re-appends):
+    - Computes a SequenceMatcher diff between old and new block fingerprints
+    - For 'equal' opcodes: no API call (block kept in place)
+    - For 'insert' / 'replace': inserts new blocks after the appropriate anchor
+    - For 'delete' / 'replace': marks old blocks for deletion (executed last)
+
+    Public URL and page ID are always preserved (same as update_page).
+    Side benefits: fewer API calls, no churn on comments anchored to unchanged blocks.
+
+    Note: tables and other types with nested children always go through the
+    delete-then-insert path because PATCH on a table can't replace its rows.
+
+    Args:
+        page_id: The page ID to update
+        content: Markdown content string
+        content_file: Path to a markdown file (used if content is empty)
+    """
+    from difflib import SequenceMatcher
+
+    if not content and content_file:
+        with open(content_file, "r") as f:
+            content = f.read()
+    if not content:
+        print("Error: No content provided. Use --content or --file.")
+        return
+
+    lines = content.split("\n")
+    if lines and lines[0].startswith("# "):
+        content = "\n".join(lines[1:])
+
+    try:
+        old_blocks = _fetch_all_children(page_id)
+    except RuntimeError as e:
+        print(f"Error: {e}")
+        return
+
+    new_blocks = markdown_to_notion_blocks(content)
+    old_fps = [_block_fingerprint_existing(b) for b in old_blocks]
+    new_fps = [_block_fingerprint_new(b) for b in new_blocks]
+
+    matcher = SequenceMatcher(None, old_fps, new_fps, autojunk=False)
+    opcodes = matcher.get_opcodes()
+
+    stats = {"kept": 0, "inserted": 0, "deleted": 0}
+    to_delete = []  # collected and executed last to avoid invalidating anchors
+
+    def _insert_after(anchor_id, blocks_to_insert):
+        if not blocks_to_insert:
+            return anchor_id
+        last = anchor_id
+        for i in range(0, len(blocks_to_insert), 100):
+            batch = blocks_to_insert[i:i + 100]
+            body = {"children": batch}
+            if last:
+                body["after"] = last
+            r = requests.patch(
+                f"{BASE_URL}/v1/blocks/{page_id}/children",
+                headers=HEADERS,
+                json=body,
+            )
+            if r.status_code != 200:
+                print(f"Error inserting blocks: {r.status_code} {r.text[:300]}")
+                return None
+            results = r.json().get("results", [])
+            if results:
+                last = results[-1]["id"]
+        return last
+
+    def _insert_at_start(blocks_to_insert):
+        """Insert blocks at position 0. Notion's API has no `before` parameter,
+        so when the page is non-empty we use a clone-shift technique:
+        insert AFTER old[0], clone old[0]'s content AFTER the inserts, then
+        delete the original old[0]. The cloned block gets a new ID; on the next
+        run the diff will see it as an unchanged 'equal' match by content.
+        """
+        if not old_blocks:
+            return _insert_after(None, blocks_to_insert)
+        first_old = old_blocks[0]
+        cloned = _clone_block_for_recreate(first_old)
+        if cloned is None:
+            print(
+                f"Warning: first block (type={first_old.get('type')}) cannot be cloned; "
+                "appending new content at end. Order may be wrong; rerun --incremental "
+                "to converge or use full update-page."
+            )
+            return _insert_after(None, blocks_to_insert)
+        last = _insert_after(first_old["id"], blocks_to_insert)
+        if last is None:
+            return None
+        if _insert_after(last, [cloned]) is None:
+            return None
+        to_delete.append(first_old["id"])
+        # The clone itself is one extra insert + one extra delete in net terms;
+        # account for them so the report is honest.
+        stats["inserted"] += 1
+        stats["deleted"] += 1
+        return last
+
+    for tag, i1, i2, j1, j2 in opcodes:
+        if tag == "equal":
+            stats["kept"] += i2 - i1
+        elif tag == "delete":
+            for k in range(i1, i2):
+                to_delete.append(old_blocks[k]["id"])
+            stats["deleted"] += i2 - i1
+        elif tag == "insert":
+            if i1 == 0 and old_blocks:
+                if _insert_at_start(new_blocks[j1:j2]) is None:
+                    return
+            else:
+                anchor = old_blocks[i1 - 1]["id"] if i1 > 0 else None
+                if _insert_after(anchor, new_blocks[j1:j2]) is None:
+                    return
+            stats["inserted"] += j2 - j1
+        elif tag == "replace":
+            # When replacing at i1=0, old[0:i2] are all marked for deletion below,
+            # so we can safely use old[i2-1] as the insert anchor (it will be
+            # deleted in the cleanup pass). Net order: [new, old[i2:]].
+            if i1 == 0 and old_blocks:
+                anchor = old_blocks[i2 - 1]["id"] if i2 > 0 else None
+            else:
+                anchor = old_blocks[i1 - 1]["id"] if i1 > 0 else None
+            if _insert_after(anchor, new_blocks[j1:j2]) is None:
+                return
+            for k in range(i1, i2):
+                to_delete.append(old_blocks[k]["id"])
+            stats["inserted"] += j2 - j1
+            stats["deleted"] += i2 - i1
+
+    for bid in to_delete:
+        r = requests.delete(f"{BASE_URL}/v1/blocks/{bid}", headers=HEADERS)
+        if r.status_code != 200:
+            print(f"Warning: delete {bid} failed: {r.status_code}")
+
+    print(
+        "Incremental update: "
+        f"kept={stats['kept']}, inserted={stats['inserted']}, deleted={stats['deleted']}, "
+        f"total now={stats['kept'] + stats['inserted']}"
+    )
+
+    resp = requests.get(f"{BASE_URL}/v1/pages/{page_id}", headers=HEADERS)
+    if resp.status_code == 200:
+        page = resp.json()
+        print(f"URL: {page.get('url', 'N/A')}")
+        if page.get("public_url"):
+            print(f"Public URL: {page['public_url']}")
+
+
 def update_page_properties(page_id: str, properties_json: str):
     """Update page properties via PATCH /v1/pages/{id}.
 
@@ -1145,10 +1392,15 @@ def main():
     subparsers.add_parser("list-databases", help="List all accessible databases")
 
     # update-page
-    p_update = subparsers.add_parser("update-page", help="Replace all page content")
+    p_update = subparsers.add_parser("update-page", help="Replace page content (default: full replace; --incremental: minimal diff)")
     p_update.add_argument("page_id", help="Page ID")
     p_update.add_argument("--content", "-c", default="", help="Markdown content string")
     p_update.add_argument("--file", "-f", dest="content_file", default="", help="Path to markdown file")
+    p_update.add_argument(
+        "--incremental",
+        action="store_true",
+        help="Apply a minimal diff (keep unchanged blocks, only patch what differs). Public URL and page ID are preserved either way; this just avoids destroying unchanged blocks.",
+    )
 
     # create-page (for creating under a page, not database)
     p_create = subparsers.add_parser("create-page", help="Create page under a page")
@@ -1194,7 +1446,10 @@ def main():
     elif args.command == "list-databases":
         list_databases()
     elif args.command == "update-page":
-        update_page(args.page_id, args.content, args.content_file)
+        if getattr(args, "incremental", False):
+            update_page_incremental(args.page_id, args.content, args.content_file)
+        else:
+            update_page(args.page_id, args.content, args.content_file)
     elif args.command == "create-page":
         create_page(args.parent_id, args.title, args.content)
     elif args.command == "create-database":

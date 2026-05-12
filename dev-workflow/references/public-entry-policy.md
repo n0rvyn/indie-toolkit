@@ -1,0 +1,47 @@
+# Public Entry Policy
+
+Claude Code skill visibility is controlled by `SKILL.md` frontmatter.
+
+| Category | User-visible entry | Model auto-invocation | Frontmatter |
+|---|---|---|---|
+| `entry-auto` | yes | yes | omit both flags, or `user-invocable: true`; do not set `disable-model-invocation: true` |
+| `entry-manual` | yes | no | `disable-model-invocation: true`; omit `user-invocable` or set it to `true` |
+| `internal-auto` | no | yes | `user-invocable: false`; do not set `disable-model-invocation: true` |
+| `disabled-compat` | no | no | `user-invocable: false` and `disable-model-invocation: true` |
+
+Policy for this pass:
+- Preserve every existing skill directory and source name.
+- Reduce the daily user entry list by hiding dispatcher/review helpers from the user entry list.
+- Keep hidden helpers available for orchestrators and model routing.
+- Do not use `disabled-compat` in this pass.
+
+`dev-workflow` daily entries:
+- `fix-bug`
+- `write-plan`
+- `write-dev-guide`
+- `run-phase`
+- `commit`
+- `issue`
+- `finish-branch`
+
+`dev-workflow` manual entries:
+- `audit-rules`
+- `generate-design-prompt`
+- `handoff`
+
+First-pass `dev-workflow` internal helpers:
+- `verify-plan`
+- `execute-plan`
+- `test-changes`
+- `write-feature-spec`
+- `crystallize`
+- `generate-vf-prompt`
+- `design-drift`
+- `review-before-commit`
+
+`apple-dev` daily entries for the follow-up task:
+- `project-kickoff`
+- `design-parity-build`
+- `submission-preview`
+- `appstoreconnect-review`
+- `code-audit`

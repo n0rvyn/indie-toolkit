@@ -23,6 +23,10 @@ pkos/scripts/.voice-transcribe-bin
 /.remember/
 minimax-output/
 
+# macOS
+.DS_Store
+**/.DS_Store
+
 # User secrets: never commit .env files (only .env.example)
 **/.env
 !**/.env.example

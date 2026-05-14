@@ -123,6 +123,6 @@ Extract relevant patterns from the guide and adapt to user's existing test struc
 - `testing-guide` — Unit Test、Mock/DI、TDD 基础、Page Object 入门
 - `profiling` — 性能测试（XCTMetric、XCTOSSignpostMetric、hitch 检测）
 
-**vabole/apple-skills**：
-- `apple-skills:xcuitest` — XCUITest API ref（element queries / waiting patterns / Swift 6 @MainActor / launch arguments / screenshots）
-- `apple-skills:simulator-utils` — Simulator 截图与设备管理（CI 截图工作流可参考）
+**本仓 references**：
+- XCUITest API ref → `apple-dev/references/xc-ui-test-guide.md` 的 XCUITest API Reference 节（element queries / waiting patterns / Swift 6 @MainActor / launch arguments / screenshots）
+- Simulator 截图与设备管理 → `apple-dev/references/external/simulator-cheatsheet.md`（CI 截图工作流可参考）

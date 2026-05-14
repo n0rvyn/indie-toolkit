@@ -1,6 +1,6 @@
 ---
 name: design-review
-description: "Use after completing a page/module UI, before visual optimization, or when the user says 'review design' or 'check visual quality'. Reviews visual hierarchy, color strategy, spacing rhythm, and overall polish in existing SwiftUI code (produces a code-verified report with file:line evidence). Complements /ui-review (code compliance) and /feature-review (user journey). For Liquid Glass UX design rationale on iOS 26+ (no code), use apple-skills:ios-design-consultant instead."
+description: "Use after completing a page/module UI, before visual optimization, or when the user says 'review design' or 'check visual quality'. Reviews visual hierarchy, color strategy, spacing rhythm, and overall polish in existing SwiftUI code (produces a code-verified report with file:line evidence). Complements /ui-review (code compliance) and /feature-review (user journey)."
 user-invocable: false
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
@@ -353,14 +353,12 @@ Preferred caller: usually invoked by `run-phase` for new pages, modules, or comp
 
 ✅ 设计质量审查完成。
 
-**iOS 26+ 项目** 可补充调用 vabole/apple-skills：
-- `apple-skills:ios-design-consultant` — Liquid Glass UX 建议（设计原理，不出代码）；用于"这个布局/位置/视觉层级 Apple-approved 吗"类问题
-- `apple-skills:ios-liquid-glass` — Liquid Glass API ref（GlassEffect modifier、navigation 模式、设计原则）
+**iOS 26+ 项目**：
+- Liquid Glass UX 建议（设计原理，不出代码）→ 本 skill 内部 grep `apple-dev/references/external/ios-design-consultant.md`
+- Liquid Glass API ref → grep `apple-dev/references/external/ios-liquid-glass/`（GlassEffect modifier、navigation 模式、设计原则）
+- 视觉重写 → `design-parity-build` skill（不再保留 ios-ui-craft 路由，因与本仓 design-parity-build 重合）
 
-**视觉重写**（如果审查发现需要重做 UI）：
-- `apple-skills:ios-ui-craft` — Apple Design Award 级 SwiftUI 实现（screenshot-driven 视觉迭代，出代码）
-
-跟本仓 design-review 互补：我们用项目 token 查代码层 hierarchy/color/spacing；apple-skills 系列在 iOS 26 Liquid Glass 上有更细的 Apple-approved 判定。
+本 skill 查代码层 hierarchy/color/spacing；ios-design-consultant 在 iOS 26 Liquid Glass 上有更细的 Apple-approved 判定。
 
 ## 5. 用户确认（必须执行）
 

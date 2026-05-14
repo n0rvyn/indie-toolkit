@@ -268,23 +268,23 @@ This enables the staleness reminder in `dev-workflow/hooks/suggest-skills.sh`. A
 
 ## 串联提示
 
-✅ 代码审计完成。按发现的问题类别可调用以下技能深入：
+Code audit complete. For issues found in specific categories, use the following local references for deeper investigation:
 
-**并发问题**（3.x 发现的安全性、actor isolation、Sendable 违规等）：
-- `apple-skills:guide-swift-concurrency` — actor / structured concurrency / cancellation / GCD 迁移 / strict-concurrency 诊断 / 常见 bug 模式
-- `apple-skills:swift-concurrency` — async/await/Task/Actor API ref
+**Concurrency issues** (Section 3 findings):
+- grep `apple-dev/references/external/swift-concurrency-patterns.md` for actor / structured concurrency / cancellation / GCD migration / strict-concurrency diagnostics / common bug patterns
+- grep `apple-dev/references/external/swift-concurrency-api/` for async/await/Task/Actor API reference
 
-**性能问题**（5.x 发现的渲染、滚动、视图更新等）：
-- `apple-skills:guide-swiftui-performance-audit` — SwiftUI 运行时性能诊断与改进
-- `profiling` — 本仓 profiling skill（OSSignposter、MetricKit、XCTMetric 插桩；run-phase / fix-bug / write-plan 自动路由）
+**Performance issues** (Section 5 findings):
+- grep `apple-dev/references/external/swiftui-performance-audit.md` for SwiftUI runtime performance diagnostics and fixes
+- `profiling` skill (OSSignposter, MetricKit, XCTMetric instrumentation; routed automatically by run-phase / fix-bug / write-plan)
 
-**SwiftUI 反模式**（6.x 发现的 state/observation/AnyView/body business logic 等）：
-- `apple-skills:ios-dev` — SwiftUI correctness checklist
-- `apple-skills:guide-swiftui-ui-patterns` — 导航/状态/sheet/list/component 模式
-- `apple-skills:guide-swiftui-view-refactor` — view 拆分、long body 重构
+**SwiftUI anti-patterns** (Section 6 findings):
+- grep `apple-dev/references/apple-swift-rules.md` → SwiftUI Correctness Checklist for the 13 hard rules
+- grep `apple-dev/references/external/swiftui-ui-patterns/` for navigation / state / sheet / list / component patterns
+- grep `apple-dev/references/external/swiftui-view-refactor.md` for view extraction and long body refactoring
 
-**API ref 查询**（不确定 API 是否存在/签名是什么）：
-- 见 `apple-swift-context` 末尾的路由表（自动加载，不需要手动调用）
+**API reference** (uncertain about an API signature):
+- See `apple-swift-context` skill's Topic Router (auto-loaded when editing Swift files)
 
 ## Completion Criteria
 

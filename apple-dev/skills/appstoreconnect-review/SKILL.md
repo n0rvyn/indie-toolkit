@@ -94,6 +94,4 @@ description: "Use when preparing for App Store submission, or the user says 'ASC
 ✅ ASC 上架审查完成。
 
 **ASO 优化**（与 ASC 合规审查互补，关注 metadata discoverability）：
-- `apple-skills:apple-aso` — App Store 关键词 / 标题 / 副标题 / description 优化与本地化策略；编辑 store.config.json 时调用
-
-跟本仓 appstoreconnect-review 互补：我们查 ASC 字段合规、隐私标签、提交前审计；apple-skills:apple-aso 查关键词排名与 metadata 优化。
+- App Store 关键词 / 标题 / 副标题 / description 优化与本地化策略 → grep `apple-dev/references/aso-guide.md`

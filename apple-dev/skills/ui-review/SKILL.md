@@ -368,9 +368,9 @@ TextField("Email", text: $email)
 
 下一步可选：
 - 视觉层级、色彩策略、间距节奏等设计质量审查 → `design-review` skill (run-phase auto-routes)
-- 深度 SwiftUI correctness 检查 → `apple-skills:ios-dev`（覆盖 @State / @FocusState privacy、@Observable @MainActor、@AppStorage / @Query in @Observable 必 @ObservationIgnored、ForEach stable identity、AnyView 避免、body purity 等硬规则）
+- 深度 SwiftUI correctness 检查 → grep `apple-dev/references/apple-swift-rules.md` 的 SwiftUI Correctness Checklist 节（13 条硬规则：@State/@Binding privacy、@Observable @MainActor、@AppStorage/@Query in @Observable 必 @ObservationIgnored、ForEach stable identity、.animation value:、body purity、AnyView 避免等）
 
-跟本仓 ui-review 互补：我们查视觉规范、可访问性、状态完整性、平台规范；apple-skills:ios-dev 补 Observation 系列硬规则。
+本 skill 查视觉规范、可访问性、状态完整性、平台规范；SwiftUI Correctness Checklist 补 Observation 系列硬规则。
 ```
 
 ## Completion Criteria

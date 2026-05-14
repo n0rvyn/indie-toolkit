@@ -1,6 +1,6 @@
 ---
 name: testing-guide
-description: "Use when the user asks about testing approaches, setting up unit tests or basic UI tests (Page Object, wait strategies), mocking strategies, TDD workflow, or test coverage strategies. For performance tests (measure, XCTMetric), use /profiling instead. For advanced XCUITest (E2E flows, network stub, snapshot, accessibility audit, CI), use /xc-ui-test instead. For Swift Testing patterns + common agent mistakes (structs over classes, async confirmations, exit tests, parameterized), use apple-skills:guide-swift-testing instead. Provides interactive guidance on iOS testing best practices based on the reference guide."
+description: "Use when the user asks about testing approaches, setting up unit tests or basic UI tests (Page Object, wait strategies), mocking strategies, TDD workflow, or test coverage strategies. For performance tests (measure, XCTMetric), use /profiling instead. For advanced XCUITest (E2E flows, network stub, snapshot, accessibility audit, CI), use /xc-ui-test instead. Provides interactive guidance on iOS testing best practices based on the reference guide."
 compatibility: Requires macOS and Xcode
 user-invocable: false
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
@@ -108,6 +108,6 @@ Extract relevant testing patterns from the guide and adapt to user's code.
 - `profiling` — 性能分析与插桩（OSSignposter、MetricKit、XCTMetric、反模式扫描）
 - `xc-ui-test` — XCUITest 高级用法（多屏幕旅程、网络 Stub、Snapshot、无障碍、CI 集成）
 
-**vabole/apple-skills**（API ref + 社区模式）：
-- `apple-skills:swift-testing` — Swift Testing API ref（@Test/@Suite/#expect/#require/traits/parameterized）
-- `apple-skills:guide-swift-testing` — Swift Testing 模式（structs over classes / async confirmations / exit tests / agent 常见错误）
+**本仓 references**：
+- `swift-testing` patterns → `apple-dev/references/external/swift-testing-patterns.md`（structs over classes / async confirmations / exit tests / agent 常见错误）
+- Swift Testing API ref → `apple-dev/references/external/swift-testing-api/`

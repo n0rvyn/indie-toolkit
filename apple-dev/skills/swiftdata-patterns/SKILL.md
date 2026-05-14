@@ -1,6 +1,6 @@
 ---
 name: swiftdata-patterns
-description: "Use when the user asks about SwiftData usage, designing data models, or has questions about relationships, queries, migrations, or concurrency issues with SwiftData. Provides interactive guidance based on this project's local SwiftData reference guide. For community-sourced patterns and pitfalls (autosave, dangerous predicates, CloudKit constraints, indexing, class inheritance), use apple-skills:guide-swiftdata instead. For raw @Model / ModelContext / @Query API reference, use apple-skills:swiftdata instead."
+description: "Use when the user asks about SwiftData usage, designing data models, or has questions about relationships, queries, migrations, or concurrency issues with SwiftData. Provides interactive guidance based on this project's local SwiftData reference guide."
 compatibility: Requires macOS and Xcode
 user-invocable: false
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
@@ -99,17 +99,11 @@ Extract relevant code examples from the guide and adapt to user's context.
 - Overusing relationships (performance)
 - Not handling migration for schema changes
 
-## 串联提示
+## Community Patterns (Deep-dive Reference)
 
-✅ SwiftData 模式咨询完成。
+For advanced patterns (autosave edge cases, dangerous predicates, CloudKit constraints, indexing, class inheritance), grep `apple-dev/references/swiftdata-guide.md` → Community Patterns 节 for detailed guidance.
 
-**深度模式**（autosave、predicates 危险点、CloudKit 约束、indexing、class inheritance）：
-- `apple-skills:guide-swiftdata` — 详尽 patterns + agent 常踩的坑
-
-**API ref**（@Model、ModelContext、@Query、schema migration 的具体 API）：
-- `apple-skills:swiftdata` — 全 API ref，grepable
-
-跟本仓 swiftdata-patterns 互补：我们基于本项目 reference guide 给交互式建议；apple-skills:guide-swiftdata 给社区沉淀的常见 pitfall 与 production-grade 模式。
+For @Model / ModelContext / @Query API reference, grep `apple-dev/references/external/swiftdata-api/` for the full grepable API reference.
 
 ## Success Criteria
 

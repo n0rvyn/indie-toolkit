@@ -95,12 +95,54 @@ If the task is not clearly scoped (e.g., the task description is very broad or c
 
 Follow the rules from the loaded sections strictly. Do not infer rules from memory about sections that were not read.
 
-## External API References
+## SwiftUI Correctness Checklist
 
-For Apple framework API details NOT covered by `references/apple-swift-rules.md`, route to vabole/apple-skills:
+When reviewing SwiftUI code, run the checklist below. Violations are always bugs.
 
-- **Entry**: `apple-skills:ios-dev` — coordinator + SwiftUI correctness checklist + topic router for SwiftUI/UIKit/SwiftData/Concurrency/Testing/Liquid Glass
-- **Framework refs**: `apple-skills:swiftui` `apple-skills:swiftdata` `apple-skills:storekit` `apple-skills:widgetkit` `apple-skills:appintents` `apple-skills:healthkit` `apple-skills:mapkit` `apple-skills:eventkit` `apple-skills:photosui` `apple-skills:corehaptics` `apple-skills:usernotifications` `apple-skills:backgroundtasks` `apple-skills:tipkit` `apple-skills:combine` `apple-skills:uikit` `apple-skills:swift-concurrency` `apple-skills:swift-testing` `apple-skills:xcuitest` `apple-skills:ios-liquid-glass` `apple-skills:hig`
-- **Tooling**: `apple-skills:simulator-utils` (截图 + sim 管理), `apple-skills:apple-docs-index` (查 API 在哪 framework), `apple-skills:apple-aso` (ASO 优化)
+- [ ] `@State` properties are `private`
+- [ ] `@Binding` only where a child needs to mutate parent state
+- [ ] Values passed in are never declared as `@State` — they silently ignore updates
+- [ ] Use `@State` with `@Observable` classes — not `@StateObject` or `ObservableObject`
+- [ ] Use `@Bindable` for injected observables that need bindings
+- [ ] `ForEach` uses stable identity — never `.indices` on dynamic content
+- [ ] Each `ForEach` element produces a constant number of views
+- [ ] `.animation(_:value:)` always includes the `value:` parameter
+- [ ] `@FocusState` properties are `private`
+- [ ] `@Observable` classes are `@MainActor` — Swift 6 strict concurrency requires it
+- [ ] Property wrappers (`@AppStorage`, `@SceneStorage`, `@Query`) inside `@Observable` classes are marked `@ObservationIgnored`
+- [ ] No business logic in `body` — use `.task`, `.onChange`, or methods
+- [ ] No `AnyView` unless truly unavoidable — fix with better composition
 
-**Rule**: Don't guess Apple APIs from memory. If task involves an API not loaded from `apple-swift-rules.md` → grep the matching apple-skills ref first; or route through `apple-skills:ios-dev` if unsure which ref applies.
+Source: `references/apple-swift-rules.md` → SwiftUI Correctness Checklist
+
+## Topic Router (Local References)
+
+For Apple framework API details NOT covered by `references/apple-swift-rules.md`, grep the matching local reference under `apple-dev/references/external/` first. If unsure which reference applies, read `apple-dev/references/apple-swift-rules.md` → SwiftUI Correctness Checklist and Topic Router.
+
+| Topic | Guide | API Reference |
+|---|---|---|
+| State management | `external/swiftui-ui-patterns/` | `external/swiftui-api/state.md`, `binding.md`, `observation.md`, `environment.md` |
+| View composition | `external/swiftui-view-refactor.md` | — |
+| Performance | `external/swiftui-performance-audit.md` | — |
+| Navigation | `external/swiftui-ui-patterns/` | `external/swiftui-api/navigationstack.md`, `navigationsplitview.md` |
+| Sheets & modals | `external/swiftui-ui-patterns/` | `external/swiftui-api/sheet.md` |
+| Lists & ForEach | `external/swiftui-ui-patterns/` | `external/swiftui-api/list.md` |
+| ScrollView | `external/swiftui-ui-patterns/` | `external/swiftui-api/scrollview.md` |
+| Forms & input | — | `external/swiftui-api/form.md`, `textfield.md`, `picker.md` |
+| Charts | `external/swiftui-charts.md` | `external/swiftui-api/chart.md` |
+| Animations | `external/swiftui-animations.md` | — |
+| Liquid Glass | `external/ios-design-consultant.md` | `external/ios-liquid-glass/` |
+| Visual design | `external/ios-design-consultant.md` | `external/hig/` |
+| Accessibility | — | `external/hig/accessibility.md` |
+| macOS apps | `external/macos-spm-packaging.md` | — |
+| Data persistence | `swiftdata-guide.md` (含 Community Patterns 节) | `external/swiftdata-api/` |
+| Testing | `external/swift-testing-patterns.md` | `external/swift-testing-api/`, `xc-ui-test-guide.md` |
+| Concurrency | `external/swift-concurrency-patterns.md` | `external/swift-concurrency-api/` |
+| Widgets | — | `external/widgetkit/` |
+| Tips | — | `external/tipkit/` |
+| Notifications | — | `external/usernotifications/` |
+| Photos | — | `external/photosui/` |
+| App Store metadata | `aso-guide.md` | — |
+| Simulator commands | `external/simulator-cheatsheet.md` | — |
+
+For dropped topics (UIKit, Combine, MapKit, HealthKit, StoreKit, etc.): grep Apple online documentation at https://developer.apple.com/documentation or use WebSearch.

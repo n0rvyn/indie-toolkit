@@ -22,33 +22,66 @@ Locate/Resume Phase
 
 ## State File
 
-Location: `.claude/dev-workflow-state.yml`
+Location: `.claude/dev-workflow-state.json` (JSON format, matches `execute-plan-state.json` for consistency).
 
 This file tracks progress across sessions. Update it **before** starting each step (so crash-resume works). Read/write via the Read and Write tools.
 
-```yaml
-project: <name>
-current_phase: 2
-phase_name: "Phase Name"
-phase_step: plan    # plan | ux-review | verify | execute | test | review | fix | done
-dev_guide: docs/06-plans/YYYY-MM-DD-project-dev-guide.md
-plan_file: null  # set to docs/06-plans/YYYY-MM-DD-<name>-plan.md after Step 2
-verification_report: null
-task_progress: null
-review_reports: []
-test_report: null   # set to .claude/test-reports/test-run-*.md path after Step 5
-gaps_remaining: 0
-last_updated: "YYYY-MM-DDTHH:MM:SS"
+**Legacy migration**: If `.claude/dev-workflow-state.yml` exists (from prior versions) and `.json` does not, read the YAML, write equivalent JSON to `.claude/dev-workflow-state.json`, delete the `.yml`, and surface `ℹ️ Migrated dev-workflow state file from legacy YAML to JSON format` to the user. After migration, continue with the JSON path.
+
+```json
+{
+  "project": "<name>",
+  "current_phase": 2,
+  "phase_name": "Phase Name",
+  "phase_step": "plan",
+  "_comment_phase_step": "one of: plan | ux-review | verify | execute | test | review | fix | done",
+  "dev_guide": "docs/06-plans/YYYY-MM-DD-project-dev-guide.md",
+  "plan_file": null,
+  "_comment_plan_file": "set to docs/06-plans/YYYY-MM-DD-<name>-plan.md after Step 2",
+  "verification_report": null,
+  "task_progress": null,
+  "review_reports": [],
+  "test_report": null,
+  "_comment_test_report": "set to .claude/test-reports/test-run-*.md path after Step 5",
+  "gaps_remaining": 0,
+  "last_updated": "YYYY-MM-DDTHH:MM:SS"
+}
 ```
+
+The `_comment_*` keys are informational and can be omitted in real state files (JSON has no native comment syntax; keep state files lean — drop these `_comment_*` keys when writing).
+
+## Agent Dispatch Verification Gate
+
+This skill dispatches sub-agents at multiple steps (Step 4 execute-plan, Step 5 test-changes, Step 6 feature-spec + 4 review agents). The `dev-workflow/hooks/verify-agent-output.py` hook intercepts every Agent return and surfaces "files NOT on disk" when a sub-agent's stdout claims it wrote files that don't actually exist.
+
+**Treat agent stdout as a claim, not a fact**:
+- After every Agent return in Step 4/5/6, before recording the report path into state, verify the claimed report file actually exists on disk (`ls` or `Read`). If missing: do NOT advance `phase_step`; either re-dispatch the agent with explicit Write tool requirement, or surface the failure to the user.
+- For execute-plan (Step 4): the agent claims tasks complete; spot-check at least one file the agent says it wrote per batch. The execute-plan skill itself has internal state, but the run-phase orchestrator should not blindly trust the final summary.
+- For test-changes / review agents: their report files (`docs/06-plans/execution-report.md`, `.claude/test-reports/*.md`, `.claude/reviews/*.md`) must exist before the next step.
+
+This gate is non-negotiable: we have a confirmed past case of a sub-agent reporting file writes that never persisted, caught only because the verify-agent-output hook fired.
+
+## User-Visible Notifications
+
+Long phases (30-60 min from plan → done) can outlast the user's attention. At three checkpoints, emit a `PushNotification` so the user is pulled back when they walked away:
+
+1. **Plan ready for approval** (end of Step 2): when decision points need answering.
+2. **All agents returned** (end of Step 6): when consolidated review summary is ready and Step 7 fix-or-skip decision is needed.
+3. **Phase done** (end of Step 8): when the phase completes (success or with documented known issues).
+
+Skip notifications when the user has been actively responding within the last minute (heuristic — when in doubt, send). Keep messages short (under 80 chars), lead with the decision needed.
 
 ## Process
 
 ### Step 1: Resume or Locate Phase
 
-1. Check for `.claude/dev-workflow-state.yml`:
-   !`cat .claude/dev-workflow-state.yml 2>/dev/null || echo "NO_STATE_FILE"`
-   If output is "NO_STATE_FILE": proceed to step 2 (starting fresh).
-   Otherwise: parse the YAML content from the output.
+1. Check for an existing state file via the Bash tool:
+   ```
+   cat .claude/dev-workflow-state.json 2>/dev/null || cat .claude/dev-workflow-state.yml 2>/dev/null || echo "NO_STATE_FILE"
+   ```
+   - If output is `NO_STATE_FILE`: proceed to step 2 (starting fresh).
+   - If output is YAML (legacy format): apply the migration described in "## State File" above — read the YAML, write equivalent JSON, delete the `.yml`. Then parse the migrated JSON.
+   - Otherwise: parse the JSON content from the output.
    - If `phase_step` is `spec` (legacy): treat as `review` and proceed to Step 6
    - If `phase_step` is `build-test` (legacy): treat as `test` and proceed to Step 5
    - If `phase_step` is not `done`:
@@ -64,20 +97,23 @@ last_updated: "YYYY-MM-DDTHH:MM:SS"
    - Identify the first incomplete Phase
    - Present Phase summary: Goal, Scope, Architecture decisions, Acceptance criteria
    - Ask: "Start Phase N?"
-3. Initialize state file:
+3. Initialize state file (write to `.claude/dev-workflow-state.json`):
 
-```yaml
-project: <from dev-guide title>
-current_phase: <N>
-phase_name: "<Phase name>"
-phase_step: plan
-dev_guide: <dev-guide path>
-plan_file: null
-verification_report: null
-task_progress: null
-review_reports: []
-gaps_remaining: 0
-last_updated: "<now>"
+```json
+{
+  "project": "<from dev-guide title>",
+  "current_phase": <N>,
+  "phase_name": "<Phase name>",
+  "phase_step": "plan",
+  "dev_guide": "<dev-guide path>",
+  "plan_file": null,
+  "verification_report": null,
+  "task_progress": null,
+  "review_reports": [],
+  "test_report": null,
+  "gaps_remaining": 0,
+  "last_updated": "<now>"
+}
 ```
 
 If the user specifies a different Phase number, use that instead.
@@ -235,6 +271,7 @@ This checkpoint catches scope pollution and aligns visual expectations before wr
 10. Auto-select verification speed: count tasks in the plan file.
     If task count < 5: mark `--fast` flag for Step 3 (use Sonnet for verification).
     If task count ≥ 5: no flag (use Opus default).
+11. **PushNotification checkpoint 1**: if the plan's `## Decisions` section has > 0 unresolved DPs, emit a `PushNotification` with message like `Phase {N} plan ready — {K} decisions await your input` (see "## User-Visible Notifications" above).
 
 ### Step 2.5: UX Review (conditional)
 
@@ -424,6 +461,7 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
      > ⚠️ 测试覆盖不完整：{N} 个计划要求的测试中，{M} 个为空壳或未覆盖核心路径
 
 9. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
+10. **PushNotification checkpoint 2**: emit `PushNotification` with message like `Phase {N} reviews complete — {N} gaps, {M} verifications need device` (see "## User-Visible Notifications" above). Skip if all agents passed with zero issues AND the user has been responding within the last minute.
 
 ### Step 7: Fix Issues
 
@@ -515,6 +553,8 @@ If any of the following have issues: execution report (blocked/failed tasks), te
    **If all phases are complete:**
    > Phase N complete. All phases done.
    > Run `/finalize` for cross-phase validation, or `/commit` to save progress.
+
+6. **PushNotification checkpoint 3**: emit `PushNotification` with message like `Phase {N} done — {next-action}` where next-action is either `next phase N+1 ready` or `all phases complete — run /finalize`. Always send this one (phase completion is a high-signal event regardless of activity).
 
 ## Rules
 

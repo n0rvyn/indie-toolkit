@@ -20,9 +20,14 @@
 - [ ] No assertion confirmation gate blocks diagnosis (Step 3 flows directly to Step 4)
 - [ ] Output includes Step 10 tradeoff report for the proposed fix
 - [ ] Root cause includes code evidence (file:line references)
+- [ ] Step 0.5 invokes `dev-workflow:kb` skill (not a non-existent `search()` tool)
+- [ ] Steps 0.5/0.7/0.8 issued as parallel tool calls (single message, not three sequential)
+- [ ] Step 5 value-domain trace prefers `LSP findReferences` when an LSP server is available; grep as fallback
+- [ ] Step 7 Consumer Impact uses `LSP findReferences` to enumerate callers (LSP-available languages)
+- [ ] Agent dispatch verification gate present: after every Agent return, claimed file writes are verified against disk state before advancing
 
 ## Redundancy Risk
 Baseline comparison: Base model can diagnose errors but lacks systematic value-domain tracing and parallel path detection methodology
-Last tested model: Opus 4.6
-Last tested date: 2026-03-08
+Last tested model: Opus 4.7 (1M context)
+Last tested date: 2026-05-14
 Verdict: essential

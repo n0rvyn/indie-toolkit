@@ -1,12 +1,14 @@
 ---
 name: verify-plan
-description: "Use when a plan has been written and needs validation before execution, or the user says 'verify plan', 'check the plan', 'review the plan', 'validate plan', '检查计划', '验证计划'. Applies Verification-First method with falsifiable error candidates, failure reverse reasoning, optional Design Token consistency checks, Design Faithfulness anchoring, and Architecture Review. Not when: code already executed — use implementation-reviewer instead. Not when: plan does not yet exist — use write-plan first."
+description: "Use when a plan has been written and needs validation before execution, or the user says 'verify plan', 'check the plan', 'review the plan', 'validate plan', '检查计划', '验证计划'. VERIFY-ONLY — does not execute the plan; invoke execute-plan separately. Applies Verification-First method with falsifiable error candidates, failure reverse reasoning, optional Design Token consistency checks, Design Faithfulness anchoring, and Architecture Review. Not when: code already executed — use implementation-reviewer instead. Not when: plan does not yet exist — use write-plan first."
 user-invocable: false
 ---
 
 ## Overview
 
 This skill dispatches the `dev-workflow:plan-verifier` agent to validate an implementation plan in a separate context so it starts with a fresh, unbiased perspective.
+
+**Mode:** VERIFY-ONLY. This skill dispatches plan-verifier (read-only) and writes only to `.claude/reviews/`. No source files are modified. As a clarity aid (not enforced), the dispatching context may echo `[Mode: VERIFY — read-only]` as the first line of its response before invoking this skill, so the user has explicit confirmation that no execution is about to happen.
 
 **Optional flag: `--fast`**
 When passed: use Sonnet instead of Opus for verification.

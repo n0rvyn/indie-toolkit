@@ -478,3 +478,196 @@ final class ItemServiceTests: XCTestCase {
 - [Apple SwiftData Documentation](https://developer.apple.com/documentation/swiftdata)
 - [WWDC23: Meet SwiftData](https://developer.apple.com/videos/play/wwdc2023/10187/)
 - [WWDC23: Model your schema with SwiftData](https://developer.apple.com/videos/play/wwdc2023/10195/)
+
+## Community Patterns (vendored from vabole/apple-skills)
+
+_Inline attribution: 以下内容 vendor 自 vabole/apple-skills v1.0.10 `skills/guide-swiftdata/` (MIT, (c) 2026 Ilia Abolhasani, vendored 2026-05-14). 与本仓 above 节内容互补：本仓骨架给项目化规范；下方为社区沉淀的常见 pitfall（autosave、危险 predicate、CloudKit 约束、indexing、class inheritance）。冲突时本仓骨架为准。_
+
+# SwiftData Patterns
+
+Write and review SwiftData code for correctness, modern API usage, and adherence to project conventions. Report only genuine problems — do not nitpick or invent issues.
+
+## Core Instructions
+
+- Target Swift 6.2 or later, using modern Swift concurrency.
+- Prefer SwiftData across the board. Do not suggest Core Data unless the feature cannot be solved with SwiftData.
+- Do not introduce third-party frameworks without asking first.
+
+## Review Process
+
+1. Check for core SwiftData issues using `references/core-rules.md`.
+2. Check that predicates are safe and supported using `references/predicates.md`.
+3. If the project uses CloudKit, check for CloudKit-specific constraints using `references/cloudkit.md`.
+4. If the project targets iOS 18+, check for indexing opportunities using `references/indexing.md`.
+5. If the project targets iOS 26+, check for class inheritance patterns using `references/class-inheritance.md`.
+
+If doing partial work, load only the relevant reference files.
+
+## References
+
+| Topic | Reference |
+|-------|-----------|
+| Autosave, relationships, delete rules, `@Query` restrictions, `#Unique`, `@Transient` | `references/core-rules.md` |
+| Supported predicates, dangerous patterns that crash at runtime, unsupported methods | `references/predicates.md` |
+| CloudKit constraints: no `#Unique`, optional requirements, eventual consistency | `references/cloudkit.md` |
+| Database indexing (iOS 18+), single and compound property indexes | `references/indexing.md` |
+| Model subclassing (iOS 26+), `@available` requirements, predicate filtering | `references/class-inheritance.md` |
+
+## Reference Materials
+
+### Core Rules
+
+- When SwiftData first launched, it autosaved model contexts aggressively. Since then, autosaving happens less frequently and is now hard to predict, so many developers prefer to add explicit calls to `save()` when correctness is important.
+- There is no need to check `modelContext.hasChanges` before saving; just call `save()` directly.
+- `ModelContext` and model instances must never cross actor boundaries. Model containers and persistent identifiers *are* sendable, so if you need a model instance to be transferred across actors you should send its identifier and re-fetch in the destination context.
+- When using `@Relationship` to define a relationship from one model to another, place the macro on one side of the relationship only. Trying to use it on both sides causes a circular reference.
+- Persistent identifiers are temporary before they are saved for the first time. Temporary IDs start with a lowercase "t", and a model will be given a new ID after it is saved for the first time. As a result, you must save an object before relying on its ID.
+- Do not attempt to use the property name `description` in any `@Model` class; it is explicitly disallowed.
+- Do not attempt to add property observers to `@Model` classes; they will be quietly ignored.
+- `@Attribute(.externalStorage)` is a *suggestion*, not a *requirement*, and only applies to properties of type `Data` – SwiftData will do what it thinks is best.
+- `@Transient` properties are not persisted, and must have a default value. They reset to that default when the object is fetched from the store. If the value is derived from other stored properties, using a computed property is usually a better idea – use `@Transient` only if the value is expensive to produce.
+- It is nearly always a good idea to have a specific migration schema in place, even if the project is only dealing with lightweight migrations.
+- It is nearly always a good idea to have an explicit delete rule in place for relationships. This is most commonly `@Relationship(deleteRule: .cascade)`, but others are available. The default is `.nullify`, which sets the related model's reference to nil when the parent is deleted. This can leave orphaned objects or crash if the property is non-optional.
+- Do not attempt to use `@Query` outside of SwiftUI views; it is designed to work specifically *inside* views, and will not operate correctly outside.
+- If you only need the number of items matching a query, consider `ModelContext.fetchCount()` with a fetch descriptor. This will *not* live update if the data changes unless something else triggers the update, such as `@Query`, so it should be used carefully.
+- When using `FetchDescriptor`, it may sometimes be beneficial to set the `relationshipKeyPathsForPrefetching` property. It is an empty array by default, but if you know certain relationships will be used it is more efficient to fetch them upfront.
+- Similarly, you should consider setting `propertiesToFetch` so that only properties that are used are actually fetched. (It fetches all properties by default.)
+- SwiftData frequently gets inverse relationships wrong, so it is almost always a good idea to be explicit with the `@Relationship` macro by specifying the exact inverse relationship.
+- Do not write `#Unique` more than once per model; you can only have one, placed inside the model class. If you need multiple uniqueness constraints, pass them as separate key path arrays in a single `#Unique`, e.g. `#Unique<Foo>([\.email], [\.username])`.
+- Enum properties stored in a model must conform to `Codable`. Some agents will insist that enums with associated values are not supported, but this is wrong – they work just fine.
+
+### Working with Predicates
+
+SwiftData predicates support only a subset of Swift functionality. Some things are marked as being unsupported, meaning that they will not build. Other things are *not* marked as unsupported and yet are still not supported, meaning that they will build but crash at runtime.
+
+This guide contains specific guidance on what to use and when.
+
+**String matching:** When writing a query predicate to perform string matching, always use `localizedStandardContains()` rather than trying to use `lowercased().contains()` or similar.
+
+```swift
+@Query(filter: #Predicate<Movie> {
+    $0.name.localizedStandardContains("titanic")
+}) private var movies: [Movie]
+```
+
+**hasPrefix():** `hasPrefix()` and `hasSuffix()` are not supported in SwiftData predicates. If you want to use `hasPrefix()`, you should use `starts(with:)` instead.
+
+```swift
+@Query(filter: #Predicate<Website> {
+    $0.type.starts(with: "https://apple.com")
+}) private var appleLinks: [Website]
+```
+
+**Unsupported predicates:** Many common methods have no equivalent in SwiftData, and will not compile. For example, all these common operations are not supported:
+- `String.hasSuffix()`
+- `String.lowercased()`
+- `Sequence.map()`
+- `Sequence.reduce()`
+- `Sequence.count(where:)`
+- `Collection.first`
+
+Custom operators are also not allowed.
+
+**Dangerous predicates:** Some SwiftData predicates will compile cleanly then fail or even crash at runtime.
+
+For example, this is a valid predicate designed to show only movies that have a non-empty cast list:
+
+```swift
+@Query(filter: #Predicate<Movie> { !$0.cast.isEmpty }, sort: \Movie.name) private var movies: [Movie]
+```
+
+However, *this* query looks like it does the same thing, but will crash at runtime:
+
+```swift
+@Query(filter: #Predicate<Movie> { $0.cast.isEmpty == false }, sort: \Movie.name) private var movies: [Movie]
+```
+
+Never attempt to create query predicates that use computed properties, `@Transient` properties, or use custom `Codable` struct data. They might compile cleanly, but they will crash at runtime.
+
+All predicates must rely on data that is actually stored in the database as `@Model` classes.
+
+Never attempt to use regular expressions in predicates. They will compile cleanly then fail at runtime.
+
+### Using SwiftData with CloudKit
+
+**These rules only apply if the project is configured to use SwiftData with CloudKit.**
+
+- Never use `@Attribute(.unique)` or `#Unique`; they are *not* supported in CloudKit, and when used will cause local data to fail too.
+- All model properties must always either have default values or be marked as optional.
+- All relationships must be marked optional.
+- Indexes and subclasses are supported in CloudKit, as long as the correct OS release is used.
+
+Keep in mind that CloudKit is designed for *eventual consistency* – any SwiftData code written with CloudKit support must be able to function if data has yet to synchronize.
+
+### Indexing
+
+When supporting iOS 18 and other coordinated releases, SwiftData supports indexes to help speed up queries. This has a small performance cost for writing, so if data is read rarely and updated frequently (such as logging), indexes may be a bad choice.
+
+Indexes can be on single properties, like this:
+
+```swift
+@Model class Article {
+    #Index<Article>([\.type], [\.author])
+
+    var type: String
+    var author: String
+    var publishDate: Date
+
+    init(type: String, author: String, publishDate: Date) {
+        self.type = type
+        self.author = author
+        self.publishDate = publishDate
+    }
+}
+```
+
+Alternatively, you can mix single properties and groups of properties when you know they are often used together:
+
+```swift
+#Index<Article>([\.type], [\.type, \.author])
+```
+
+### Class Inheritance
+
+When supporting iOS 26 and other coordinated releases (macOS 26, etc), SwiftData supports class inheritance for models.
+
+**Important:** This is not a common feature; only add model subclassing if it actually has a benefit. Alternatives such as protocols are often simpler and better.
+
+This works the same as regular class inheritance in Swift, however, child classes must be explicitly marked `@available` for a 26 release or later, e.g. iOS 26. This is required even if iOS 26 is set as the minimum deployment target.
+
+For example:
+
+```swift
+@Model class Article {
+    var type: String
+
+    init(type: String) {
+        self.type = type
+    }
+}
+
+@available(iOS 26, *)
+@Model class Tutorial: Article {
+    var difficulty: Int
+
+    init(difficulty: Int) {
+        self.difficulty = difficulty
+        super.init(type: "Tutorial")
+    }
+}
+```
+
+Notice how both the parent and child classes must use the `@Model` macro.
+
+When providing the schemas as part of model container creation, make sure to list both the parent class and its child classes – SwiftData is *not* able to infer the connection by itself.
+
+If you create a relationship to a model that has subclasses, the relationship might contain the parent class or any of its subclasses. If you want to load specific child classes but not the parent class, use `is` with the `#Predicate` macro to perform filtering:
+
+```swift
+@Query(filter: #Predicate<Article> {
+    $0 is Tutorial || $0 is News
+}) private var tutorialsAndNews: [Article]
+```
+
+**Important:** The type of the resulting array elements is `Article`, the parent class, so typecasting must be used to access child-class properties and methods.
+

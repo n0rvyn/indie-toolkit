@@ -350,3 +350,51 @@ macOS 特有交互：
 - `.contextMenu { ... }` 右键菜单在 macOS 上比 iOS 更常用
 - 拖放：`.draggable()` / `.dropDestination()` 修饰符通用，但 macOS 支持文件 promise
 - `.help("tooltip text")` 添加鼠标悬停提示（macOS only）
+
+## SwiftUI Correctness Checklist (vendored from vabole/apple-skills:ios-dev)
+
+_Inline attribution: vendor 自 vabole/apple-skills v1.0.10 `skills/ios-dev/SKILL.md` (MIT, (c) 2026 Ilia Abolhasani, vendored 2026-05-14). 违反任一条即 bug，code-review 和 /ui-review 直接引用。_
+
+- [ ] `@State` properties are `private`
+- [ ] `@Binding` only where a child needs to mutate parent state
+- [ ] Values passed in are never declared as `@State` — they silently ignore updates
+- [ ] Use `@State` with `@Observable` classes — not `@StateObject` or `ObservableObject`
+- [ ] Use `@Bindable` for injected observables that need bindings
+- [ ] `ForEach` uses stable identity — never `.indices` on dynamic content
+- [ ] Each `ForEach` element produces a constant number of views
+- [ ] `.animation(_:value:)` always includes the `value:` parameter
+- [ ] `@FocusState` properties are `private`
+- [ ] `@Observable` classes are `@MainActor` — Swift 6 strict concurrency requires it
+- [ ] Property wrappers (`@AppStorage`, `@SceneStorage`, `@Query`) inside `@Observable` classes are marked `@ObservationIgnored` — they conflict with the macro and cause compiler errors
+- [ ] No business logic in `body` — use `.task`, `.onChange`, or methods
+- [ ] No `AnyView` unless truly unavoidable — fix with better composition
+
+## Topic Router (Local References)
+
+_Inline attribution: 改编自 vabole/apple-skills:ios-dev Topic Router，全部路由指向本仓 `apple-dev/references/`。_
+
+| Topic | Guide | API Reference |
+|-------|-------|---------------|
+| State management | `external/swiftui-ui-patterns/` | `external/swiftui-api/state.md`, `binding.md`, `observation.md`, `environment.md` |
+| View composition | `external/swiftui-view-refactor.md` | — |
+| Performance | `external/swiftui-performance-audit.md` | — |
+| Navigation | `external/swiftui-ui-patterns/` | `external/swiftui-api/navigationstack.md`, `navigationsplitview.md` |
+| Sheets & modals | `external/swiftui-ui-patterns/` | `external/swiftui-api/sheet.md` |
+| Lists & ForEach | `external/swiftui-ui-patterns/` | `external/swiftui-api/list.md` |
+| ScrollView | `external/swiftui-ui-patterns/` | `external/swiftui-api/scrollview.md` |
+| Forms & input | — | `external/swiftui-api/form.md`, `textfield.md`, `picker.md` |
+| Charts | `external/swiftui-charts.md` | `external/swiftui-api/chart.md` |
+| Animations | `external/swiftui-animations.md` | — |
+| Liquid Glass | `external/ios-design-consultant.md` | `external/ios-liquid-glass/` |
+| Visual design | `external/ios-design-consultant.md` | `external/hig/` |
+| Accessibility | — | `external/hig/accessibility.md` |
+| macOS apps | `external/macos-spm-packaging.md` | — |
+| Data persistence | `swiftdata-guide.md` (含 Community Patterns 节) | `external/swiftdata-api/` |
+| Testing | `external/swift-testing-patterns.md` | `external/swift-testing-api/`, `xc-ui-test-guide.md` |
+| Concurrency | `external/swift-concurrency-patterns.md` | `external/swift-concurrency-api/` |
+| Widgets | — | `external/widgetkit/` |
+| Tips | — | `external/tipkit/` |
+| Notifications | — | `external/usernotifications/` |
+| Photos | — | `external/photosui/` |
+| App Store metadata | `aso-guide.md` | — |
+| Simulator commands | `external/simulator-cheatsheet.md` | — |

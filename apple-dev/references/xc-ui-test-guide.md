@@ -818,3 +818,696 @@ xcrun simctl install "CI iPhone" ./Build/Products/Debug-iphonesimulator/MyApp.ap
 
 - `/testing-guide` — Unit Test、Mock/DI、TDD 基础、Page Object 入门
 - `/profiling` — 性能测试（XCTMetric、XCTOSSignpostMetric、XCTHitchMetric）
+
+## XCUITest API Reference (vendored from vabole/apple-skills)
+
+_Inline attribution: vendor 自 vabole/apple-skills v1.0.10 `skills/xcuitest/` (MIT, (c) 2026 Ilia Abolhasani, vendored 2026-05-14). 与本仓 above 节互补：本仓给高级 XCUITest 工作流（E2E、network stub、snapshot、a11y、CI）；下方为 element queries / waiting / Swift 6 @MainActor / launch arguments / screenshots 的 API ref，grepable。冲突时本仓骨架为准。_
+
+### xctest-index
+
+<!-- Content from /tmp/apple-skills-research/skills/xcuitest/xctest-index.md -->
+
+This is the index for the XCUITest API documentation. Refer to the subsections below for individual class/framework API details.
+
+**Topics covered:**
+- `XCUIApplication` — launching, monitoring, terminating test applications
+- `XCUIElement` — querying and interacting with UI elements
+- `XCUIElementQuery` — search criteria for identifying UI elements
+- `XCUICoordinate` — screen locations relative to UI elements
+- `XCUIProtectedResource` — authorization for protected resources
+- `XCUIScreenshot` — capturing screenshots of UI state
+
+### xcuielementquery
+
+**Available on:** iOS, iPadOS, Mac Catalyst, macOS, tvOS, visionOS, watchOS, Xcode 16.3+
+
+> An object that defines the search criteria a test uses to identify UI elements.
+
+```swift
+@MainActor class XCUIElementQuery
+```
+
+Use element queries to find UI elements in your app that you interact with in the tests, to test for the presence of expected elements, or to discover elements to test their values.
+
+For example, this test uses an element query to find the "Add Book" button, and after clicking the button, checks that there is one button in an outline view cell titled "Untitled Book". If the test cannot find the "Add Book" button, or there is not one "Untitled Book" cell, then the test fails.
+
+```swift
+@MainActor
+func testClickingAddCreatesAnUntitledBook() throws {
+    let app = XCUIApplication()
+    app.launch()
+    let list = app.windows["Reading Journal"]
+    list.toolbars.children(matching: .button)["Add Book"].click()
+    XCTAssertEqual(list.outlines["Sidebar"].cells.containing(.button, identifier:"Untitled Book").count, 1)
+}
+```
+
+**Creating new queries:**
+- `children(matching:)` — Returns a new query that matches all direct children of the requested type.
+- `descendants(matching:)` — Returns a new query that matches all descendants of the requested type.
+- `containing(_:)` — Returns a new query that matches elements containing a descendant that meets the logical conditions of the provided predicate.
+- `containing(_:identifier:)` — Returns a new query that matches elements that contain a descendant of the requested type and an identifying property that matches a provided identifier.
+- `matching(identifier:)` — Returns a new query that matches elements that have an identifying property that matches a provided identifier.
+- `matching(_:)` — Returns a new query that matches elements that meet the logical conditions of the provided predicate.
+- `matching(_:identifier:)` — Returns a new query that matches elements of the requested type and have an identifying property that matches a provided identifier.
+
+**Accessing matched elements:**
+- `allElementsBoundByAccessibilityElement` — Immediately evaluates the query and returns an array of elements bound to the resulting accessibility elements.
+- `allElementsBoundByIndex` — Immediately evaluates the query and returns an array of elements bound by the index of each result.
+- `count` — Evaluates the query and returns the number of elements that match.
+- `element` — The query's single matching element.
+- `element(boundBy:)` — Uses an index into the query's results to determine which underlying accessibility element to use.
+- `element(matching:)` — Matches the predicate.
+- `element(matching:identifier:)` — Matches the provided element type and identifier.
+- `subscript(_:)` — Returns a descendant element that matches a provided identifier.
+- `element(at:)` — Returns an element that resolves to the index into the query's result set.
+
+**Debugging element queries:**
+- `debugDescription` — Provides debugging information about the query.
+
+### xcuielement
+
+**Available on:** iOS, iPadOS, Mac Catalyst, macOS, tvOS, visionOS, watchOS, Xcode 16.3+
+
+> A UI element in an application.
+
+```swift
+@MainActor class XCUIElement
+```
+
+In macOS and iPadOS 15 and later, `XCUIElement` provides a way to test your app with keyboard and mouse interactions, such as typing, clicking, scrolling, and moving and pausing the pointer. In iOS, `XCUIElement` provides a way to test your app with gestures, such as tapping, swiping, pinching, and rotating.
+
+**Querying element state:**
+- `waitForExistence(timeout:)` — Waits the specified amount of time for an element to exist.
+- `waitForNonExistence(timeout:)` — Waits the specified amount of time for an element to no longer exist.
+- `wait(for:toEqual:timeout:)` — Waits a specified amount of time for a property value to equal a specified value.
+- `exists` — Determines if the element exists.
+- `isHittable` — Determines if the system can compute a hit point for the element.
+- `debugDescription` — Provides debugging information about the element.
+
+**Querying descendant elements:**
+- `children(matching:)` — Returns a query for all direct children of the element matching the type you specify.
+- `descendants(matching:)` — Returns a query for all descendants of the element matching the type you specify.
+
+**Typing text:**
+- `typeText(_:)` — Types a string into the element.
+
+**Combining keystrokes:**
+- `typeKey(_:modifierFlags:)` — Types a single key from the XCUIKeyboardKey enumeration with the specified modifier flags.
+- `perform(withKeyModifiers:block:)` — Executes a block of code while holding a combination keystroke.
+- `XCUIElement.KeyModifierFlags` — Flags for simulating combination keystrokes with keys, such as Control, Option, Shift, and Command.
+
+**Moving the pointer:**
+- `hover()` — Moves the pointer over the element.
+
+**Clicking:**
+- `click()` — Sends a click event to a hittable point computed for the element.
+- `click(forDuration:thenDragTo:)` — Clicks and holds an element for a duration you specify, then drags it to another element.
+- `doubleClick()` — Sends a double-click event to a hittable point the system computes for the element.
+- `rightClick()` — Sends a Control-click event to a hittable point the system computes for the element.
+
+**Scrolling:**
+- `scroll(byDeltaX:deltaY:)` — Scrolls the view by the number of x and y pixels you specify.
+
+**Tapping and pressing:**
+- `tap()` — Sends a tap event to a hittable point computed for the element.
+- `doubleTap()` — Sends a double-tap event to a hittable point computed for the element.
+- `press(forDuration:)` — Sends a press-and-hold gesture to a hittable point computed for the element.
+- `press(forDuration:thenDragTo:)` — Initiates a press-and-hold gesture, then drags to another element.
+
+**Tapping multiple times:**
+- `twoFingerTap()` — Sends a two-finger tap event to a hittable point computed for the element.
+- `tap(withNumberOfTaps:numberOfTouches:)` — Sends one or more taps with one or more touch points.
+
+**Performing gestures:**
+- `swipeLeft()`, `swipeLeft(velocity:)` — Sends a swipe-left gesture.
+- `swipeRight()`, `swipeRight(velocity:)` — Sends a swipe-right gesture.
+- `swipeUp()`, `swipeUp(velocity:)` — Sends a swipe-up gesture.
+- `swipeDown()`, `swipeDown(velocity:)` — Sends a swipe-down gesture.
+- `pinch(withScale:velocity:)` — Sends a pinching gesture with two touches.
+- `rotate(_:withVelocity:)` — Sends a rotation gesture with two touches.
+- `XCUIGestureVelocity` — A value that describes how fast a gesture moves across the screen, in pixels per second.
+
+**Interacting with sliders:**
+- `normalizedSliderPosition` — Returns the position of the slider's indicator as a normalized value.
+- `adjust(toNormalizedSliderPosition:)` — Manipulates the UI to change the slider value to a new normalized position.
+- `adjust(toPickerWheelValue:)` — Changes the value that a picker wheel displays.
+
+**Calculating coordinates:**
+- `coordinate(withNormalizedOffset:)` — Creates and returns a new coordinate with a normalized offset.
+
+**Supporting types:**
+- `XCUIElement.ElementType` — The types of UI elements (button, cell, textField, etc.).
+- `XCUIElement.SizeClass` — The user interface size classes you can inspect in a UI test.
+- `XCUIElement.AttributeName` — A set of string constants serving as keys for storing element attributes.
+
+### xcuiapplication
+
+**Available on:** iOS, iPadOS, Mac Catalyst, macOS, tvOS, visionOS, watchOS, Xcode 16.3+
+
+> A proxy that can launch, monitor, and terminate a test application.
+
+```swift
+@MainActor class XCUIApplication
+```
+
+Use this class to launch, monitor, and terminate your app in a UI test. Use `wait(for:timeout:)` to launch your app and wait for it to reach an expected state before you check test conditions.
+
+**Creating an application proxy:**
+- `init()` — Creates a proxy for the application configured as the Target Application in Xcode's target settings.
+- `init(bundleIdentifier:)` — Creates a proxy for the application with the specified bundle identifier.
+- `init(url:)` — Creates a proxy for the application at the specified file system URL.
+
+**Launching the application:**
+- `launch()` — Launches the application.
+- `launchArguments` — The arguments passed to the application on launch.
+- `launchEnvironment` — The environment variables passed to the application on launch.
+- `open(_:)` — Launches the application by URL.
+
+**Activating and terminating:**
+- `activate()` — Activates the application.
+- `terminate()` — Terminates any running instance of the application.
+- `state` — The most recent state of the application.
+- `XCUIApplication.State` — The possible states of an application during UI testing.
+- `wait(for:timeout:)` — Waits for the application to reach the specified state or timeout.
+
+**Resetting authorization status:**
+- `resetAuthorizationStatus(for:)` — Resets the authorization status for a protected resource.
+- `XCUIProtectedResource` — A system resource that requires user authorization to access.
+
+**Performing an accessibility audit:**
+- `performAccessibilityAudit(for:_:)` — Performs an accessibility audit on specified elements.
+- `XCUIAccessibilityAuditType` — The types of accessibility audits available.
+- `XCUIAccessibilityAuditIssue` — An issue found during an accessibility audit.
+
+### xcuiautomation-index
+
+<!-- Content from /tmp/apple-skills-research/skills/xcuitest/xcuiautomation-index.md -->
+
+This is the index for the XCUIAutomation framework API documentation. It covers all XCUITest classes referenced above including `XCUIApplication`, `XCUIElement`, `XCUIElementQuery`, `XCUICoordinate`, `XCUIProtectedResource`, and `XCUIScreenshot`.
+
+### xcuicoordinate
+
+**Available on:** iOS, iPadOS, Mac Catalyst, macOS, visionOS, watchOS, Xcode 16.3+
+
+> A location on screen relative to a UI element.
+
+```swift
+@MainActor class XCUICoordinate
+```
+
+Coordinates are dynamic, like the elements to which they refer, and may compute different screen locations at different times, or be invalid if the element they reference does not exist.
+
+**Getting coordinate properties:**
+- `referencedElement` — The element that the coordinate is based on, either directly or through the coordinate from which it was derived.
+- `screenPoint` — The dynamically computed value of the coordinate's location on screen.
+
+**Moving the pointer:**
+- `hover()` — Moves the pointer to the coordinate.
+
+**Clicking:**
+- `click()` — Sends a click event at the coordinate.
+- `click(forDuration:thenDragTo:)` — Clicks and holds for a duration you specify, then drags to the other coordinate.
+- `doubleClick()` — Sends a double-click event at the coordinate.
+- `rightClick()` — Sends a Control-click event at the coordinate.
+
+**Scrolling:**
+- `scroll(byDeltaX:deltaY:)` — Scrolls the view by the number of x and y pixels you specify.
+
+**Tapping and pressing:**
+- `tap()` — Sends a tap event at the coordinate.
+- `doubleTap()` — Sends a double-tap event at the coordinate.
+- `press(forDuration:)` — Initiates a press-and-hold gesture at the coordinate.
+- `press(forDuration:thenDragTo:)` — Initiates a press-and-hold gesture, then drags to another coordinate.
+
+**Performing gestures:**
+- `swipeLeft()`, `swipeLeft(velocity:)`, `swipeRight()`, `swipeRight(velocity:)`, `swipeUp()`, `swipeUp(velocity:)`, `swipeDown()`, `swipeDown(velocity:)` — Send swipe gestures at the coordinate.
+
+**Creating relative coordinates:**
+- `withOffset(_:)` — Creates a new coordinate with an absolute offset in points from the original coordinate.
+
+### xcuiprotectedresource
+
+**Available on:** iOS 13.4+, iPadOS 13.4+, Mac Catalyst 13.4+, macOS 10.15.4+, tvOS 13.4+, visionOS 1.0+, watchOS 6.2+, Xcode 16.3+
+
+> A system resource that requires user authorization to access.
+
+```swift
+enum XCUIProtectedResource
+```
+
+**Protected resource cases:**
+- `location` — Location Services
+- `userTracking` — Tracking data
+- `contacts` — Contacts data
+- `calendar` — Calendar data
+- `reminders` — Reminders data
+- `photos` — Photos
+- `bluetooth` — Bluetooth utilization
+- `localNetwork` — Local network devices
+- `microphone` — Microphone
+- `camera` — Camera
+- `health` — Health data
+- `homeKit` — Home data
+- `mediaLibrary` — Media library
+- `keyboardNetwork` — Keyboard network
+- `systemRootDirectory` — System root directory
+- `userDesktopDirectory` — Desktop directory
+- `userDocumentsDirectory` — Documents directory
+- `userDownloadsDirectory` — Downloads directory
+- `focus` — Focus status
+- `removableVolumes` — Removable volumes
+- `networkVolumes` — Network volumes
+- `appleEvents` — Apple Events
+
+**Resetting authorization status:**
+Use `XCUIApplication.resetAuthorizationStatus(for:)` to reset the authorization status for a protected resource.
+
+### xcuiscreenshot
+
+**Available on:** iOS, iPadOS, Mac Catalyst, macOS, tvOS, visionOS, watchOS, Xcode 16.3+
+
+> A captured image of a screen, app, or UI element state.
+
+```swift
+@MainActor class XCUIScreenshot
+```
+
+Screenshots capture the current UI state of classes that conform to `XCUIScreenshotProviding`, such as `XCUIScreen` and `XCUIElement`.
+
+```swift
+func testTakeScreenshots() {
+    // Take a screenshot of the current device's main screen.
+    let mainScreenScreenshot = XCUIScreen.main.screenshot()
+
+    // Take a screenshot of an app's first window.
+    let app = XCUIApplication()
+    app.launch()
+    let windowScreenshot = app.windows.firstMatch.screenshot()
+}
+```
+
+**Screenshot representations:**
+- `image` — A representation of the screenshot as a platform-native image object.
+- `pngRepresentation` — A representation of the screenshot as PNG image data.
+
+**Attaching screenshots to tests (XCTest):**
+Create an attachment using `XCTAttachment(screenshot:)` or `XCTAttachment(screenshot:quality:)`, then add it to the test using `XCTActivity.add(_:)`.
+
+### patterns
+
+<!-- Content from /tmp/apple-skills-research/skills/xcuitest/patterns.md -->
+
+Common XCUITest patterns and best practices for writing robust UI tests.
+
+**Waiting for elements:** Always use `waitForExistence(timeout:)` before interacting with elements rather than relying on immediate availability. This prevents flaky tests.
+
+```swift
+let button = app.buttons["Submit"]
+XCTAssertTrue(button.waitForExistence(timeout: 5))
+button.tap()
+```
+
+**Checking element existence:** Use `exists` for simple checks, but prefer `waitForExistence` when you need the element to appear as a result of an action.
+
+**Chaining queries:** Build complex queries by chaining `children(matching:)`, `descendants(matching:)`, and `containing(_:identifier:)` methods.
+
+```swift
+let cell = app.tables.cells.containing(.textField, identifier: "Name")
+cell.textFields["Name"].tap()
+```
+
+**Swift 6 @MainActor:** XCUITest classes are `@MainActor`. Write all test methods as `@MainActor` functions or mark the whole test class as `@MainActor`.
+
+```swift
+@MainActor
+class MyTests {
+    @Test func example() {
+        let app = XCUIApplication()
+        app.launch()
+        // ...
+    }
+}
+```
+
+**Launch arguments and environment:** Pass test-specific configuration via `launchArguments` and `launchEnvironment`.
+
+```swift
+app.launchArguments = ["--reset-state"]
+app.launchEnvironment = ["API_BASE_URL": "https://test.example.com"]
+app.launch()
+```
+
+
+### xctest-index (API Index)
+
+**Full XCTest API Index — extracted from Apple DocC JSON.**
+
+**Test Cases and Test Methods:**
+- `XCTestCase` — Base class for all test cases
+- `setUp()` / `setUpWithError()` — Run before each test method
+- `tearDown()` / `tearDownWithError()` — Run after each test method
+- `addTeardownBlock(() throws -> Void)` — Deferred teardown closures
+- `continueAfterFailure` — Whether to stop on first failure
+- `executionTimeAllowance` — Time limit per test
+
+**Measuring Performance:**
+- `measure(_:)` / `measure(metrics:block:)` — Block-based performance measurement
+- `startMeasuring()` / `stopMeasuring()` — Manual measurement boundaries
+- `defaultPerformanceMetrics` / `defaultMetrics` — Built-in metrics
+- `XCTPerformanceMetric` — Metric type (wallClockTime, custom)
+
+**Asynchronous Test Expectations:**
+- `expectation(description:)` — Basic expectation
+- `expectation(forNotification:name:object:handler:)` — NSNotification expectation
+- `expectation(for:KVOObject keyPath:expectedValue:)` — KVO expectation
+- `expectation(that: KeyPath<K,V> willEqual:)` — KeyPath expectation
+- `fulfillment(of:timeout:enforceOrder:)` — Async/await based wait
+- `wait(for:timeout:enforceOrder:)` — Legacy async wait
+- `XCTestError.Code` — `timeoutWhileWaiting`, `failureWhileWaiting`
+
+**UI Interruption Monitoring:**
+- `addUIInterruptionMonitor(withDescription:handler:)` — Register interruption handler
+- `removeUIInterruptionMonitor(_:)` — Remove handler
+
+**Recording and Issues:**
+- `record(_: XCTIssue)` — Record a custom issue/failure
+- `recordFailure(withDescription:inFile:atLine:expected:)` — Legacy failure recording
+
+**Test Assertions:**
+- `XCTAssertTrue` / `XCTAssertFalse`
+- `XCTAssertNil` / `XCTAssertNotNil` / `XCTUnwrap`
+- `XCTAssertEqual` / `XCTAssertNotEqual` / `XCTAssertIdentical`
+- `XCTAssertGreaterThan` / `XCTAssertLessThan`
+- `XCTAssertThrowsError`
+- `XCTFail(String)`
+- `XCTExpectedFailure` — Mark a test as expected to fail
+
+**XCTAttachment (for test results):**
+- `XCTAttachment(screenshot:)` — Attach a screenshot
+- `XCTAttachment(screenshot:quality:)` — Attach with quality level
+- `lifetime: .keepAlways` / `.deleteOnSuccess` — Attachment retention
+
+### xcuiautomation-index (API Index)
+
+**Full XCUIAutomation API Index — extracted from Apple DocC JSON.**
+
+**XCUIElementTypeQueryProvider (element shortcuts):**
+Access via any `XCUIElement` or `XCUIElementQuery`:
+- `.buttons`, `.textFields`, `.secureTextFields`
+- `.tables`, `.cells`, `.collectionViews`
+- `.navigationBars`, `.tabBars`, `.toolbars`
+- `.switches`, `.sliders`, `.pickers`, `.datePickers`
+- `.images`, `.staticTexts`, `.links`
+- `.scrollViews`, `.webViews`, `.maps`
+- `.activityIndicators`, `.progressIndicators`
+- `.searchFields`, `.segmentedControls`
+- `.keyboard`, `.keyboards`
+- `.alerts`, `.dialogs`, `.sheets`, `.popovers`
+- `.menuBars`, `.menuItems`, `.menuButtons`
+- `.statusBars`, `.windows`
+- `.otherElements` — Catch-all for unclassified elements
+- `.firstMatch` — Returns first matching element without throwing
+
+**Keyboard Keys (XCUIKeyboardKey):**
+Modifier keys: `.command`, `.control`, `.option`, `.shift`, `.rightCommand`, `.rightControl`, `.rightOption`, `.rightShift`
+Navigation: `.upArrow`, `.downArrow`, `.leftArrow`, `.rightArrow`, `.home`, `.end`, `.pageUp`, `.pageDown`
+Function keys: `.F1` through `.F19`
+Delete: `.delete` (keyIdentifier: "delete")
+
+**XCUIElement.ElementType values:**
+`.button`, `.cell`, `.staticText`, `.textField`, `.textField`, `.navigationBar`, `.tabBar`, `.toolbar`, `.switch`, `.slider`, `.pickerWheel`, `.activityIndicator`, `.image`, `.scrollView`, `.table`, `.collectionView`, `.webView`, `.map`, `.alert`, `.dialog`, `.sheet`, `.popover`, `.menuItem`, `.menuBarItem`, `.statusBar`, `.window`, `.keyboard`, `.key`, `.other`, `.group`, `.valueIndicator`, `.levelIndicator`, `.searchField`, `.segmentedControl`, `.picker`, `.datePicker`, `.link`, `.disclosureTriangle`, `.radioButton`, `.checkBox`, `.comboBox`, `.incrementArrow`, `.decrementArrow`, `.toggle`
+
+**XCUIScreen:**
+- `XCUIScreen.main` — Main screen singleton
+- `.screenshot()` — Capture screenshot of the screen
+- `.scale` — Screen scale factor
+
+### patterns (Advanced Patterns)
+
+<!-- Full content from upstream patterns.md follows -->
+
+## Base Test Class Pattern
+
+A reusable base class that handles common setup, teardown, and helpers:
+
+```swift
+@MainActor
+class BaseUITest: XCTestCase {
+    var app: XCUIApplication!
+
+    nonisolated var apiURL: String {
+        ProcessInfo.processInfo.environment["API_URL"] ?? "https://api.example.com"
+    }
+
+    override func setUp() {
+        super.setUp()
+        continueAfterFailure = false
+        app = XCUIApplication()
+        app.terminate()
+        app.launchArguments += ["-UITest", "-API_URL", apiURL]
+        app.launch()
+    }
+
+    override func tearDown() {
+        captureScreenshotOnFailure()
+        app = nil
+        super.tearDown()
+    }
+
+    func captureScreenshotOnFailure() {
+        guard let failureCount = testRun?.failureCount, failureCount > 0 else { return }
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = "Failure-\(name)"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    func waitForElement(_ identifier: String, timeout: TimeInterval = 10) -> XCUIElement {
+        let element = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+        XCTAssertTrue(element.waitForExistence(timeout: timeout))
+        return element
+    }
+
+    func takeScreenshot(_ name: String) {
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+}
+```
+
+## Handling iOS System Dialogs
+
+### HealthKit Authorization (iOS 26+)
+```swift
+func handleHealthKitDialog() {
+    let healthAccessText = app.staticTexts["Health Access"]
+    if healthAccessText.waitForExistence(timeout: 5) {
+        // Scroll to reveal buttons
+        let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
+        let to = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+        from.press(forDuration: 0.1, thenDragTo: to)
+        if app.buttons["Don't Allow"].waitForExistence(timeout: 5) {
+            app.buttons["Don't Allow"].tap()
+        }
+    }
+}
+```
+
+### Location Permission
+```swift
+func handleLocationPermission(allow: Bool) {
+    addUIInterruptionMonitor(withDescription: "Location") { alert -> Bool in
+        let button = allow ? "Allow While Using App" : "Don't Allow"
+        if alert.buttons[button].waitForExistence(timeout: 2) {
+            alert.buttons[button].tap()
+            return true
+        }
+        return false
+    }
+}
+```
+
+## Waiting Patterns
+
+### Wait for Element with Predicate
+```swift
+func waitForNonExistence(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
+    let predicate = NSPredicate(format: "exists == false")
+    let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+    return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+}
+
+func waitForValue<T>(_ element: XCUIElement, keyPath: String, timeout: TimeInterval) -> Bool {
+    let predicate = NCTKVOExpectation(keyPath: keyPath, object: element)
+    return XCTWaiter().wait(for: [predicate], timeout: timeout) == .completed
+}
+```
+
+### Wait with Retry
+```swift
+func waitAndRetry<T>(maxAttempts: Int = 3, delay: TimeInterval = 1, action: () throws -> T) rethrows -> T {
+    var lastError: Error?
+    for attempt in 1...maxAttempts {
+        do { return try action() }
+        catch { lastError = error; if attempt < maxAttempts { Thread.sleep(forTimeInterval: delay) } }
+    }
+    throw lastError!
+}
+```
+
+## Element Query Patterns
+
+### Find by Partial Text
+```swift
+// Case-insensitive contains
+let errorText = app.staticTexts.matching(
+    NSPredicate(format: "label CONTAINS[c] 'error'")
+).firstMatch
+
+// Regex match
+let versionText = app.staticTexts.matching(
+    NSPredicate(format: "label MATCHES 'v[0-9]+\\.[0-9]+'")
+).firstMatch
+```
+
+### Scroll Until Element Visible
+```swift
+func scrollUntilVisible(_ element: XCUIElement, in scrollView: XCUIElement, maxScrolls: Int = 10) {
+    for _ in 0..<maxScrolls {
+        if element.isHittable { return }
+        scrollView.swipeUp()
+        Thread.sleep(forTimeInterval: 0.3)
+    }
+    XCTAssertTrue(element.isHittable, "Element not visible after \(maxScrolls) scrolls")
+}
+```
+
+### Check if Table is Empty
+```swift
+func isTableEmpty(_ tableIdentifier: String) -> Bool {
+    return app.tables[tableIdentifier].cells.count == 0
+}
+```
+
+## Text Field Patterns
+
+### Clear and Type
+```swift
+extension XCUIElement {
+    func clearAndType(_ text: String) {
+        tap()
+        press(forDuration: 1.0) // Select all
+        if XCUIApplication().menuItems["Select All"].waitForExistence(timeout: 2) {
+            XCUIApplication().menuItems["Select All"].tap()
+        }
+        typeText(text)
+    }
+}
+```
+
+### Dismiss Keyboard
+```swift
+func dismissKeyboard() {
+    app.tap()
+    if app.buttons["Done"].waitForExistence(timeout: 2) {
+        app.buttons["Done"].tap()
+    } else if app.buttons["Return"].waitForExistence(timeout: 2) {
+        app.buttons["Return"].tap()
+    }
+}
+```
+
+## Debugging
+
+### Print Element Hierarchy
+```swift
+func printHierarchy() {
+    print("=== APP HIERARCHY ===")
+    print(app.debugDescription)
+}
+```
+
+### Diagnostic Test
+```swift
+func testDiagnostic() {
+    print("Buttons: \(app.buttons.count)")
+    print("TextFields: \(app.textFields.count)")
+    for id in ["tab-home", "submit-button", "main-scroll"] {
+        let el = app.descendants(matching: .any).matching(identifier: id).firstMatch
+        print("\(id): \(el.exists ? "FOUND" : "NOT FOUND")")
+    }
+    print(app.debugDescription)
+}
+```
+
+## Swift 6 @MainActor Requirements
+
+XCUITest classes are `@MainActor`. Mark test classes or individual methods as `@MainActor`:
+
+```swift
+@MainActor
+class MyUITests: XCTestCase {
+    @Test func example() {
+        let app = XCUIApplication()
+        app.launch()
+        // All XCUIElement interactions must be on MainActor
+    }
+}
+```
+
+## Launch Arguments and Environment
+
+Pass test-specific configuration to the app:
+
+```swift
+app.launchArguments = [
+    "-uitest",
+    "-resetState",
+    "-debugMode",
+]
+app.launchEnvironment = [
+    "API_BASE_URL": "https://test.example.com",
+    "TEST_USER_EMAIL": "test@example.com",
+]
+app.launch()
+```
+
+
+### Additional XCTest API Reference
+
+**Async Test Expectations (XCTestExpectation):**
+- `init(description:)` — Create a named expectation
+- `fulfill()` — Mark an expectation as fulfilled
+- `expectedFulfillmentCount` — Number of times `fulfill()` must be called
+- `assertForOverFulfill` — Fail if `fulfill()` is called more than expected
+
+**XCTWaiter / XCTWaiter.Result:**
+- `wait(for:timeout:enforceOrder:)` — Wait for multiple expectations
+- `XCTWaiter.Result.completed` — All expectations fulfilled
+- `XCTWaiter.Result.timedOut` — Timeout elapsed
+- `XCTWaiter.Result.inconclusive` — Interrupted
+- `XCTWaiter.Result.failed` — Test failed while waiting
+
+**XCTActivity:**
+- `add(_: XCTAttachment)` — Attach a screenshot or data to a test activity
+- XCTAttachment supports `lifetime: .keepAlways` (default) or `.deleteOnSuccess`
+
+**Performance Measurement (XCTMetric):**
+- `wallClockTime` — Measure elapsed time
+- `XCTOSSignpostMetric` — OS signpost-based metrics (for Swift Metrics API)
+- `XCTHitchMetric` — Animation hitch time (Core Animation frame drops)
+- `XCTMemoryMetric` — Memory usage metrics
+
+**Expected Failures (XCTExpectedFailure):**
+- `XCTExpectFailure("issue URL or reason")` — Mark a test as expected to fail
+- `Options.isStrict = true` — Test FAILS if it passes (unexpectedly)
+- `Options.isStrict = false` — Test passes if it fails (default)
+
+**Skipping Tests:**
+- `try XCTSkipIf(condition, "reason")` — Skip if condition is true
+- `try XCTSkipUnless(condition, "reason")` — Skip unless condition is true
+- `XCTSkip(message:)` — Unconditional skip
+

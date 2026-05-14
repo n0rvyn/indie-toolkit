@@ -10,6 +10,22 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 - Build: `npm run build` = `tsc --noEmit` (type check only) + `esbuild` (bundle to `dist/`).
 - Release artifacts in `dist/` must be self-contained single files. If a new dependency is added, verify it gets bundled — `--packages=external` is NOT used.
 
+## Suggestion Hygiene (Anti-Fabrication Rule)
+
+When closing out a response with a "next step" suggestion or follow-up plan:
+
+**禁止**: 引用不存在的工作流入口。常见违例：
+- "下一个 session 跑 /run-phase" — 没有 dev-guide 时禁止
+- "继续执行计划" — 没有已写的 plan 文件时禁止
+- "下一阶段" — 没有 phased dev-guide 时禁止
+- "按既定流程" — 当流程并不存在时禁止
+
+**自检**: 发出每一条 suggestion 前问：「我是否在引用一个具体存在的文件/状态机/已运行的 skill？」回答"我以为有"或"应该有"= 禁止发送。
+
+**Why:** 主上下文 Claude 反复出现"凭空发明工作流"模式。这与全局 CLAUDE.md 的「未读不评 / 先验证再结论」是同一类失败的运行时表现。
+
+**How to apply:** 在每次 response 结尾的"下一步"建议前停顿，对照已知 artifact 列表（plan file / dev-guide / state file / running task）。无对应 artifact → suggestion 改写为"如果你想 X，可以 ..."（条件式），不是"我建议下一步 Y"（断言式）。
+
 ## Plugin Lifecycle
 
 ### When Creating a New Plugin

@@ -20,6 +20,29 @@ Determine operation from user input:
 - **Argument starts with `#`** (e.g., `#5`) -> Step 2 (read)
 - **Other text** -> Step 3 (create)
 
+### Step 0.5: Preflight gh availability
+
+Before any `gh issue` invocation, verify gh is authenticated and the repo has a GitHub remote.
+
+1. Run: `gh auth status 2>&1`
+   - If exit code != 0: STOP. Output to user:
+     ```
+     ❌ gh 未认证或不可用：
+     {stderr output}
+
+     修复：运行 `gh auth login`，或检查 `gh` 是否已安装 (`which gh`)。
+     ```
+   Do NOT proceed.
+2. Run: `git config --get remote.origin.url 2>&1`
+   - If exit code != 0 OR output does not contain `github.com`: STOP. Output to user:
+     ```
+     ❌ 当前仓库无 GitHub remote（remote.origin.url = {output}）。
+     gh issue 仅支持 GitHub 仓库。
+     ```
+   Do NOT proceed.
+
+This preflight prevents the silent-failure pattern where `gh issue list/view/create` fails on auth or repo-type mismatch and the calling context returns no actionable output to the user.
+
 ### Step 1: List Issues
 
 1. Run: `gh issue list --state open --json number,title,labels,milestone`

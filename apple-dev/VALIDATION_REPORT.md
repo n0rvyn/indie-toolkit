@@ -70,3 +70,48 @@
    - `/project-kickoff` for new projects
    - `/generate-design-system` for Design System generation
    - `/ui-review` and `/design-review` for code review
+
+## External Vendored Content (2026-05-14)
+
+This plugin has been made self-contained by vendoring selected content from [vabole/apple-skills](https://github.com/vabole/apple-skills) v1.0.10 (MIT License, Copyright 2026 Ilia Abolhasani, vendored 2026-05-14). All vendor content is stored under `references/external/` with attribution footers in each file.
+
+### Vendor Source Map
+
+| Source skill | Destination path | Notes |
+|---|---|---|
+| `skills/ios-liquid-glass/` | `references/external/ios-liquid-glass/` | 17 files |
+| `skills/hig/` | `references/external/hig/` | 5 files: layout, typography, color, materials, accessibility |
+| `skills/guide-swiftui-ui-patterns/` | `references/external/swiftui-ui-patterns/` | 38 files |
+| `skills/guide-swiftui-view-refactor/` | `references/external/swiftui-view-refactor.md` | Merged SKILL.md + references/ |
+| `skills/guide-swiftui-performance-audit/` | `references/external/swiftui-performance-audit.md` | Merged SKILL.md + references/ |
+| `skills/swiftui/` | `references/external/swiftui-api/` | 13 files |
+| `skills/swift-concurrency/` | `references/external/swift-concurrency-api/` | 7 files |
+| `skills/guide-swift-concurrency/` | `references/external/swift-concurrency-patterns.md` | Merged SKILL.md + references/ |
+| `skills/swift-testing/` | `references/external/swift-testing-api/` | 7 files |
+| `skills/guide-swift-testing/` | `references/external/swift-testing-patterns.md` | Merged SKILL.md + references/ |
+| `skills/swiftdata/` | `references/external/swiftdata-api/` | 4 files |
+| `skills/guide-swiftdata/` | `references/swiftdata-guide.md` | Merged into existing file (Community Patterns section) |
+| `skills/xcuitest/` | `references/xc-ui-test-guide.md` | Merged into existing file (XCUITest API Reference section) |
+| `skills/tipkit/` | `references/external/tipkit/` | 6 files |
+| `skills/widgetkit/` | `references/external/widgetkit/` | 3 files |
+| `skills/usernotifications/` | `references/external/usernotifications/` | 6 files |
+| `skills/photosui/` | `references/external/photosui/` | 2 files |
+| `skills/guide-macos-spm-packaging/` | `references/external/macos-spm-packaging.md` | Merged SKILL.md + references/ |
+| `skills/simulator-utils/` | `references/external/simulator-cheatsheet.md` | Single-file SKILL.md body |
+| `skills/ios-design-consultant/` | `references/external/ios-design-consultant.md` | Merged SKILL.md + docs/ |
+| `skills/guide-swiftui-animations/` | `references/external/swiftui-animations.md` | Merged SKILL.md + references/ |
+| `skills/guide-swiftui-charts/` | `references/external/swiftui-charts.md` | Merged SKILL.md + references/ |
+| `skills/apple-aso/` | `references/aso-guide.md` | Single-file SKILL.md body |
+
+### Skill Routing Updates
+
+10 SKILL.md files were updated to replace `apple-skills:*` references with local paths:
+`apple-swift-context`, `swiftdata-patterns`, `code-audit`, `testing-guide`, `xc-ui-test`, `profiling`, `design-review`, `ui-review`, `generate-design-system`, `appstoreconnect-review`.
+
+### Not Vendored (Explicit Drops)
+
+The following upstream skills were intentionally not vendored (out of scope per project direction): uikit, combine, core-animation, mapkit, healthkit, storekit, eventkit, corehaptics, backgroundtasks, appintents, apple-docs-index, ios-ui-craft.
+
+### License
+
+All vendored content retains the MIT License from the upstream source. Attribution footers are preserved in every vendored file per the license requirements.

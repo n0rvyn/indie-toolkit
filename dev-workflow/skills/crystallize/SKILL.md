@@ -1,6 +1,6 @@
 ---
 name: crystallize
-description: "Use before /write-plan or when the session has settled significant design decisions. Extracts the decision history from the current conversation into a persistent crystal file that /write-plan and plan-verifier consume."
+description: "Use before /write-plan or when the session has settled significant design decisions. Extracts the decision history from the current conversation into a persistent crystal file that /write-plan and plan-verifier consume. Not when: extracting a postmortem after a fixed bug or completed task — use collect-lesson instead."
 user-invocable: false
 ---
 

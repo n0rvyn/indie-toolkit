@@ -31,6 +31,20 @@ The user's friction reports show speculative architecture answers are a top frus
 
 ## Process
 
+### Step Echo (audit aid)
+
+Before executing any step below (0, 0.5, 0.7, 0.8, 0.9, 1, 2, 2.5, 3, 4, 4.5, 5, 6, 7, 8, 9, 10), emit a one-line marker as the FIRST line of the response chunk for that step:
+
+```
+[fix-bug] Step={n} — {name}
+```
+
+Where `{n}` is the step number (e.g., `3` or `4.5`) and `{name}` is the step's bold title (e.g., `BV: Generate falsifiable assertions`).
+
+This is an audit aid, not an enforced gate — no hook intercepts a missing marker. Its value is post-hoc: the user can grep the response for `[fix-bug] Step=` to see which steps actually ran. Skipping from Step 2 directly to Step 7 ("Plan the fix") without emitting markers for 3/4/5/6/7 leaves the gap visible.
+
+**Why this exists:** the 2026-04 to 2026-05 insights report shows assistant frequently lands on the first plausible hypothesis and ships a fix, skipping the BV (Step 3) / verification (Step 4) / value-domain trace (Step 5) gates. Explicit step markers make skipping visible to the user even when it's not blocked.
+
 0. **Parse input and read GitHub Issue (if reference provided)**
 
    If input contains `#N` or `issue N` (e.g., `/fix-bug #5`, `/fix-bug issue 5`):

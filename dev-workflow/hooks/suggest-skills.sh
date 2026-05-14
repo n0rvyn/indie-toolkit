@@ -42,6 +42,13 @@ fi
 # Lowercase for matching
 lower=$(echo "$prompt" | tr '[:upper:]' '[:lower:]')
 
+# Retry-pattern hint: when user signals "still not working" after prior attempts,
+# nudge toward hypothesis reset rather than another patch.
+# Conservative — fires only on multi-failure phrases, not generic frustration.
+if echo "$lower" | grep -qE "still broken|still doesn'?t work|didn'?t work|same error|还是不行|还是有这个问题|还是这个错"; then
+  echo "[skill-hint] 多次失败可能是假说叠加。考虑 /fix-bug 触发假说重置，而不是继续叠加补丁。"
+fi
+
 # Project health hint (bounded, non-blocking; at most one line)
 if echo "$lower" | grep -qE 'commit|提交|write.*plan|计划|dev.?guide|开发指南|bug|报错|crash|fix.*error|error.*fix'; then
   _hook_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)

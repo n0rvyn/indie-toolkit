@@ -44,6 +44,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/check-repeated-edit.py",
+            "timeout": 5
+          }
+        ]
       }
     ]
   }

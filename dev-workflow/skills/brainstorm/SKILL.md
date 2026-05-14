@@ -27,11 +27,11 @@ If the user already has 2+ concrete options and needs to pick one, use `dev-work
 
 ### 1. Explore Project Context
 
-**First, search the knowledge base (if search tool available):**
+**First, search the knowledge base via `dev-workflow:kb` skill:**
 1. Extract 3-5 domain keywords from the user's request (component type, domain area, technology names)
-2. Call `search(query="<domain keywords>", source_type=["doc", "error", "lesson"], project_root="<cwd>")`
+2. Invoke `dev-workflow:kb` skill via the Skill tool, passing the keywords as the query. The kb skill searches `~/.claude/knowledge/` (categories: api-misuse / api-usage / architecture / bug-postmortem / data-research / platform-constraints / workflow) and returns relevant past decisions and lessons.
 3. If results are returned: note existing architecture decisions and lessons; use them to avoid proposing approaches already tried or decided against
-4. If the search tool is unavailable or returns no results: skip silently
+4. If the kb skill returns no matches, or the knowledge directory is empty: skip silently
 
 Then:
 - Read relevant code, configs, and docs

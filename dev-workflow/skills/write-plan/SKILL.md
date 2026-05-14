@@ -25,14 +25,14 @@ This skill writes an implementation plan directly in the main context, benefitin
 
 ## Process
 
-### Step 0: Retrieve Prior Context (if search tool available)
+### Step 0: Retrieve Prior Context (via `dev-workflow:kb`)
 
 Before gathering context, search for relevant ADRs, architecture decisions, and known pitfalls:
 
 1. Extract 3-5 keywords from the plan goal (component names, technology names, pattern names)
-2. Call `search(query="<goal text>", source_type=["doc", "error", "lesson"], project_root="<cwd>")`
+2. Invoke `dev-workflow:kb` skill via the Skill tool, passing the keywords as the query. The kb skill searches `~/.claude/knowledge/` (categories: api-misuse / api-usage / architecture / bug-postmortem / data-research / platform-constraints / workflow) and returns relevant prior context.
 3. If results are returned: note them as "Prior context from knowledge base:" for use in Step 2
-4. If the search tool is unavailable or returns no results: skip silently and continue to Step 1
+4. If the kb skill returns no matches, or the knowledge directory is empty: skip silently and continue to Step 1
 
 ### Step 1: Gather Context
 

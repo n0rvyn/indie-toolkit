@@ -59,17 +59,20 @@ This is an audit aid, not an enforced gate — no hook intercepts a missing mark
 
    If input does not contain an issue reference, skip to Step 0.5.
 
-0.5. **Retrieve historical context**
+0.5. **Retrieve historical context** (via local knowledge base)
    - Extract 3-5 keywords from the bug description (error type, component name, API name, symptom)
-   - Call `search(query="<keywords from bug description>", source_type=["error","lesson"], project_root="<current working directory>")`
+   - Invoke `dev-workflow:kb` skill via the Skill tool, passing the keywords as the query. The kb skill searches `~/.claude/knowledge/` (categories: api-misuse / api-usage / architecture / bug-postmortem / data-research) and returns relevant past lessons.
    - If results are returned: present them as "Related historical records:" before proceeding
-   - If the index returns no results, or the search tool is unavailable: skip this step silently and proceed to Step 1
-   - Do not block investigation if the search tool is slow or unresponsive
-   - Note: Phase 1 searches project-level index only. Cross-scope search (project + global) will be added in Phase 2.
+   - If the kb skill returns no matches, or the knowledge directory is empty: skip silently and proceed to Step 1
+   - Do not block investigation if the kb skill is unavailable in the current invocation context
 
 0.7. **Project Health** — see `dev-workflow/references/project-health-scanner.md`. If scanner exists and cached state is missing/red/stale (>7 days), run full mode with `--reason fix --max-ms 5000 --write-state`. Treat red/yellow signals as regression guards for the fix plan.
 
 0.8. **Project Context Contract** — see `dev-workflow/references/project-context-contract.md`. Read `docs/00-AI-CONTEXT.md` if present; otherwise mark `Project context contract: missing` and continue. Do not create `CONTEXT.md`.
+
+**Parallel execution note (Steps 0.5 / 0.7 / 0.8):** these three preflight steps are read-only and independent. Issue them in **one tool-call batch** (single message, parallel Skill / Bash / Read calls) — Opus 4.7's 1M context easily holds all three results. Sequential execution costs latency without informational benefit.
+
+**Agent dispatch verification gate (applies to any agent dispatch later in this skill, including Step 7 `/write-plan` and any `Explore` calls):** the `dev-workflow/hooks/verify-agent-output.py` hook intercepts sub-agent stdout — when an agent claims it wrote a file but the file isn't actually on disk, the hook surfaces "files NOT on disk" to this skill. **Treat agent stdout as a claim, not a fact**: after every Agent return, before acting on the agent's reported changes, verify with `ls` or `Read` against the actual paths it claims to have written. Apply this gate without exception (we have a confirmed past case of sub-agent reporting file writes that did not persist).
 
 ## Step 0.9: Feedback Loop (mandatory before Step 3)
 
@@ -185,7 +188,10 @@ If no level is constructable, output `[Feedback Loop] level=0 — not constructa
    A bug is value-related if: a wrong number/string/enum appears where a different one was expected, OR a field displays data from the wrong source, OR a computed result is incorrect. When in doubt, treat as value-related.
 
    - Reverse-trace from bug location to data source (record each variable rename)
-   - Forward-Grep all consumers from source (using source field name + every intermediate variable name)
+   - **Forward-trace consumers — LSP first, grep fallback**:
+     - If the project has a registered LSP server for the file's language (Swift / TypeScript / Python / Rust / Go), prefer `LSP findReferences` at the symbol's declaration site — it identifies real references (handles same-name-different-scope, follows renames, ignores comment/string occurrences).
+     - If no LSP server, or LSP returns errors: fall back to `Grep` for the source field name + each intermediate variable name.
+     - Hybrid is OK: LSP for the declaration's direct references, then grep for transformed copies (e.g., field renamed via destructuring).
    - Verify unit/domain/format assumptions at each consumer
    - Output format:
      ```
@@ -237,7 +243,7 @@ If no level is constructable, output `[Feedback Loop] level=0 — not constructa
 
    **Consumer impact (mandatory for any fix that changes a field's value or source):**
 
-   Before presenting the plan, list all consumers of the modified field:
+   Before presenting the plan, enumerate all consumers of the modified field. **Use `LSP findReferences` on the field's declaration to get the canonical reference list** (when an LSP server is available for the language). For untyped languages or projects without LSP, fall back to `Grep` of the field name + transformed copies. List all callers:
    ```
    [Consumer Impact]
    - {consumer file:line} — 当前读取: {X} — 修复后读取: {Y} — 行为变化: {description}

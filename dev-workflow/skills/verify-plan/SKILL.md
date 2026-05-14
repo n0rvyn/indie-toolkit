@@ -36,13 +36,13 @@ Collect the following before dispatching:
 
 If the plan file path is unclear, ask the user.
 
-### Step 1.5: Retrieve Error Patterns (if search tool available)
+### Step 1.5: Retrieve Error Patterns (via `dev-workflow:kb`)
 
 After collecting plan and design doc paths, extract technical keywords from the plan (framework names, API names, component names found in the plan file) and search for known error patterns:
 
-1. Call `search(query="<technical keywords from plan>", source_type=["error", "lesson"], project_root="<cwd>")`
+1. Invoke `dev-workflow:kb` skill via the Skill tool with the technical keywords as the query. The kb skill searches `~/.claude/knowledge/` (categories: api-misuse / api-usage / architecture / bug-postmortem / data-research / platform-constraints / workflow) for error patterns and lessons related to the plan's technologies.
 2. If results are returned: collect them as `retrieved_context` — a compact list of (source_path, section, content preview) for each hit
-3. If the search tool is unavailable or returns no results: set `retrieved_context` to empty and continue
+3. If the kb skill returns no matches, or the knowledge directory is empty: set `retrieved_context` to empty and continue
 
 ### Step 2: Dispatch Agent
 

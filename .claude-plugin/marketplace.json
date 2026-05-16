@@ -147,6 +147,15 @@
       "strict": true
     },
     {
+      "name": "readback",
+      "source": "./readback",
+      "description": "Before-action read-back protocol — model must restate intent in plain language before code/plan changes. Inspired by aviation/medical closed-loop communication.",
+      "version": "0.1.0",
+      "category": "development",
+      "tags": ["dialog", "alignment", "communication", "hooks", "agent"],
+      "strict": true
+    },
+    {
       "name": "shared-utils",
       "source": "./shared-utils",
       "description": "Reusable utility scripts and skills shared across indie-toolkit plugins: Notion API helpers, MongoDB queries, and other cross-plugin primitives",

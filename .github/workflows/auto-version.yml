@@ -14,6 +14,7 @@ on:
       - "minimax-quota/**"
       - "netease-cloud-music/**"
       - "shared-utils/**"
+      - "readback/**"
 
 permissions:
   contents: write
@@ -41,7 +42,7 @@ jobs:
           set -euo pipefail
 
           MARKET_FILE=".claude-plugin/marketplace.json"
-          ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-master" "wechat-bridge" "x-api" "minimax-quota" "netease-cloud-music" "shared-utils")
+          ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-master" "wechat-bridge" "x-api" "minimax-quota" "netease-cloud-music" "shared-utils" "readback")
 
           bump_semver() {
             local version="$1"

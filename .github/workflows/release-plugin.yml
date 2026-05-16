@@ -19,6 +19,7 @@ on:
           - minimax-quota
           - netease-cloud-music
           - shared-utils
+          - readback
           - all
       bump:
         description: "Semver bump type"
@@ -83,7 +84,7 @@ jobs:
           }
 
           if [[ "$TARGET" == "all" ]]; then
-            PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-master" "wechat-bridge" "x-api" "minimax-quota" "netease-cloud-music" "shared-utils")
+            PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-master" "wechat-bridge" "x-api" "minimax-quota" "netease-cloud-music" "shared-utils" "readback")
           else
             PLUGINS=("$TARGET")
           fi

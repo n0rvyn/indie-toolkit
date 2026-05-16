@@ -16,6 +16,7 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 | `minimax-quota` | integration | MiniMax coding plan quota checker: only requires MINIMAX_API_KEY |
 | `netease-cloud-music` | integration | NetEase Cloud Music helper: cookie-based login flows and cloud-drive upload via maintained CLI |
 | `shared-utils` | development | Reusable utility scripts and skills shared across plugins: Notion API, MongoDB queries, cross-plugin primitives |
+| [readback](readback/README.md) | development | Before-action read-back protocol: force plain-language echo before code/plan changes (3 hooks + 1 agent + 1 skill) |
 
 ## Repository Layout
 

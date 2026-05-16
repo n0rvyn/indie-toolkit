@@ -1,12 +1,13 @@
 ---
-name: master
+name: plugin-master
 description: |
-  Use when the user says 'master', 'build a plugin', 'create a skill', 'create an agent',
-  'review plugin', 'audit plugin', 'iterate skill', 'improve trigger', 'package plugin',
-  or wants to create, review, iterate, or package Claude Code plugins and components.
+  Use when the user says 'plugin-master', 'orchestrate plugin creation', 'manage plugin lifecycle',
+  'review plugin', 'audit plugin', 'iterate skill quality', 'package plugin for marketplace',
+  or wants to orchestrate the full lifecycle (create / review / iterate / package / insights) of Claude Code plugins.
   (also: insights based on real usage to propose plugin improvements)
+  Not when: user wants to create a single atomic component — use `/plugin-dev:skill-development` / `agent-development` / `hook-development` / `command-development` / `plugin-structure` directly. plugin-master is the orchestrator; plugin-dev provides the atomic builders.
 
-  Single entry with 5 routes:
+  Single entry /plugin-master with 5 routes:
   - create: brainstorm → design → scaffold (plugin-dev) → eval baseline (skill-creator) → review → iterate
   - review: 9-dimension audit from AI executor perspective + cross-plugin trigger conflict detection
   - iterate: fix → re-eval (skill-creator) → compare baseline → verify
@@ -36,7 +37,7 @@ description: |
 
 **Routing logic:**
 1. If keywords match a single route → proceed to that route
-2. If user just says "master" with no other context → AskUserQuestion: "Which workflow?" with 5 options (create / review / iterate / package / insights)
+2. If user just says "plugin-master" with no other context → AskUserQuestion: "Which workflow?" with 5 options (create / review / iterate / package / insights)
 3. If ambiguous (keywords match multiple routes) → dispatch `skill-master:intent-distiller` agent with user's message → use its `recommendation` field to determine route
 4. If still ambiguous after intent-distiller → AskUserQuestion with 5 route options
 
@@ -132,8 +133,6 @@ If review finds only Logic/Minor issues or no issues:
 
 Goal: 9-dimension plugin quality audit from the AI executor perspective, plus cross-plugin trigger conflict detection.
 
-This route is migrated from `skill-audit:plugin-review` with one addition (trigger-arbiter).
-
 #### 2b.1: Determine Scope
 
 From user message, determine what to review:
@@ -228,7 +227,7 @@ Also read these for cross-reference checking:
 - Eval files: {comma-separated paths or "none"}
 
 Supporting files to load: structural-validation.md, trigger-baseline.md
-Plugin agents dir: {skill-master agents directory path}
+  (Resolve via `${CLAUDE_PLUGIN_ROOT}/agents/` if executing inside skill-master plugin context, otherwise Glob `**/skill-master/agents/{structural-validation,trigger-baseline}.md`. These are non-agent reference fragments stored under `agents/` for historical reasons; load with Read, not Task dispatch.)
 
 Focus on: logic bugs, trigger mechanism issues, execution feasibility, and edge cases.
 ```
@@ -300,8 +299,11 @@ If not already detected (e.g., when iterate is called standalone, not from creat
 
 This is the most common iterate case.
 
-If `skill_creator_available`: use automated optimization. If not: apply manual description changes based on review findings, then skip to 2c.5.
+If `skill_creator_available` is false: apply manual description changes based on review findings, then skip to 2c.5.
 
+Otherwise (skill_creator_available = true), automated optimization:
+
+1. Locate the skill's existing eval.md if any (skip step 2 if absent — write evals.json from review findings instead).
 2. If the skill has `eval.md`, convert trigger/negative trigger tests to `skill-creator` eval-set format:
    ```json
    [

@@ -6,10 +6,10 @@ allowed-tools: Read, Bash(python3:*), Bash(gh pr create:*), Bash(gh --version:*)
 
 Analyzes real usage data from the skill-master SQLite database to propose targeted, evidence-based improvements to plugin skill descriptions.
 
-Invocation forms (both supported via master routing):
+Invocation forms (both supported via plugin-master routing):
 
-- Slash: `/master insights [--focus <skill_name>] [--window <days>] [--dry-run]`
-- Natural language: routes here whenever the master entry-point matches keywords like "insights" / "usage data" / "auto-tune" / "propose improvements". In NL form, ask the user once for `--focus` / `--window` / `--dry-run` defaults if not stated.
+- Slash: `/plugin-master insights [--focus <skill_name>] [--window <days>] [--dry-run]`
+- Natural language: routes here whenever the plugin-master entry-point matches keywords like "insights" / "usage data" / "auto-tune" / "propose improvements". In NL form, ask the user once for `--focus` / `--window` / `--dry-run` defaults if not stated.
 
 ## Args
 

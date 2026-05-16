@@ -97,7 +97,7 @@ Explicitly check these known ambiguity hotspots across plugins:
 
 | Pattern | Competing plugins |
 |---------|-------------------|
-| "review" / "audit" | skill-audit, apple-dev, dev-workflow |
+| "review" / "audit" | apple-dev, dev-workflow |
 | "create" / "build" / "new" | plugin-dev, dev-workflow, skill-creator |
 | "design" | apple-dev (design-review), dev-workflow (understand-design) |
 | "test" / "testing" | apple-dev (testing-guide, xc-ui-test), dev-workflow |

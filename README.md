@@ -10,8 +10,7 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 | `apple-dev` | development | iOS/macOS/iPadOS development workflows, reviews, design-token checks, CI/CD, localization, App Store review prep |
 | `mactools` | productivity | macOS automation for Notes, Calendar, Mail, Safari, Spotlight, Reminders, OCR, Photos, Contacts, OmniFocus |
 | `product-lens` | product | Product evaluation: demand validation, market analysis, moat assessment, feature assessment, comparison matrix |
-| `skill-master` | development | Unified plugin lifecycle: brainstorm, create, eval, review, iterate, package Claude Code plugins |
-| `skill-audit` | development | [DEPRECATED — use skill-master] Plugin auditor from AI executor perspective |
+| `skill-master` | development | Unified plugin lifecycle: brainstorm, create, eval, review, iterate, package Claude Code plugins. Entry: `/plugin-master` |
 | `wechat-bridge` | integration | WeChat message bridge via MCP `--channels` protocol: permission relay, push messages, reply |
 | `x-api` | integration | X (Twitter) API v2 MCP server: 131+ tools with Bearer Token and OAuth2 PKCE support |
 | `minimax-quota` | integration | MiniMax coding plan quota checker: only requires MINIMAX_API_KEY |
@@ -27,7 +26,6 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 ├── mactools/
 ├── product-lens/
 ├── skill-master/
-├── skill-audit/
 ├── wechat-bridge/
 ├── x-api/
 ├── minimax-quota/
@@ -73,7 +71,6 @@ Current marketplace entries from `.claude-plugin/marketplace.json`:
 | `mactools` | `1.0.1` | macOS automation for Apple apps |
 | `product-lens` | `1.0.0` | Product evaluation and market analysis |
 | `skill-master` | `1.0.0` | Unified plugin lifecycle management |
-| `skill-audit` | `1.1.5` | [DEPRECATED] Plugin auditor |
 | `wechat-bridge` | `1.0.3` | WeChat message bridge |
 | `x-api` | `1.0.0` | X (Twitter) API v2 MCP server |
 | `minimax-quota` | `0.2.1` | MiniMax coding plan quota checker |
@@ -98,7 +95,6 @@ Each plugin has its own `README.md`:
 - `mactools/README.md` — macOS automation
 - `product-lens/README.md` — Product evaluation
 - `skill-master/README.md` — Plugin lifecycle management
-- `skill-audit/README.md` — Plugin audit (deprecated)
 - `wechat-bridge/README.md` — WeChat bridge
 - `x-api/README.md` — X API v2 MCP server
 - `minimax-quota/README.md` — MiniMax coding plan quota checker

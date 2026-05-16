@@ -1,7 +1,7 @@
-# master Eval
+# plugin-master Eval
 
 ## Trigger Tests
-- "master"
+- "plugin-master"
 - "build a plugin that monitors stale PRs"
 - "create a new skill for code review"
 - "create an agent that validates configs"
@@ -15,7 +15,7 @@
 - "inject this skill into my other project"
 - "run insights on dev-workflow"
 - "auto-tune my skills based on usage"
-- "/master insights --window 30"
+- "/plugin-master insights --window 30"
 - "propose improvements from real usage data"
 
 ## Negative Trigger Tests
@@ -38,7 +38,7 @@
 - [ ] create: delegates to skill-creator for eval loop (when creating skills)
 - [ ] create: auto-triggers review after creation
 - [ ] create: quality gate presented (pass/needs-fix)
-- [ ] review: produces 9-dimension report matching skill-audit format
+- [ ] review: produces 9-dimension report
 - [ ] review: Strategy A/B routing based on plugin-dev availability
 - [ ] review: includes cross-plugin trigger conflict section via trigger-arbiter
 - [ ] review: findings grouped by severity (Bug/Logic/Minor)
@@ -56,6 +56,6 @@
 - [ ] insights: opens draft PR via pr_composer OR exits 0 with actionable reason
 
 ## Redundancy Risk
-Baseline comparison: subsumes skill-audit:plugin-review, orchestrates plugin-dev + skill-creator
+Baseline comparison: orchestrates plugin-dev + skill-creator
 Last tested model: (not yet tested)
 Verdict: essential

@@ -13,7 +13,7 @@ Unified plugin lifecycle management: brainstorm, create, eval, review, iterate, 
 Single entry point:
 
 ```
-/master
+/plugin-master
 ```
 
 Routes to one of five workflows based on intent:
@@ -29,7 +29,7 @@ Routes to one of five workflows based on intent:
 ## Architecture
 
 ```
-/master (intent detection)
+/plugin-master (intent detection)
    │
    ├── create ──→ intent-distiller → plugin-dev:create-plugin / skill-development
    │                                → skill-creator:skill-creator (eval loop)
@@ -73,7 +73,7 @@ skill-master orchestrates; it does not rebuild existing capabilities:
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
-| plugin-reviewer | opus | 9-dimension deep review from AI executor perspective (migrated from skill-audit) |
+| plugin-reviewer | opus | 9-dimension deep review from AI executor perspective |
 | intent-distiller | sonnet | Extract structured plugin/skill development intent from user requests |
 | trigger-arbiter | opus | Cross-plugin trigger overlap and conflict detection |
 | proposer | sonnet | (insights route) Drafts skill description / Examples edits from real usage findings; outputs strict JSON candidates list |
@@ -85,13 +85,13 @@ skill-master orchestrates; it does not rebuild existing capabilities:
 |------|------------|---------|
 | structural-validation.md | plugin-dev unavailable | D1 Structural Validation + D2 Reference Integrity |
 | trigger-baseline.md | plugin-dev unavailable | D5.1-5.2 description overlap + D7.3 description quality + D9.1 trigger quality |
-| skills/master/insights.md | "insights" intent matched | 8-step insights route process |
+| skills/plugin-master/insights.md | "insights" intent matched | 8-step insights route process |
 
 ## Skills
 
 | Skill | Description |
 |-------|-------------|
-| master | Single entry point with 5-route intent detection (create / review / iterate / package / insights). Orchestrates full plugin lifecycle including evidence-driven improvement from real usage. |
+| plugin-master | Single entry point with 5-route intent detection (create / review / iterate / package / insights). Orchestrates full plugin lifecycle including evidence-driven improvement from real usage. |
 
 ## Review Dimensions
 
@@ -117,10 +117,3 @@ The review route covers 9 dimensions, with ownership split based on plugin-dev a
 
 Without these, skill-master falls back to manual workflows and self-contained review (Strategy B).
 
-## Migration from skill-audit
-
-skill-master absorbs all skill-audit capabilities. If you have skill-audit installed:
-
-1. Install skill-master: `/plugin install skill-master@indie-toolkit`
-2. Use `/master` with "review" intent instead of `/plugin-review`
-3. Optionally uninstall skill-audit: `/plugin uninstall skill-audit`

@@ -1,0 +1,11 @@
+{
+  "window_days": 14,
+  "findings": [
+    {"plugin": "dev-workflow", "component": "verify-plan",
+     "invocations": 12, "corrections": 4, "correction_rate": 0.33,
+     "pattern_summary": "users frequently followed up with 'skip this' or 'just do it' within 1 turn"}
+  ],
+  "target_files": [
+    {"path": "dev-workflow/skills/verify-plan/SKILL.md", "current_description": "..."}
+  ]
+}

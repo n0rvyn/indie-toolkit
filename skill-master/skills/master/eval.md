@@ -13,6 +13,10 @@
 - "package this as a standalone skill"
 - "export this plugin for marketplace"
 - "inject this skill into my other project"
+- "run insights on dev-workflow"
+- "auto-tune my skills based on usage"
+- "/master insights --window 30"
+- "propose improvements from real usage data"
 
 ## Negative Trigger Tests
 - "review my code" (→ code review, not plugin review)
@@ -23,9 +27,11 @@
 - "audit the CLAUDE.md rules" (→ dev-workflow audit-rules)
 - "commit my changes" (→ dev-workflow commit)
 - "brainstorm a feature" (→ dev-workflow brainstorm)
+- "show me my git log usage" (→ git/shell tool, NOT insights — insights is about Claude Code session usage)
+- "improve verify-plan" (→ iterate, NOT insights — iterate works on a specific named skill; insights works on aggregate evidence)
 
 ## Output Assertions
-- [ ] Routes to correct workflow based on intent (create/review/iterate/package)
+- [ ] Routes to correct workflow based on intent (create/review/iterate/package/insights)
 - [ ] Ambiguous input prompts user to choose route
 - [ ] create: dispatches intent-distiller for structured intent extraction
 - [ ] create: delegates to plugin-dev for component creation
@@ -42,6 +48,12 @@
 - [ ] package: validates marketplace readiness for full plugin
 - [ ] package: supports single component injection into target project
 - [ ] package: uses skill-creator package_skill.py when available
+- [ ] insights: preflight passes (db / schema / marketplace / gh CLI all OK)
+- [ ] insights: dispatches proposer agent with single JSON payload matching schema
+- [ ] insights: validate_proposal rejects forbidden changes (frontmatter / Process section / deletions)
+- [ ] insights: dispatches judge agent for semantic accumulation check (DP-V1=D)
+- [ ] insights: judge dispatch failure → deny-all (conservative default)
+- [ ] insights: opens draft PR via pr_composer OR exits 0 with actionable reason
 
 ## Redundancy Risk
 Baseline comparison: subsumes skill-audit:plugin-review, orchestrates plugin-dev + skill-creator

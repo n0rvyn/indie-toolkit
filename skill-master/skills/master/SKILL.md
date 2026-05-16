@@ -4,12 +4,14 @@ description: |
   Use when the user says 'master', 'build a plugin', 'create a skill', 'create an agent',
   'review plugin', 'audit plugin', 'iterate skill', 'improve trigger', 'package plugin',
   or wants to create, review, iterate, or package Claude Code plugins and components.
+  (also: insights based on real usage to propose plugin improvements)
 
-  Single entry with 4 routes:
+  Single entry with 5 routes:
   - create: brainstorm → design → scaffold (plugin-dev) → eval baseline (skill-creator) → review → iterate
   - review: 9-dimension audit from AI executor perspective + cross-plugin trigger conflict detection
   - iterate: fix → re-eval (skill-creator) → compare baseline → verify
   - package: full plugin or single component into target project
+  - insights: analyze real usage data → propose evidence-based skill improvements → open draft PR
 ---
 
 # Plugin Lifecycle Management
@@ -30,14 +32,13 @@ description: |
 | review | "review", "audit", "check quality", "review plugin", "review skill", "plugin review" |
 | iterate | "improve", "fix trigger", "iterate", "refine", "trigger is too broad", "trigger is too narrow", "quality" |
 | package | "package", "export", "inject", "distribute", "marketplace-ready", "deploy to project" |
+| insights | "insights", "usage data", "propose improvements", "auto-tune", "skill improvements from usage" |
 
 **Routing logic:**
 1. If keywords match a single route → proceed to that route
-2. If user just says "master" with no other context → AskUserQuestion: "Which workflow?" with 4 options (create / review / iterate / package)
+2. If user just says "master" with no other context → AskUserQuestion: "Which workflow?" with 5 options (create / review / iterate / package / insights)
 3. If ambiguous (keywords match multiple routes) → dispatch `skill-master:intent-distiller` agent with user's message → use its `recommendation` field to determine route
-4. If still ambiguous after intent-distiller → AskUserQuestion with 4 route options
-
----
+4. If still ambiguous after intent-distiller → AskUserQuestion with 5 route options
 
 ### Step 2a: Create Route
 
@@ -431,6 +432,12 @@ Present readiness checklist:
 #### Completion (package)
 - Full plugin: readiness checklist presented (all pass = ready)
 - Single component: files copied, validated in target
+
+---
+
+### Step 2e: Insights Route
+
+See `insights.md` for the full 8-step process (preflight → Reader → Proposer → validate → judge → AskUserQuestion → pr_composer → record state).
 
 ---
 

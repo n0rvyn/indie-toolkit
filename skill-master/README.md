@@ -16,7 +16,7 @@ Single entry point:
 /master
 ```
 
-Routes to one of four workflows based on intent:
+Routes to one of five workflows based on intent:
 
 | Route | When | What happens |
 |-------|------|-------------|
@@ -24,6 +24,7 @@ Routes to one of four workflows based on intent:
 | **review** | "review plugin", "audit my plugin" | 9-dimension audit + cross-plugin trigger conflict detection |
 | **iterate** | "improve trigger", "fix this skill" | fix → re-eval → compare baseline → verify |
 | **package** | "package plugin", "inject skill" | marketplace readiness check or inject into target project |
+| **insights** | "run insights", "auto-tune", "propose improvements from usage" | reads session-reflect SQLite → proposer + validator + judge → draft PR with skill description / Examples improvements |
 
 ## Architecture
 
@@ -41,8 +42,14 @@ Routes to one of four workflows based on intent:
    ├── iterate ─→ skill-creator scripts (run_loop.py, quick_validate.py)
    │              re-eval + baseline comparison
    │
-   └── package ─→ plugin-dev:plugin-validator (structural)
-                  skill-creator scripts (quick_validate.py, package_skill.py)
+   ├── package ─→ plugin-dev:plugin-validator (structural)
+   │              skill-creator scripts (quick_validate.py, package_skill.py)
+   │
+   └── insights → scripts/insights_reader (Q1-Q5 SQL on ~/.claude/session-reflect/sessions.db)
+                  skill-master:proposer (draft skill description / Examples edits)
+                  scripts/validate_proposal (mechanical whitelist check)
+                  skill-master:judge (semantic accumulation defense — DP-V1=D)
+                  AskUserQuestion → scripts/pr_composer (draft PR via gh)
 ```
 
 ### Delegation Principle
@@ -69,6 +76,8 @@ skill-master orchestrates; it does not rebuild existing capabilities:
 | plugin-reviewer | opus | 9-dimension deep review from AI executor perspective (migrated from skill-audit) |
 | intent-distiller | sonnet | Extract structured plugin/skill development intent from user requests |
 | trigger-arbiter | opus | Cross-plugin trigger overlap and conflict detection |
+| proposer | sonnet | (insights route) Drafts skill description / Examples edits from real usage findings; outputs strict JSON candidates list |
+| judge | sonnet | (insights route, DP-V1=D) Evaluates Proposer candidates for semantic accumulation / drift / original-intent divergence; returns approvals + rejections |
 
 ### Supporting Files
 
@@ -76,12 +85,13 @@ skill-master orchestrates; it does not rebuild existing capabilities:
 |------|------------|---------|
 | structural-validation.md | plugin-dev unavailable | D1 Structural Validation + D2 Reference Integrity |
 | trigger-baseline.md | plugin-dev unavailable | D5.1-5.2 description overlap + D7.3 description quality + D9.1 trigger quality |
+| skills/master/insights.md | "insights" intent matched | 8-step insights route process |
 
 ## Skills
 
 | Skill | Description |
 |-------|-------------|
-| master | Single entry point with 4-route intent detection. Orchestrates full plugin lifecycle. |
+| master | Single entry point with 5-route intent detection (create / review / iterate / package / insights). Orchestrates full plugin lifecycle including evidence-driven improvement from real usage. |
 
 ## Review Dimensions
 

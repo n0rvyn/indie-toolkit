@@ -1,0 +1,16 @@
+{
+  "candidates": [
+    {
+      "candidate_index": 0,
+      "file_path": "dev-workflow/skills/verify-plan/SKILL.md",
+      "change_type": "append_examples_section",
+      "old_string": "...",
+      "new_string": "...\n\n## Examples\n\n### Example: ...\n",
+      "evidence_summary": "12 invocations, 33% correction rate; users often expressed 'skip this' suggesting trigger is too eager"
+    }
+  ],
+  "context": {
+    "window_days": 14,
+    "lag_warning": null
+  }
+}

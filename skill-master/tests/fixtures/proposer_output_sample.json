@@ -1,0 +1,13 @@
+{
+  "candidates": [
+    {"file_path": "dev-workflow/skills/verify-plan/SKILL.md",
+     "change_type": "description_update",
+     "old_string": "description: Verifies implementation plans for correctness.",
+     "new_string": "description: Verifies implementation plans for correctness. Use when you have a plan file ready to check for gaps, ambiguities, or missing dependencies before execution.",
+     "evidence_keys": ["correction_rate", "pattern_summary", "window_days"],
+     "evidence_summary": "12 invocations, 33% correction rate; users often expressed intent to skip suggesting trigger is too eager",
+     "expected_metric_change": "correction_rate should drop below 20% in next 14-day window",
+     "sample_size": 12,
+     "confidence": "medium"}
+  ]
+}

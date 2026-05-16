@@ -23,6 +23,7 @@ Policy for this pass:
 - `commit`
 - `issue`
 - `finish-branch`
+- `execute-plan` (also auto-invoked by `run-phase`; kept user-visible for direct re-runs after manual fixes)
 
 `dev-workflow` manual entries:
 - `audit-rules`
@@ -31,7 +32,6 @@ Policy for this pass:
 
 First-pass `dev-workflow` internal helpers:
 - `verify-plan`
-- `execute-plan`
 - `test-changes`
 - `write-feature-spec`
 - `crystallize`

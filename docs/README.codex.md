@@ -22,7 +22,7 @@ Command source of truth is `.codex/INSTALL.md`.
 ## Notes
 
 - Codex directly loads `skills/`; `agents/` and `hooks/` are plugin internals and are not linked directly.
-- Current Codex-loadable plugin skill folders: `dev-workflow`, `apple-dev`, `mactools`, `product-lens`, `skill-master`, `skill-audit`, `domain-intel`, `session-reflect`, `youtube-scout`, `pkos`, `wechat-bridge`, `health-insights`, `minimax-quota`, `netease-cloud-music`.
+- Current Codex-loadable plugin skill folders: `dev-workflow`, `apple-dev`, `mactools`, `product-lens`, `skill-master`, `wechat-bridge`, `minimax-quota`, `netease-cloud-music`, `shared-utils`.
 - `x-api` is not a Codex skill folder. It is an MCP server plugin and needs separate MCP setup.
 
 ## Utility Scripts

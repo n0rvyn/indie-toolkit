@@ -1,6 +1,6 @@
 ---
 name: fix-bug
-description: "Use when the user reports an error with stack trace or screenshot, describes unexpected behavior, or build/test failures occur. Triggers: '修 bug', '报错', '不work', '为什么', 'fix this', stack trace pasted. Systematically diagnoses through reproduction, hypothesis, value domain tracing, and parallel path detection. Not when: user only wants an explanation of behavior (answer directly) or wants a feature added (use brainstorm or write-plan)."
+description: "Use when the user reports an error with stack trace or screenshot, describes unexpected behavior, build/test failures occur, OR provides a batch of issues to fix against a running system that exposes an end-to-end verification surface — API, CLI, REPL, chat agent, or mobile deeplink ('fix these N issues against the API', 'dogfood this batch', '修一批 issue 通过平台自验证'). Triggers: '修 bug', '报错', '不work', '为什么', 'fix this', stack trace pasted, multi-issue list. Single-bug input runs the linear diagnostic; multi-issue input WITH the verification surface present switches to the multi-issue loop in references/multi-issue-loop.md (multi-issue WITHOUT a verification surface falls back to per-issue single-bug flow, not loop mode). Not when: user only wants an explanation of behavior (answer directly) or wants a feature added (use brainstorm or write-plan)."
 ---
 
 ## Input
@@ -9,6 +9,7 @@ Trigger this command when:
 - User reports an error with stack trace or screenshot
 - User describes unexpected behavior
 - Build/test failures occur
+- User provides a batch of bugs/issues to fix against a running system
 
 If input is incomplete, use `AskUserQuestion` with a single batch covering the missing pieces:
 1. Steps to reproduce
@@ -18,6 +19,18 @@ If input is incomplete, use `AskUserQuestion` with a single batch covering the m
 Ask in one turn, not three. Only include questions for fields you don't already have.
 
 **Fallback**: if `AskUserQuestion` is not available in the current invocation context (e.g., skill invoked via hook or programmatic dispatch), ask in prose as a single consolidated message instead — do not split into sequential turns.
+
+## Mode Detection
+
+Inspect the input. If **all** of these hold, switch to the multi-issue loop documented in `references/multi-issue-loop.md`:
+
+1. Input references 2+ issues (e.g., `#N1 #N2 #N3`, "fix these 4 issues", "dogfood this batch", a list of bug IDs, or 2+ symptom paragraphs separated as items)
+2. The system under repair has an end-to-end verification surface (HTTP API, CLI, REPL, chat agent, mobile deeplink, or equivalent)
+3. The user expects verification through that surface (not just unit-test green) — explicit ("verify via the platform itself"), or implicit (the bugs are user-visible behaviors that only manifest at runtime)
+
+In loop mode, the linear flow below is wrapped by a Baseline → Bundle → per-bundle pipeline. Within each bundle, this skill's Steps 1–6 (diagnostic) still run per-issue — only Step 7 (`/write-plan`) is invoked once per bundle, covering all issues in that bundle. Read `references/multi-issue-loop.md` and follow its L0–L5 process; treat the steps below as the diagnostic substrate that L4.0 calls into.
+
+Otherwise (single bug, OR no end-to-end verification surface): proceed with the steps below as the normal single-bug flow.
 
 ## Hard Gate: "Why does X behave this way" Questions
 
@@ -68,7 +81,7 @@ This is an audit aid, not an enforced gate — no hook intercepts a missing mark
 
 0.7. **Project Health** — see `dev-workflow/references/project-health-scanner.md`. If scanner exists and cached state is missing/red/stale (>7 days), run full mode with `--reason fix --max-ms 5000 --write-state`. Treat red/yellow signals as regression guards for the fix plan.
 
-0.8. **Project Context Contract** — see `dev-workflow/references/project-context-contract.md`. Read `docs/00-AI-CONTEXT.md` if present; otherwise mark `Project context contract: missing` and continue. Do not create `CONTEXT.md`.
+0.8. **Project Context Contract + Ubiquitous Language** — see `dev-workflow/references/project-context-contract.md`. Read `docs/00-AI-CONTEXT.md` if present; otherwise mark `Project context contract: missing` and continue. Do not create `CONTEXT.md`. Also check `docs/02-architecture/ubiquitous-language.md` (per `dev-workflow/references/ubiquitous-language-pattern.md`); if present, read it and use the term mappings when reasoning about the bug and describing the fix — keeps AI vocabulary aligned with the project's domain language. If absent, do not auto-create it; suggesting maintenance is part of `brainstorm`'s flow, not `fix-bug`'s.
 
 **Parallel execution note (Steps 0.5 / 0.7 / 0.8):** these three preflight steps are read-only and independent. Issue them in **one tool-call batch** (single message, parallel Skill / Bash / Read calls) — Opus 4.7's 1M context easily holds all three results. Sequential execution costs latency without informational benefit.
 
@@ -238,6 +251,8 @@ If no level is constructable, output `[Feedback Loop] level=0 — not constructa
    - Regression shield: {adjacent behavior that must remain unchanged}
    - Project Health: {red/yellow signals from Step 0.7, or none}
    ```
+
+   **Relationship to write-plan's Task Contract schema:** when fix complexity is Complex and Step 7 invokes `/write-plan`, the structured `**Task Contract:**` block in the resulting plan uses a different (more granular) field shape: `Expected behavior` / `Automated verify` / `Real path verify` / `Manual/device verify` (see `dev-workflow/skills/write-plan/SKILL.md` § Task Structure). Translation when handing off: this skill's `[Task Contract].Expected behavior` → plan's `Expected behavior`; `Reproduction / verification method` → split into plan's `Automated verify` (the command/fixture) plus `Real path verify` (the user-perspective check); `Regression shield` → plan's per-task `Regression shield:` line. Do not duplicate this skill's `[Task Contract]` block into the plan — let `/write-plan` regenerate using its own schema.
 
    If the bug touches Swift, iOS, macOS, SwiftUI, SwiftData, `.xcodeproj`, or `.xcworkspace`, load `apple-dev:apple-swift-context` internally before the fix plan.
 

@@ -17,6 +17,7 @@
 - [ ] Step 0 Out-of-scope check must exist before Step 1 (Understand Complexity Source); must list .out-of-scope/*.md and surface matches to user.
 - [ ] Step 0.5 Pre-decision Expectation Check must exist between Step 0 (out-of-scope check) and Step 1 (understand complexity).
 - [ ] Pre-decision Expectation Check must require user confirmation before proceeding to Step 1.
+- [ ] Step 3 contains 5th evaluation question on module shape (deep/shallow + seam/adapter), referencing dev-workflow/references/deep-modules-pattern.md; Output section includes "module-shape note" requirement per option
 
 ## Redundancy Risk
 Baseline comparison: Base model can analyze trade-offs but lacks structured essential vs accidental complexity framework

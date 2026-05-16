@@ -23,6 +23,7 @@
 - [ ] Mini-spec written to `docs/06-plans/YYYY-MM-DD-<slug>-increment.md` with frontmatter
 - [ ] `.claude/increment-history.yml` appended (or created) with new entry, `status: pending`
 - [ ] Next-skill suggestion stated once, mapped from complexity
+- [ ] Step 2 contains "Deletion-test screen" paragraph referencing dev-workflow/references/deep-modules-pattern.md; Rules section contains "Deletion-test mandatory" bullet
 
 ## Scenario Tests
 

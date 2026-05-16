@@ -22,6 +22,9 @@
 - [ ] Static plugin compliance eval checks dev-workflow/apple-dev frontmatter against the public-entry visibility matrix
 - [ ] Static plugin compliance eval checks stale direct `/execution-review` user-routing references are absent from hook/template/verifier/README
 - [ ] Step 1 Gather Context must include item 12: out-of-scope archive read with surfacing-to-user behavior on match.
+- [ ] Step 1 item 8 Pre-flight Audit references dev-workflow/references/deep-modules-pattern.md for module-shape scan (shallow / adapter / locality signals), with declarative-UI caveat
+- [ ] Task Structure section contains the "On the verify-first ordering" callout pointing to dev-workflow/references/tdd-research-2026.md
+- [ ] Existing line "vertical slice per Pocock TDD" remains present in Task Structure section (regression: do not remove)
 - [ ] Decision points presented if any ambiguities exist
 
 ## Contract Fixtures

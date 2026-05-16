@@ -16,9 +16,7 @@
 - [ ] Output includes batch progress tracking
 - [ ] Output suggests implementation-reviewer for plan-vs-code audit (standalone mode)
 - [ ] Each task's Verify command is run before marking task complete
-
-- [ ] Frontmatter marks this skill `user-invocable: false` while keeping model routing available
-- [ ] Internal route phrases trigger this skill without user slash-command wording
+- [ ] Step 2 contains "Plan-time test-impl split (documentation note)" subsection referencing dev-workflow/references/tdd-research-2026.md and write-plan/SKILL.md Writing Guideline item 12; explicitly states NO dispatch-time splitting
 
 ## Redundancy Risk
 Baseline comparison: Base model can execute tasks but lacks batch execution with review checkpoint methodology

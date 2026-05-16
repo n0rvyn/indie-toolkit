@@ -27,11 +27,18 @@ This skill dispatches the `dev-workflow:execute-plan` agent (sonnet) to execute 
    - If the user does NOT choose to accept all: present each DP individually via separate AskUserQuestion calls. Do not assume any DP is accepted until the user explicitly confirms it.
    - Record user choices: edit the plan file, replace `**Recommendation:**` or `**Recommendation (unverified):**` with `**Chosen:** {Option A | B | C}` using the original label.
 
+### Behavior Note: Plan-time test-impl split pattern
+
+Some plans contain task pairs like `Task N-tests` and `Task N-impl` — a single conceptual unit split across two tasks. This is the plan-time isolation pattern (see `dev-workflow/references/tdd-research-2026.md` § 2026 mitigation stack); the split happens during `write-plan` task generation (per `write-plan/SKILL.md` Writing Guideline item 12), not at dispatch time. `execute-plan` runs these tasks as two normal sequential tasks via the existing single-agent flow — no special routing, no agent contract changes. The second agent reads the now-committed test files as input and is constrained by `Task N-impl`'s `Regression shield:` to not modify them.
+
+If you encounter a single task whose Files list includes BOTH test and non-test files (i.e., the plan was hand-written without the split), execute it as-is — do not attempt to split at dispatch time (that would require agent contract changes not implemented in this codebase).
+
 ### Step 2: Initialize and Dispatch
 
 1. Read the plan file and count total tasks (count `### Task N:` headings).
    - **If state file exists and references a `plan_file` path that no longer exists** (file moved, renamed, or deleted between resumes): surface a clear error — "State file references {path} which no longer exists. Either restore the plan file at this path, or delete `.claude/execute-plan-state.json` to start fresh." Abort. Do not silently fall through.
    - **If state file exists but `state.plan_file` differs from the plan path being invoked on** (stale state from a previous plan, user is now starting work on a new plan): surface — "State file references {state.plan_file} but you're invoking on {current path}. Delete `.claude/execute-plan-state.json` to start fresh, or invoke on {state.plan_file} to resume that plan." Abort. Do not silently resume the wrong plan.
+
 2. Check for existing state file at `.claude/execute-plan-state.json`:
    - If exists and `status` is `in_progress`: resume from `last_completed + 1`
      - **Plan-edit reconciliation** (always run on resume): re-count `### Task N:` headings in the plan file. If `actual_total != state.total`: update `state.total = actual_total` and surface "ℹ️ Plan now has {N} tasks (was {M}); resuming with updated total." This catches cases where the user added/removed tasks while paused.

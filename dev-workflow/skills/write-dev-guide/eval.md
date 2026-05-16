@@ -25,6 +25,7 @@
 - [ ] Output presents Decision Points via AskUserQuestion for blocking decisions
 - [ ] Output asks user to confirm or adjust structure before proceeding
 - [ ] Output presents per-phase confirmation table with user-visible changes, key files, acceptance criteria
+- [ ] Phase Splitting Principles section contains "Module-shape lens" bullet referencing dev-workflow/references/deep-modules-pattern.md, with the seam-and-locality reasoning intact and declarative-UI caveat
 
 ## Redundancy Risk
 Baseline comparison: Base model can outline projects but lacks standardized phased structure and design-doc anchoring

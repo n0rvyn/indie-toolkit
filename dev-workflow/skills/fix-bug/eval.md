@@ -1,13 +1,27 @@
 # fix-bug Eval
 
 ## Trigger Tests
+
+**Single-bug mode:**
 - "I'm getting this error: [stack trace]"
 - "The app crashes when I tap save, here's a screenshot"
 - "Build fails with 'ambiguous reference' after my changes"
 
+**Multi-issue loop mode** (must route to `references/multi-issue-loop.md`):
+- "Fix #12, #15, and #17 and verify each via the API"
+- "Dogfood this batch of 4 bugs against the running platform"
+- "修一批 issue 并通过平台自验证"
+- "Here are 3 user-visible bugs in the chat agent — fix them and replay through ChatManager"
+
 ## Negative Trigger Tests
-- "Add a new feature to export data"
-- "Refactor this code to be cleaner"
+
+**Should NOT trigger fix-bug:**
+- "Add a new feature to export data" (feature, use brainstorm)
+- "Refactor this code to be cleaner" (refactor, use write-plan)
+
+**Should trigger fix-bug single-bug mode, NOT loop mode:**
+- "Fix these 2 bugs in this pure-function library" (2+ issues but no end-to-end verification surface — falls back to single-bug flow per issue)
+- "Two failing unit tests in math.test.ts" (unit-test scope only, no runtime surface)
 
 ## Output Assertions
 - [ ] Skill Step 0.9 must contain a compact Level/Signal table covering all 10 levels AND a pointer to `dev-workflow/references/feedback-loop-ladder.md` for long-form rationale.
@@ -25,6 +39,9 @@
 - [ ] Step 5 value-domain trace prefers `LSP findReferences` when an LSP server is available; grep as fallback
 - [ ] Step 7 Consumer Impact uses `LSP findReferences` to enumerate callers (LSP-available languages)
 - [ ] Agent dispatch verification gate present: after every Agent return, claimed file writes are verified against disk state before advancing
+- [ ] Mode Detection block exists between `## Input` and `## Hard Gate`, with all three conditions enumerated (2+ issues / verification surface present / surface-level verification expected); routes to `references/multi-issue-loop.md` when all three hold
+- [ ] Step 0.8 reads `docs/02-architecture/ubiquitous-language.md` if present (in addition to AI-CONTEXT.md), per `references/ubiquitous-language-pattern.md`
+- [ ] `dev-workflow/references/multi-issue-loop.md` exists and defines steps L0 through L5, including L4.0 "route through fix-bug Steps 1-6 for diagnostic"
 
 ## Redundancy Risk
 Baseline comparison: Base model can diagnose errors but lacks systematic value-domain tracing and parallel path detection methodology

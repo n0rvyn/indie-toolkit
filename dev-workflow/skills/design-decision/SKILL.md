@@ -75,11 +75,12 @@ For each option, ask:
 - Does it require explanation to use?
 - Does it break existing consistency?
 - Is it adding accidental or essential complexity?
+- Module shape: does this option create a deep module with a simple interface, or a shallow module with a complex interface? Does it produce a natural seam (a swappable boundary) or an awkward adapter (a bridge that exists only because two layers don't agree)? See `dev-workflow/references/deep-modules-pattern.md` for the vocabulary. When two options are close on the first 4 questions, this one often discriminates. (Declarative-UI exception: skip the deep-vs-shallow part; apply only seam-vs-adapter to state binding / prop drilling.)
 
 ## Output
 
 1. Restate the core problem (one sentence)
-2. For each option: pros, cons, complexity type
+2. For each option: pros, cons, complexity type, module-shape note (deep/shallow + seam/adapter — see `dev-workflow/references/deep-modules-pattern.md`)
 3. Recommendation with clear reasoning
 4. If no option is good: suggest a different framing
 

@@ -94,6 +94,7 @@ Before starting, identify:
 2. **Design doc** — the design document the plan was derived from (may not exist; ask user)
 3. **Scope** — which plan tasks to audit (default: all)
 4. **Project Context Contract** — if `docs/00-AI-CONTEXT.md` exists, read it for product language, user-visible names, module map, and validation commands. `CLAUDE.md` and `AGENTS.md` remain execution-rule files. Do not request or create `CONTEXT.md`.
+5. **Plan file (path)** — used to detect split task pairs by matching `### Task N-tests` and `### Task N-impl` patterns.
 
 ## Part 1: Plan-vs-Code Verification (always run)
 
@@ -334,6 +335,51 @@ Output per item:
 ```
 [E - Degraded] {design_file:line} Design: {approach}, Code: {actual_approach} — ✅ faithful / ⚠️ known simplification (plan annotated) / ❌ silent degradation (must-fix)
 ```
+
+---
+
+## Test-Fidelity Audit (for split task pairs)
+
+When the plan contains task pairs matching the pattern `### Task N-tests:` + `### Task N-impl:` (per `dev-workflow/skills/write-plan/SKILL.md` Writing Guideline item 12), perform this additional audit. The pattern match is on the heading shape — strict `-tests` / `-impl` suffixes; alternate names like `Task 5a / Task 5b` are NOT recognized as split pairs.
+
+**Why this exists:** plan-time test-impl split (per `dev-workflow/references/tdd-research-2026.md`) isolates the test-writer's context from the implementer's, but doesn't guarantee test correctness. After both halves execute, if `test-changes` reports failure, the user needs to know which side drifted. This audit provides that diagnosis.
+
+**Pre-audit scan (always run):**
+
+1. Glob all `### Task N-tests:` and `### Task N-impl:` headings in the plan file.
+2. **Orphan detection** — for any `N-tests` heading without a matching `N-impl` heading (or vice versa), emit an `advisory` finding: `Orphaned split half: Task N-{tests|impl} exists without its counterpart — split may be incomplete or hand-edited inconsistently.` Continue the audit on paired tasks only.
+3. **No-split annotation** — tasks with `<!-- no-split: <reason> -->` immediately after the `### Task N:` heading (per write-plan Guideline 12 "When NOT to split") are excluded from pair detection regardless of suffix. The annotation is the plan author's explicit opt-out and overrides any naming-based pair match.
+4. **Empty result** — if no paired split tasks remain after the scan, output the single line `Test-Fidelity Audit: no split task pairs in plan; skipped.` and contribute nothing to the verdict. Do NOT skip silently — the marker line is auditable proof that this step ran.
+
+**Audit procedure** for each split task pair (Task N-tests, Task N-impl):
+
+1. Read Task N-tests' `Task Contract.Expected behavior` (call it `EB_tests`).
+2. Read Task N-impl's `Task Contract.Expected behavior` (call it `EB_impl`).
+3. Read the test files listed in Task N-tests' `**Files:**` — when collecting paths, strip the `Create:`, `Modify:`, or `Test:` prefix (these are plan-author annotations, not part of the file path).
+4. Read the impl files listed in Task N-impl's `**Files:**` — same prefix stripping rule (`Create:` / `Modify:` / `Test:`).
+5. Evaluate three checks:
+
+   **Check A — Test-vs-Contract fidelity:** do the test assertions encode `EB_tests` (the user-observable expectations the test author was supposed to capture)? Or do they assert on details not mentioned in `EB_tests` (overfitting to specific implementation choices)?
+   - If test assertions are STRICTLY about user-observable behavior named in `EB_tests` → fidelity good.
+   - If test assertions reference internal function names, call counts, or implementation patterns not in `EB_tests` → overfitting; finding severity `advisory`.
+   - If `EB_tests` describes behavior X but the tests test behavior Y instead → test wrong; finding severity `blocker`.
+
+   **Check B — Contract consistency:** does `EB_impl` describe the same user-visible outcome as `EB_tests`? Per Writing Guideline item 12, the two should describe the same outcome from two angles (test-side expectations vs impl-side behavior).
+   - If `EB_tests` and `EB_impl` agree → pass.
+   - If they describe different outcomes (e.g., `EB_tests` says "returns sorted list", `EB_impl` says "returns unsorted list with `_sortable=true` flag") → contract drift between halves; finding severity `blocker`.
+
+   **Check C — Test-vs-Impl gap:** are there behaviors described in `EB_impl` that have no corresponding test assertion?
+   - If every behavior in `EB_impl` has at least one test asserting it → pass.
+   - If `EB_impl` has behaviors not tested → test/impl gap; finding severity `advisory`.
+
+6. Report findings in the agent's standard output format under a section `## Test-Fidelity Findings`. For each finding, include: pair identifier (`Task N-tests / Task N-impl`), check (A/B/C), severity, evidence (file:line in test and/or impl), and a one-sentence diagnosis.
+
+**Output contract:** the audit's verdict is part of the overall agent verdict — any `blocker` test-fidelity finding contributes to a `must-revise` overall verdict; `advisory` findings are surfaced but don't change verdict. (The empty-result marker line is emitted by the Pre-audit scan above, not here.)
+
+**Interpretation guide for the user reading the report:**
+- Test wrong (Check A or B blocker): rewrite Task N-tests; re-execute the pair.
+- Test/impl gap (Check C advisory): either add tests to Task N-tests OR scope the gap as a follow-up; not a blocker for the current plan unless the gap covers a critical path.
+- Both halves wrong consistently (Check B blocker + tests pass): this is the classic context-pollution failure that plan-time split is supposed to prevent — if seen, surface as a regression on the split mechanism itself.
 
 ---
 

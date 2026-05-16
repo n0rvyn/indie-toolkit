@@ -66,6 +66,8 @@ Produce between 3 and 5 candidates. Each candidate is a block with every field b
 
 One candidate can satisfy one archetype. If the architecture is at a stage where one archetype has no meaningful increment, state that explicitly and still produce 3 candidates from the remaining archetypes.
 
+**Deletion-test screen** (Pocock — see `dev-workflow/references/deep-modules-pattern.md`): before listing a candidate, apply the deletion test to its `what` field. Would the codebase observably behave differently if the candidate's work did not exist? If no (the candidate only changes code structure / adds an abstraction / renames things without changing user-visible or downstream behavior), the candidate fails the deletion test. Drop it from the candidate set; replace with a candidate whose `what` describes observable behavior change. This screen is independent of the archetype coverage rule — an infrastructure-seed candidate still must pass deletion test (the seed must unblock a downstream observable behavior, not just exist).
+
 ### Step 3: Recommend + Metadata
 
 After the candidate list, output two lines:
@@ -76,6 +78,8 @@ Reasoned top-1: {letter} — {one sentence citing the architecture anchor, depen
 ```
 
 If these two disagree, the user sees the mismatch and can decide whether they are overriding instinct or reasoning. If they agree, state them anyway — the user still learns the reasoning.
+
+When candidates are close on archetype + signal velocity + complexity, use the module-shape lens (see `dev-workflow/references/deep-modules-pattern.md`) as a tiebreaker: prefer the candidate that creates a deep module / a clean seam over one that adds an adapter or a shallow boundary. Cite the seam-vs-adapter or locality reasoning in the `Reasoned top-1` one-sentence rationale.
 
 ### Step 4: AskUserQuestion
 
@@ -178,6 +182,7 @@ On completion of a prior increment (user says "mark {id} done" or equivalent), u
 - **Verify field is concrete.** "Manual check" / "looks right" / "tests pass" are not acceptable `verify` values.
 - **One increment at a time.** Preconditions block a second run while another is `in_progress`.
 - **Doc anchors are mandatory.** Every candidate must cite at least one architecture doc section. A candidate with no anchor means the skill has drifted from the stated direction; drop it.
+- **Deletion-test mandatory.** Candidates that fail the deletion test (work whose absence wouldn't change observable behavior) are rejected; regenerate. See `dev-workflow/references/deep-modules-pattern.md` for the deletion-test definition.
 
 ## Completion Criteria
 

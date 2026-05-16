@@ -59,6 +59,69 @@ Read relevant source files (design docs, existing code the plan will touch, crys
 
 Save the plan to `docs/06-plans/YYYY-MM-DD-<feature-name>-plan.md`.
 
+### Step 2.5: Readback Echo (soft — skip if caller is run-phase)
+
+Caller detection:
+- If invoked from `dev-workflow:run-phase` orchestration → skip this step entirely
+- If invoked from `dev-workflow:next-increment` orchestration → skip
+- Else (standalone `/write-plan` or hook-driven) → execute
+
+Execution:
+
+1. Dispatch `readback:intent-echoer` agent via Task tool with:
+   - `user_request`: the user's original prompt (full text from this session)
+   - `draft_plan`: the just-written plan's Goal + Architecture (first 30 lines of the plan file)
+   - `context_terms`: 3-5 project terms from session
+
+2. Capture agent's verbatim output. **Substitute the literal content between the EOF markers with the actual text returned by intent-echoer** — do not modify, escape, or summarize. (If agent output contains the literal string `EOF_AGENT_OUTPUT`, use a unique marker variant for both lines.)
+
+   ```bash
+   AGENT_OUTPUT=$(cat <<'EOF_AGENT_OUTPUT'
+   {paste intent-echoer's literal output here; do not modify}
+   EOF_AGENT_OUTPUT
+   )
+   ```
+
+3. Write `.claude/readback-state.json`:
+   ```bash
+   mkdir -p .claude
+   jq -n \
+     --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+     --arg text "$AGENT_OUTPUT" \
+     '{
+       created_at: $ts,
+       session_id: null,
+       skill: "write-plan",
+       readback_done: true,
+       readback_text: $text,
+       user_confirmed: false,
+       confirmed_at: null,
+       correction_count: 0
+     }' > .claude/readback-state.json
+   ```
+
+4. Present agent output VERBATIM to user. Stop. Do not proceed to Step 3 (Decision Points / verify-plan).
+
+5. Wait for user response:
+   - "go" / "OK" / correction acknowledged → update state:
+     ```bash
+     jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+       '.user_confirmed = true | .confirmed_at = $ts' \
+       .claude/readback-state.json > .claude/readback-state.json.tmp \
+       && mv .claude/readback-state.json.tmp .claude/readback-state.json
+     ```
+     Then continue to Step 3.
+   - Correction → re-dispatch intent-echoer with the correction, capture new `AGENT_OUTPUT`, then update state with incremented `correction_count`:
+     ```bash
+     jq --arg text "$AGENT_OUTPUT" \
+       '.readback_text = $text | .correction_count += 1' \
+       .claude/readback-state.json > .claude/readback-state.json.tmp \
+       && mv .claude/readback-state.json.tmp .claude/readback-state.json
+     ```
+     Present new agent output verbatim. If `correction_count` reaches 2, suggest `/dev-workflow:brainstorm` (alignment broken upstream).
+
+Note: this is soft mode (no `PreToolUse` hook enforcement — the readback plugin's hook only blocks when `skill: "fix-bug"`). The intent is alignment, not blocking. Standalone `/write-plan` callers benefit from the echo; `/run-phase`-driven invocations skip it because run-phase already handles confirmation at its own boundary.
+
 ### Step 3: Present and Verify
 
 After writing the plan:
@@ -67,6 +130,7 @@ After writing the plan:
    - Plan file path
    - Number of tasks
    - Key files to be created/modified
+
 2. **Decision Points:** Check the `## Decisions` section of the plan file.
    - If Decisions > 0:
      - First time this session: Read `${CLAUDE_PLUGIN_ROOT}/references/decision-points.md`

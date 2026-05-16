@@ -252,8 +252,8 @@ current: true
 - ASC materials
 
 **Review checklist:**
-- [ ] /submission-preview
-- [ ] /appstoreconnect-review
+- [ ] /asc-submit-preview
+- [ ] /asc-listing
 <!-- /section -->
 ```
 

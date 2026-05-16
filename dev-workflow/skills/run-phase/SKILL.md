@@ -390,7 +390,9 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
    - **If Phase modified UI files:** `apple-dev:ui-reviewer` — pass list of modified `*View.swift` files
    - **If Phase created new pages/components:** `apple-dev:design-reviewer` — pass list of new View files
    - **If Phase completed a full user journey:** `apple-dev:feature-reviewer` — pass feature scope + key files
-   - **If this is the submission prep Phase:** invoke `/submission-preview` skill after agents complete
+   - **If this is the submission prep Phase:** invoke `/asc-submit-preview` skill after agents complete
+
+   > Note: run-phase dispatches Apple reviewers via Phase-completion signals (UI files modified / new components / journey completed). `/review-execution` dispatches the SAME agents via git-diff signals (HAS_SWIFT / HAS_NEW_VIEW / user keywords). Both routes are intentional — run-phase serves orchestrated phases; review-execution is standalone. Running both back-to-back will dispatch agents twice with slightly different scopes.
 
 3. **Dispatch ALL agents in parallel** using the Task tool in a single message:
 

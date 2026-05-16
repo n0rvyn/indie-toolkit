@@ -1,8 +1,8 @@
 ---
 name: review-execution
-description: "Use when the user says 'review execution', 'parallel review', '审查执行', '并行 review', or wants a fresh-context multi-lens review of uncommitted changes BEFORE commit. Dispatches 4 parallel reviewer agents (correctness, test-coverage, breaking-changes, root-cause-depth) and consolidates findings into must-fix / nice-to-have. Standalone — does NOT require a plan or dev-guide. Not when: a plan exists and you want plan-vs-code audit — use implementation-reviewer. Not when: pre-commit semantic classification only — use review-before-commit."
+description: "Use when the user says 'review execution', 'parallel review', 'deep review', 'review my code', 'review after coding', 'execution review', '审查执行', '并行 review', '写完 review 一下', '代码 review 一下', '深度审查', '执行后审查', or wants a fresh-context multi-lens review of uncommitted changes BEFORE commit. Dispatches 4 parallel reviewer agents (correctness, test-coverage, breaking-changes, root-cause-depth) and consolidates findings into must-fix / nice-to-have. Standalone — does NOT require a plan or dev-guide. Not when: a plan exists and you want plan-vs-code audit — use implementation-reviewer. Not when: pre-commit semantic classification only — use review-before-commit. Not when project is Apple-only and you want only ASC pre-submit review — use /asc-submit-preview. Not when user says '代码审计' (the 4-char compound triggers apple-dev:code-audit internal scan; this skill matches '代码审' as a verb phrase, not '代码审计' as a noun)."
 user-invocable: true
-allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*), Task
+allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*, find:*, grep:*), Task
 ---
 
 ## Overview
@@ -17,6 +17,7 @@ This skill formalizes the "parallel reviewer dispatch" pattern that consistently
 - Before a PR / merge to main
 - After `execute-plan` completes outside of `run-phase` orchestration
 - When the user wants a "second opinion" on uncommitted work
+- Apple 项目（自动并行 dispatch ui/design/feature/apple reviewers 与 4-lens 同批次执行）
 
 ## When NOT To Use
 
@@ -31,10 +32,19 @@ This skill formalizes the "parallel reviewer dispatch" pattern that consistently
 1. Run: `git status` — confirm uncommitted changes exist. If none, STOP: "无 uncommitted changes — review-execution 无对象。"
 2. Run: `git diff --stat` + `git diff --staged --stat` — get scope.
 3. Identify project root and primary language(s) for the lens-prompts.
+4. Detect project type using shell:
+   - Run `find . -maxdepth 3 \( -name "*.xcodeproj" -o -name "*.xcworkspace" -o -name "Package.swift" \) -print -quit`
+   - If output is non-empty → mark project as Apple (use this flag in Step 2)
+   - Else → mark as non-Apple
+5. Identify modified file kinds (only used when project is Apple):
+   - `HAS_SWIFT`: shell expression `git diff --name-only HEAD | grep -q '\.swift$'`
+   - `HAS_NEW_VIEW`: shell expression `git diff --name-only --diff-filter=A HEAD | grep -q 'View\.swift$'`
 
-### Step 2: Dispatch Four Parallel Reviewers
+### Step 2: Dispatch Reviewers (Single Parallel Batch)
 
-Use the Task tool to dispatch all four in a SINGLE message (parallel execution):
+Use the Task tool to dispatch ALL applicable reviewers in a SINGLE message (parallel execution).
+
+**Always dispatched (4-lens):**
 
 **Lens A — Correctness (subagent_type: general-purpose, model: opus):**
 ```
@@ -91,9 +101,19 @@ For each finding emit:
 Skip enhancement / refactor / removal changes — only grade fixes.
 ```
 
+**Additionally dispatched in the SAME batch when project is Apple:**
+- `apple-dev:apple-reviewer` — always when Apple project is detected (covers non-Swift diffs too: .plist, Package.swift, entitlements, asset catalogs)
+- `apple-dev:ui-reviewer` — if HAS_SWIFT
+- `apple-dev:design-reviewer` — if HAS_NEW_VIEW
+- `apple-dev:feature-reviewer` — if user message contains "user journey" / "feature 完成" / "完整流程"
+
+Critical: all applicable reviewers (4 lenses + conditional Apple) must be in ONE Task batch — do NOT split into a follow-up sequential dispatch.
+
+If project is Apple but ONLY apple-reviewer applies (no Swift / new View / user journey signals), still emit the Apple section in the report so the user knows Apple coverage was assessed; if project is non-Apple, do not mention Apple at all.
+
 ### Step 3: Consolidate
 
-Wait for all four agents to return. Parse their outputs into a single table:
+Wait for all agents to return. Parse their outputs into a single table:
 
 ```
 ## Review Findings — {date}
@@ -111,10 +131,13 @@ Wait for all four agents to return. Parse their outputs into a single table:
 - Lens B (test-coverage) returned: {count} findings
 - Lens C (breaking) returned: {count} findings
 - Lens D (depth) returned: {count} findings
+- Apple coverage: {one of: "not applicable — non-Apple project" / "apple-reviewer + ui-reviewer + ..." (list dispatched) / "Apple project detected but no Apple reviewer applied (reason: {no Swift / no new View / no user journey signal})"}
 - Any agent that errored: {list, or "none"}
 ```
 
 Sort must-fix by file path; group by lens within each section.
+
+**Only when at least one Apple reviewer actually ran in Step 2**, prepend their findings under '## Apple-Specific Findings' section before the 4-lens consolidated table. If no Apple reviewer ran (non-Apple project or none of the conditions matched), do NOT add this section header.
 
 ### Step 4: Present and STOP
 

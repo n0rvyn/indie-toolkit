@@ -267,6 +267,7 @@ The agent detects the project type (Node / Swift Package / Cargo / Go / Python) 
 
 **Standalone mode** (not within run-phase):
 - All pass: "All build, test, and lint checks pass."
+- All pass + 改动 > 0：追加 hint「下一步可 `/review-execution` 做 4-lens 深审（correctness / test-coverage / breaking-changes / root-cause-depth）」
 - Failures: present errors and suggest fixing in main context.
 
 ## State Integration

@@ -20,7 +20,7 @@
 - [ ] Each non-doc task references at least one Impact Map row via `**Maps to Impact Map:**` field (required for contract_version: 2; advisory for v1)
 - [ ] Red/yellow Project Health signals are included in the plan header when scanner output is available
 - [ ] Static plugin compliance eval checks dev-workflow/apple-dev frontmatter against the public-entry visibility matrix
-- [ ] Static plugin compliance eval checks stale direct `/execution-review` user-routing references are absent from hook/template/verifier/README
+- [ ] Static plugin compliance eval checks stale direct user-routing references to /apple-dev:execution-review, /submission-preview, /appstoreconnect-review are absent from hook/template/verifier/README
 - [ ] Step 1 Gather Context must include item 12: out-of-scope archive read with surfacing-to-user behavior on match.
 - [ ] Step 1 item 8 Pre-flight Audit references dev-workflow/references/deep-modules-pattern.md for module-shape scan (shallow / adapter / locality signals), with declarative-UI caveat
 - [ ] Task Structure section contains the "On the verify-first ordering" callout pointing to dev-workflow/references/tdd-research-2026.md

@@ -42,6 +42,6 @@ First-pass `dev-workflow` internal helpers:
 `apple-dev` daily entries for the follow-up task:
 - `project-kickoff`
 - `design-parity-build`
-- `submission-preview`
-- `appstoreconnect-review`
+- `asc-submit-preview`
+- `asc-listing`
 - `code-audit`

@@ -73,7 +73,7 @@
     {
       "name": "skill-master",
       "source": "./skill-master",
-      "description": "Unified plugin lifecycle: brainstorm, create, eval, review, iterate, and package Claude Code plugins and components. Single entry /master with intent routing.",
+      "description": "Unified plugin lifecycle: brainstorm, create, eval, review, iterate, and package Claude Code plugins and components. Single entry /plugin-master with intent routing.",
       "version": "1.1.0",
       "category": "development",
       "tags": [
@@ -83,21 +83,6 @@
         "creation",
         "iteration",
         "packaging"
-      ],
-      "strict": true
-    },
-    {
-      "name": "skill-audit",
-      "source": "./skill-audit",
-      "description": "[DEPRECATED: use skill-master] Review Claude Code plugins from the AI executor perspective",
-      "version": "1.1.5",
-      "category": "development",
-      "tags": [
-        "review",
-        "audit",
-        "skills",
-        "agents",
-        "plugins"
       ],
       "strict": true
     },

@@ -28,7 +28,6 @@ ln -sfn ~/.codex/indie-toolkit/apple-dev/skills ~/.codex/skills/indie-toolkit-ap
 ln -sfn ~/.codex/indie-toolkit/mactools/skills ~/.codex/skills/indie-toolkit-mactools
 ln -sfn ~/.codex/indie-toolkit/product-lens/skills ~/.codex/skills/indie-toolkit-product-lens
 ln -sfn ~/.codex/indie-toolkit/skill-master/skills ~/.codex/skills/indie-toolkit-skill-master
-ln -sfn ~/.codex/indie-toolkit/skill-audit/skills ~/.codex/skills/indie-toolkit-skill-audit
 ln -sfn ~/.codex/indie-toolkit/domain-intel/skills ~/.codex/skills/indie-toolkit-domain-intel
 ln -sfn ~/.codex/indie-toolkit/session-reflect/skills ~/.codex/skills/indie-toolkit-session-reflect
 ln -sfn ~/.codex/indie-toolkit/youtube-scout/skills ~/.codex/skills/indie-toolkit-youtube-scout
@@ -49,7 +48,6 @@ ls -la ~/.codex/skills/indie-toolkit-apple-dev
 ls -la ~/.codex/skills/indie-toolkit-mactools
 ls -la ~/.codex/skills/indie-toolkit-product-lens
 ls -la ~/.codex/skills/indie-toolkit-skill-master
-ls -la ~/.codex/skills/indie-toolkit-skill-audit
 ls -la ~/.codex/skills/indie-toolkit-domain-intel
 ls -la ~/.codex/skills/indie-toolkit-session-reflect
 ls -la ~/.codex/skills/indie-toolkit-youtube-scout
@@ -64,7 +62,6 @@ find ~/.codex/skills/indie-toolkit-apple-dev -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-mactools -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-product-lens -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-skill-master -name SKILL.md | wc -l
-find ~/.codex/skills/indie-toolkit-skill-audit -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-domain-intel -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-session-reflect -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-youtube-scout -name SKILL.md | wc -l
@@ -91,7 +88,6 @@ rm ~/.codex/skills/indie-toolkit-apple-dev
 rm ~/.codex/skills/indie-toolkit-mactools
 rm ~/.codex/skills/indie-toolkit-product-lens
 rm ~/.codex/skills/indie-toolkit-skill-master
-rm ~/.codex/skills/indie-toolkit-skill-audit
 rm ~/.codex/skills/indie-toolkit-domain-intel
 rm ~/.codex/skills/indie-toolkit-session-reflect
 rm ~/.codex/skills/indie-toolkit-youtube-scout

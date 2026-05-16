@@ -28,7 +28,6 @@ ln -sfn ~/.config/opencode/indie-toolkit/apple-dev/skills ~/.config/opencode/ski
 ln -sfn ~/.config/opencode/indie-toolkit/mactools/skills ~/.config/opencode/skills/indie-toolkit-mactools
 ln -sfn ~/.config/opencode/indie-toolkit/product-lens/skills ~/.config/opencode/skills/indie-toolkit-product-lens
 ln -sfn ~/.config/opencode/indie-toolkit/skill-master/skills ~/.config/opencode/skills/indie-toolkit-skill-master
-ln -sfn ~/.config/opencode/indie-toolkit/skill-audit/skills ~/.config/opencode/skills/indie-toolkit-skill-audit
 ln -sfn ~/.config/opencode/indie-toolkit/domain-intel/skills ~/.config/opencode/skills/indie-toolkit-domain-intel
 ln -sfn ~/.config/opencode/indie-toolkit/session-reflect/skills ~/.config/opencode/skills/indie-toolkit-session-reflect
 ln -sfn ~/.config/opencode/indie-toolkit/youtube-scout/skills ~/.config/opencode/skills/indie-toolkit-youtube-scout
@@ -49,7 +48,6 @@ ls -la ~/.config/opencode/skills/indie-toolkit-apple-dev
 ls -la ~/.config/opencode/skills/indie-toolkit-mactools
 ls -la ~/.config/opencode/skills/indie-toolkit-product-lens
 ls -la ~/.config/opencode/skills/indie-toolkit-skill-master
-ls -la ~/.config/opencode/skills/indie-toolkit-skill-audit
 ls -la ~/.config/opencode/skills/indie-toolkit-domain-intel
 ls -la ~/.config/opencode/skills/indie-toolkit-session-reflect
 ls -la ~/.config/opencode/skills/indie-toolkit-youtube-scout
@@ -76,7 +74,6 @@ rm ~/.config/opencode/skills/indie-toolkit-apple-dev
 rm ~/.config/opencode/skills/indie-toolkit-mactools
 rm ~/.config/opencode/skills/indie-toolkit-product-lens
 rm ~/.config/opencode/skills/indie-toolkit-skill-master
-rm ~/.config/opencode/skills/indie-toolkit-skill-audit
 rm ~/.config/opencode/skills/indie-toolkit-domain-intel
 rm ~/.config/opencode/skills/indie-toolkit-session-reflect
 rm ~/.config/opencode/skills/indie-toolkit-youtube-scout

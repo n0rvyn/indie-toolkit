@@ -1,6 +1,6 @@
 ---
 name: fix-bug
-description: "Use when the user reports an error with stack trace or screenshot, describes unexpected behavior, build/test failures occur, OR provides a batch of issues to fix against a running system that exposes an end-to-end verification surface — API, CLI, REPL, chat agent, or mobile deeplink ('fix these N issues against the API', 'dogfood this batch', '修一批 issue 通过平台自验证'). Triggers: '修 bug', '报错', '不work', '为什么', 'fix this', stack trace pasted, multi-issue list. Single-bug input runs the linear diagnostic; multi-issue input WITH the verification surface present switches to the multi-issue loop in references/multi-issue-loop.md (multi-issue WITHOUT a verification surface falls back to per-issue single-bug flow, not loop mode). Not when: user only wants an explanation of behavior (answer directly) or wants a feature added (use brainstorm or write-plan)."
+description: "Use when the user reports an error with stack trace or screenshot, describes unexpected behavior, build/test failures occur, OR provides a batch of issues to fix against a running system that exposes an end-to-end verification surface — API, CLI, REPL, chat agent, or mobile deeplink ('fix these N issues against the API', 'dogfood this batch', '修一批 issue 通过平台自验证'). Triggers: '修 bug', '报错', '不work', '为什么', 'fix this', stack trace pasted, multi-issue list. Single-bug input runs the linear diagnostic; multi-issue input WITH the verification surface present switches to multi-issue loop mode (multi-issue WITHOUT a verification surface falls back to per-issue single-bug flow, not loop mode). Not when: user only wants an explanation of behavior (answer directly) or wants a feature added (use brainstorm or write-plan)."
 ---
 
 ## Input
@@ -44,9 +44,9 @@ The user's friction reports show speculative architecture answers are a top frus
 
 ## Process
 
-### Step Echo (audit aid)
+### Step Echo (audit aid — read before executing any step)
 
-Before executing any step below (0, 0.5, 0.7, 0.8, 0.9, 1, 2, 2.5, 3, 4, 4.5, 5, 6, 7, 8, 9, 10), emit a one-line marker as the FIRST line of the response chunk for that step:
+Before executing any step below (pre-0, 0, 0.5, 0.7, 0.8, 0.9, 1, 2, 2.5, 3, 4, 4.5, 5, 6, 7, 8, 9, 10), emit a one-line marker as the FIRST line of the response chunk for that step:
 
 ```
 [fix-bug] Step={n} — {name}
@@ -57,6 +57,58 @@ Where `{n}` is the step number (e.g., `3` or `4.5`) and `{name}` is the step's b
 This is an audit aid, not an enforced gate — no hook intercepts a missing marker. Its value is post-hoc: the user can grep the response for `[fix-bug] Step=` to see which steps actually ran. Skipping from Step 2 directly to Step 7 ("Plan the fix") without emitting markers for 3/4/5/6/7 leaves the gap visible.
 
 **Why this exists:** the 2026-04 to 2026-05 insights report shows assistant frequently lands on the first plausible hypothesis and ships a fix, skipping the BV (Step 3) / verification (Step 4) / value-domain trace (Step 5) gates. Explicit step markers make skipping visible to the user even when it's not blocked.
+
+## Step pre-0: Readback Gate (always — required for fix-bug)
+
+Before any reproduction / diagnosis / planning work:
+
+1. Collect inputs for readback:
+   - `user_request`: the user's original prompt (full text)
+   - `context_terms`: 3-5 project-specific terms the user used in this session
+
+2. Dispatch `readback:intent-echoer` agent via Task tool (subagent_type = `readback:intent-echoer`).
+
+3. Write `.claude/readback-state.json`:
+
+   First, capture the agent's verbatim output into a shell variable. **Substitute the literal content between the EOF markers with the actual text returned by intent-echoer** — do not modify, escape, or summarize. (If agent output contains the literal string `EOF_AGENT_OUTPUT`, use a unique marker variant for both lines.)
+
+   ```bash
+   AGENT_OUTPUT=$(cat <<'EOF_AGENT_OUTPUT'
+   {paste the intent-echoer agent's literal output here; do not modify}
+   EOF_AGENT_OUTPUT
+   )
+   ```
+
+   Then write state:
+   ```bash
+   mkdir -p .claude
+   jq -n \
+     --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+     --arg text "$AGENT_OUTPUT" \
+     '{
+       created_at: $ts,
+       session_id: null,
+       skill: "fix-bug",
+       readback_done: true,
+       readback_text: $text,
+       user_confirmed: false,
+       confirmed_at: null,
+       correction_count: 0
+     }' > .claude/readback-state.json
+   ```
+
+   Note: skill bash writes `session_id: null` (it cannot read hook stdin); the readback plugin's `PreToolUse` hook stamps the real session id into the file on first read after user confirmation. See `readback/references/state-schema.md` for the v2 two-phase identity model.
+
+4. Present agent output VERBATIM to user. Stop. Do not proceed to Step 0.
+
+5. Wait for user response:
+   - "go" / "OK" / "对" / 等价表达 → update state `user_confirmed: true, confirmed_at: <now>` → continue to Step 0
+   - Correction → increment `correction_count`, re-dispatch agent with correction, present again
+   - `correction_count` ≥ 2 → STOP, suggest user invoke `/dev-workflow:brainstorm` (alignment broken upstream)
+
+### Why this gate exists
+
+readback plugin's `pre-tool-use.sh` hook is registered globally. When skill=fix-bug and user_confirmed=false, it BLOCKS Write/Edit/MultiEdit/NotebookEdit. This step ensures the model produces a plain-language echo and gets user confirmation before any code changes. See the `readback` plugin in the indie-toolkit marketplace (`readback@indie-toolkit`).
 
 0. **Parse input and read GitHub Issue (if reference provided)**
 

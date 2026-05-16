@@ -1,7 +1,7 @@
 # App Review Guidelines Reference
 
 Structured reference for Apple App Store Review Guidelines sections 1–5.
-Used by `submission-preview` skill as a supplementary reference file.
+Used by `asc-submit-preview` skill as a supplementary reference file.
 
 ---
 

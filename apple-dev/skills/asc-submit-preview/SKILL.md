@@ -1,13 +1,13 @@
 ---
-name: submission-preview
-description: "Use before submitting to App Store, or when the user says 'submission preview', 'pre-submit check', 'will this pass review'. Checks app code against Apple's App Review Guidelines to catch common rejection reasons."
+name: asc-submit-preview
+description: "Use before submitting to App Store, or when the user says 'asc submit preview', 'asc pre-submit check', '上架前自检', 'will this pass review'. Checks app code against Apple's App Review Guidelines to catch common rejection reasons. Not for ASC 后台材料 (privacy labels / screenshots / store description) — use /asc-listing."
 compatibility: Requires macOS and Xcode
 ---
 
 ## Division of Responsibility
 
-- **submission-preview** (this skill): checks **App code** against App Review Guidelines (sections 1-5)
-- **appstoreconnect-review**: checks **store listing materials** (ASC form fields, descriptions, screenshots)
+- **asc-submit-preview** (this skill): checks **App code** against App Review Guidelines (sections 1-5)
+- **asc-listing**: checks **store listing materials** (ASC form fields, descriptions, screenshots)
 
 Run both before submission. They don't overlap.
 
@@ -273,7 +273,7 @@ These items cannot be verified through code and need device/ASC confirmation:
 ```
 
 Report ends with:
-> Code compliance check complete. Run `/appstoreconnect-review` to check store listing materials.
+> Code compliance check complete. Run `/asc-listing` to check store listing materials.
 
 ---
 
@@ -291,4 +291,4 @@ Report ends with:
 - All applicable guideline sections checked with code evidence
 - Report delivered with severity classification (High/Medium/Passed)
 - Manual verification checklist generated
-- 串联提示 to `/appstoreconnect-review` included
+- 串联提示 to `/asc-listing` included

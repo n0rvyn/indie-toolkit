@@ -1,6 +1,6 @@
 # ASO Guide (App Store Optimization)
 
-_本指南为 `/appstoreconnect-review` 的关键词与 metadata 部分提供路由来源。原始内容 vendor 自 vabole/apple-skills v1.0.10 `skills/apple-aso/SKILL.md`（MIT (c) 2026 Ilia Abolhasani，vendored 2026-05-14）。_
+_本指南为 `/asc-listing` 的关键词与 metadata 部分提供路由来源。原始内容 vendor 自 vabole/apple-skills v1.0.10 `skills/apple-aso/SKILL.md`（MIT (c) 2026 Ilia Abolhasani，vendored 2026-05-14）。_
 
 Optimize App Store metadata following Apple's guidelines and ASO best practices to maximize visibility and downloads.
 

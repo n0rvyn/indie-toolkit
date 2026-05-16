@@ -1,13 +1,13 @@
 ---
-name: appstoreconnect-review
-description: "Use when preparing for App Store submission, or the user says 'ASC review', 'prepare submission'. Performs item-by-item App Store Connect submission material check and guidance. Keywords: ASC, App Store Connect, submission, privacy labels, screenshots, review."
+name: asc-listing
+description: "Use when preparing ASC store listing materials, or the user says 'ASC listing', 'asc 上架材料', 'ASC 填写', 'app store listing', 'privacy labels'. Performs item-by-item App Store Connect submission material check and guidance. Keywords: ASC, App Store Connect, submission, privacy labels, screenshots, review. Not for 代码合规检查 — use /asc-submit-preview."
 ---
 
 # App Store Connect 上架审查
 
 逐项指导 App Store Connect 中 iOS/macOS App 上架需要填写的内容，或执行提交前审计。
 
-参考资料在 `appstoreconnect-review/references/` 目录中（相对于 skills 目录），按需加载。
+参考资料在 `asc-listing/references/` 目录中（相对于 skills 目录），按需加载。
 
 ## Process
 
@@ -19,9 +19,9 @@ description: "Use when preparing for App Store submission, or the user says 'ASC
 
 **模式 B — 隐私标签**：用户专门问隐私标签。聚焦 App Privacy 部分。
 
-**模式 C — 提交前审计**：用户说"提交前检查"或"pre-submit audit"。执行代码 + 文档合规检查。
+**模式 C — 特定部分**：用户问某个具体字段或部分。加载对应 reference 段落回答。
 
-**模式 D — 特定部分**：用户问某个具体字段或部分。加载对应 reference 段落回答。
+> 历史说明：早期版本含"代码合规审计"模式，已迁移到 `/asc-submit-preview`。本 skill 不再处理代码合规，专注 ASC 后台材料（隐私标签 / 截图 / 描述 / 价格 / 关键词）。
 
 ### Step 2: 加载参考资料
 
@@ -31,7 +31,6 @@ description: "Use when preparing for App Store submission, or the user says 'ASC
 |------|---------|
 | A | `references/asc-fields-guide.md` → `references/asc-version-and-review.md` → `references/asc-audit-checklist.md`（准备清单部分） |
 | B | `references/asc-fields-guide.md`（第二部分：App Privacy） |
-| C | `references/asc-audit-checklist.md` |
 | D | 根据用户问题定位对应 reference 的具体段落 |
 
 ### Step 3: 执行审查
@@ -48,40 +47,11 @@ description: "Use when preparing for App Store submission, or the user says 'ASC
 | Location | ❌ | 无相关 import/API | 不声明 |
 ```
 
-**模式 C**：按 `references/asc-audit-checklist.md` 执行：
-1. 素材准备清单 → 逐项检查
-2. 代码审计命令 → 逐个运行 Grep 检查
-3. ASC 文档一致性 → 对比隐私政策与代码
-4. 输出审计报告
-
 **模式 D**：直接回答用户问题，引用 reference 中的具体指引。
 
 ### Step 4: 输出报告
 
 **模式 A/B**：输出已确认的字段值汇总，标注待用户补充的项。
-
-**模式 C**：输出审计报告：
-
-```
-## ASC 提交前审计报告
-
-### 素材检查
-- [ ] / [x] 逐项结果
-
-### 代码合规
-| 检查项 | 状态 | 说明 |
-|--------|------|------|
-| 框架残留 | ✅/❌ | 详情 |
-| Consent Flow | ✅/❌ | 详情 |
-| 法律链接 | ✅/❌ | 详情 |
-
-### 文档一致性
-| 项目 | 状态 | 说明 |
-|------|------|------|
-
-### 需要修复
-1. {issue + fix}
-```
 
 ## Completion Criteria
 

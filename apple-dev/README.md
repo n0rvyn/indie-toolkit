@@ -24,9 +24,8 @@ For Codex/OpenCode: see `.codex/INSTALL.md` or `.opencode/INSTALL.md`.
 |-------|---------|-------------|
 | project-kickoff | `/project-kickoff` | New project feasibility + requirements |
 | design-parity-build | `/design-parity-build` | Audit Claude Design ↔ iOS parity, produce classified Gap List, hand off to /write-dev-guide |
-| submission-preview | `/submission-preview` | App Review Guidelines pre-check |
-| appstoreconnect-review | `/appstoreconnect-review` | ASC submission material check |
-| code-audit | `/code-audit` | Code quality and security assessment |
+| asc-submit-preview | `/asc-submit-preview` | App Review Guidelines pre-check |
+| asc-listing | `/asc-listing` | ASC submission material check |
 
 ## Called by dev-workflow
 
@@ -38,13 +37,13 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | ui-review | dev-workflow review step | SwiftUI UI + interaction compliance review |
 | design-review | dev-workflow review step | Visual hierarchy, color, spacing quality review |
 | feature-review | dev-workflow review step | Product + UX completeness from user journey perspective |
-| execution-review | called by dev-workflow | Plan-vs-code verification + Swift code scan |
+| code-audit | run-phase / implementation-reviewer | Code quality + security assessment (5 categories) |
 | validate-design-tokens | dev-workflow review step | Design token compliance check |
 | testing-guide | write-plan / fix-bug / test-changes | Interactive testing guidance |
 | profiling | write-plan / fix-bug / test-changes | Performance profiling guidance |
 | xc-ui-test | write-plan / test-changes | Advanced XCUITest guidance |
 
-## Full Capability Inventory (24)
+## Full Capability Inventory (23)
 
 | Skill | Route | Description |
 |-------|---------|-------------|
@@ -53,12 +52,11 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | design-review | dev-workflow review step | Visual hierarchy, color, spacing quality review |
 | feature-review | dev-workflow review step | Product + UX completeness from user journey perspective |
 | audit-finishing-touches | internal route | Mechanical §17–§20 polish-gap scan (border / default-style / undecorated card / hero) |
-| code-audit | `/code-audit` | Code quality and security assessment |
-| execution-review | called by dev-workflow | Plan-vs-code verification + Swift code scan |
+| code-audit | run-phase / implementation-reviewer | Code quality and security assessment (5 categories) — internal only, not user-invocable |
 | validate-design-tokens | dev-workflow review step | Design token compliance check |
 | characterization-test | internal route | Behavior-locking tests before refactoring |
-| submission-preview | `/submission-preview` | App Review Guidelines pre-check |
-| appstoreconnect-review | `/appstoreconnect-review` | ASC submission material check |
+| asc-submit-preview | `/asc-submit-preview` | App Review Guidelines pre-check |
+| asc-listing | `/asc-listing` | ASC submission material check |
 | testing-guide | write-plan / fix-bug / test-changes | Interactive testing guidance |
 | profiling | write-plan / fix-bug / test-changes | Performance profiling guidance |
 | xc-ui-test | write-plan / test-changes | Advanced XCUITest guidance |

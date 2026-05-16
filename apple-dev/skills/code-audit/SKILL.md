@@ -1,7 +1,8 @@
 ---
 name: code-audit
-description: "Use when the user says 'code audit', 'audit code', '代码审计', 'report card', 'security scan', or wants a comprehensive code quality assessment. Scans for security issues, concurrency safety, accessibility gaps, performance anti-patterns, and SwiftUI anti-patterns in iOS/macOS Swift projects."
+description: "Internal skill — called by run-phase / implementation-reviewer for comprehensive code quality assessment of iOS/macOS Swift projects. Scans for security issues, concurrency safety, accessibility gaps, performance anti-patterns, and SwiftUI anti-patterns. Not user-invocable: for user-facing review use /review-execution (general code review with 4-lens + Apple reviewers) or /dev-workflow:run-phase (orchestrated phase review)."
 compatibility: Requires macOS and Xcode
+user-invocable: false
 ---
 
 # Code Audit

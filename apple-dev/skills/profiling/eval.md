@@ -18,7 +18,7 @@
 - "Write a unit test for my ViewModel" (→ testing-guide)
 - "Set up UI tests with Page Object pattern" (→ xc-ui-test)
 - "How do I mock a network service?" (→ testing-guide)
-- "Review my app for App Store submission" (→ submission-preview)
+- "Review my app for App Store submission" (→ asc-submit-preview)
 - "Optimize my SwiftData query" (→ swiftdata-patterns)
 
 ## Output Assertions

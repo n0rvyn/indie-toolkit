@@ -3,7 +3,7 @@
      heading it labels. Use Grep("<!-- section:", file) to find sections, then
      Read(file, offset, limit) to fetch only the relevant lines. -->
 
-> 用于 execution-review 阶段检查 UI 代码合规性。
+> 用于 review-execution 阶段（Apple 项目自动 dispatch ui-reviewer）检查 UI 代码合规性。
 > 适用：iOS 26 / SwiftUI / Swift 6（兼容 iOS 18+）
 
 ---

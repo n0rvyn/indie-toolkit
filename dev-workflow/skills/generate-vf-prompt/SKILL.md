@@ -1,7 +1,6 @@
 ---
 name: generate-vf-prompt
 description: "Use when you need to create a verification prompt with falsifiable assertions for a plan, code change, or session response. Generates structured prompts that enable rigorous verification."
-user-invocable: false
 ---
 
 ## Overview

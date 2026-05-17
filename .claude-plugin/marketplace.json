@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Indie toolkit with iOS development, macOS tooling, and more",
-    "version": "1.45.0"
+    "version": "1.45.1"
   },
   "plugins": [
     {
@@ -150,7 +150,7 @@
       "name": "readback",
       "source": "./readback",
       "description": "Before-action read-back protocol — model must restate intent in plain language before code/plan changes. Inspired by aviation/medical closed-loop communication.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "category": "development",
       "tags": [
         "dialog",

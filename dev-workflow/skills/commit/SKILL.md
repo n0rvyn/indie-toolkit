@@ -124,6 +124,8 @@ On trigger:
 
 ## Commit Message Guidelines
 
+See references/conventional-commits.md for full spec (type list, bump mapping, BREAKING CHANGE syntax, auto-version integration).
+
 **Format:**
 ```
 type(scope): brief description

@@ -72,6 +72,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | write-plan | interactive | Writes implementation plan with Impact Map and Task Contract |
 | write-dev-guide | interactive | Writes phased dev-guide for multi-unit work |
 | commit | fork (haiku) | Conventional commit analysis and execution |
+| review-before-commit | interactive | Pre-commit semantic review: classify changes, detect breaking changes, interactive risk confirmation |
 | issue | interactive | GitHub Issue unified entry point |
 | finish-branch | interactive | Test, document, merge/PR/discard |
 
@@ -86,7 +87,6 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | design-decision | interactive | Trade-off analysis with essential/accidental complexity |
 | parallel-agents | guide | Pattern for concurrent agent dispatch |
 | use-worktree | guide | Git worktree setup and safety |
-| review-before-commit | interactive | Pre-commit semantic review: classify changes, detect breaking changes, interactive risk confirmation |
 | handoff | fork (sonnet) | Cold-start prompt generation for cross-day/cross-person session transfer |
 | generate-design-prompt | interactive | Generate Stitch/Figma prompts from project features; supports initial and refinement modes |
 | understand-design | dispatcher | Dual-channel design prototype analysis, token extraction, platform translation |

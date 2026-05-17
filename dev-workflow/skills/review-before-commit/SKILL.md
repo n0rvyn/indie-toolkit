@@ -1,7 +1,7 @@
 ---
 name: review-before-commit
 description: "Use when the user says 'review changes', 'review-before-commit', '审查变更', '检查改动', '提交前审查', 'pre-commit review', or wants a semantic review of uncommitted changes before committing. Classifies changes into enhancements, fixes, refactors, and removals; explains what each does; detects breaking changes; and flags risks interactively. Not when: user only wants to commit (use commit skill) or wants to fix a bug (use fix-bug)."
-user-invocable: false
+user-invocable: true
 argument-hint: "[path or empty — optional path scopes review to matching files]"
 allowed-tools: Bash(git diff:*, git status:*, git log:*, grep:*, wc:*, find:*, ls:*, mkdir:*) AskUserQuestion
 ---

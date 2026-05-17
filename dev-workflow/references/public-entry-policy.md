@@ -21,6 +21,7 @@ Policy for this pass:
 - `write-dev-guide`
 - `run-phase`
 - `commit`
+- `review-before-commit`
 - `issue`
 - `finish-branch`
 - `execute-plan` (also auto-invoked by `run-phase`; kept user-visible for direct re-runs after manual fixes)
@@ -37,7 +38,6 @@ First-pass `dev-workflow` internal helpers:
 - `crystallize`
 - `generate-vf-prompt`
 - `design-drift`
-- `review-before-commit`
 
 `apple-dev` daily entries for the follow-up task:
 - `project-kickoff`

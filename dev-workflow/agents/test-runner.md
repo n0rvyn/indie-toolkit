@@ -13,7 +13,7 @@ description: |
   assistant: "I'll use the test-runner agent to run all checks."
   </example>
 
-model: sonnet[1m]
+model: sonnet
 maxTurns: 30
 effort: medium
 tools: Glob, Grep, Read, Write, Bash

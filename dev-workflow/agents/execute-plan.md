@@ -19,7 +19,7 @@ description: |
   assistant: "I'll use the execute-plan agent to continue from task 6."
   </example>
 
-model: sonnet[1m]
+model: sonnet
 maxTurns: 120
 effort: medium
 tools: Glob, Grep, Read, Write, Edit, Bash, LSP

@@ -55,7 +55,7 @@ If you encounter a single task whose Files list includes BOTH test and non-test 
      ```
 3. **Dispatch loop:**
    - Read state file: `start = last_completed + 1`, `end = min(last_completed + batch_size, total)`
-   - Dispatch `dev-workflow:execute-plan` agent:
+   - Dispatch `dev-workflow:execute-plan` agent with `model: "sonnet"` (always pass explicitly — see note below):
      ```
      Execute tasks {start} through {end} of the implementation plan.
 
@@ -63,6 +63,8 @@ If you encounter a single task whose Files list includes BOTH test and non-test 
      Project root: {project root}
      State file: .claude/execute-plan-state.json
      ```
+
+     **Why pass `model: "sonnet"` explicitly:** if the parent session runs a 1M-context variant (e.g., `claude-opus-4-7[1m]`), agent dispatch may inherit the 1M context flag and fail with `API Error: Extra usage is required for 1M context · run /extra-usage to enable`. The explicit `model: "sonnet"` parameter (no `[1m]` suffix) forces standard 200k context and bypasses the billing gate. Batch size 5 already bounds per-batch context well under 200k, so 1M is never required for normal execution.
    - When agent returns: read `.claude/execute-plan-state.json`
      - If `last_completed < total`: loop back (re-dispatch next batch)
      - If `last_completed >= total`: update state `status: "complete"`, exit loop

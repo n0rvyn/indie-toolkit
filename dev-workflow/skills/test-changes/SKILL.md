@@ -244,7 +244,7 @@ The `test-runner` agent (non-Apple) extracts verification commands from the plan
 
 ### Step 2B: Other Projects (dispatch sub-agent)
 
-For non-Apple projects, dispatch `dev-workflow:test-runner` as before:
+For non-Apple projects, dispatch `dev-workflow:test-runner` with `model: "sonnet"` (always pass explicitly):
 
 ```
 Run the project's build, test, and lint suite.
@@ -254,6 +254,8 @@ Plan file: {plan file path, or "none" if standalone}
 ```
 
 The agent detects the project type (Node / Swift Package / Cargo / Go / Python) and writes a report to `.claude/test-reports/`.
+
+**Why pass `model: "sonnet"` explicitly:** if the parent session runs a 1M-context variant (e.g., `claude-opus-4-7[1m]`), agent dispatch may inherit the 1M context flag and fail with `API Error: Extra usage is required for 1M context`. The explicit `model: "sonnet"` parameter (no `[1m]` suffix) forces standard 200k context and bypasses the billing gate. Standard sonnet context is sufficient for a single test-suite run.
 
 ### Step 3: Process Results
 

@@ -97,21 +97,35 @@ jobs:
             esac
           }
 
-          # Determine bump type from conventional commit messages
+          # Determine bump type from conventional commit messages.
+          # Input: newline-separated list of commit hashes (so we can inspect
+          # subject + full body per commit, not just concatenated subjects).
+          #
+          # Per Conventional Commits v1.0.0, a major bump requires either:
+          #   (a) subject has `type!:` or `type(scope)!:` syntax
+          #   (b) a footer line beginning with `BREAKING CHANGE: ` or
+          #       `BREAKING-CHANGE: ` (uppercase, line-anchored)
+          # Mere mention of the words "BREAKING CHANGE" inside a subject or
+          # prose body — e.g., a docs commit *describing* the syntax — must
+          # NOT trigger a major bump.
           detect_bump_type() {
-            local commits="$1"
+            local hashes="$1"
             local max_bump="patch"
 
-            while IFS= read -r msg; do
-              [[ -z "$msg" ]] && continue
-              # BREAKING CHANGE in body or feat! prefix
-              if echo "$msg" | grep -qE '^[a-z]+(\(.+\))?!:' || echo "$msg" | grep -q 'BREAKING CHANGE'; then
+            while IFS= read -r hash; do
+              [[ -z "$hash" ]] && continue
+              local subject body
+              subject="$(git log -1 --format='%s' "$hash")"
+              body="$(git log -1 --format='%B' "$hash")"
+
+              if echo "$subject" | grep -qE '^[a-z]+(\(.+\))?!:' \
+                 || echo "$body" | grep -qE '^BREAKING[ -]CHANGE: '; then
                 max_bump="major"
                 break
-              elif echo "$msg" | grep -qE '^feat(\(.+\))?:'; then
+              elif echo "$subject" | grep -qE '^feat(\(.+\))?:'; then
                 max_bump="minor"
               fi
-            done <<< "$commits"
+            done <<< "$hashes"
 
             echo "$max_bump"
           }
@@ -135,8 +149,8 @@ jobs:
 
           echo "Changed plugins: ${changed_plugins[*]}"
 
-          # Get commit messages for this push (only non-bot commits)
-          commit_messages="$(git log --format='%s' HEAD~1..HEAD 2>/dev/null || git log --format='%s' -1)"
+          # Get commit hashes for this push (used to inspect full bodies, not just subjects)
+          commit_hashes="$(git log --format='%H' HEAD~1..HEAD 2>/dev/null || git log --format='%H' -1)"
 
           # Bump each changed plugin
           changed=()
@@ -150,9 +164,17 @@ jobs:
               continue
             fi
 
-            # Filter commits relevant to this plugin
-            plugin_commits="$(echo "$commit_messages" | grep -E "\(${plugin}\)" || echo "$commit_messages")"
-            bump_type="$(detect_bump_type "$plugin_commits")"
+            # Filter commit hashes whose subject mentions (${plugin}); fall back to all hashes if none match
+            plugin_hashes=""
+            while IFS= read -r h; do
+              [[ -z "$h" ]] && continue
+              if git log -1 --format='%s' "$h" | grep -qE "\(${plugin}\)"; then
+                plugin_hashes+="${h}"$'\n'
+              fi
+            done <<< "$commit_hashes"
+            [[ -z "$plugin_hashes" ]] && plugin_hashes="$commit_hashes"
+
+            bump_type="$(detect_bump_type "$plugin_hashes")"
 
             current_version="$(jq -r '.version' "$plugin_file")"
             new_version="$(bump_semver "$current_version" "$bump_type")"

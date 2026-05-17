@@ -89,10 +89,11 @@ Removing/renaming input or changing default behavior → breaking, requires `wor
 
 本仓使用 [Conventional Commits](https://www.conventionalcommits.org/) 配合 auto-version workflow 实现 semver 自动 bump。
 
-**完整规范**：见 `dev-workflow:commit` skill 的 SKILL.md 和 `references/conventional-commits.md`（推荐通过 `/commit` skill 创建 commit，自动保证规范）。
+**权威规范**：`dev-workflow/skills/commit/references/conventional-commits.md`（推荐通过 `/commit` skill 创建 commit，自动保证规范）。
 
 **核心 type → bump 映射**：
-- `feat` → minor | `fix` / `refactor` / `perf` / `chore` / `docs` / `test` → patch | `feat!` 或 body 含 `BREAKING CHANGE` → major
+- `feat` → minor | `fix` / `refactor` / `perf` / `chore` / `docs` / `test` → patch | 任意 type 加 `!`（如 `fix!`、`chore(api)!`）或 body 含 `BREAKING CHANGE` → major
+- BREAKING `!` 必须在 scope 括号**后**：`feat(pkos)!:` 正确，`feat!(pkos):` 错误（后者静默 fallback 到 patch）
 
 **Scope**：使用 plugin 名（如 `feat(dev-workflow):`），跨 plugin 用 `chore(release):` 或 `docs:`。
 

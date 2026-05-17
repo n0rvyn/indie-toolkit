@@ -15,6 +15,9 @@
 - [ ] Diff >= 200 lines, public API changes, removals, or red/yellow Project Health `module_size` trigger MUST dispatch `dev-workflow:review-before-commit` via Skill tool (not inline analysis)
 - [ ] Static fixture covers a large/high-risk diff route into review-before-commit before commit grouping (verify the dispatch is hard, not advisory)
 - [ ] Output uses conventional commit format (type(scope): description)
+- [ ] BREAKING commits use form `<type>(scope)!:` or `<type>!:` (! AFTER scope parens, NOT `<type>!(scope):`)
+- [ ] Scope follows plugin-name convention from `references/conventional-commits.md` (e.g., `feat(dev-workflow):` not `feat(sync):` in this monorepo)
+- [ ] Types used are from canonical list (feat/fix/docs/refactor/perf/test/chore); `style` is NOT in project's list
 - [ ] Pre-commit audit runs before any group is committed
 - [ ] Secrets/credential patterns in diff lines are detected and blocked
 - [ ] Debug residue (console.log, debugger, breakpoint) in diff lines is detected and blocked

@@ -3,7 +3,7 @@ name: commit
 description: "Use when the user says 'commit' or wants to save progress after completing a task. Analyzes uncommitted changes, groups them logically, and commits with conventional format messages."
 context: fork
 model: haiku
-allowed-tools: Bash(git add:*, git commit:*, git diff:*, git status:*, git log:*, wc -c *)
+allowed-tools: Bash(git add:*) Bash(git commit:*) Bash(git diff:*) Bash(git status:*) Bash(git log:*) Bash(wc:*)
 ---
 
 ## Input
@@ -78,8 +78,9 @@ On trigger:
 
 4. **Create commit messages**
    - Follow conventional commit format: `type(scope): description`
-   - Types: `feat`, `fix`, `docs`, `refactor`, `style`, `test`, `chore`
-   - Scope: component/service name (e.g., `sync`, `home`, `repository`)
+   - Types and bump mapping: see `references/conventional-commits.md` (authoritative). Canonical types are `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `chore` — note `style` is NOT in this project's list.
+   - Scope: plugin name when in a plugin monorepo (e.g., `feat(dev-workflow):`, `fix(apple-dev):`); component/service name otherwise. See references for full guidance.
+   - BREAKING CHANGE: append `!` after the type and scope (`feat(pkos)!:` or `fix!:`), NOT before the scope. Wrong form silently falls through to patch bump.
    - Description: concise summary of what changed
    - Multi-line body: explain why and how (if needed)
 
@@ -135,11 +136,12 @@ Optional body explaining:
 - Why it changed
 ```
 
-**Examples:**
-- `fix(sync): use healthKitWorkoutId for stable log binding`
-- `feat(home): auto-refresh on sync success`
-- `docs(readme): add setup instructions`
-- `refactor(repository): check persistentModelID before inserting`
+**Examples (plugin-monorepo scope convention — see references/conventional-commits.md for full list):**
+- `fix(apple-dev): use healthKitWorkoutId for stable log binding`
+- `feat(dev-workflow): auto-refresh on sync success`
+- `docs(readback): add setup instructions`
+- `refactor(commit): check persistentModelID before inserting`
+- `feat(pkos)!: breaking change to inbox routing` (note `!` after scope, not before)
 
 **Grouping Rules:**
 - Same file, same concern -> one commit

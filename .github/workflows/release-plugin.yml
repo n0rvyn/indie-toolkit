@@ -40,6 +40,40 @@ on:
         type: boolean
         required: true
         default: true
+  workflow_call:
+    inputs:
+      target:
+        description: "Plugin name or 'all'"
+        type: string
+        required: true
+      bump:
+        description: "Semver bump type: patch / minor / major"
+        type: string
+        required: true
+      plugins_when_all:
+        description: "Space-separated plugin list (used when target=all)"
+        type: string
+        required: false
+        default: ""
+      update_marketplace:
+        description: "Also bump marketplace.json metadata.version"
+        type: boolean
+        required: false
+        default: true
+      create_tag:
+        description: "Create and push a git tag"
+        type: boolean
+        required: false
+        default: true
+      marketplace_tag_prefix:
+        description: "Prefix for marketplace metadata tag"
+        type: string
+        required: true
+      marketplace_path:
+        description: "Path to marketplace.json"
+        type: string
+        required: false
+        default: ".claude-plugin/marketplace.json"
 
 permissions:
   contents: write
@@ -65,10 +99,27 @@ jobs:
         run: |
           set -euo pipefail
 
-          TARGET="${{ inputs.target }}"
-          BUMP="${{ inputs.bump }}"
-          UPDATE_MARKETPLACE="${{ inputs.update_marketplace }}"
-          MARKET_FILE=".claude-plugin/marketplace.json"
+          # Discriminator: marketplace_tag_prefix is workflow_call-only (required there,
+          # absent from workflow_dispatch inputs), so its presence reliably distinguishes
+          # the two trigger paths. Cannot use github.event_name — it reflects caller's
+          # event when invoked via workflow_call.
+          if [[ -n "${{ inputs.marketplace_tag_prefix }}" ]]; then
+            # workflow_call path
+            TARGET="${{ inputs.target }}"
+            BUMP="${{ inputs.bump }}"
+            UPDATE_MARKETPLACE="${{ inputs.update_marketplace }}"
+            MARKET_FILE="${{ inputs.marketplace_path }}"
+            MARKET_TAG_PREFIX="${{ inputs.marketplace_tag_prefix }}"
+            PLUGINS_WHEN_ALL_STR="${{ inputs.plugins_when_all }}"
+          else
+            # workflow_dispatch path (indie-toolkit's own UI)
+            TARGET="${{ inputs.target }}"
+            BUMP="${{ inputs.bump }}"
+            UPDATE_MARKETPLACE="${{ inputs.update_marketplace }}"
+            MARKET_FILE=".claude-plugin/marketplace.json"
+            MARKET_TAG_PREFIX="indie-toolkit-"
+            PLUGINS_WHEN_ALL_STR="dev-workflow apple-dev mactools product-lens skill-master wechat-bridge x-api minimax-quota netease-cloud-music shared-utils readback"
+          fi
 
           bump_semver() {
             local version="$1"
@@ -84,7 +135,7 @@ jobs:
           }
 
           if [[ "$TARGET" == "all" ]]; then
-            PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-master" "wechat-bridge" "x-api" "minimax-quota" "netease-cloud-music" "shared-utils" "readback")
+            read -ra PLUGINS <<< "$PLUGINS_WHEN_ALL_STR"
           else
             PLUGINS=("$TARGET")
           fi
@@ -125,6 +176,7 @@ jobs:
           {
             echo "release_target=$TARGET"
             echo "release_bump=$BUMP"
+            echo "tag_prefix=$MARKET_TAG_PREFIX"
             echo "changes<<EOF"
             for line in "${changed[@]}"; do
               echo "$line"
@@ -158,9 +210,9 @@ jobs:
 
           if [[ "$target" == "all" ]]; then
             if [[ -n "${{ steps.bump.outputs.market_new_version }}" ]]; then
-              tag="indie-toolkit-v${{ steps.bump.outputs.market_new_version }}"
+              tag="${{ steps.bump.outputs.tag_prefix }}v${{ steps.bump.outputs.market_new_version }}"
             else
-              tag="release-all-$(date +%Y%m%d%H%M%S)"
+              tag="${{ steps.bump.outputs.tag_prefix }}release-all-$(date +%Y%m%d%H%M%S)"
             fi
           else
             tag="${target}-v${{ steps.bump.outputs.target_new_version }}"

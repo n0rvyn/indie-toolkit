@@ -15,6 +15,21 @@ on:
       - "netease-cloud-music/**"
       - "shared-utils/**"
       - "readback/**"
+  workflow_call:
+    inputs:
+      plugins:
+        description: "Space-separated list of plugin directory names"
+        type: string
+        required: true
+      marketplace_tag_prefix:
+        description: "Prefix for marketplace metadata tag (e.g., ops-toolkit-, personal-os-)"
+        type: string
+        required: true
+      marketplace_path:
+        description: "Path to marketplace.json"
+        type: string
+        required: false
+        default: ".claude-plugin/marketplace.json"
 
 permissions:
   contents: write
@@ -41,8 +56,23 @@ jobs:
         run: |
           set -euo pipefail
 
-          MARKET_FILE=".claude-plugin/marketplace.json"
-          ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-master" "wechat-bridge" "x-api" "minimax-quota" "netease-cloud-music" "shared-utils" "readback")
+          # Data source discriminator: use input-presence sentinel (NOT github.event_name).
+          # Inside a reusable workflow, github.event_name reflects the CALLER's trigger
+          # (e.g., "push" when ops-toolkit's push triggers its caller workflow), so we
+          # cannot use it to distinguish push-vs-workflow_call. Instead check if a
+          # workflow_call-only input is set — empty string when triggered by indie-toolkit's
+          # own push event (no inputs context), non-empty when called by a downstream caller.
+          if [[ -n "${{ inputs.plugins }}" ]]; then
+            # workflow_call path (downstream caller invocation)
+            MARKET_FILE="${{ inputs.marketplace_path }}"
+            read -ra ALL_PLUGINS <<< "${{ inputs.plugins }}"
+            MARKET_TAG_PREFIX="${{ inputs.marketplace_tag_prefix }}"
+          else
+            # push path (indie-toolkit's own native trigger)
+            MARKET_FILE=".claude-plugin/marketplace.json"
+            ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-master" "wechat-bridge" "x-api" "minimax-quota" "netease-cloud-music" "shared-utils" "readback")
+            MARKET_TAG_PREFIX="indie-toolkit-"
+          fi
 
           bump_semver() {
             local version="$1"
@@ -162,6 +192,7 @@ jobs:
           # Output for downstream steps
           {
             echo "skipped=false"
+            echo "tag_prefix=$MARKET_TAG_PREFIX"
             echo "changes<<EOF"
             for line in "${changed[@]}"; do
               echo "$line"
@@ -197,7 +228,7 @@ jobs:
             new_version="${line##*->}"
 
             if [[ "$plugin" == "marketplace" ]]; then
-              tag="indie-toolkit-v${new_version}"
+              tag="${{ steps.bump.outputs.tag_prefix }}v${new_version}"
             else
               tag="${plugin}-v${new_version}"
             fi

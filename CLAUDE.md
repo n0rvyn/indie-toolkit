@@ -87,50 +87,12 @@ Removing/renaming input or changing default behavior → breaking, requires `wor
 
 ## Commit Message Convention
 
-This project uses [Conventional Commits](https://www.conventionalcommits.org/) with automated semver bumping.
+本仓使用 [Conventional Commits](https://www.conventionalcommits.org/) 配合 auto-version workflow 实现 semver 自动 bump。
 
-### Format
+**完整规范**：见 `dev-workflow:commit` skill 的 SKILL.md 和 `references/conventional-commits.md`（推荐通过 `/commit` skill 创建 commit，自动保证规范）。
 
-```
-<type>(<scope>): <description>
+**核心 type → bump 映射**：
+- `feat` → minor | `fix` / `refactor` / `perf` / `chore` / `docs` / `test` → patch | `feat!` 或 body 含 `BREAKING CHANGE` → major
 
-[optional body]
-```
-
-### Types
-
-| Type | Bump | When |
-|------|------|------|
-| `feat` | minor | New feature |
-| `fix` | patch | Bug fix |
-| `docs` | patch | Documentation only |
-| `refactor` | patch | Code change that neither fixes a bug nor adds a feature |
-| `perf` | patch | Performance improvement |
-| `test` | patch | Adding or correcting tests |
-| `chore` | patch | Build process, auxiliary tools, or dependency updates |
-| `feat!` or `BREAKING CHANGE` in body | major | Breaking change |
-
-### Scoping
-
-Scope should reference the plugin or concern being changed:
-- `feat(dev-workflow):`, `fix(apple-dev):`, `docs(mactools):`
-- For changes spanning multiple plugins: `chore(release):`, `docs:`
-
-### Auto-Version Bump
-
-`.github/workflows/auto-version.yml` detects the highest bump type from commit messages and bumps:
-- All changed plugins (each plugin's `version` in its `plugin.json`)
-- The marketplace `metadata.version` (highest bump among changed plugins)
-
-Commits from `github-actions[bot]` are excluded from bump detection.
-
-### Examples
-
-```
-feat(domain-intel): add GitHub API rate limit handling
-fix(apple-dev): correct SwiftData migration guide for iOS 26
-docs: update wechat-bridge README with new auth flow
-feat!(pkos): change inbox routing to require explicit destination
-chore: bump dependencies across all plugins
-```
+**Scope**：使用 plugin 名（如 `feat(dev-workflow):`），跨 plugin 用 `chore(release):` 或 `docs:`。
 

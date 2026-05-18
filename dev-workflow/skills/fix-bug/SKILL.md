@@ -1,6 +1,6 @@
 ---
 name: fix-bug
-description: "Use when the user reports an error with stack trace or screenshot, describes unexpected behavior, build/test failures occur, OR provides a batch of issues to fix against a running system that exposes an end-to-end verification surface — API, CLI, REPL, chat agent, or mobile deeplink ('fix these N issues against the API', 'dogfood this batch', '修一批 issue 通过平台自验证'). Triggers: '修 bug', '报错', '不work', '为什么', 'fix this', stack trace pasted, multi-issue list. Single-bug input runs the linear diagnostic; multi-issue input WITH the verification surface present switches to multi-issue loop mode (multi-issue WITHOUT a verification surface falls back to per-issue single-bug flow, not loop mode). Not when: user only wants an explanation of behavior (answer directly) or wants a feature added (use brainstorm or write-plan)."
+description: "Use when the user reports an error with stack trace or screenshot, describes unexpected behavior, build/test failures occur, OR provides a batch of issues to fix against a running system that exposes an end-to-end verification surface — API, CLI, REPL, chat agent, or mobile deeplink ('fix these N issues against the API', 'dogfood this batch', '修一批 issue 通过平台自验证'). Triggers: '修 bug', '报错', '不work', '为什么', 'fix this', stack trace pasted, multi-issue list, `#N` / `issue N` GitHub references. Single-bug input runs the linear diagnostic; multi-issue input WITH the verification surface present switches to multi-issue loop mode (multi-issue WITHOUT a verification surface falls back to per-issue single-bug flow, not loop mode). Compound 'why does X behave + fix X' inputs stay here — the Hard Gate resolves the why-question via primary sources before hypothesis generation. Not when: user only wants an explanation of behavior with no reported defect (answer directly), or wants a feature added (use brainstorm or write-plan)."
 ---
 
 ## Input
@@ -337,8 +337,25 @@ If no level is constructable, output `[Feedback Loop] level=0 — not constructa
      Present diagnosis context (confirmed assertions, consumer impact) in the plan.
      User reviews and approves within plan mode, then proceed to Step 8.
 
-   → If **Complex**: invoke `/write-plan` with the diagnosis context
-     (confirmed assertions, value domain trace, parallel path analysis) as input.
+   → If **Complex**: invoke `dev-workflow:write-plan` with a **structured diagnosis bundle** as input. The invocation prompt MUST begin with this caller marker line (literal, on its own line as the first non-empty line of the prompt):
+
+     ```
+     Caller: dev-workflow:fix-bug
+     ```
+
+     write-plan reads this marker as the single source of truth for caller identity (gates both Step 1 item 12 Bug-diagnosis population AND Step 2.5 echo-only mode). Without it, write-plan falls through to standalone flow.
+
+     Bundle contents (write-plan Step 1 item 12 consumes these and lands them in the plan header's `**Bug diagnosis:**` field):
+
+     1. Confirmed assertions from Step 4 — list every `[Bug Assertion N]` that resolved to "confirmed", with the file:line evidence cited during verification
+     2. `[值域检查]` table from Step 5 — paste verbatim if Step 5 was triggered; include every ❌ consumer (write-plan tasks must address all of them)
+     3. `[路径检查]` table from Step 6 — paste verbatim if Step 6 was triggered; include the coordination-mechanism finding
+     4. `[Consumer Impact]` list from this Step 7 — every consumer of the modified field with current vs post-fix read values
+
+     Readback continuity: this skill's Step pre-0 already obtained `user_confirmed: true` for the bug report. write-plan's Step 2.5 echo-only mode will skip re-prompting iff all of: (a) the `Caller:` marker above is present, (b) `.claude/readback-state.json` is fresh (created within last 30 min), (c) no new requirements were introduced after pre-0. **Conservative default: when in doubt about (c), state it explicitly when invoking write-plan so it falls through to the full readback flow.** Re-prompting costs one echo; silently skipping alignment costs a misaligned plan.
+
+     Session-freshness caveat: this continuity claim assumes Step pre-0 and Step 7 ran in the same Claude Code session. If you resumed fix-bug from a prior session (e.g., `references/multi-issue-loop.md` state restore), the readback state file is stale relative to the current session and write-plan's freshness check will fail; full readback will run automatically. To force a fresh readback even within the same session, delete `.claude/readback-state.json` before invoking write-plan.
+
      Wait for plan approval before proceeding.
 
    **Proceeding to Step 8 without a user-approved plan is a violation of this skill's protocol.**

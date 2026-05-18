@@ -44,11 +44,12 @@ Before starting, confirm you have:
 4. **Crystal file path** — the crystal file with `[D-xxx]` decisions (if exists)
 5. **Previously resolved decisions** — list of `DP-xxx: Title → Chosen Option X` entries that have already been decided by the user; do not generate new decision points for these
 6. **Project root path** — for resolving file paths and searching code
-7. **Plugin agents dir** — absolute path to this plugin's `agents/` directory, for resolving supporting file references below. The dispatching skill resolves this and passes a concrete path.
+7. **Bug diagnosis source** — read the plan header's `**Bug diagnosis:**` field. If value is `not applicable`, BD strategy is inactive. If value is the structured bundle inline, parse it directly. If value matches `see .claude/bug-diagnosis-*.md`, read the referenced file. Failure to parse the field (malformed bundle, missing referenced file) is a verification gap — surface in the report.
+8. **Plugin agents dir** — absolute path to this plugin's `agents/` directory, for resolving supporting file references below. The dispatching skill resolves this and passes a concrete path.
    - **Fallback resolution**: If the value is missing, contains an unresolved `${...}` token, or the path does not exist, locate the directory yourself by running this Bash command:
      `d=$(ls -d "$HOME"/.claude/plugins/marketplaces/*/dev-workflow/agents 2>/dev/null | head -1); if [ -z "$d" ]; then d=$(ls -d "$HOME"/.claude/plugins/cache/*/dev-workflow/*/agents 2>/dev/null | sort -V | tail -1); fi; echo "$d"`
      Use the returned path as the agents dir. If output is empty, report the failure in the verification report and skip the DF/CF/AR sections that depend on these supporting files.
-8. **Out-of-scope archive path** — `{project_root}/dev-workflow/.out-of-scope/` (or equivalent in user-customized projects). Before generating any `DP-xxx`, list the directory and read every `*.md` file. If a candidate DP would re-raise a rejected idea, suppress it and add `Skipped DP candidate: {short title} — rejected per .out-of-scope/{filename}` to the verification report.
+9. **Out-of-scope archive path** — `{project_root}/dev-workflow/.out-of-scope/` (or equivalent in user-customized projects). Before generating any `DP-xxx`, list the directory and read every `*.md` file. If a candidate DP would re-raise a rejected idea, suppress it and add `Skipped DP candidate: {short title} — rejected per .out-of-scope/{filename}` to the verification report.
 
 Read the plan file, design doc, design analysis, and crystal file (if provided) before proceeding.
 
@@ -74,12 +75,13 @@ Report: .claude/reviews/plan-verifier-{timestamp}.md
 Verdict: {approved | must-revise}
 [S1] assertions: {N} tested, {M} failed (reported: {X} C>=80, filtered: {Y} C<80)
 [S2] failures: {N} compile, {M} runtime
+[T1] test coverage: {N} logic tasks, {M} tested, {K} type-matched (or "skipped")
 [U1] tokens: {N} checked, {M} missing (or "skipped")
 [DF] design faithfulness: {N}/{total} mapped, {M} gaps (or "skipped")
 [CF] crystal fidelity: {N}/{total} covered, {M} conflicts, {K} scope violations (or "skipped")
+[BD] bug diagnosis fidelity: {N}/{total} covered, {M} missed-consumer items, {K} uncoordinated parallel paths (or "skipped")
 [AR] architecture: {N} issues (or "skipped")
 [S3] runtime semantics: {N} checked, {M} gaps (or "skipped")
-[T1] test coverage: {N} logic tasks, {M} tested, {K} type-matched (or "skipped")
 Must-revise items: {N}
 Decisions: {N blocking}, {M recommended}
 ```
@@ -108,6 +110,7 @@ Do NOT modify the plan file. Return revision instructions only.
 | 多步骤执行 | 步骤 >= 5 且有编译/运行时依赖 | S2 |
 | 有设计文档的计划 | 计划引用了设计文档 | DF |
 | 有 crystal 文件的计划 | 计划引用了 crystal 文件 | CF |
+| 有 Bug diagnosis 的计划 | 计划头部 `**Bug diagnosis:**` 字段非 `not applicable`（fix-bug Complex 修复路径产物） | BD |
 | 安全/资源敏感 | sandbox, permission, auth, RBAC, deny, allow, isolation, encrypt, token, credential, secret, certificate, injection, escape, validate, process spawn, child process, tmp/temp | S1 + S2 + S3 |
 
 ### 2. 执行适用策略
@@ -295,6 +298,73 @@ Read `{Plugin agents dir}/crystal-fidelity.md` and execute all verification step
 
 ---
 
+#### BD. Bug Diagnosis Fidelity（有 Bug diagnosis 字段的计划）
+
+**前置条件**：计划头部 `**Bug diagnosis:**` 字段非 `not applicable`。fix-bug Complex 修复路径产生此字段；其他来源不应触发此策略。如果字段为 `not applicable`，跳过本策略。
+
+**目的**：验证 fix-bug Complex 修复诊断证据已被 plan tasks 充分覆盖。本策略是 fix-bug → write-plan handoff 的下游消费者，存在的意义就是确保诊断证据不会被写进 header 后失能。
+
+**输入解析**：
+
+1. 读取 `**Bug diagnosis:**` 字段值
+2. 如果字段值匹配 `see .claude/bug-diagnosis-*.md`：Read 该文件作为 bundle 内容；文件不存在 → must-revise（`❌ BD Pre: bug-diagnosis 引用文件缺失`）
+3. 如果字段值为内联 bundle：直接解析
+4. 从 bundle 中提取四类条目：
+   - `confirmed assertions`（来自 fix-bug Step 4）— 每条含 file:line 证据
+   - `[值域检查]` 表行（来自 fix-bug Step 5）— 含 ❌ 标记的 consumer
+   - `[路径检查]` 表行（来自 fix-bug Step 6）— 含未协调的并行路径
+   - `[Consumer Impact]` 列表项（来自 fix-bug Step 7）— 含当前/修复后读值
+
+**检查步骤**：
+
+逐条目验证 plan tasks 是否充分覆盖：
+
+1. **每条 confirmed assertion** — 至少一个 plan task 的 `**Files:**`、`**Steps:**`、`**Touched surface:**`、或 `**Maps to Impact Map:**` 字段引用该 assertion 的 file:line。无任何引用 → 这条断言被"诊断了但没修" → must-revise。
+2. **每个 ❌ consumer**（值域检查表）— 至少一个 plan task 修改该 consumer 的 file:line。漏改 → 用户原始 bug 现场可能修了，但被诊断暴露的其他 ❌ 现场仍坏 → must-revise（fix-bug Step 5 规则："All ❌ must be fixed in the same pass"）。
+3. **每个未协调的并行路径**（路径检查表）— 至少一个 plan task 引入协调机制（mutex / shared state / idempotency check）或显式说明为何不需要。无任何处理 → must-revise（架构问题不能搁置）。
+4. **每个 Consumer Impact 行** — 该 consumer 的"修复后读值"与至少一个 task 的 `**Expected outcome:**` 或 `Task Contract.Expected behavior` 一致。不一致 → 诊断预期与计划交付不一致 → must-revise。
+
+例外通道：plan 的 `## Decisions` 章节中存在 `[DP-xxx]` 显式说明为何某项不处理（用户已确认偏离）→ 视为已覆盖，记录该 DP 引用。
+
+**输出格式**：
+
+```
+[BD Bug Diagnosis Fidelity]
+| 诊断条目 | 类型 | plan task 覆盖 | 状态 |
+|---------|------|---------------|------|
+| Assertion 1 (foo.swift:42) | confirmed | Task 2 (Files: foo.swift) | ✅ |
+| ❌ consumer bar.swift:88 | 值域检查 | — | ❌ 未覆盖 |
+| 并行路径 A↔B | 路径检查 | Task 3 引入 mutex | ✅ |
+| Consumer Impact: baz.read = X→Y | Consumer Impact | Task 2 Expected outcome 含 Y | ✅ |
+
+覆盖率：{N}/{total} 诊断条目被 plan 处理
+Gap：{M} 条
+```
+
+**Gap 输出**：
+
+```
+❌ BD Gap [must-revise]: {诊断条目} 无 plan task 覆盖
+   修订：添加 task 处理 {具体 file:line} 或在 `## Decisions` 中说明偏离理由
+
+❌ BD Gap [must-revise]: ❌ consumer {file:line} 漏改 — fix-bug Step 5 要求所有 ❌ 一次性修复
+   修订：将 {file:line} 加入现有 task 的 `**Files:**` 或新增专门 task
+
+❌ BD Pre [must-revise]: bug-diagnosis 引用文件 {path} 缺失/无法解析
+   修订：write-plan 重新生成 plan 头部或 caller 重新提交 bundle
+```
+
+**严重程度**：
+- 任何 ❌ consumer 漏改 → **must-revise**（fix-bug Step 5 硬规则）
+- confirmed assertion 无任何 plan task 引用 → **must-revise**
+- 并行路径未协调且无 DP 解释 → **must-revise**
+- Consumer Impact 预期与 task Expected behavior 不一致 → **must-revise**
+- bug-diagnosis 引用文件缺失/格式错误 → **must-revise**（预检查失败）
+
+**原则**：本策略只关心"诊断已落地"，不重复诊断本身——fix-bug 阶段已完成 assertion 验证。BD 的职责是 plan tasks 是否真正消费了 fix-bug 写下的证据。
+
+---
+
 #### AR. 架构审查（架构变更时）
 
 Read `{Plugin agents dir}/architecture-review.md` and execute all verification steps described there.
@@ -367,6 +437,7 @@ Gap 数：{M} 项
 - U1 Token 一致性：检查 {N} 项，缺失 {M} 项
 - DF 设计忠实度：设计要求映射 {N}/{total}，缺失锚点 {M} 个，隐含上下文 {N} 项未覆盖，粒度问题 {N} 处，边界场景 {N} 个未覆盖，UX 断言 {N}/{total} 覆盖
 - CF 决策忠实度：决策覆盖 {N}/{total}，否决方案冲突 {N} 条，scope 越界 {N} 处
+- BD Bug 诊断忠实度：诊断条目覆盖 {N}/{total}，❌ consumer 漏改 {M} 条，并行路径未协调 {K} 条
 - AR 架构审查：入口冲突 {N}，替代清单 {完整/不完整}
 - S3 运行时语义：检查 {N} 项，gap {M} 项
 

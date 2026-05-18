@@ -1,6 +1,6 @@
 ---
 name: write-plan
-description: "Use when the user says 'write a plan', 'plan this', 'break this into tasks', '写计划', '拆分任务', or has requirements/specs for a multi-step task before touching code. Creates structured implementation plans with self-contained, verifiable tasks — each task lists files to touch, steps to take, and verification commands. Not when: trivial single-file change (just do it), plan file already exists (use verify-plan), or requirements still unclear (use brainstorm). For phase-driven development, run-phase calls this internally."
+description: "Use when the user says 'write a plan', 'plan this', 'break this into tasks', '写计划', '拆分任务', or has requirements/specs for a multi-step task before touching code. Also invoked programmatically by `fix-bug` Step 7 for Complex fixes (consumes a structured diagnosis bundle into the plan's `**Bug diagnosis:**` field). Creates structured implementation plans with self-contained, verifiable tasks — each task lists files to touch, steps to take, and verification commands. Not when: trivial single-file change with no consumer fan-out (just do it), plan file already exists (use verify-plan), or requirements still unclear (use brainstorm). For phase-driven development, run-phase calls this internally."
 ---
 
 ## Behavior Note
@@ -49,7 +49,14 @@ Collect the following before writing:
 9. **Project Context Contract + Ubiquitous Language** — read `dev-workflow/references/project-context-contract.md`. If `docs/00-AI-CONTEXT.md` exists, read it and use it as the project language/source contract. `CLAUDE.md` and `AGENTS.md` remain rule files. If it is missing, continue and mark `Project context contract: missing`. Do not create `CONTEXT.md`. Additionally, read `docs/02-architecture/ubiquitous-language.md` if present (per `dev-workflow/references/ubiquitous-language-pattern.md`); when present, use its canonical terms in every task's `Expected behavior`, `User interaction`, and `Touched surface` fields. Mismatch between the plan's vocabulary and the ubiquitous-language file is a verifier-flagged issue.
 10. **Project Health** — if `dev-workflow/scripts/project_health_scan.py` exists, read `.claude/dev-workflow-health.json` first; if state is missing, has any red signal, or older than 7 days, run scanner full mode with `--check-staleness 7 --max-ms 5000 --reason plan --write-state`; otherwise use cached `last_health`. Include red/yellow signals as `**Project health:**` in the plan header.
 11. **Impact Map** — before task generation, write the plan-level Impact Map: user path, data path, shared surfaces, existing consumers, must remain unchanged, and regression checks.
-12. **Out-of-scope archive** — list `dev-workflow/.out-of-scope/*.md`. If any scope item the user has provided matches a rejected entry, surface this to the user before writing the plan: "{item} was previously rejected per .out-of-scope/{file} — confirm you want to revisit?". Do not auto-skip; user may have new reasons.
+12. **Bug diagnosis** (only when the invocation prompt's first non-empty line is the literal marker `Caller: dev-workflow:fix-bug`, emitted by fix-bug Step 7's Complex branch). Detection is marker-based, not content-based — without the explicit marker, do not populate this field even if the prompt contains diagnosis-shaped content (the user may be drafting a plan with diagnostic context, but only the orchestrated fix-bug path guarantees the bundle's structural shape). Receive the following diagnosis bundle from the caller:
+    - Confirmed assertions from fix-bug Step 4 (the `[Bug Assertion N]` items that resolved to "confirmed", with their file:line evidence)
+    - `[值域检查]` table from fix-bug Step 5 (if Step 5 was triggered), including every ❌ consumer
+    - `[路径检查]` table from fix-bug Step 6 (if Step 6 was triggered), with the coordination-mechanism finding
+    - `[Consumer Impact]` list from fix-bug Step 7 (all consumers of the modified field with current vs post-fix read values)
+
+    Record the bundle verbatim under the plan header's `**Bug diagnosis:**` field (per Plan Document Format). Plan tasks must reference these findings; any task that deviates from a confirmed assertion or fails to address a ❌ consumer requires an explicit Decision Point. This structured handoff means `verify-plan` and `plan-verifier` read the diagnosis directly from the plan file instead of relying on main-context memory.
+13. **Out-of-scope archive** — list `dev-workflow/.out-of-scope/*.md`. If any scope item the user has provided matches a rejected entry, surface this to the user before writing the plan: "{item} was previously rejected per .out-of-scope/{file} — confirm you want to revisit?". Do not auto-skip; user may have new reasons.
 
 If any of these are unclear, ask the user before writing.
 
@@ -64,7 +71,37 @@ Save the plan to `docs/06-plans/YYYY-MM-DD-<feature-name>-plan.md`.
 Caller detection:
 - If invoked from `dev-workflow:run-phase` orchestration → skip this step entirely
 - If invoked from `dev-workflow:next-increment` orchestration → skip
-- Else (standalone `/write-plan` or hook-driven) → execute
+- If invoked from `dev-workflow:fix-bug` Complex-fix path → **echo-only mode** (see below)
+- Else (standalone `/write-plan` or hook-driven) → execute full readback flow
+
+**Echo-only mode** (fix-bug Complex path):
+
+fix-bug's Step pre-0 already ran `readback:intent-echoer` and obtained `user_confirmed: true` for the bug report. The plan written here is a direct artifact of the diagnosis steps that followed under the same alignment. Re-running the full readback would force the user to confirm twice without new information. In multi-issue loop mode (`references/multi-issue-loop.md`), each bundle's `dev-workflow:write-plan` invocation independently enters echo-only mode against the same pre-0 confirmation — each echo summarises that bundle's plan while all bundles share the original readback alignment.
+
+Procedure:
+
+1. Required preconditions for echo-only mode (ALL must hold; conservative default — if any is uncertain, fall through):
+
+   - **Caller marker present.** The invocation prompt's first non-empty line is the literal `Caller: dev-workflow:fix-bug`. This is the single source of truth for caller identity (no longer relies on the state file's `skill` field, which can be stale cross-session).
+   - **Consent token valid.** Read `.claude/readback-state.json`; require `user_confirmed: true`.
+   - **State freshness.** `created_at` is within the last 30 minutes. Compute:
+     ```bash
+     created_ts=$(jq -r '.created_at' .claude/readback-state.json | xargs -I {} date -j -f "%Y-%m-%dT%H:%M:%SZ" {} +%s 2>/dev/null)
+     now_ts=$(date -u +%s)
+     [ $((now_ts - created_ts)) -le 1800 ] && echo "fresh" || echo "stale"
+     ```
+     Stale → fail this precondition. This guards against cross-session state-file resurrection (a prior session's confirmed fix-bug state surviving into an unrelated `dev-workflow:write-plan` invocation). 30-min TTL mirrors `readback/hooks/pre-tool-use.sh` L37–51 pending-state TTL semantics.
+   - **No new requirements introduced after pre-0 confirmation.** Inspect the conversation between fix-bug's pre-0 confirmation and this invocation. Reformatting/clarifying the same bug = not new requirement; adding adjacent work (new feature ask, new component, new constraint not implied by original bug report) = new requirement.
+
+   **Conservative default**: when in doubt about any precondition — especially the "no new requirements" judgment, which has no executable check — fall through to the full readback flow. The cost of a redundant echo is small; the cost of skipping alignment on a scope expansion is high.
+
+2. If any precondition fails → fall through to the **full readback flow** (skip the rest of echo-only mode and execute Steps 1–5 of the Execution subsection below).
+
+3. If all preconditions hold:
+   - Do **not** dispatch `readback:intent-echoer`.
+   - Do **not** flip `user_confirmed` back to false.
+   - Print a one-paragraph plan-level alignment echo inline (no agent), summarising: what the plan achieves, key files it touches, and how it maps back to the bug diagnosis. Frame as "Echo (no confirmation needed — already aligned via fix-bug pre-0):".
+   - Continue to Step 3 without waiting for user response.
 
 Execution:
 
@@ -197,6 +234,8 @@ refs: []
 **Design analysis:** [path to design analysis, if one exists]
 
 **Crystal file:** [path to crystal file, if one exists — links to verify-plan CF strategy]
+
+**Bug diagnosis:** [populated when caller is `fix-bug` Complex-fix path — paste the structured bundle (confirmed assertions, `[值域检查]` table, `[路径检查]` table, `[Consumer Impact]` list) per Step 1 item 12; otherwise `not applicable`. If the bundle exceeds ~100 lines, write it to `.claude/bug-diagnosis-{plan-slug}.md` and put `see .claude/bug-diagnosis-{plan-slug}.md` here instead — plan-verifier's BD strategy reads the referenced file when this field is a path.]
 
 **Threat model:** [included / not applicable]
 

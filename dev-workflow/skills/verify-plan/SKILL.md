@@ -32,7 +32,8 @@ Collect the following before dispatching:
    - Else search `docs/11-crystals/*-crystal.md`: if exactly 1 file → use it automatically
    - If multiple files → ask the user which one applies
    - If no files → set to "none"
-5. **Project root** — current working directory
+5. **Bug diagnosis value** — read the plan header's `**Bug diagnosis:**` field verbatim. Three possible shapes: (a) `not applicable` → pass through as `not applicable`; (b) inline structured bundle → pass through verbatim; (c) `see .claude/bug-diagnosis-{slug}.md` path reference → pass through the path string (plan-verifier opens the file itself per its Inputs item 7). Do not interpret or summarize the field — let plan-verifier's BD strategy parse it.
+6. **Project root** — current working directory
 
 If the plan file path is unclear, ask the user.
 
@@ -66,6 +67,7 @@ Plan file: {path}
 Design doc: {path or "none"}
 Design analysis: {path or "none"}
 Crystal file: {path or "none"}
+Bug diagnosis: {verbatim value from plan header **Bug diagnosis:** field, or "not applicable"}
 Project root: {path}
 
 Plugin agents dir: ${CLAUDE_PLUGIN_ROOT}/agents

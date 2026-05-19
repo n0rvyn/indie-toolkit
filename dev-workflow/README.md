@@ -94,11 +94,13 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | next-increment | interactive | Proposes 3-5 archetype-diverse next-step candidates for mature codebases, writes mini-spec for chosen one |
 | write-feature-spec | dispatcher | Gathers context, dispatches feature-spec-writer agent |
 | audit-rules | dispatcher | Gathers context, dispatches rules-auditor agent |
+| audit-tokens | fork (sonnet) | Multi-dimensional Claude Code token consumption analysis with self-contained HTML report; auto cost-posture recommendations |
 | design-drift | dispatcher | Design document vs codebase drift audit |
 | crystallize | interactive | Lock settled decisions from current session into a persistent crystal file |
 | collect-lesson | interactive | Capture development lessons learned |
 | kb | interactive | Cross-project knowledge base search with freshness indicators |
 | distill-discussion | interactive | Extract structured outputs (crystals, lessons) from raw discussion files |
+| generate-bases-views | interactive | Generate Obsidian Bases (.base) views over crystals, lessons, and vault notes |
 | generate-vf-prompt | interactive | Generate Verification-First prompts with falsifiable assertions |
 | finalize | interactive | Cross-phase validation: full test suite, acceptance criteria regression, cumulative coverage audit |
 

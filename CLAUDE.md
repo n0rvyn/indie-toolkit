@@ -26,6 +26,31 @@ When closing out a response with a "next step" suggestion or follow-up plan:
 
 **How to apply:** 在每次 response 结尾的"下一步"建议前停顿，对照已知 artifact 列表（plan file / dev-guide / state file / running task）。无对应 artifact → suggestion 改写为"如果你想 X，可以 ..."（条件式），不是"我建议下一步 Y"（断言式）。
 
+## Skill Cost Posture
+
+Every skill and agent SKILL.md / agent.md in this marketplace must declare a deliberate cost posture via `model:` / `effort:` / `context:` frontmatter. Skills that omit these inherit the session model (Opus by default in this team's setup), which silently charges ~20× a Sonnet turn for work Sonnet handles correctly.
+
+**Authoritative heuristic + decision table**: `skill-master/skills/plugin-master/cost-posture.md`
+
+**Quick reference** (classify by *dominant work at runtime*):
+
+| Class | Config |
+|---|---|
+| Mechanical execution (follows pre-written plan/spec) | `model: sonnet` |
+| Retrieval + extract (search corpus, return snippets) | `model: sonnet` + optional `context: fork agent: Explore` |
+| Tool wrapper (CLI/API call, structured output) | `model: haiku` + `context: fork` |
+| Judgment / Synthesis / Orchestration | inherit (do not downgrade) |
+
+**When this rule fires:**
+
+- **Creating a new skill/agent**: `skill-master:plugin-master` Step 2a.5 runs the cost posture recommendation; do not commit a new SKILL.md without it set or explicitly marked "keep inherit".
+- **Auditing**: `skill-master:plugin-reviewer` Dimension 7.5 flags missing optimization (mechanical skill on inherit) AND misuse (judgment skill on haiku). Both directions matter.
+- **Refactoring an existing skill**: if you change what a skill *does*, re-classify and update the posture.
+
+**Why we enforce this**: real usage data over 3 days showed `execute-plan` running 626 turns on Opus ($487) vs 3054 turns on Sonnet ($103) — the Sonnet half worked, the Opus half was inherited default. The fix was a one-line frontmatter change per skill.
+
+**Do not downgrade**: write-plan, brainstorm, design-decision, verify-plan, run-phase, fix-bug (diagnosis), review-execution, plugin-master itself. These do judgment / synthesis / orchestration; quality loss cascades downstream and costs more than the per-turn savings.
+
 ## Plugin Lifecycle
 
 ### When Creating a New Plugin

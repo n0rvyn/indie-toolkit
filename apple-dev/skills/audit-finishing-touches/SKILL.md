@@ -3,6 +3,7 @@ name: audit-finishing-touches
 description: "Mechanical §17–§20 polish-gap scan over SwiftUI files. Runs 5 grep-based checks (border overuse, default-style controls, undecorated card backgrounds, empty-state pointer, undecorated hero areas) and outputs a 必修/建议/灵感 report — does NOT make subjective design judgments. Use when a module is feature-complete and the UI 'feels generic' / 'has AI-feel' / 缺少性格, or the user says 打磨 / polish / finishing touches. Not when: feature is incomplete (use feature-review first); or you want subjective hierarchy/color/spacing review (use design-review — that one judges visual quality, this one only flags mechanical gaps)."
 compatibility: Requires macOS and Xcode (greps Swift files).
 user-invocable: false
+model: sonnet
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 

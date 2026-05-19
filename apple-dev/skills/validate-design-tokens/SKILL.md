@@ -3,6 +3,7 @@ name: validate-design-tokens
 description: "Use when scanning per-View SwiftUI files for Design Token compliance, or the user says 'validate tokens', 'check design tokens', 'check view files for hardcoded values'. Reports hardcoded spacing/colors/fonts/corner-radius in View files, plus an optional DesignSystem.swift ↔ DESIGN.md cross-check (read-only). Not for: applying fixes (use sync-design-md for token sync), doc-vs-code drift across architecture docs (use design-drift)."
 compatibility: Requires macOS and Xcode
 user-invocable: false
+model: sonnet
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**", "**/DESIGN.md"]
 ---
 

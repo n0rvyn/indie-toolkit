@@ -2,6 +2,7 @@
 name: fetch-swift-api-updates
 description: "Use when the user wants to check for latest Swift/SwiftUI API changes, or says 'fetch API updates', 'check WWDC changes'. Fetches latest Swift/SwiftUI API changes from WWDC session notes and updates project references."
 user-invocable: false
+model: sonnet
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 

@@ -2,6 +2,7 @@
 name: kb
 description: "Use when you need to search the cross-project knowledge base manually. Accepts a query, searches ~/.claude/knowledge/ for past lessons, API gotchas, architecture decisions, and learning notes."
 user-invocable: true
+model: sonnet
 ---
 
 ## Overview

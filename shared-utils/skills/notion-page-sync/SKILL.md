@@ -2,6 +2,8 @@
 name: notion-page-sync
 description: Use this skill to sync local markdown files or a directory to Notion pages under a configured parent page. Trigger phrases include "sync to Notion", "push docs to Notion", "同步到 Notion", "/notion-page-sync <path>". Project-level config lives in .claude/notion-sync.local.md.
 disable-model-invocation: false
+model: haiku
+context: fork
 allowed-tools: Bash(NOTION_TOKEN=*), Bash(python3*), Read, Write, Edit
 ---
 

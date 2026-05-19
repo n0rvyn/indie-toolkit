@@ -1,7 +1,9 @@
 ---
 name: minimax-coding-plan
-description: "查询 MiniMax coding plan 剩余额度。Triggered by: check MiniMax quota, remains, usage, 额度。"
+description: "查询 MiniMax coding plan 剩余额度（HTTP query against minimaxi.com quota API). Triggered by: 'check MiniMax quota', 'MiniMax remains', 'MiniMax 额度', 'MiniMax usage'. Not when: user wants to audit Claude Code's own token spend — that's dev-workflow:audit-tokens."
 allowed-tools: Bash
+model: haiku
+context: fork
 ---
 
 # MiniMax Coding Plan

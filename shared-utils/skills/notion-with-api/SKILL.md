@@ -1,7 +1,9 @@
 ---
 name: notion-with-api
-description: This skill should be used when the user asks to "connect to Notion", "search Notion pages", "create Notion page", "read Notion database", "update Notion content", or mentions Notion workspace operations. Keywords: Notion, notes, database, workspace.
+description: "This skill should be used when the user asks to 'connect to Notion', 'search Notion pages', 'create Notion page', 'read Notion database', 'update Notion content', or mentions Notion workspace operations. Not when: user wants narrative knowledge capture or research synthesis into Notion — those are claude-plugins-official:notion's knowledge-capture and research-documentation skills. Keywords — Notion, notes, database, workspace."
 disable-model-invocation: false
+model: haiku
+context: fork
 allowed-tools: Bash(python3*)
 ---
 

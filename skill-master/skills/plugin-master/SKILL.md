@@ -104,13 +104,39 @@ After creation completes → continue to 2a.5.
 - If `plugin_dev_available`: invoke `Skill("plugin-dev:command-development")`. If not: write command .md directly
 - After created → continue to 2a.5
 
-#### 2a.5: Auto-Review Gate
+#### 2a.5: Cost Posture Recommendation
+
+Before auto-review, classify the new artifact's dominant work and recommend `model` / `effort` / `context` frontmatter.
+
+1. Read `${CLAUDE_PLUGIN_ROOT}/skills/plugin-master/cost-posture.md` for the classification heuristic, decision questions, and recommended configs. If the file cannot be located, skip this step.
+
+2. Apply the heuristic to the newly created artifact:
+   - Read the artifact's description and body
+   - Walk the decision questions (writes spec vs follows / output consumed downstream / needs CLAUDE.md / failure cost)
+   - Determine the class: Mechanical / Retrieval / Tool wrapper / Judgment / Synthesis / Orchestration
+
+3. If the artifact already has `model:` or `context:` set: verify it matches the recommended config for its class.
+   - If it matches: no action, note "cost posture: aligned"
+   - If it conflicts with the heuristic (e.g. mechanical skill on inherit, or synthesis skill set to haiku): present the conflict and ask the user to confirm or override
+
+4. If the artifact has no `model:` / `context:` set: present the recommendation as an AskUserQuestion:
+   - Class: {detected}
+   - Recommended frontmatter: `model: {sonnet|haiku}` + optional `context: fork agent: {Explore|...}`
+   - Reason: cite the relevant row from cost-posture.md
+   - Options: "Apply recommendation" / "Keep inherit (default Opus)" / "Custom"
+   - If "Apply recommendation": Edit the artifact's frontmatter
+   - If "Keep inherit": continue without changes
+   - If "Custom": ask for explicit values
+
+5. Note the cost posture decision in the **Completion (create)** summary at the end of this route, so the user has it on record.
+
+#### 2a.6: Auto-Review Gate
 
 Collect the file paths of newly created artifacts (from the delegated skill's output, or Glob the target directory for recently created/modified .md files).
 
 Execute the review route (Step 2b) on these artifacts, using Scope A (specific files).
 
-#### 2a.6: Quality Decision
+#### 2a.7: Quality Decision
 
 If review finds **Bug-severity** issues:
 - Present the findings to user

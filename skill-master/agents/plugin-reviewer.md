@@ -213,13 +213,48 @@ Otherwise: skip (handled by external `plugin-dev:skill-reviewer` agent).
 2. If > 500 lines → flag as Logic. Include the line count and suggest: "Extract reference/template content to a `references/` subdirectory. Keep workflow logic in SKILL.md, move static tables, templates, and checklists to reference files."
 3. If > 500 lines: identify the largest contiguous non-workflow block (tables, templates, code blocks not part of step instructions) and report its line range as the extraction candidate
 
-**7.5 `context` and `model` field consistency:**
+**7.5 `context` and `model` field consistency (cost posture):**
+
+Reference: `skills/plugin-master/cost-posture.md` (heuristic classification, decision questions, and grounded examples). Resolve via `${CLAUDE_PLUGIN_ROOT}/skills/plugin-master/cost-posture.md` when running inside skill-master, otherwise Glob `**/skill-master/skills/plugin-master/cost-posture.md`. Skip this dimension if the file cannot be located.
+
+This sub-dimension checks both directions: misconfigured fields AND missed optimization opportunities.
+
+**7.5.A — Misuse checks (fields are set but wrong):**
+
 1. If skill has `context: fork`:
    - Check if the skill is multi-step with agent dispatch that produces results needed by later steps. If yes → flag as Minor: "context: fork isolates this skill from conversation state; multi-step workflows that return results to the user may lose context"
-   - Expected use: lightweight, self-contained operations (commit, search, quick lookup)
+   - Check if skill body lacks an actionable task prompt (only guidelines/conventions). If yes → flag as Logic: "context: fork subagent will receive guidelines with no task and return empty"
 2. If skill has `model: haiku`:
-   - Check if the skill instructions require complex reasoning (multi-step analysis, architectural decisions, nuanced judgment, creative generation). If yes → flag as Minor: "haiku model may not handle the complexity described in these instructions"
-   - Expected use: simple routing, straightforward script execution, template filling
+   - Check if the skill instructions require complex reasoning (multi-step analysis, architectural decisions, nuanced judgment, creative generation). If yes → flag as Bug: "haiku does not handle the complexity described; misclassification, missed defects, or wrong output likely downstream"
+3. If skill has `model:` set but `effort:` mismatched (e.g. `model: haiku, effort: high`): flag as Minor — Haiku does not support high effort, the field is silently ignored.
+
+**7.5.B — Missing optimization checks (fields not set but should be):**
+
+For each skill without a `model:` field set, classify the skill's dominant work using the heuristic in `cost-posture.md`:
+
+| Detected class | Recommendation | Severity if missing |
+|---|---|---|
+| Mechanical execution (follows pre-written plan/spec, applies edits, parses output) | `model: sonnet` | Minor |
+| Retrieval + extract (search corpus, filter, return snippets) | `model: sonnet` + consider `context: fork agent: Explore` | Minor |
+| Tool wrapper (CLI/API call, structured output) | `model: haiku` + `context: fork` | Minor |
+| Judgment / Synthesis / Orchestration | inherit (do not flag) | — |
+
+**Classification precedence — judgment keywords win.** When scanning the skill's description and body, if BOTH a judgment keyword AND a mechanical/retrieval keyword appear, classify as **judgment** (do not flag). This matches the implementation in `audit-tokens/scripts/generate_report.py:classify_skill_by_description` (canonical keyword lists live there). Without this precedence rule, the text-reviewer report and the python-driven `audit-tokens` HTML report can produce conflicting recommendations on the same skill.
+
+Detection signals — apply in this order:
+
+1. **Judgment** (stop scanning if any match): "judge", "judges", "critique", "critiques", "review", "reviews", "diagnose", "diagnoses", "design", "designs", "synthesize", "synthesizes", "brainstorm", "decide", "decides", "orchestrate", "orchestrates", "evaluate", "evaluates", "assess", "assesses"
+2. **Tool wrapper**: "wraps", "wrapper", "cli", "api call", "rest call", "send", "post", "trigger"
+3. **Retrieval**: "search", "retrieve", "query", "find", "look up", "lookup", "fetch", "fetches"
+4. **Mechanical** (most permissive bucket): "execute", "executes", "apply", "applies", "run", "runs", "parse", "parses", "scan", "scans", "audit", "audits", "validate", "validates", "verify", "verifies", "sync", "syncs", "extract", "extracts", "generate", "generates", "lint", "format", "mechanical"
+
+Additional signal: a skill body that dispatches a sub-agent already running on sonnet/haiku means the orchestration layer itself is doing mechanical work — recommend matching the sub-agent's model.
+
+When flagging, include the detected class and a citation: e.g. "Detected class: Mechanical execution (skill description: 'Executes plan tasks mechanically'). Recommend `model: sonnet`. See cost-posture.md for criteria."
+
+**7.5.C — Judgment/Synthesis/Orchestration do-not-downgrade check:**
+
+If skill has `model: haiku` or `model: sonnet` AND the skill's dominant work is judgment, synthesis, or orchestration (per cost-posture.md examples): flag as Bug — "Downgrading {class} skills risks silent quality loss that costs more downstream than the per-turn savings. See cost-posture.md anti-patterns."
 
 ---
 

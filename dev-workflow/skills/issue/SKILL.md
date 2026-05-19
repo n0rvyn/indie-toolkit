@@ -1,6 +1,6 @@
 ---
 name: issue
-description: "Use when the user says 'issue', wants to list/read/create GitHub Issues, or needs to record a bug/idea/question discovered during development. Unified GitHub Issue entry point."
+description: "Use when the user says '/issue', 'file an issue', 'record this as an issue', or wants to list/read/create GitHub Issues. Unified GitHub Issue entry point — list and read are cheap; create may include hypothesis generation (judgment), so the skill inherits the session model rather than downgrading. Not when: user is describing a general problem in conversation without asking to file it."
 user-invocable: true
 ---
 

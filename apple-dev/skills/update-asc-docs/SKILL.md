@@ -1,7 +1,8 @@
 ---
 name: update-asc-docs
-description: "Use when preparing for App Store submission or the user says 'update ASC docs'. Audits codebase for privacy frameworks, permissions, third-party services, then updates legal and marketing documents."
+description: "Manual /update-asc-docs invocation only (auto-routing disabled). Audits codebase for privacy frameworks, permissions, third-party services, then updates legal and marketing documents. Use when preparing for App Store submission."
 disable-model-invocation: true
+model: sonnet
 ---
 
 ## 4 种文档

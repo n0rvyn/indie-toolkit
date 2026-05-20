@@ -2,6 +2,7 @@
 name: distill-discussion
 description: "Use when you have raw discussion files (AI conversation exports, exploratory notes) and want to extract structured outputs. Routes each file to: crystal (decisions), lesson (failures/pitfalls), or skip (no conclusion)."
 user-invocable: true
+model: sonnet
 ---
 
 ## Overview

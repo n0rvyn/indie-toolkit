@@ -2,6 +2,7 @@
 name: audit-rules
 description: "Use when Claude exhibited unexpected behavior, for periodic rule health checks, or after adding new rules. Audits CLAUDE.md rules from the AI execution perspective for conflicts, loopholes, gaps, and redundancies."
 disable-model-invocation: true
+model: sonnet
 ---
 
 ## Overview

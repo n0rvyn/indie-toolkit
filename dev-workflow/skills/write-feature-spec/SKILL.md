@@ -2,6 +2,7 @@
 name: write-feature-spec
 description: "Generate feature spec (docs/05-features/) capturing what was built, design decisions made, and user journeys completed. Use for cross-session context recovery, publication notes, or as input for external review. Not a prerequisite for self-review."
 user-invocable: false
+model: sonnet
 ---
 
 ## Overview

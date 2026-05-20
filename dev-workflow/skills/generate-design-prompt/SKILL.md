@@ -2,6 +2,8 @@
 name: generate-design-prompt
 description: "Use when the user needs a design tool prompt (for Stitch, Figma, or similar) based on actual project functionality. Generates initial prompts from design docs/code, or refinement prompts from design analysis feedback."
 disable-model-invocation: true
+model: sonnet
+context: fork
 ---
 
 > **Note on `disable-model-invocation`:** This skill generates text for the user to paste into external design tools (Stitch/Figma). It does not invoke AI models itself; the AI reads project code/docs and assembles a prompt. Shared pattern with `apple-dev:generate-stitch-prompts`.

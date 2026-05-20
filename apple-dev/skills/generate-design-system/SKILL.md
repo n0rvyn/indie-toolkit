@@ -3,6 +3,8 @@ name: generate-design-system
 description: "Use when the user needs to generate SwiftUI Design System code from token specifications, or says 'generate design system'. Creates Apple HIG-compliant design tokens and component styles."
 compatibility: Requires macOS and Xcode
 user-invocable: false
+model: sonnet
+context: fork
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**", "**/DESIGN.md"]
 ---
 

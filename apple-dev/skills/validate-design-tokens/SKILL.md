@@ -4,6 +4,8 @@ description: "Use when scanning per-View SwiftUI files for Design Token complian
 compatibility: Requires macOS and Xcode
 user-invocable: false
 model: sonnet
+context: fork
+agent: Explore
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**", "**/DESIGN.md"]
 ---
 

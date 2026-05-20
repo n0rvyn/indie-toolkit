@@ -219,11 +219,18 @@ Reference: `skills/plugin-master/cost-posture.md` (heuristic classification, dec
 
 This sub-dimension checks both directions: misconfigured fields AND missed optimization opportunities.
 
+**Runtime notes** (verified 2026-05):
+
+- `context: fork` is honored by the Skill tool dispatch path. Per [Issue #17283](https://github.com/anthropics/claude-code/issues/17283) (closed `stateReason: COMPLETED` 2026-01-10), the earlier limitation where Skill tool ignored `context: fork` and `agent:` frontmatter has been fixed. Earlier guidance saying "fork doesn't work via Skill tool" is outdated — recommend fork without that caveat.
+- `agent: Explore` and `agent: Plan` SKIP CLAUDE.md and git status loading (per [official skills docs](https://code.claude.com/docs/en/skills#run-skills-in-a-subagent) and [sub-agents docs](https://code.claude.com/docs/en/sub-agents#what-loads-at-startup)). Only recommend these agents when the skill body does NOT depend on project conventions, custom rules, or workspace state. Skills that read CLAUDE.md as data, or rely on project-specific conventions, should omit `agent:` so the default `general-purpose` agent loads CLAUDE.md.
+- **Why fork matters beyond context cleanliness**: when the parent session has accumulated >200K tokens (≈800KB), a child Sonnet/Haiku skill inherits the full parent context and triggers Anthropic's long-context billing gate (`Usage credits are required for long context requests`, HTTP 429). On Max plans, Opus 1M is auto-included but Sonnet 1M is not — this hits even without the `[1m]` model suffix because Anthropic gates on actual request body size. Fork creates a fresh subagent context that bypasses this. Verified via ModelProxy passthrough log (596KB Sonnet request body → 429 long-context error) and [official model-config docs](https://code.claude.com/docs/en/model-config#extended-context).
+
 **7.5.A — Misuse checks (fields are set but wrong):**
 
 1. If skill has `context: fork`:
    - Check if the skill is multi-step with agent dispatch that produces results needed by later steps. If yes → flag as Minor: "context: fork isolates this skill from conversation state; multi-step workflows that return results to the user may lose context"
    - Check if skill body lacks an actionable task prompt (only guidelines/conventions). If yes → flag as Logic: "context: fork subagent will receive guidelines with no task and return empty"
+   - Check if skill body contains `AskUserQuestion` calls, "Wait for user", "ask the user via", "user confirms", or "用户确认" patterns. If yes → flag as Bug: "context: fork only surfaces the subagent's final message to the main session; intermediate AskUserQuestion calls in the forked subagent cannot reach the user, which breaks the skill's interactive design. Remove `context: fork` or refactor to defer user interaction to the dispatcher."
 2. If skill has `model: haiku`:
    - Check if the skill instructions require complex reasoning (multi-step analysis, architectural decisions, nuanced judgment, creative generation). If yes → flag as Bug: "haiku does not handle the complexity described; misclassification, missed defects, or wrong output likely downstream"
 3. If skill has `model:` set but `effort:` mismatched (e.g. `model: haiku, effort: high`): flag as Minor — Haiku does not support high effort, the field is silently ignored.
@@ -235,7 +242,7 @@ For each skill without a `model:` field set, classify the skill's dominant work 
 | Detected class | Recommendation | Severity if missing |
 |---|---|---|
 | Mechanical execution (follows pre-written plan/spec, applies edits, parses output) | `model: sonnet` | Minor |
-| Retrieval + extract (search corpus, filter, return snippets) | `model: sonnet` + consider `context: fork agent: Explore` | Minor |
+| Retrieval + extract (search corpus, filter, return snippets) | `model: sonnet` + `context: fork agent: Explore` (REQUIRED when the skill is dispatched by ≥1 orchestrator skill/agent; consider otherwise) | Major if orchestrator-called and missing fork; Minor otherwise |
 | Tool wrapper (CLI/API call, structured output) | `model: haiku` + `context: fork` | Minor |
 | Judgment / Synthesis / Orchestration | inherit (do not flag) | — |
 

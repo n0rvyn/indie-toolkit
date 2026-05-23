@@ -94,7 +94,10 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | next-increment | interactive | Proposes 3-5 archetype-diverse next-step candidates for mature codebases, writes mini-spec for chosen one |
 | write-feature-spec | dispatcher | Gathers context, dispatches feature-spec-writer agent |
 | audit-rules | dispatcher | Gathers context, dispatches rules-auditor agent |
-| audit-tokens | fork (sonnet) | Multi-dimensional Claude Code token consumption analysis with self-contained HTML report; auto cost-posture recommendations |
+| audit-tokens | fork (sonnet) | Multi-dimensional Claude Code token consumption analysis with self-contained HTML report; auto cost-posture recommendations; auto-invokes diagnose-cost-drivers for root-cause attribution |
+| diagnose-cost-drivers | fork (sonnet) | Root-cause attribution (Skill gap / Cache bloat / Sub-agent miss / Read pollution) for top expensive sessions. Reads TSV + session jsonl. Auto-invoked by audit-tokens; also user-invocable standalone |
+| distill-project-skills | fork (sonnet) | Scans project session jsonl + cost-hint.log for repeat (no skill) main-session patterns and proposes skill candidates with frequency, est wasted cost, and suggested cost-posture |
+| fork-this | fork (sonnet) | Mid-session orthogonal split: when topic A's discussion surfaces problem B, generate minimal seed prompt for B in a new session WITHOUT polluting current A context |
 | design-drift | dispatcher | Design document vs codebase drift audit |
 | crystallize | interactive | Lock settled decisions from current session into a persistent crystal file |
 | collect-lesson | interactive | Capture development lessons learned |
@@ -109,9 +112,12 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | Event | Script | Purpose |
 |-------|--------|---------|
 | SessionStart | check-workflow-state.sh | Detects in-progress phase, prompts resume |
-| PreToolUse (Bash) | scan-secrets.sh | Intercepts git commit, blocks if secrets detected in staged content |
+| PreToolUse (Bash, `git commit *`) | scan-secrets.sh | Intercepts git commit, blocks if secrets detected in staged content |
+| PreToolUse (Bash) | suggest-agent-dispatch.sh | Cost-routing nudge: emits stderr hint when ≥2 mechanical探查 Bash (sqlite3/curl/grep -r/find) accumulate in 30-min window. Always exit 0; never blocks |
+| PreToolUse (Read) | suggest-read-routing.sh | Cost-routing nudge: emits stderr hint when same file Read ≥2× (Read pollution) OR ≥2 large Reads (>300 lines) in window. Always exit 0; never blocks |
 | UserPromptSubmit | suggest-skills.sh | Pattern-matches user prompt and suggests relevant skills |
 | PostToolUse (Agent) | verify-agent-output.py | Detects "wrote/saved/created PATH" claims in sub-agent responses; warns the main session if those files are missing or empty on disk |
+| PostToolUse (Edit\|Write) | check-repeated-edit.py | Warns when same file is edited multiple times in a 10-min window — nudges toward hypothesis statement before next edit |
 
 ## Workflow State
 

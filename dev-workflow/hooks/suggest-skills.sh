@@ -116,6 +116,12 @@ elif echo "$lower" | grep -qE 'review.*(code|impl)|代码审查|审查.*实现';
   else
     echo "[skill-hint] Related: /review-before-commit — semantic diff review before commit"
   fi
+elif echo "$lower" | grep -qE 'fork.*this|park.*this|分叉|现场分叉|另一个.*问题|顺便.*问|另起一.?个'; then
+  echo "[skill-hint] Related: /fork-this — mid-session orthogonal topic split (parks B in a seed prompt, current session keeps going on A)"
+elif echo "$lower" | grep -qE 'distill.*skill|mine.*pattern|提炼.*skill|挖.*模式|找重复模式|哪些值得做成 skill|repeating pattern'; then
+  echo "[skill-hint] Related: /distill-project-skills — scan project sessions for repeat no-skill patterns and propose new skills"
+elif echo "$lower" | grep -qE 'diagnose.*cost|why.*expensive|cost.*root|诊断.*成本|为什么.?这?么贵|找出.?贵的原因|why this session was expensive'; then
+  echo "[skill-hint] Related: /diagnose-cost-drivers — root-cause attribute top expensive sessions (also auto-invoked by /audit-tokens)"
 fi
 
 exit 0

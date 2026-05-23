@@ -15,7 +15,7 @@ PROMPT=$(echo "$INPUT" | jq -r '.prompt // empty')
 
 # Skip conditions (highest priority — fast exit)
 # Skip 1: orchestration commands
-if echo "$PROMPT" | grep -qE "^/(run-phase|execute-plan|verify-plan|commit|test-changes|finalize|reload-plugins|exit|clear)( |$)"; then
+if echo "$PROMPT" | grep -qE "^/(run-phase|execute-plan|verify-plan|commit|test-changes|finalize|reload-plugins|exit|clear|fork-this)( |$)"; then
   echo "{}"; exit 0
 fi
 

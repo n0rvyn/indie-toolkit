@@ -638,6 +638,9 @@ def render(rows, days: int, candidates):
     parts.append("<p style='font-size:12px;color:#94a3b8;margin-top:8px;'>1h is 1.6× the per-token write cost of 5m. The split is decided automatically by the Claude Code harness; there is currently no user-side configuration. Reported for awareness only.</p>")
     parts.append("</section>")
 
+    # Diagnosis placeholder (injected by audit-tokens Step 3.5 via diagnose-cost-drivers)
+    parts.append("<!-- DIAGNOSIS -->")
+
     # Footer
     parts.append("<footer>")
     parts.append("<p>Pricing reflects Anthropic public list prices for Claude Opus 4.7 / Sonnet 4.6 / Haiku 4.5 as of 2026-05. On flat-rate plans the dollar figures are notional — use them as relative ranking, not actual billing.</p>")

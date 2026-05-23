@@ -1,6 +1,6 @@
 ---
 name: audit-tokens
-description: "Use when the user says 'audit tokens', 'token audit', 'analyze token consumption', '审计 token', '分析 token 消耗', '查 token 开销', 'cost audit', 'token consumption analysis', or wants a multi-dimensional analysis of Claude Code session token consumption with HTML report. Accepts integer days or natural-language window ('today', 'last week', 'last month'). Reads ~/.claude/projects/ session jsonl files, aggregates spend by skill/model/project/date/tool, identifies optimization opportunities using the cost-posture heuristic, and writes a self-contained HTML report. Not when: user wants to monitor live token usage during a session — that's /context. Not when: user wants quota check for a specific model provider — that's minimax-coding-plan. Not when: user wants the official Claude Code session HTML report — use claude-plugins-official:session-report (overlapping source: ~/.claude/projects transcripts)."
+description: "Use when the user says 'audit tokens', 'token audit', 'analyze token consumption', '审计 token', '分析 token 消耗', '查 token 开销', 'cost audit', 'token consumption analysis', or wants a multi-dimensional analysis of Claude Code session token consumption with HTML report. Accepts integer days or natural-language window ('today', 'last week', 'last month'). Reads ~/.claude/projects/ session jsonl files, aggregates spend by skill/model/project/date/tool, identifies optimization opportunities using the cost-posture heuristic, auto-invokes diagnose-cost-drivers for root-cause attribution, and writes a self-contained HTML report. Not when: user wants to monitor live token usage during a session — that's /context. Not when: user wants quota check for a specific model provider — that's minimax-coding-plan. Not when: user wants the official Claude Code session HTML report — use claude-plugins-official:session-report (overlapping source: ~/.claude/projects transcripts). Not when: user already has a TSV (from a prior /audit-tokens run) and ONLY wants the diagnosis section re-computed — use /diagnose-cost-drivers standalone."
 user-invocable: true
 model: sonnet
 context: fork
@@ -59,6 +59,24 @@ Open the report:
 open "$OUT"
 ```
 
+### Step 3.5: Run cost-driver diagnosis (default-on; fail-open)
+
+Execute the diagnose-cost-drivers sibling skill's script directly:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/diagnose-cost-drivers/scripts/diagnose.py \
+  /tmp/audit-tokens-raw.tsv \
+  /tmp/diagnose-fragment.html 2>/tmp/diagnose-stderr.log || true
+```
+
+If `diagnose-fragment.html` exists and is non-empty: read it and inject the contents at the `<!-- DIAGNOSIS -->` placeholder in the HTML output (placeholder lives in `generate_report.py` just before the `<footer>` tag).
+
+If diagnose.py failed or fragment is missing/empty: substitute the placeholder with `<section><h2>Diagnosis & Suggestions</h2><p>Diagnosis unavailable (see /tmp/diagnose-stderr.log).</p></section>` so the report still completes (per "enhance not break" principle).
+
+Note: this is a direct script invocation, not a Skill-tool call. The `/diagnose-cost-drivers` user-invocable slash command exists separately (SKILL.md) and runs the same `diagnose.py` from its own Process; both entry points share the script as the single source of truth.
+
+**Cross-skill dependency**: this step hardcodes the path `${CLAUDE_PLUGIN_ROOT}/skills/diagnose-cost-drivers/scripts/diagnose.py`. If `diagnose-cost-drivers` is renamed or its `scripts/diagnose.py` is moved, this step will silently fall back to the "Diagnosis unavailable" placeholder (per fail-open). Renaming requires updating this path here AND mirroring the change in `diagnose-cost-drivers/SKILL.md` Cross-skill dependency section.
+
 ### Step 4: Summarize in chat
 
 Read the generated HTML file's `<!-- SUMMARY -->` block (the Python script embeds a short machine-readable summary at the top of the HTML as an HTML comment). Present to user:
@@ -73,6 +91,7 @@ Do NOT paste the full HTML or large tables into chat. The HTML is the deliverabl
 ## Completion criteria
 
 - Raw TSV written to `/tmp/audit-tokens-raw.tsv`
+- Diagnosis fragment injected into HTML report at `<!-- DIAGNOSIS -->` (or fallback "Diagnosis unavailable" section if diagnose-cost-drivers failed — fail-open per Principle 1)
 - HTML written to `~/Desktop/token-audit-<timestamp>.html`
 - HTML opened in default browser
 - 3-bullet summary delivered in chat (total / top driver / top recommendations)
@@ -84,3 +103,13 @@ Do NOT paste the full HTML or large tables into chat. The HTML is the deliverabl
 - **Date semantics**: "last N days" means `find -mtime -N`, i.e. files modified within N × 24h of now. Not calendar days.
 - **Cache TTL caveat**: 1h vs 5m split is reported but not actionable — Claude Code's harness decides automatically, no user-side knob.
 - **Plugin cache lag**: the recommendations engine reads SKILL.md frontmatter from `~/.claude/plugins/marketplaces/<marketplace>/<plugin>/skills/<name>/SKILL.md` and the versioned `~/.claude/plugins/cache/.../` copies. These reflect the **installed** plugin version, not edits in your local repo. After editing a SKILL.md in the source repo, you must commit → wait for auto-version bump → run `/plugin update` for Claude Code to pull the new version. Until then, a freshly-edited skill will still appear in this report's recommendations as if it lacked the `model:` field.
+
+## Principles
+
+These principles govern HOW cost-engineering work proceeds in this project. They apply both to this skill's evolution and to any cost-related enhancements (hooks, sibling skills, CLAUDE.md rules):
+
+1. **Enhance, not break.** Cost-saving mechanisms NUDGE, not BLOCK. Hooks emit hints to stderr; they do not exit non-zero. Rules are self-applied by the main model; they do not prevent action. The user's flow is sacred — friction added in the name of cost is friction we pay later in user trust.
+
+2. **Recover unwarranted cost only.** Target spend that shouldn't have happened — Opus running on mechanical探查, cache bloat from re-Reading the same file, work that bypassed an existing cheaper skill. Do NOT blanket-downgrade work that needs the quality (orchestration, judgment, synthesis). The goal is not the lowest number on the invoice; the goal is keeping the work that earned its cost and trimming the work that didn't.
+
+Cross-reference: project CLAUDE.md `## Skill Cost Posture` links here.

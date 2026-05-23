@@ -42,6 +42,34 @@ When the bug report includes a "why does X happen" / "how is X supposed to work"
 
 The user's friction reports show speculative architecture answers are a top frustration mode; this gate prevents starting a fix-bug flow with a wrong premise.
 
+## 现状/预期 必填块 (Pre-Edit Gate)
+
+In **single-bug mode**, before invoking any Edit / Write / MultiEdit / NotebookEdit tool, you MUST print this block — verbatim format, both lines required:
+
+```
+**现状**: <one sentence describing what the user actually sees, no code-layer terms>
+**预期**: <one sentence describing what the user should see after fix, no code-layer terms>
+```
+
+**Rules:**
+- "现状" describes the user-observable symptom (e.g., "点相册按钮变成拍照功能"), NOT the root cause hypothesis
+- "预期" describes the user-observable success state (e.g., "点相册按钮进入照片选择界面"), NOT the planned code change
+- Write in the project's primary language (中文 if the bug was reported in 中文; English otherwise)
+- 冒号可以是半角 `:` 或全角 `：`，hook 两种都识别
+- **English variant** (use when bug was reported in English) — note hook accepts ASCII colon only for English form:
+
+  ```
+  **Current**: <one sentence describing what the user actually sees>
+  **Expected**: <one sentence describing what the user should see after fix>
+  ```
+- The bug-fix-gate hook (`dev-workflow/hooks/bug-fix-gate.py`) detects this block; missing it inside /fix-bug = Edit blocked
+- The block's truthfulness is your responsibility — hook can only verify presence, not whether "现状" actually matches what the user reported. Writing a fake block to bypass the gate violates fix-bug protocol.
+- **If you see `[fix-gate]` after fixing a `[readback-mandate]` block**: both gates are independent. readback-mandate checks user-intent alignment; fix-gate checks bug-fix expected-behavior anchor. Satisfy each separately.
+
+**Why this exists:** the frustration audit (`.claude/research/frustration-audit-2026-05-23.md`) showed multiple cases where the model fixed the wrong bug or did a partial undo because the misunderstanding wasn't surfaced before code changes. Stating the user-visible target explicitly gives the user a checkpoint to redirect cheaply.
+
+**Multi-issue loop mode:** see `references/multi-issue-loop.md` — that mode's per-bundle reproduction step already serves this function. Skip the block requirement when multi-issue mode is active.
+
 ## Process
 
 ### Step Echo (audit aid — read before executing any step)

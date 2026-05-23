@@ -1,0 +1,1 @@
+{"type": "user", "message": {"content": "这个按钮点了崩溃，看下 /tmp/integration-test-log.log"}, "uuid": "u1"}

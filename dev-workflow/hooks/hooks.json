@@ -41,6 +41,26 @@
             "timeout": 3
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|Grep|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/nudge-named-source.py",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/bug-fix-gate.py",
+            "timeout": 3
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [

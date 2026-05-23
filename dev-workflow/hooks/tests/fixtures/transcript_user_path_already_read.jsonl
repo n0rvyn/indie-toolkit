@@ -1,0 +1,2 @@
+{"type": "user", "message": {"content": "看一下 /tmp/test-fixture-already-read.log"}, "uuid": "u1"}
+{"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "Read", "input": {"file_path": "/tmp/test-fixture-already-read.log"}, "id": "t1"}]}, "uuid": "a1"}

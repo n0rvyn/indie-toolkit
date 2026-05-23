@@ -1,0 +1,2 @@
+{"type": "user", "message": {"content": "这个按钮点了崩溃"}, "uuid": "u1"}
+{"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "Edit", "input": {"file_path": "/tmp/some.swift"}, "id": "e1"}]}, "uuid": "a1"}

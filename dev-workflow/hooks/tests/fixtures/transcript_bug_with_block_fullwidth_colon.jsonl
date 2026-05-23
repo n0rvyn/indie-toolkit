@@ -1,0 +1,2 @@
+{"type": "user", "message": {"content": "这个按钮点了崩溃"}, "uuid": "u1"}
+{"type": "assistant", "message": {"content": [{"type": "text", "text": "诊断完毕。\n**现状**：点击保存按钮 app 闪退\n**预期**：点击保存按钮成功保存数据并显示提示\n开始修复。"}]}, "uuid": "a1"}

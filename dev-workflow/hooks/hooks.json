@@ -21,6 +21,26 @@
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scan-secrets.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/suggest-agent-dispatch.sh",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/suggest-read-routing.sh",
+            "timeout": 3
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [

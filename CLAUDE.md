@@ -51,6 +51,8 @@ Every skill and agent SKILL.md / agent.md in this marketplace must declare a del
 
 **Do not downgrade**: write-plan, brainstorm, design-decision, verify-plan, run-phase, fix-bug (diagnosis), review-execution, plugin-master itself. These do judgment / synthesis / orchestration; quality loss cascades downstream and costs more than the per-turn savings.
 
+**Operating principles**: see `dev-workflow/skills/audit-tokens/SKILL.md §Principles` for the two governance rules (enhance-not-break; recover-unwarranted-cost-only).
+
 ## Plugin Lifecycle
 
 ### When Creating a New Plugin

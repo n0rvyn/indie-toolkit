@@ -8,6 +8,8 @@
 ## Negative Trigger Tests
 - "Commit my changes"
 - "Write a summary"
+- "Fork this topic to a separate session" (should route to /fork-this — mid-session orthogonal split, not end-of-session full transfer)
+- "Park this for later" (should route to /fork-this)
 
 ## Output Assertions
 - [ ] Output generates cold-start prompt for session transfer

@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: "Use when handing off work to a new session (next day, different person), the user says 'handoff', or a complex task needs to continue in a new session. Generates a cold-start prompt for session transfer."
+description: "Use when ending the current session and transferring ALL current work to a new session (next day, different person), the user says 'handoff', '交接'. End-of-session full transfer — not for mid-session orthogonal splits (use /fork-this for that). Generates a cold-start prompt covering: current plan, completed items, open items, key files, next steps."
 disable-model-invocation: true
 context: fork
 model: sonnet

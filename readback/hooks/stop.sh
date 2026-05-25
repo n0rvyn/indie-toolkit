@@ -35,6 +35,7 @@ if [ -r "$STATE_FILE" ]; then
   [ "$STORED_SID" = "unknown" ] && STORED_SID=""
   CURRENT_SID=$(echo "$INPUT" | jq -r '.session_id // empty' 2>/dev/null || echo "")
   CREATED_AT=$(jq -r '.created_at // empty' "$STATE_FILE" 2>/dev/null || echo "")
+  CONFIRMED_AT=$(jq -r '.confirmed_at // empty' "$STATE_FILE" 2>/dev/null || echo "")
   SKILL=$(jq -r '.skill // empty' "$STATE_FILE" 2>/dev/null || echo "")
   CONFIRMED=$(jq -r '.user_confirmed // false' "$STATE_FILE" 2>/dev/null || echo "false")
 
@@ -54,6 +55,21 @@ if [ -r "$STATE_FILE" ]; then
   if [ "$CONFIRMED" = "true" ] && [ -n "$STORED_SID" ] && [ -n "$CURRENT_SID" ] \
      && [ "$STORED_SID" != "$CURRENT_SID" ]; then
     SKILL=""; CONFIRMED="false"
+  fi
+  # Phase 3: confirmed + empty stored sid + stale confirmed_at (>30 min) →
+  # state leaked from a prior session where pre-tool-use.sh never stamped
+  # (e.g., /readback without subsequent Write/Edit, or skill != fix-bug).
+  # Treat as no-readback so the warning fires. Mirrors user-prompt-submit.sh
+  # TTL fix for state-leak prevention (audit fix 2026-05-25).
+  if [ "$CONFIRMED" = "true" ] && [ -z "$STORED_SID" ] && [ -n "$CONFIRMED_AT" ]; then
+    if NOW_TS=$(date -u +%s 2>/dev/null) \
+       && CONF_TS=$( (date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "$CONFIRMED_AT" +%s 2>/dev/null) \
+                    || (date -d "$CONFIRMED_AT" +%s 2>/dev/null) ); then
+      AGE=$((NOW_TS - CONF_TS))
+      if [ "$AGE" -ge 1800 ]; then
+        SKILL=""; CONFIRMED="false"
+      fi
+    fi
   fi
 
   # Skip warning when skill orchestration is active (run-phase et al ran the writes)

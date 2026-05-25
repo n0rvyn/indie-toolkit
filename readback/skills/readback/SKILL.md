@@ -1,8 +1,8 @@
 ---
 name: readback
-description: "Use when the user says '/readback', 'readback', 'read back', 'echo my intent', 'restate my ask', 'play it back', '复述一下', '复述', '回读', '对齐一下', '确认理解', '让我看看你理解的对不对', '你理解了吗'. Triggers a manual 3-paragraph plain-language echo of the user's current intent via the intent-echoer agent (echoes intent without asking new questions; before substantial code/plan work, or to recover alignment after drift). '/readback status' shows current readback state. Not when: already inside /brainstorm Step 2 — its Expectation Recap handles alignment via '对齐了'. Not when: a plan file already exists and user wants it validated (use /verify-plan). Not when: post-code review (use /review-execution). Not when: user said 'go' / '直接做' (bypass intent). Not when: '对齐一下时间' or similar schedule context."
+description: "Use when the user says '/readback', 'readback', 'echo my intent', 'restate my ask', 'play it back', '复述', '复述一下', '回读'. Triggers a manual 3-paragraph plain-language echo of the user's current intent via the intent-echoer agent — before substantial code/plan work, or to recover alignment after drift. '/readback status' shows current readback state. Not when: inside /brainstorm Step 2 (its Expectation Recap handles alignment via '对齐了'). Not when: a plan file already exists and user wants it validated (use /verify-plan). Not when: post-code review (use /review-execution). Not when: user wants a code or doc summary (use Read/Grep directly). Not when: user wants progress summary for next session (use /handoff). Not when: user wants to extract decisions from past discussion (use /crystallize or /distill-discussion)."
 user-invocable: true
-allowed-tools: Bash(jq:*, mkdir:*, date:*, mv:*), Task
+allowed-tools: Bash(jq:*, mkdir:*, date:*, mv:*, rm:*), Task
 ---
 
 # Readback
@@ -34,12 +34,12 @@ If args is `status` or empty + user explicitly asks for state:
 
 4. Write `.claude/readback-state.json`:
 
-   First, capture the agent's verbatim output into a shell variable. **Substitute the literal content between the EOF markers with the actual text returned by intent-echoer** — do not modify, escape, or summarize. (If the agent's output happens to contain the literal string `EOF_AGENT_OUTPUT`, use a unique marker variant like `EOF_AGENT_OUTPUT_XYZ123` for both lines.)
+   First, capture the agent's verbatim output into a shell variable. **Substitute the literal content between the EOF markers with the actual text returned by intent-echoer** — do not modify, escape, or summarize. **Always use a unique random suffix on the EOF marker** (e.g., `EOF_AGENT_OUTPUT_A7F3B2`) to eliminate any collision risk if the agent output happens to contain the literal marker string. Pick a 6-character hex nonce each time; use the same suffix on both opening and closing markers.
 
    ```bash
-   AGENT_OUTPUT=$(cat <<'EOF_AGENT_OUTPUT'
+   AGENT_OUTPUT=$(cat <<'EOF_AGENT_OUTPUT_A7F3B2'
    {paste the intent-echoer agent's literal output between the EOF markers — do not modify}
-   EOF_AGENT_OUTPUT
+   EOF_AGENT_OUTPUT_A7F3B2
    )
    ```
 
@@ -77,7 +77,14 @@ If args is `status` or empty + user explicitly asks for state:
        .claude/readback-state.json > .claude/readback-state.json.tmp \
        && mv .claude/readback-state.json.tmp .claude/readback-state.json
      ```
-     Present new agent output verbatim. If `correction_count` reaches 2: STOP, suggest `/brainstorm` (alignment problem is upstream).
+     Present new agent output verbatim. If `correction_count` reaches 2: STOP, suggest `/brainstorm` (alignment problem is upstream), AND mark state as bailed-out so subsequent action prompts in this session don't loop the failing readback:
+     ```bash
+     jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+       '.user_confirmed = true | .confirmed_at = $ts | .bail_reason = "max_corrections"' \
+       .claude/readback-state.json > .claude/readback-state.json.tmp \
+       && mv .claude/readback-state.json.tmp .claude/readback-state.json
+     ```
+     (Setting `user_confirmed = true` lets the user-prompt-submit.sh state-aware short-circuit suppress further mandates; the `bail_reason` field documents why. State will naturally expire via the 30-min TTL on `confirmed_at`.)
    - User asks something unrelated → leave state as-is (readback unresolved); do not silently treat as confirmation.
 
 ## Completion criteria

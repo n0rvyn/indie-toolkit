@@ -39,12 +39,21 @@ build_transcript() {
 }
 
 run_case() {
+  # NOTE: `${7-test}` (no colon) defaults only when $7 is unset — allows passing
+  # explicit empty string "" for the empty-stored-sid test cases.
   local desc="$1" last_writes="$2" earlier_writes="$3" skill_val="$4" confirmed="$5" \
-        expect_warn="$6" stored_sid="${7:-test}" created_at="${8:-$FRESH_TS}"
+        expect_warn="$6" stored_sid="${7-test}" created_at="${8-$FRESH_TS}" \
+        confirmed_at="${9-}"
   build_transcript "$last_writes" "$earlier_writes"
   if [ -n "$skill_val" ]; then
-    jq -n --arg s "$skill_val" --argjson c "$confirmed" --arg sid "$stored_sid" --arg ts "$created_at" \
-      '{session_id: $sid, created_at: $ts, skill: $s, user_confirmed: $c}' > "$STATE"
+    # session_id: empty string → JSON null (matches the SKILL.md Step 4 schema where session_id is null)
+    if [ -z "$stored_sid" ]; then
+      jq -n --arg s "$skill_val" --argjson c "$confirmed" --arg ts "$created_at" --arg cts "$confirmed_at" \
+        '{session_id: null, created_at: $ts, confirmed_at: (if $cts == "" then null else $cts end), skill: $s, user_confirmed: $c}' > "$STATE"
+    else
+      jq -n --arg s "$skill_val" --argjson c "$confirmed" --arg sid "$stored_sid" --arg ts "$created_at" --arg cts "$confirmed_at" \
+        '{session_id: $sid, created_at: $ts, confirmed_at: (if $cts == "" then null else $cts end), skill: $s, user_confirmed: $c}' > "$STATE"
+    fi
   else
     rm -f "$STATE"
   fi
@@ -72,6 +81,11 @@ run_case "stale session_id + 5 writes — warn (state ignored)" 5 0 "fix-bug" tr
 # Schema v2: new cases
 run_case "pending state past TTL + 5 writes — warn (treated as no-readback)" 5 0 "fix-bug" false 1 "test" "$OLD_TS"
 run_case "residual unknown sid + 5 writes confirmed — no warn (v1 backward compat)" 5 0 "fix-bug" true 0 "unknown"
+# Phase 3 (audit fix 2026-05-25): empty stored sid + stale confirmed_at → state-leak guard
+run_case "empty stored sid + stale confirmed_at + 5 writes — warn (state-leak guard)" \
+  5 0 "fix-bug" true 1 "" "$OLD_TS" "$OLD_TS"
+run_case "empty stored sid + fresh confirmed_at + 5 writes — no warn (pre-stamp window)" \
+  5 0 "fix-bug" true 0 "" "$FRESH_TS" "$FRESH_TS"
 
 echo
 echo "Passed: $PASS, Failed: $FAIL"

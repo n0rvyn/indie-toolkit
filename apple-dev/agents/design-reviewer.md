@@ -21,11 +21,10 @@ model: sonnet
 tools: Glob, Grep, Read, Bash, Write
 allowed-tools: Bash(mkdir*) Bash(date*) Write(*/.claude/reviews/*)
 maxTurns: 30
+color: yellow
 ---
 
-<!-- Source: apple-dev/skills/design-review/SKILL.md -->
-<!-- Last synced: 2026-03-05 -->
-<!-- When updating the source skill file, manually update this agent file to match. -->
+<!-- Supersedes apple-dev/skills/design-review/ (removed 2026-05-25 in skills→agents migration; agent is now the canonical source — git history has prior skill versions) -->
 
 # Design Reviewer Agent
 

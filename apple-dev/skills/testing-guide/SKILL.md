@@ -1,8 +1,11 @@
 ---
 name: testing-guide
-description: "Use when the user asks about testing approaches, setting up unit tests or basic UI tests (Page Object, wait strategies), mocking strategies, TDD workflow, or test coverage strategies. For performance tests (measure, XCTMetric), use /profiling instead. For advanced XCUITest (E2E flows, network stub, snapshot, accessibility audit, CI), use /xc-ui-test instead. Provides interactive guidance on iOS testing best practices based on the reference guide."
+description: "Internal reference loader auto-injected on iOS testing work (paths trigger). Provides UT/UI test patterns, Page Object, wait strategies, mocking, TDD, coverage from the testing reference. For performance instrumentation context use sibling profiling loader; for advanced XCUITest context use sibling xc-ui-test loader. Not user-invocable (called by dev-workflow:fix-bug, run-phase, etc. when testing context is needed)."
 compatibility: Requires macOS and Xcode
 user-invocable: false
+model: sonnet
+context: fork
+agent: Explore
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 

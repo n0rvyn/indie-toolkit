@@ -353,7 +353,7 @@ macOS 特有交互：
 
 ## SwiftUI Correctness Checklist (vendored from vabole/apple-skills:ios-dev)
 
-_Inline attribution: vendor 自 vabole/apple-skills v1.0.10 `skills/ios-dev/SKILL.md` (MIT, (c) 2026 Ilia Abolhasani, vendored 2026-05-14). 违反任一条即 bug，code-review 和 /ui-review 直接引用。_
+_Inline attribution: vendor 自 vabole/apple-skills v1.0.10 `skills/ios-dev/SKILL.md` (MIT, (c) 2026 Ilia Abolhasani, vendored 2026-05-14). 违反任一条即 bug，code-review 和 `apple-dev:ui-reviewer` agent（通过 /review-execution 派发）直接引用。_
 
 - [ ] `@State` properties are `private`
 - [ ] `@Binding` only where a child needs to mutate parent state

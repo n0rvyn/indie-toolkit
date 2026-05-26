@@ -1,8 +1,11 @@
 ---
 name: profiling
-description: "Use when the user asks about iOS/macOS performance instrumentation — os_signpost / OSSignposter, MetricKit, Instruments workflow, XCTMetric / XCTest measure, hitch detection, signpost→test→metric workflow, or says 'profiling', '性能分析'. Provides interactive guidance on iOS/macOS profiling based on the reference guide."
+description: "Internal reference loader auto-injected on iOS/macOS performance-instrumentation work (paths trigger). Provides os_signpost / OSSignposter / MetricKit / Instruments / XCTMetric guidance from the profiling reference. Not user-invocable (called by dev-workflow:fix-bug, run-phase, etc. when profiling context is needed)."
 compatibility: Requires macOS and Xcode
 user-invocable: false
+model: sonnet
+context: fork
+agent: Explore
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 

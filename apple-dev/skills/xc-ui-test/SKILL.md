@@ -1,8 +1,11 @@
 ---
 name: xc-ui-test
-description: "Use when the user asks about advanced XCUITest patterns, E2E testing, multi-screen user journey tests, network stubbing for UI tests, snapshot/visual regression testing, accessibility testing with performAccessibilityAudit, or CI integration for UI tests. Provides interactive guidance based on the reference guide."
+description: "Internal reference loader auto-injected on advanced XCUITest work (paths trigger). Provides E2E patterns, multi-screen journey tests, network stubbing, snapshot/visual regression, performAccessibilityAudit, CI integration from the XCUITest reference. Not user-invocable (called by dev-workflow:fix-bug, run-phase, etc. when XCUITest context is needed)."
 compatibility: Requires macOS and Xcode
 user-invocable: false
+model: sonnet
+context: fork
+agent: Explore
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 

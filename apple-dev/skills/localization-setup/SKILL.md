@@ -1,8 +1,11 @@
 ---
 name: localization-setup
-description: "Use when setting up localization for a new project, adding new language support, or answering questions about String Catalogs, pluralization, or variable handling. Provides interactive guidance on iOS localization based on the reference guide."
+description: "Internal reference loader auto-injected on iOS localization work (paths trigger). Provides String Catalogs / pluralization / variable handling guidance from the localization reference. Not user-invocable (called by dev-workflow:fix-bug, run-phase, etc. when localization context is needed)."
 compatibility: Requires macOS and Xcode
 user-invocable: false
+model: sonnet
+context: fork
+agent: Explore
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 

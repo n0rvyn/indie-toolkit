@@ -3,6 +3,7 @@ name: characterization-test
 description: "Use before refactoring legacy code, or when the user says 'characterization test', 'lock behavior', '特征测试', 'write characterization tests', 'snapshot behavior'. Generates Swift Testing test cases that capture current behavior as a safety net before refactoring."
 compatibility: Requires macOS and Xcode
 user-invocable: false
+model: sonnet
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 

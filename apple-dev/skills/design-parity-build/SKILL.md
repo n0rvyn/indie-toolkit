@@ -1,6 +1,6 @@
 ---
 name: design-parity-build
-description: "Use when auditing a Claude Design (or similar handoff) against an iOS codebase, or the user says 'design parity', 'design 1:1', 'verify Claude Design', 'Claude Design audit', 'audit design implementation', '设计落地审计', 'Claude Design 对齐', '1:1 还原 Claude Design', or '/design-parity-build'. Writes audit doc to docs/06-plans/ for /write-dev-guide. Not for: token sync (sync-design-md), per-View scan (validate-design-tokens), subjective review without an external design source (design-review), multi-doc drift (design-drift), DS codegen (generate-design-system)."
+description: "Use when auditing a Claude Design (or similar handoff) against an iOS codebase, or the user says 'design parity', 'design 1:1', 'verify Claude Design', 'Claude Design audit', 'audit design implementation', '设计落地审计', 'Claude Design 对齐', '1:1 还原 Claude Design', or '/design-parity-build'. Writes audit doc to docs/06-plans/ for /write-dev-guide. Not for: token sync (sync-design-md), per-View scan (validate-design-tokens), subjective review without an external design source (run /review-execution which dispatches apple-dev:design-reviewer agent), multi-doc drift (design-drift), DS codegen (generate-design-system)."
 compatibility: Requires macOS and Xcode
 ---
 
@@ -14,7 +14,7 @@ The skill is **audit + bridge only**. It does not modify Swift code, sync tokens
 
 - Apply DESIGN.md ↔ DesignSystem.swift token writes → `apple-dev:sync-design-md`
 - Per-View SwiftUI hardcoded value scan → `apple-dev:validate-design-tokens`
-- Subjective visual hierarchy / color / spacing review → `apple-dev:design-review`
+- Subjective visual hierarchy / color / spacing review → `/review-execution` (dispatches `apple-dev:design-reviewer` agent)
 - Cross-document drift across project-brief / architecture / ADRs → `dev-workflow:design-drift`
 - Initial DesignSystem.swift code generation → `apple-dev:generate-design-system`
 - Phase plan execution → `dev-workflow:run-phase`

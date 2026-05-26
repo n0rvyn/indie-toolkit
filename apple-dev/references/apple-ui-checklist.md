@@ -325,7 +325,7 @@
 <!-- section: 11. 设计质量 keywords: design quality, visual, professional, polish -->
 ## 11. 设计质量
 
-> 供 `/design-review` 命令参考。关注视觉打磨感而非代码合规。
+> 供 `apple-dev:design-reviewer` agent（通过 `/review-execution` 派发）参考。关注视觉打磨感而非代码合规。
 > 完整设计原则和精确数值标准见 `~/.claude/docs/ui-design-principles.md`
 
 ### 11.1 视觉层级

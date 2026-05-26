@@ -1,8 +1,11 @@
 ---
 name: swiftdata-patterns
-description: "Use when the user asks about SwiftData usage, designing data models, or has questions about relationships, queries, migrations, or concurrency issues with SwiftData. Provides interactive guidance based on this project's local SwiftData reference guide."
+description: "Internal reference loader auto-injected when working on SwiftData files (paths trigger). Provides guidance on data models, relationships, queries, migrations, and concurrency from the local SwiftData reference guide. Not user-invocable (called by dev-workflow:fix-bug, run-phase, etc. when SwiftData context is needed)."
 compatibility: Requires macOS and Xcode
 user-invocable: false
+model: sonnet
+context: fork
+agent: Explore
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 

@@ -31,7 +31,7 @@ description: "Use when preparing ASC store listing materials, or the user says '
 |------|---------|
 | A | `references/asc-fields-guide.md` → `references/asc-version-and-review.md` → `references/asc-audit-checklist.md`（准备清单部分） |
 | B | `references/asc-fields-guide.md`（第二部分：App Privacy） |
-| D | 根据用户问题定位对应 reference 的具体段落 |
+| C | 根据用户问题定位对应 reference 的具体段落 |
 
 ### Step 3: 执行审查
 
@@ -47,7 +47,7 @@ description: "Use when preparing ASC store listing materials, or the user says '
 | Location | ❌ | 无相关 import/API | 不声明 |
 ```
 
-**模式 D**：直接回答用户问题，引用 reference 中的具体指引。
+**模式 C**：直接回答用户问题，引用 reference 中的具体指引。
 
 ### Step 4: 输出报告
 

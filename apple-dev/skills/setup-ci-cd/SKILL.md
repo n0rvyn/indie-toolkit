@@ -1,8 +1,9 @@
 ---
 name: setup-ci-cd
-description: "Use when setting up CI/CD for the first time, or the user says 'setup CI', 'configure CI', 'Xcode Cloud', 'auto version', '版本自动化', '配置 CI'. Configures Xcode Cloud build number management and GitHub Actions automatic version bumping based on conventional commits."
+description: "Manual /setup-ci-cd invocation only (auto-routing disabled). Configures Xcode Cloud build number management and GitHub Actions automatic version bumping based on conventional commits. Use when setting up CI/CD for the first time."
 compatibility: "Requires macOS and Xcode"
 disable-model-invocation: true
+model: sonnet
 ---
 
 # Setup CI/CD

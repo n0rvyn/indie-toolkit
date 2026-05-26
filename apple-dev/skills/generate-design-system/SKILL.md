@@ -4,7 +4,6 @@ description: "Use when the user needs to generate SwiftUI Design System code fro
 compatibility: Requires macOS and Xcode
 user-invocable: false
 model: sonnet
-context: fork
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**", "**/DESIGN.md"]
 ---
 

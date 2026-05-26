@@ -108,7 +108,7 @@ def update_light(report: dict[str, Any], root: pathlib.Path) -> None:
     else:
         report["signals"]["doc_drift"]["evidence"].append("context files: " + ", ".join(found))
 
-    if (root / ".claude" / "dev-workflow-state.yml").exists():
+    if (root / ".claude" / "dev-workflow-state.json").exists() or (root / ".claude" / "dev-workflow-state.yml").exists():
         report["signals"]["feedback_loop"]["evidence"].append("dev-workflow state present")
 
     state, warning = read_state(root)

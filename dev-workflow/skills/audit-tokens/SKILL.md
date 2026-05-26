@@ -1,11 +1,11 @@
 ---
 name: audit-tokens
-description: "Use when the user says 'audit tokens', 'token audit', 'analyze token consumption', '审计 token', '分析 token 消耗', '查 token 开销', 'cost audit', 'token consumption analysis', or wants a multi-dimensional analysis of Claude Code session token consumption with HTML report. Accepts integer days or natural-language window ('today', 'last week', 'last month'). Reads ~/.claude/projects/ session jsonl files, aggregates spend by skill/model/project/date/tool, identifies optimization opportunities using the cost-posture heuristic, auto-invokes diagnose-cost-drivers for root-cause attribution, and writes a self-contained HTML report. Not when: user wants to monitor live token usage during a session — that's /context. Not when: user wants quota check for a specific model provider — that's minimax-coding-plan. Not when: user wants the official Claude Code session HTML report — use claude-plugins-official:session-report (overlapping source: ~/.claude/projects transcripts). Not when: user already has a TSV (from a prior /audit-tokens run) and ONLY wants the diagnosis section re-computed — use /diagnose-cost-drivers standalone."
+description: "Use when the user says 'audit tokens', 'token audit', 'analyze token consumption', '审计 token', '分析 token 消耗', '查 token 开销', 'cost audit', 'token consumption analysis', or wants a multi-dimensional analysis of Claude Code session token consumption with HTML report. Accepts integer days or natural-language window ('today', 'last week', 'last month'). Reads ~/.claude/projects/ session jsonl files, aggregates spend by skill/model/project/date/tool, identifies optimization opportunities using the cost-posture heuristic, and writes a self-contained HTML report. Not when: user wants to monitor live token usage during a session — that's /context. Not when: user wants quota check for a specific model provider — that's minimax-coding-plan. Not when: user wants the official Claude Code session HTML report — use claude-plugins-official:session-report (overlapping source: ~/.claude/projects transcripts)."
 user-invocable: true
 model: sonnet
 context: fork
 argument-hint: "[days|window]"
-allowed-tools: Bash(bash:*), Bash(python3:*), Bash(open:*), Bash(date:*), Read, Write
+allowed-tools: Bash(bash:*), Bash(python3:*), Bash(open:*), Bash(date:*), Bash(mkdir:*), Read, Write
 ---
 
 # Audit Token Consumption
@@ -61,10 +61,10 @@ open "$OUT"
 
 ### Step 3.5: Run cost-driver diagnosis (default-on; fail-open)
 
-Execute the diagnose-cost-drivers sibling skill's script directly:
+Execute the bundled diagnose.py script directly:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/diagnose-cost-drivers/scripts/diagnose.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/audit-tokens/scripts/diagnose.py \
   /tmp/audit-tokens-raw.tsv \
   /tmp/diagnose-fragment.html 2>/tmp/diagnose-stderr.log || true
 ```
@@ -73,9 +73,9 @@ If `diagnose-fragment.html` exists and is non-empty: read it and inject the cont
 
 If diagnose.py failed or fragment is missing/empty: substitute the placeholder with `<section><h2>Diagnosis & Suggestions</h2><p>Diagnosis unavailable (see /tmp/diagnose-stderr.log).</p></section>` so the report still completes (per "enhance not break" principle).
 
-Note: this is a direct script invocation, not a Skill-tool call. The `/diagnose-cost-drivers` user-invocable slash command exists separately (SKILL.md) and runs the same `diagnose.py` from its own Process; both entry points share the script as the single source of truth.
+Note: this is a direct script invocation, not a Skill-tool call. The script is bundled under `scripts/diagnose.py` and owned by audit-tokens.
 
-**Cross-skill dependency**: this step hardcodes the path `${CLAUDE_PLUGIN_ROOT}/skills/diagnose-cost-drivers/scripts/diagnose.py`. If `diagnose-cost-drivers` is renamed or its `scripts/diagnose.py` is moved, this step will silently fall back to the "Diagnosis unavailable" placeholder (per fail-open). Renaming requires updating this path here AND mirroring the change in `diagnose-cost-drivers/SKILL.md` Cross-skill dependency section.
+**Internal dependency**: this step invokes `${CLAUDE_PLUGIN_ROOT}/skills/audit-tokens/scripts/diagnose.py`. The script and audit-tokens are bundled together — relocating diagnose.py requires updating this path.
 
 ### Step 4: Summarize in chat
 
@@ -91,10 +91,11 @@ Do NOT paste the full HTML or large tables into chat. The HTML is the deliverabl
 ## Completion criteria
 
 - Raw TSV written to `/tmp/audit-tokens-raw.tsv`
-- Diagnosis fragment injected into HTML report at `<!-- DIAGNOSIS -->` (or fallback "Diagnosis unavailable" section if diagnose-cost-drivers failed — fail-open per Principle 1)
+- Diagnosis fragment injected into HTML report at `<!-- DIAGNOSIS -->` (or fallback "Diagnosis unavailable" section if diagnose.py failed — fail-open per Principle 1)
 - HTML written to `~/Desktop/token-audit-<timestamp>.html`
 - HTML opened in default browser
 - 3-bullet summary delivered in chat (total / top driver / top recommendations)
+- **Cadence marker written**: `mkdir -p ~/.claude && date -u +%Y-%m-%dT%H:%M:%SZ > ~/.claude/last-audit-tokens-run` — the `suggest-skills.sh` UserPromptSubmit hook reads this file's mtime to compute "days since last audit" and suppress its 14-day cadence nudge. Without this write, the bootstrap nudge fires perpetually.
 
 ## Notes
 

@@ -1,6 +1,7 @@
 # Ignore plans directory
 docs/06-plans/
 06-discussions/
+docs/_archived/
 
 .claude
 __pycache__/

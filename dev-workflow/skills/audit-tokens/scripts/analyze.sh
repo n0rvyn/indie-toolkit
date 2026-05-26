@@ -3,7 +3,7 @@
 # Output: TSV with 14 columns, deduped by requestId.
 #
 # Usage: analyze.sh <days> [out_path]
-#   days     — look-back window (1..30). Default 3.
+#   days     — look-back window (1..365). Default 3.
 #   out_path — TSV output path. Default /tmp/audit-tokens-raw.tsv
 
 set -euo pipefail
@@ -12,8 +12,8 @@ DAYS="${1:-3}"
 OUT="${2:-/tmp/audit-tokens-raw.tsv}"
 
 # Validate days
-if ! [[ "$DAYS" =~ ^[0-9]+$ ]] || [ "$DAYS" -lt 1 ] || [ "$DAYS" -gt 30 ]; then
-  echo "error: days must be an integer 1..30, got: $DAYS" >&2
+if ! [[ "$DAYS" =~ ^[0-9]+$ ]] || [ "$DAYS" -lt 1 ] || [ "$DAYS" -gt 365 ]; then
+  echo "error: days must be an integer 1..365, got: $DAYS" >&2
   exit 2
 fi
 

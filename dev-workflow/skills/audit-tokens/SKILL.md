@@ -16,7 +16,7 @@ Multi-dimensional analysis of Claude Code session token consumption over a date 
 
 ### Step 1: Parse arguments → assign `DAYS`
 
-- `$1` (optional): days to look back. Default `3`. Acceptable: integer 1–30 OR a natural-language window: "today" → 1, "last week" → 7, "last month" → 30.
+- `$1` (optional): days to look back. Default `3`. Acceptable: integer 1–365 OR a natural-language window: "today" → 1, "last week" → 7, "last month" → 30, "last year" → 365.
 - Resolve to an integer and **store it in a shell variable named `DAYS`** that Steps 2 and 3 will consume. Do not pass the literal string `<days>` to scripts.
 
 Echo the chosen window to user: "Auditing last $DAYS days of session data."
@@ -100,7 +100,7 @@ Do NOT paste the full HTML or large tables into chat. The HTML is the deliverabl
 
 - **Pricing assumption**: uses public Anthropic list pricing as of 2026-05 for Opus 4.7 / Sonnet 4.6 / Haiku 4.5. If the user is on a flat-rate plan, the dollar numbers are notional (treat as relative ranking, not actual billing).
 - **Cost-posture heuristic**: the recommendations engine cites `skill-master/skills/plugin-master/cost-posture.md` — see that file for the classification rules. If `cost-posture.md` is not installed locally, the report falls back to a built-in subset of the heuristic.
-- **Date semantics**: "last N days" means `find -mtime -N`, i.e. files modified within N × 24h of now. Not calendar days.
+- **Date semantics**: "last N days" means `find -mtime -N`, i.e. files modified within N × 24h of now. Not calendar days. Supports up to 365 days.
 - **Cache TTL caveat**: 1h vs 5m split is reported but not actionable — Claude Code's harness decides automatically, no user-side knob.
 - **Plugin cache lag**: the recommendations engine reads SKILL.md frontmatter from `~/.claude/plugins/marketplaces/<marketplace>/<plugin>/skills/<name>/SKILL.md` and the versioned `~/.claude/plugins/cache/.../` copies. These reflect the **installed** plugin version, not edits in your local repo. After editing a SKILL.md in the source repo, you must commit → wait for auto-version bump → run `/plugin update` for Claude Code to pull the new version. Until then, a freshly-edited skill will still appear in this report's recommendations as if it lacked the `model:` field.
 

@@ -1,18 +1,16 @@
 ---
 name: generate-design-prompt
-description: "Use when the user needs a design tool prompt (for Stitch, Figma, or similar) based on actual project functionality. Generates initial prompts from design docs/code, or refinement prompts from design analysis feedback."
+description: "Manual /generate-design-prompt invocation only (auto-routing disabled). Generates a design tool prompt (for Stitch, Figma, or similar) from actual project functionality — initial prompts from design docs/code or refinement prompts from design analysis feedback. Output adapts to detected platform (iOS/macOS → Stitch DSL; Web → Figma; cross-platform default → Figma). Not when: user has an existing design prototype and wants AI to analyze it (use /understand-design — inverse direction: image/code → analysis)."
 disable-model-invocation: true
 model: sonnet
 context: fork
 ---
 
-> **Note on `disable-model-invocation`:** This skill generates text for the user to paste into external design tools (Stitch/Figma). It does not invoke AI models itself; the AI reads project code/docs and assembles a prompt. Shared pattern with `apple-dev:generate-stitch-prompts`.
+> **Why `disable-model-invocation`:** This skill is gated to manual `/generate-design-prompt` invocation only — the routing model will not auto-fire it on keyword matches. Reason: the output is text the user pastes into an external design tool, so the user always has a specific design tool / refinement intent that's clearer when they invoke the slash command explicitly. (Note: this flag controls Claude Code's auto-routing, not whether the skill invokes AI internally.)
 
 ## 定位
 
-从代码/文档中提取功能需求，翻译为设计工具能理解的 UI 描述语言。支持两种输出目标（Stitch / Figma）和两种模式（初始生成 / 迭代改进）。
-
-基于 `apple-dev:generate-stitch-prompts` 的核心提取逻辑演进，增加 Figma 支持和 pipeline 集成。
+支持多平台目标（iOS/macOS → Stitch DSL，Web/其它 → Figma）和两种模式（初始生成 / 迭代改进）。
 
 ## 参数
 
@@ -29,14 +27,21 @@ context: fork
 
 ### Mode A: 初始生成（默认）
 
-#### 1. 目标工具检测
+#### 0. Platform Detection
 
-如果参数未指定工具：
-1. 检查是否有 Stitch MCP 工具可用（`get_screen_code`）→ 建议 Stitch
-2. 检查是否有 Figma MCP 工具可用（`get_design_context`）→ 建议 Figma
-3. 都没有或都有 → 询问用户首选
+Detect the project platform to determine which output path to follow. **Check in this order, exclude `node_modules/` from all globs:**
 
-#### 2. 项目信息采集
+1. **iOS / macOS**: Look for `*.xcodeproj` OR `*.xcworkspace` at depth ≤ 2 from project root, OR `Package.swift` at depth ≤ 1. If found → route to Stitch DSL path.
+   - **Do not** use `**/*.swift` as a signal — npm packages may ship Swift files in `node_modules/`, causing false positives on Web projects.
+2. **Web**: Look for `package.json` at depth ≤ 1 + any of `react`, `vue`, `angular`, `next`, `nuxt`, `svelte`, `solid` in dependencies. If found → route to Figma path (cross-platform default for Web; see #3).
+3. **React Native ambiguity guard**: if BOTH iOS (`ios/*.xcodeproj`) AND Web (`package.json` with `react-native` dep) match, the platform is ambiguous. Since this skill runs in `context: fork` (cannot reach the user via AskUserQuestion mid-flow), resolution policy: **default to iOS/macOS Stitch DSL path** AND emit `[generate-design-prompt] React Native detected — defaulted to iOS/macOS. To target Web/Figma instead, re-invoke with /generate-design-prompt figma` as a leading comment in the output deliverable AND to stderr (so user sees the override mechanism).
+4. **Default / other**: If no clear platform signal, use the Figma path with generic output (Figma works cross-platform; users can adapt). Do not silently default to iOS Stitch DSL for unknown platforms.
+
+#### 1. iOS/macOS: Stitch DSL Path
+
+When platform is iOS or macOS, generate a Stitch prompt using the iOS/macOS Stitch DSL logic:
+
+**a) 项目信息采集**
 
 **自动执行，不问用户。** 按优先级依次读取，跳过不存在的：
 
@@ -44,12 +49,12 @@ context: fork
 |--------|------|----------|
 | 1 | `CLAUDE.md` / `docs/00-AI-CONTEXT.md` / `README.md` | 产品定位、目标用户、核心功能、技术栈 |
 | 2 | 设计文档（`docs/06-plans/*-design.md`） | 布局结构、页面层级、交互流程、信息架构、UX Assertions |
-| 3 | UI 组件代码（Swift: `**/*View.swift`; Web: `src/components/`、`src/pages/`、`app/`） | 页面/组件列表、层级关系 |
-| 4 | 类型/模型定义（Swift: `**/*.swift` with `struct/enum`; Web: `src/types/`、`src/models/`） | UI 展示的数据结构、枚举值、状态类型 |
-| 5 | 样式/主题（`**/DesignTokens*`、`tailwind.config.*`、`**/theme.*`） | 当前配色、字体、间距体系（仅作参考） |
+| 3 | UI 组件代码（Swift: `**/*View.swift`） | 页面/组件列表、层级关系 |
+| 4 | 类型/模型定义（Swift: `**/*.swift` with `struct/enum`） | UI 展示的数据结构、枚举值、状态类型 |
+| 5 | 样式/主题（`**/DesignTokens*`） | 当前配色、字体、间距体系（仅作参考） |
 | 6 | 路由/导航定义 | 页面总数、导航结构 |
 
-#### 3. 功能清单提取
+**b) 功能清单提取**
 
 **a) 屏幕清单**
 
@@ -80,7 +85,106 @@ context: fork
 - 点击 A 区域的元素 → B 区域如何响应
 - 拖拽/缩放行为
 
-#### 4. 信息转译
+**c) 信息转译**
+
+将技术描述转译为 Stitch 理解的 UI 语言：
+
+| 技术概念 | Stitch 语言 |
+|----------|-------------|
+| `DashMap<TabId, TabState>` | "a row of status cards, one per open session" |
+| `enum Status { Idle, Running, Error }` | "a colored status dot (green=idle, blue=running, red=error)" |
+| `RingBuffer<u8>` | （不出现在 prompt 中，纯后端） |
+| `xterm.js` terminal | "a real terminal emulator area with monospace text, blinking cursor, and sample output" |
+
+**过滤规则**：
+- 后端实现细节（框架、并发模型、数据库）→ 不出现
+- API 调用方式 → 不出现
+- 状态管理方案 → 不出现
+- 用户可见的数据和交互 → 必须出现
+- 数据的视觉形态（卡片/列表/表格）→ 必须出现
+
+**d) Prompt 组装（Stitch 格式）**
+
+```
+第1段：产品定位（1-2句）
+  "Design a {platform} application UI for {name}, a {one-line description}."
+
+第2段：平台约束（1句）
+  "Platform: {desktop/mobile/responsive}. {theme preference}."
+
+第3段起：逐区域描述（每区域一段，标题用 ── 分隔）
+  每段包含：
+  - 布局方式
+  - 包含哪些元素（逐一列出）
+  - 每个元素显示什么数据
+  - 用户可以做什么操作
+  - 状态变化的视觉表达
+
+最后一段：设计方向指引
+  - 目标用户画像（开发者 / 普通用户 / 设计师）
+  - 设计优先级（信息密度 / 留白 / 可玩性）
+  - 调性描述（专业工具 / 消费产品 / 极简）
+```
+
+**术语规范**：navbar, card, feed, badge, chip, modal, split pane, toggle, textarea（不用 container, indicator, popup 等泛称）
+
+**字符限制**：主 prompt < 4000 字符。超出则拆分到 follow-up。不足 1500 字符则补充视觉细节。
+
+#### 2. Web: Figma Path
+
+When platform is Web (React/Vue/Angular/Next/Nuxt/Svelte/Solid detected), route to the Figma generation flow below (Step 3). Figma is the standard Web design tool; the same Figma generation logic applies.
+
+#### 3. Default / Figma Path
+
+When platform is Web (from Step 2) OR no clear platform signal (per Step 0.4 default), follow the Figma generation sub-steps below. Stitch and Figma share most of the extraction logic; only the **Prompt 组装** step (3.4 below) differs in output format.
+
+> **Tool selection note**: Step 0 has already routed (Web → Figma; default → Figma). If `$ARGUMENTS` explicitly specifies `stitch` or `figma`, the explicit value wins over Step 0's routing. If `$ARGUMENTS` is empty AND Step 0 routed here, use Figma format. (The previous Step 3.1 "目标工具检测" was removed because it could re-route Web projects to Stitch, contradicting Step 0.)
+
+#### 3.1 项目信息采集
+
+**自动执行，不问用户。** 按优先级依次读取，跳过不存在的：
+
+| 优先级 | 来源 | 提取内容 |
+|--------|------|----------|
+| 1 | `CLAUDE.md` / `docs/00-AI-CONTEXT.md` / `README.md` | 产品定位、目标用户、核心功能、技术栈 |
+| 2 | 设计文档（`docs/06-plans/*-design.md`） | 布局结构、页面层级、交互流程、信息架构、UX Assertions |
+| 3 | UI 组件代码（Swift: `**/*View.swift`; Web: `src/components/`、`src/pages/`、`app/`） | 页面/组件列表、层级关系 |
+| 4 | 类型/模型定义（Swift: `**/*.swift` with `struct/enum`; Web: `src/types/`、`src/models/`） | UI 展示的数据结构、枚举值、状态类型 |
+| 5 | 样式/主题（`**/DesignTokens*`、`tailwind.config.*`、`**/theme.*`） | 当前配色、字体、间距体系（仅作参考） |
+| 6 | 路由/导航定义 | 页面总数、导航结构 |
+
+#### 3.2 功能清单提取
+
+**a) 屏幕清单**
+
+列出所有独立页面/屏幕，每个标注：
+- 名称
+- 功能（一句话）
+- 包含的 UI 区域（zones）
+- 关键交互
+
+**b) 每个屏幕的 UI 区域分解**
+
+对目标屏幕逐区域提取：
+
+| 区域 | 提取内容 |
+|------|----------|
+| 布局 | 排列方式（split pane / stack / grid / sidebar + content） |
+| 数据展示 | 展示什么数据、数据的字段和值域、列表/卡片/表格形态 |
+| 状态指示 | 有哪些状态、每个状态的视觉表达（颜色、图标、徽章） |
+| 用户输入 | 输入方式（文本框 / 选择器 / 开关）、输入格式 |
+| 操作按钮 | 按钮名称、触发行为描述 |
+| 消息/反馈 | 消息类型、不同类型的视觉区分 |
+| 导航 | Tab 切换、侧边栏、面包屑 |
+| 可折叠/展开 | 哪些内容默认折叠、展开触发方式 |
+
+**c) 交互关系**
+
+提取区域间的联动：
+- 点击 A 区域的元素 → B 区域如何响应
+- 拖拽/缩放行为
+
+#### 3.3 信息转译
 
 将技术描述转译为设计工具理解的 UI 语言：
 
@@ -95,7 +199,7 @@ context: fork
 
 规则：用户可见的数据和交互 → 必须出现；纯后端细节 → 过滤掉。
 
-#### 5. Prompt 组装
+#### 3.4 Prompt 组装
 
 根据目标工具选择格式：
 
@@ -144,7 +248,7 @@ context: fork
 
 Figma 特有：可以引用现有组件库名称；可以指定 Auto Layout 方向；支持更长的 prompt（无严格字符限制）。
 
-#### 6. 字符数检查（Stitch 格式时）
+#### 3.5 字符数检查（Figma 格式不做字符裁切）
 
 1. 估算总字符数
 2. \> 4000 字符：移最不关键的区域到 follow-up

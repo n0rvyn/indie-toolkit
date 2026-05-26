@@ -2,8 +2,6 @@
 name: handoff
 description: "Use when ending the current session and transferring ALL current work to a new session (next day, different person), the user says 'handoff', '交接'. End-of-session full transfer — not for mid-session orthogonal splits (use /fork-this for that). Generates a cold-start prompt covering: current plan, completed items, open items, key files, next steps."
 disable-model-invocation: true
-context: fork
-model: sonnet
 ---
 
 ## 使用场景
@@ -60,20 +58,3 @@ Crystal file：[docs/11-crystals/xxx-crystal.md | 无]
 6. 如果当前会话是按计划执行的，必须包含计划来源（文件路径或 transcript 路径）
 7. 如果项目有 crystal 文件（`docs/11-crystals/*-crystal.md`），在关键文件中列出路径
 
-## Fork-Context Failure Fallback
-
-This skill runs in a forked context (`context: fork` in frontmatter). If the fork fails (rare but possible — OOM, transient platform error), the user may see no output in the main session.
-
-**What the user should see on success:** a markdown block starting with `## 上下文恢复` containing the structured handoff sections.
-
-**If no output appears within ~30 seconds of invoking `/handoff`:** the fork likely failed. User remediation:
-
-1. Retry: `/handoff` (often transient).
-2. If retry also produces no output: manually export by quoting key files in the chat:
-   - Current plan file (if any): `docs/06-plans/*-plan.md` (most recent)
-   - Crystal file (if any): `docs/11-crystals/*-crystal.md` (most recent)
-   - Current state file (if any): `.claude/dev-workflow-state.yml`
-   - One-line task summary
-3. Paste these into the new session as the cold-start prompt.
-
-The fallback exists because forked contexts have no main-session error channel — silent fork failure is the only failure mode that doesn't surface naturally.

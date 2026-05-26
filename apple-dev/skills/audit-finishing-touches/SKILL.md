@@ -1,6 +1,6 @@
 ---
 name: audit-finishing-touches
-description: "Mechanical §17–§20 polish-gap scan over SwiftUI files. Runs 5 grep-based checks (border overuse, default-style controls, undecorated card backgrounds, empty-state pointer, undecorated hero areas) and outputs a 必修/建议/灵感 report — does NOT make subjective design judgments. Use when a module is feature-complete and the UI 'feels generic' / 'has AI-feel' / 缺少性格, or the user says 打磨 / polish / finishing touches. Not when: feature is incomplete (use feature-review first); or you want subjective hierarchy/color/spacing review (use design-review — that one judges visual quality, this one only flags mechanical gaps)."
+description: "Mechanical §17–§20 polish-gap scan over SwiftUI files. Runs 5 grep-based checks (border overuse, default-style controls, undecorated card backgrounds, empty-state pointer, undecorated hero areas) and outputs a 必修/建议/灵感 report — does NOT make subjective design judgments. Use when a module is feature-complete and the UI 'feels generic' / 'has AI-feel' / 缺少性格, or the user says 打磨 / polish / finishing touches. Not when: feature is incomplete (run /review-execution which dispatches apple-dev:feature-reviewer agent); or you want subjective hierarchy/color/spacing review (run /review-execution which dispatches apple-dev:design-reviewer agent — that one judges visual quality, this one only flags mechanical gaps)."
 compatibility: Requires macOS and Xcode (greps Swift files).
 user-invocable: false
 model: sonnet
@@ -9,7 +9,7 @@ paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace
 
 # Audit: Finishing Touches
 
-针对已功能完成的模块，扫描"打磨感"缺口。与 `design-review` skill（合规审查）和 `feature-review` skill（用户旅程完整性审查）形成互补。
+针对已功能完成的模块，扫描"打磨感"缺口。与 `apple-dev:design-reviewer` agent（合规审查）和 `apple-dev:feature-reviewer` agent（用户旅程完整性审查）形成互补——两者均通过 `/review-execution` 派发。
 
 ## 触发时机
 
@@ -131,7 +131,7 @@ grep -nE '\.background\(\.(regular|thick|thin|ultraThin|ultraThick)Material\)|\.
 
 **机械规则：** 本 skill **不重复扫描**。改为输出以下指针：
 
-> 空状态完整规范见 `apple-dev:feature-review` B3 检查项与 `apple-dev:ui-review`。本 skill 不重复列表扫描；仅在 audit 结尾以 hint 形式提醒：「如尚未跑过 feature-review，建议补一次空状态扫描。」
+> 空状态完整规范见 `apple-dev:feature-reviewer` agent B3 检查项与 `apple-dev:ui-reviewer` agent（通过 `/review-execution` 派发）。本 skill 不重复列表扫描；仅在 audit 结尾以 hint 形式提醒：「如尚未跑过 /review-execution，建议补一次空状态扫描。」
 
 **建议：** 跨引用，无重复检测逻辑。
 
@@ -198,7 +198,7 @@ grep -nE '\.font\(\.largeTitle\)|\.font\(\.title\)|\.font\(\.system\(size:\s*[0-
   Note: this may be intentional in your context — review and decide.
 
 ### Hint
-- 如果尚未跑过 `apple-dev:feature-review`，建议补一次空状态扫描（Check 4 在本 skill 中仅作为 pointer，未执行扫描）。
+- 如果尚未跑过 `/review-execution`（派发 `apple-dev:feature-reviewer` agent），建议补一次空状态扫描（Check 4 在本 skill 中仅作为 pointer，未执行扫描）。
 
 ### 总结
 - 检查文件数: N

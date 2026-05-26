@@ -1,8 +1,9 @@
 ---
 name: code-audit
-description: "Internal skill — called by run-phase / implementation-reviewer for comprehensive code quality assessment of iOS/macOS Swift projects. Scans for security issues, concurrency safety, accessibility gaps, performance anti-patterns, and SwiftUI anti-patterns. Not user-invocable: for user-facing review use /review-execution (general code review with 4-lens + Apple reviewers) or /dev-workflow:run-phase (orchestrated phase review)."
+description: "On-demand standalone scan for comprehensive code quality assessment of iOS/macOS Swift projects. Scans for security issues, concurrency safety, accessibility gaps, performance anti-patterns, and SwiftUI anti-patterns."
 compatibility: Requires macOS and Xcode
 user-invocable: false
+model: sonnet
 ---
 
 # Code Audit

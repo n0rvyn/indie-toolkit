@@ -1,15 +1,17 @@
 # update-asc-docs Eval
 
 ## Trigger Tests
-<!-- Prompts that SHOULD trigger this skill -->
+<!-- Skill has disable-model-invocation: true — ONLY slash invocations should trigger -->
+- "/update-asc-docs"
+- "/update-asc-docs privacy"
+
+## Negative Trigger Tests
+<!-- These used to be triggers but auto-routing is now disabled; they must NOT fire the skill -->
 - "Update my App Store Connect documents"
 - "Audit my code for privacy policy updates"
 - "准备 ASC 提交文档"
 - "Generate terms of use from my code"
 - "Update legal docs for submission"
-
-## Negative Trigger Tests
-<!-- Prompts that should NOT trigger this skill -->
 - "Review my code"
 - "Write a plan"
 - "Fix this bug"

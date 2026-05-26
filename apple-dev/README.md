@@ -34,23 +34,19 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | Skill | Preferred caller | Description |
 |-------|------------------|-------------|
 | apple-swift-context | Swift/iOS/macOS work | Loads platform-specific rules from reference docs |
-| ui-review | dev-workflow review step | SwiftUI UI + interaction compliance review |
-| design-review | dev-workflow review step | Visual hierarchy, color, spacing quality review |
-| feature-review | dev-workflow review step | Product + UX completeness from user journey perspective |
 | code-audit | run-phase / implementation-reviewer | Code quality + security assessment (5 categories) |
 | validate-design-tokens | dev-workflow review step | Design token compliance check |
 | testing-guide | write-plan / fix-bug / test-changes | Interactive testing guidance |
 | profiling | write-plan / fix-bug / test-changes | Performance profiling guidance |
 | xc-ui-test | write-plan / test-changes | Advanced XCUITest guidance |
 
-## Full Capability Inventory (23)
+## Full Capability Inventory (19)
+
+> **Cross-plugin handoff (2026-05-26)**: design prompt generation (formerly `generate-stitch-prompts`) was merged into `dev-workflow:generate-design-prompt` with platform routing (iOS/macOS → Stitch DSL, Web → Figma, generic → Figma). `project-kickoff` cross-calls it for the Stitch step.
 
 | Skill | Route | Description |
 |-------|---------|-------------|
 | apple-swift-context | Auto (Swift files) | Loads platform-specific rules from reference docs |
-| ui-review | dev-workflow review step | SwiftUI UI + interaction compliance review |
-| design-review | dev-workflow review step | Visual hierarchy, color, spacing quality review |
-| feature-review | dev-workflow review step | Product + UX completeness from user journey perspective |
 | audit-finishing-touches | internal route | Mechanical §17–§20 polish-gap scan (border / default-style / undecorated card / hero) |
 | code-audit | run-phase / implementation-reviewer | Code quality and security assessment (5 categories) — internal only, not user-invocable |
 | validate-design-tokens | dev-workflow review step | Design token compliance check |
@@ -66,7 +62,6 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | generate-design-system | internal route | Generate SwiftUI design system from tokens |
 | sync-design-md | internal route | Bidirectional sync between Stitch DESIGN.md and DesignSystem.swift |
 | design-parity-build | `/design-parity-build` | Audit Claude Design ↔ iOS parity, produce classified Gap List, hand off to /write-dev-guide |
-| generate-stitch-prompts | internal route | Generate UI prompts from requirements |
 | project-kickoff | `/project-kickoff` | New project feasibility + requirements |
 | setup-ci-cd | `/setup-ci-cd` | Fastlane + GitHub Actions for TestFlight |
 | update-asc-docs | `/update-asc-docs` | Audit and update ASC legal/marketing documents |
@@ -85,6 +80,7 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | Hook | Event | Purpose |
 |------|-------|---------|
 | protect-pbxproj | PreToolUse | Prevents direct editing of `.xcodeproj/project.pbxproj` files |
+| check-xcode-docs | SessionStart | Detects Xcode AI documentation changes and notifies in session header (silent if Xcode not installed) |
 
 ## References (14)
 

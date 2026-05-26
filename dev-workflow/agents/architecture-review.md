@@ -8,14 +8,18 @@
 - 找出该入口最终调用的核心函数
 - Grep 该核心函数及其关键子函数的所有现有调用者
 
+**LSP verification**: Use `findReferences(file, line, char)` on the core function definition to get all call sites. This is more precise than grep — no false positives from comments, string literals, or substring matches.
+
 ```
 [入口检查] 计划新增入口: {new entry point}
 目标核心函数: {function name}
-现有调用者:
+LSP findReferences on {file:line}:
 - {file:line} — {caller description}
 - {file:line} — {caller description}
 结论: ✅ 无并行路径 / ⚠️ 已存在 {N} 条路径，需合并或说明共存理由
 ```
+
+If LSP returns empty (no references found), fall back to `Grep` for the function name pattern and note the fallback in the finding.
 
 现有调用者走不同上游路径且计划未说明 → 停止，报告冲突。
 
@@ -48,7 +52,16 @@
 展示: {file:line} ({UI display})
 ```
 
-每个处理节点搜索其他上游调用者（= 并行路径）。并行路径无协调机制 = 架构冲突。
+**LSP verification**: Use `incomingCalls(file, line, char)` on each processing function to find all callers. This is more accurate than grep for distinguishing actual function calls from comments, string literals, or name collisions.
+
+```
+[数据流 LSP] {function name} at {file:line}
+LSP incomingCalls:
+- {file:line} — {caller context}
+结论: ✅ 无并行路径 / ⚠️ 已存在 {N} 条未协调的调用路径
+```
+
+If LSP returns empty, fall back to `Grep` and note the fallback in the finding.
 
 **AR.4 保底验证**
 

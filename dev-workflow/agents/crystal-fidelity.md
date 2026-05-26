@@ -44,6 +44,15 @@
 对每个识别出的删除：
 1. 检查该删除是否被 IN scope 条目或 D-xxx 决策授权
 2. 如果未授权 → ❌ 标记为 must-revise（未授权的功能删除）
+3. **LSP verification for deletion tasks**: After identifying a deletion task, use `findReferences` on the deleted symbol to verify no remaining live callers exist. If LSP returns callers, each remaining caller is a must-revise gap.
+
+**Augmentation**: The primary deletion check (steps 41-47) uses grep on plan text to identify deletion tasks. For each confirmed deletion, LSP augments with a "no remaining callers" check to catch the regression of "deleted X but Y still calls it".
+
+```
+[CF.3 LSP] Deletion of {symbol} at {file:line} — verified via `findReferences`:
+- {N} remaining references found — must-revise (未授权的残留调用)
+- 0 remaining references — ✅
+```
 
 ```
 [CF-3] Scope 边界验证

@@ -19,7 +19,7 @@ description: |
   </example>
 
 model: opus
-tools: Glob, Grep, Read, Bash, Write
+tools: Glob, Grep, Read, Bash, Write, LSP
 allowed-tools: Bash(mkdir*) Bash(date*) Bash(ls*) Bash(find*) Write(*/.claude/reviews/*)
 maxTurns: 80
 effort: high
@@ -142,6 +142,11 @@ Before strategy-specific review, inspect plan frontmatter.
 1. 基于计划内容和代码库现状，**生成 3-5 条具体的、可证伪的错误断言**
 2. 每条断言必须包含：具体步骤编号 + 具体文件/函数 + 具体的错误后果
 3. 逐条验证，引用代码库中的文件:行号
+
+**LSP-augmented verification**: When an assertion involves "step N creates function X and step M references it", verify the cross-reference via LSP before closing the assertion:
+- Use `goToDefinition(file, line, char)` at the reference site to confirm it resolves to the correct definition
+- Use `findReferences` on the created symbol to confirm callers exist and are correctly wired
+- If LSP returns empty/error, fall back to `Grep` as described in step 3; note in the finding that LSP was unavailable
 
 **断言生成规则**：
 - 必须足够具体以至于可以通过读代码证实或证伪（"可能有边界值问题" = 太抽象，禁止）

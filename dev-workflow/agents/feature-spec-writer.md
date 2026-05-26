@@ -2,7 +2,7 @@
 name: feature-spec-writer
 description: |
   Use this agent to generate feature specs comparing design intent against implementation.
-  Produces docs/05-features/ documents for use by the feature-review skill (auto-invoked by run-phase).
+  Produces docs/05-features/ documents for use by the apple-dev:feature-reviewer agent (auto-dispatched by run-phase via /review-execution).
 
   Examples:
 
@@ -190,5 +190,5 @@ Common decision triggers for feature spec writing:
 - **Design is the source of truth.** User Stories are extracted from design documents, never reverse-engineered from code.
 - **No design source → stop and report.** Do not guess intent from code.
 - **Deviations are facts, not judgments.** Record what differs; do not label deviations as problems.
-- **Output format must be compatible with the `feature-review` skill.** The "用户可以..." + file:line format is consumed directly by that skill.
+- **Output format must be compatible with the `apple-dev:feature-reviewer` agent.** The "用户可以..." + file:line format is consumed directly by that agent.
 - **Frontmatter fields:** `type` is always `feature-spec`. `status` is always `active`. `tags` — derive from the feature name and the User Story verbs (e.g., feature covers sync and offline access → `[sync, offline]`). `refs` — list the design doc path(s) used as design sources.

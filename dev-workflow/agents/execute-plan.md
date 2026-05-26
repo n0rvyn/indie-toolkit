@@ -95,7 +95,7 @@ For each task in the batch (from `last_completed + 1` through batch end):
 
 ### Step 3: State Updates
 
-If `.claude/dev-workflow-state.yml` exists and `phase_step` is `execute`:
+If `.claude/dev-workflow-state.json` exists and `phase_step` is `execute`:
 - After every 5 tasks, update the state file:
   - `task_progress`: `"{completed}/{total}"` (e.g., `"8/15"`)
   - `last_updated`: current timestamp

@@ -1,7 +1,7 @@
 ---
 name: intent-echoer
 description: "Generates a 3-paragraph plain-language read-back of user intent before code changes. Use ONLY when dispatched by the readback skill, user-prompt-submit hook, or fix-bug/write-plan integration steps. Returns natural-language echo with strict no-jargon-as-subject rule. Dispatched only — never invoke standalone."
-model: opus
+model: sonnet
 color: cyan
 tools:
   - Read

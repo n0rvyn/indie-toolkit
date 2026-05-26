@@ -15,15 +15,17 @@ Same idea, applied to AI coding sessions.
 
 ## How it triggers
 
-Three layers, each covering a different gap:
+Four layers, each covering a different gap:
 
 1. **`UserPromptSubmit` hook** — detects action verbs (`fix` / `implement` / `修` / `改` / …) in your prompt and tells the assistant to dispatch the `intent-echoer` agent before responding. Soft trigger, fails open. Covers conversational prompts without slash commands.
 
 2. **`PreToolUse` hook** — when you invoke `/fix-bug`, the skill writes a state file marking readback-required. This hook then *hard-blocks* any `Write` / `Edit` / `MultiEdit` until the state file says you've confirmed the readback. fix-bug = stable > fast.
 
-3. **`Stop` hook** — silent tally. If a turn writes ≥3 files without a confirmed readback, the next turn gets a quiet warning. Doesn't block the session.
+3. **`PostToolUse` hook** (Agent matcher) — fires right after `intent-echoer` returns. The earlier UserPromptSubmit mandate distance-decays across long dispatch turns, so the main model sometimes acknowledges dispatch ("回读已发出") without pasting the agent's 3-paragraph output into the reply body — leaving the user staring at a collapsed tool panel. This hook re-injects the paste-verbatim mandate at the exact moment the agent output is in the immediate prior turn.
 
-The `intent-echoer` agent runs in a fresh context with strict rules: no function names / file paths / class names as sentence subjects (only as parenthetical references). 3 paragraphs: situation / approach / what you'll see. Reuses your vocabulary verbatim.
+4. **`Stop` hook** — silent tally. If a turn writes ≥3 files without a confirmed readback, the next turn gets a quiet warning. Doesn't block the session.
+
+The `intent-echoer` agent runs in a fresh context (`model: sonnet`) with strict rules: no function names / file paths / class names as sentence subjects (only as parenthetical references). 3 paragraphs: situation / approach / what you'll see. Reuses your vocabulary verbatim.
 
 ## When it skips
 
@@ -63,8 +65,9 @@ Every hook fails open. Bad JSON, missing files, parse errors, missing jq → the
 
 - `hooks/user-prompt-submit.sh` — keyword detection + mandate injection
 - `hooks/pre-tool-use.sh` — hard-block enforcement (scoped to fix-bug)
+- `hooks/post-tool-use.sh` — paste-verbatim reminder when `intent-echoer` returns
 - `hooks/stop.sh` — quiet threshold warning
-- `agents/intent-echoer.md` — opus agent, 3-paragraph plain-language generator
+- `agents/intent-echoer.md` — sonnet agent, 3-paragraph plain-language generator
 - `skills/readback/` — manual `/readback` entry
 - `references/` — speak-rules, trigger-detection, state-schema
 

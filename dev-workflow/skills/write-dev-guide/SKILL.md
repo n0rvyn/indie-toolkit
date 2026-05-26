@@ -233,9 +233,9 @@ current: true
 
 **Review checklist:**
 - [ ] run-phase review step (auto-invokes implementation-reviewer)
-- [ ] ui-review (run-phase auto-invokes when Phase has UI)
-- [ ] design-review (run-phase auto-invokes when Phase has new pages)
-- [ ] feature-review (run-phase auto-invokes when Phase completes a full user journey)
+- [ ] apple-dev:ui-reviewer agent (run-phase auto-dispatches when Phase has UI)
+- [ ] apple-dev:design-reviewer agent (run-phase auto-dispatches when Phase has new pages)
+- [ ] apple-dev:feature-reviewer agent (run-phase auto-dispatches when Phase completes a full user journey)
 
 <!-- /section -->
 

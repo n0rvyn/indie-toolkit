@@ -22,7 +22,7 @@ Validate preconditions (all phases done?)
 
 ### Step 1: Validate Preconditions
 
-1. Read `.claude/dev-workflow-state.yml` using the Read tool.
+1. Read `.claude/dev-workflow-state.json` (legacy fallback: `.yml`) using the Read tool.
    - If the file exists: read `dev_guide` path from it
    - If no state file: search `docs/06-plans/*-dev-guide.md`. If `docs/06-plans/` does not exist, ask user for the dev-guide path via AskUserQuestion. If multiple dev-guides found, prefer the file with `current: true` in frontmatter; if none has `current:`, ask user.
 2. Read the dev-guide file
@@ -43,7 +43,7 @@ Validate preconditions (all phases done?)
    - `Cargo.toml` exists → `cargo test`
    - `pyproject.toml` or `setup.py` exists → `pytest`
    - `go.mod` exists → `go test ./...`
-   - `*.xcodeproj` or `*.xcworkspace` exists → detect scheme via `xcodebuild -list -json`, pick the scheme containing "Tests" or the main app scheme; use `-destination 'platform=iOS Simulator,name=iPhone 16'` (fallback: `platform=macOS`); if detection fails, fall through to "ask user"
+   - `*.xcodeproj` or `*.xcworkspace` exists → detect scheme via `xcodebuild -list -json` (pick scheme containing "Tests" or the main app scheme); for simulator destination, follow the booted-sim-UDID pattern from `test-changes` Step A3 (if 0 booted → `xcrun simctl boot "iPhone 16 Pro"`; if >1 booted → `xcrun simctl shutdown all && sleep 3 && xcrun simctl boot "iPhone 16 Pro" && sleep 8`; then capture `BOOTED_UDID=$(xcrun simctl list devices booted | grep -oE '[A-F0-9-]{36}' | head -1)`). Use `-destination "platform=iOS Simulator,id=$BOOTED_UDID"` (never `name=` — global CLAUDE.md hard rule). Fallback: `platform=macOS`. If detection fails, ask user via AskUserQuestion.
    - None found → ask user for the test command via AskUserQuestion
 2. Run the full test suite. Capture output.
 3. Parse results: total, passed, failed, skipped
@@ -177,12 +177,14 @@ Untested source files (no corresponding test):
 
 ### Step 5: Generate Report
 
-1. **Update state file:** If `.claude/dev-workflow-state.yml` exists, update it:
-   ```yaml
-   phase_step: finalized
-   last_updated: "<now>"
+1. **Update state file:** If `.claude/dev-workflow-state.json` exists, update it (preserve all other keys, only modify the two below):
+   ```json
+   {
+     "phase_step": "finalized",
+     "last_updated": "<now>"
+   }
    ```
-   This prevents the SessionStart hook from prompting "Resume phase?" after finalization.
+   If only legacy `.yml` exists (pre-migration project), first migrate per `run-phase`'s spec, then write the JSON update above. This prevents the SessionStart hook from prompting "Resume phase?" after finalization.
 2. `mkdir -p .claude/reviews`
 3. Write to `.claude/reviews/finalize-{YYYY-MM-DD-HHmmss}.md`:
 

@@ -1,6 +1,6 @@
 ---
 name: kb
-description: "Use when you need to search the cross-project knowledge base manually. Accepts a query, searches ~/.claude/knowledge/ for past lessons, API gotchas, architecture decisions, and learning notes."
+description: "Use when the user says '/kb', 'search kb', 'find lesson about X', '搜知识库', '以前怎么处理 X', or needs to search the cross-project knowledge base manually. Accepts a query, searches ~/.claude/knowledge/ for past lessons, API gotchas, architecture decisions, and learning notes. Not when: user wants to ADD a new lesson from current session (use /collect-lesson); user wants to extract decisions from a settled session (use /crystallize); user means their Obsidian PKOS vault (use /pkos — different store: PKOS vault vs ~/.claude/knowledge cross-project lessons)."
 user-invocable: true
 model: sonnet
 context: fork

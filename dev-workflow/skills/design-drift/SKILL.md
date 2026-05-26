@@ -32,7 +32,7 @@ This skill dispatches the `dev-workflow:design-drift-auditor` agent to extract a
 | ADRs | `docs/03-decisions/*.md` | 否 |
 | Feature specs | `docs/05-features/*.md`（排除 README.md） | 否 |
 | Dev guide | `docs/06-plans/*-dev-guide.md` | 否 |
-| State file | `.claude/dev-workflow-state.yml` | 否 |
+| State file | `.claude/dev-workflow-state.json` (legacy `.yml` if pre-migration) | 否 |
 
 **前置条件**：至少 1 个文档存在。如果 0 个文档找到，停止并告知用户：
 

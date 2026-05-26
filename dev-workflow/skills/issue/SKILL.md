@@ -8,7 +8,7 @@ user-invocable: true
 
 GitHub Issue unified entry point. Supports list, read, and create operations via `gh` CLI.
 
-Core flow: `/issue` creates issues with prior hypotheses (via `/generate-vf-prompt`) that `/fix-bug` can later consume for higher diagnostic accuracy.
+Core flow: `/issue` creates issues with prior hypotheses (generated inline in Step 3.2) that `/fix-bug` can later consume for higher diagnostic accuracy.
 
 ## Process
 

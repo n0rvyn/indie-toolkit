@@ -1,6 +1,6 @@
 ---
 name: review-execution
-description: "Use when the user says 'review execution', 'parallel review', 'deep review', 'review my code', 'review after coding', 'execution review', '审查执行', '并行 review', '写完 review 一下', '代码 review 一下', '深度审查', '执行后审查', or wants a fresh-context multi-lens review of uncommitted changes BEFORE commit. Dispatches 4 parallel reviewer agents (correctness, test-coverage, breaking-changes, root-cause-depth) and consolidates findings into must-fix / nice-to-have. Standalone — does NOT require a plan or dev-guide. Not when: a plan exists and you want plan-vs-code audit — use implementation-reviewer. Not when: pre-commit semantic classification only — use review-before-commit. Not when project is Apple-only and you want only ASC pre-submit review — use /asc-submit-preview. Not when user says '代码审计' (the 4-char compound triggers apple-dev:code-audit internal scan; this skill matches '代码审' as a verb phrase, not '代码审计' as a noun)."
+description: "Use when the user says 'review execution', 'parallel review', 'deep review', 'review my code', 'review after coding', 'execution review', '审查执行', '并行 review', '写完 review 一下', '代码 review 一下', '深度审查', '执行后审查', or wants a fresh-context multi-lens review of uncommitted changes BEFORE commit. Dispatches 4 parallel reviewer agents (correctness, test-coverage, breaking-changes, root-cause-depth) and consolidates findings into must-fix / nice-to-have. Standalone — does NOT require a plan or dev-guide. Not when: a plan exists and you want plan-vs-code audit — use implementation-reviewer. Not when: pre-commit semantic classification only — use review-before-commit. Not when project is Apple-only and you want only ASC pre-submit review — use /asc-submit-preview."
 user-invocable: true
 allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*, find:*, grep:*), Task
 ---
@@ -101,7 +101,10 @@ For each finding emit:
 Skip enhancement / refactor / removal changes — only grade fixes.
 ```
 
-**Additionally dispatched in the SAME batch when project is Apple:**
+**Additionally dispatched in the SAME batch when project is Apple AND apple-dev plugin is installed:**
+
+First verify apple-dev availability: `ls ~/.claude/plugins/cache/*/apple-dev/ 2>/dev/null`. If no output, skip ALL four reviewers below and add to the Step 3 summary table: "apple-dev not installed — Apple-platform review coverage skipped for this run". If installed:
+
 - `apple-dev:apple-reviewer` — always when Apple project is detected (covers non-Swift diffs too: .plist, Package.swift, entitlements, asset catalogs)
 - `apple-dev:ui-reviewer` — if HAS_SWIFT
 - `apple-dev:design-reviewer` — if HAS_NEW_VIEW
@@ -109,7 +112,7 @@ Skip enhancement / refactor / removal changes — only grade fixes.
 
 Critical: all applicable reviewers (4 lenses + conditional Apple) must be in ONE Task batch — do NOT split into a follow-up sequential dispatch.
 
-If project is Apple but ONLY apple-reviewer applies (no Swift / new View / user journey signals), still emit the Apple section in the report so the user knows Apple coverage was assessed; if project is non-Apple, do not mention Apple at all.
+If project is Apple, apple-dev IS installed, but ONLY apple-reviewer applies (no Swift / new View / user journey signals), still emit the Apple section in the report so the user knows Apple coverage was assessed; if project is non-Apple OR apple-dev is not installed, do not mention Apple at all.
 
 ### Step 3: Consolidate
 

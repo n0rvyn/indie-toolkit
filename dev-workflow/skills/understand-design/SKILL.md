@@ -1,6 +1,7 @@
 ---
 name: understand-design
-description: "Use when the user has a design prototype (from Stitch, Figma, or any tool) and wants AI to analyze it. Works standalone for daily development or in pipeline mode with a design doc. Handles images, HTML/CSS, or both."
+description: "Use when the user has a design prototype (from Stitch, Figma, or any tool) and wants AI to analyze it. Works standalone for daily development or in pipeline mode with a design doc. Handles images, HTML/CSS, or both. Not when: user wants to GENERATE a design prompt FOR a tool (use /generate-design-prompt — inverse direction: project context → prompt text)."
+model: sonnet
 ---
 
 ## Overview

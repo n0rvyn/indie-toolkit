@@ -1,7 +1,8 @@
 ---
 name: finish-branch
-description: "Use when implementation is complete and you need to decide how to integrate the work. Verifies tests, presents structured options, handles cleanup."
+description: "Use when implementation is complete and you need to decide how to integrate the work, or the user says 'finish branch', 'finalize branch', '完成分支', '结束分支', '收尾', 'merge or pr'. Runs full test suite, then presents structured integration options (merge to main / open PR / archive branch) and handles cleanup. Not when: user only wants to commit current changes (use /commit); user wants cross-phase finalization of a dev-guide (use /finalize)."
 allowed-tools: Bash(git:*) Bash(gh:*) Bash(npm:*) Bash(cargo:*) Bash(pytest:*) Bash(go:*) Bash(xcodebuild:*) Bash(ls:*)
+model: sonnet
 ---
 
 ## Process

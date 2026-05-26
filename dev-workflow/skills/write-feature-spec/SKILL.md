@@ -78,6 +78,7 @@ When the agent completes:
    - "Quickly restore context in a future session (share spec with new Claude session)"
    - "Document the feature for changelog or release notes"
    - "Feed to an external reviewer for independent review:
-      Dispatch via Task tool with:
+      First check apple-dev plugin availability: `ls ~/.claude/plugins/cache/*/apple-dev/ 2>/dev/null`. If no output (plugin not installed), skip this offer and note 'External reviewer requires apple-dev plugin — install via /plugin marketplace'.
+      If installed, dispatch via Task tool with:
         subagent_type: 'apple-dev:feature-reviewer'
         prompt: 'Review feature: {name}. Spec: {path}. Key files: {files list}. Project root: {root}'"

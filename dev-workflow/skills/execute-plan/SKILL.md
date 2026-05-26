@@ -92,7 +92,7 @@ When execution completes (all batches done):
 
 When running within a phase orchestrated by `run-phase`:
 
-If `.claude/dev-workflow-state.yml` exists and `phase_step` is `execute`:
+If `.claude/dev-workflow-state.json` exists and `phase_step` is `execute`:
 - After all batches complete, do NOT update `phase_step` (orchestrator owns state transitions)
 - Output: "Execution complete. Returning to run-phase."
 

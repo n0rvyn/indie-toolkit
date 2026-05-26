@@ -1,6 +1,6 @@
 ---
 name: generate-bases-views
-description: "Generate Obsidian Bases (.base) views for structured querying of crystals, lessons, and vault notes. Use when the user says 'generate views', 'create base files', 'make queryable', or after crystallize/collect-lesson."
+description: "Generate Obsidian Bases (.base) views for structured querying of crystals, lessons, and vault notes. Use when the user says 'generate views', 'create base files', 'make queryable', '生成 base views', '生成视图', '让它可查询', or after crystallize/collect-lesson."
 user-invocable: true
 model: sonnet
 context: fork

@@ -31,17 +31,9 @@ Policy for this pass:
 - `generate-design-prompt`
 - `handoff`
 
-First-pass `dev-workflow` internal helpers:
-- `verify-plan`
-- `test-changes`
-- `write-feature-spec`
-- `crystallize`
-- `generate-vf-prompt`
-- `design-drift`
 
 `apple-dev` daily entries for the follow-up task:
 - `project-kickoff`
 - `design-parity-build`
 - `asc-submit-preview`
 - `asc-listing`
-- `code-audit`

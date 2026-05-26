@@ -1,6 +1,6 @@
 ---
 name: run-phase
-description: "Use when the user says 'run phase', 'start phase N', 'next phase', '继续开发', '跑下一阶段', '开始第N阶段', or when continuing development guided by a dev-guide. Orchestrates the plan-execute-review cycle for one phase of a development guide: write-plan → verify-plan → execute-plan → test-changes → review agents in parallel → fix issues. Produces: phase completion report + updated workflow state in .claude/dev-workflow-state.yml. Not when: no dev-guide exists — run write-dev-guide first."
+description: "Use when the user says 'run phase', 'start phase N', 'next phase', '继续开发', '跑下一阶段', '开始第N阶段', or when continuing development guided by a dev-guide. Orchestrates the plan-execute-review cycle for one phase of a development guide: write-plan → verify-plan → execute-plan → test-changes → review agents in parallel → fix issues. Produces: phase completion report + updated workflow state in .claude/dev-workflow-state.json. Not when: no dev-guide exists — run write-dev-guide first."
 ---
 
 ## Overview
@@ -387,10 +387,11 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 
    **Review agents (always at least one):**
    - **Always:** `dev-workflow:implementation-reviewer` agent
-   - **If Phase modified UI files:** `apple-dev:ui-reviewer` — pass list of modified `*View.swift` files
-   - **If Phase created new pages/components:** `apple-dev:design-reviewer` — pass list of new View files
-   - **If Phase completed a full user journey:** `apple-dev:feature-reviewer` — pass feature scope + key files
-   - **If this is the submission prep Phase:** invoke `/asc-submit-preview` skill after agents complete
+   - **apple-dev reviewers (conditional)**: before adding any of the three below, verify apple-dev is installed via `ls ~/.claude/plugins/cache/*/apple-dev/ 2>/dev/null`. If no output, skip all three and add to the Step 6 summary table: "apple-dev not installed — UI/design/feature review coverage skipped". If installed:
+     - **If Phase modified UI files:** `apple-dev:ui-reviewer` — pass list of modified `*View.swift` files
+     - **If Phase created new pages/components:** `apple-dev:design-reviewer` — pass list of new View files
+     - **If Phase completed a full user journey:** `apple-dev:feature-reviewer` — pass feature scope + key files
+   - **If this is the submission prep Phase:** invoke `/asc-submit-preview` skill after agents complete (requires apple-dev installed; if not, note in summary and skip)
 
    > Note: run-phase dispatches Apple reviewers via Phase-completion signals (UI files modified / new components / journey completed). `/review-execution` dispatches the SAME agents via git-diff signals (HAS_SWIFT / HAS_NEW_VIEW / user keywords). Both routes are intentional — run-phase serves orchestrated phases; review-execution is standalone. Running both back-to-back will dispatch agents twice with slightly different scopes.
 

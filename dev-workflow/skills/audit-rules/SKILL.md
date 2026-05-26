@@ -1,6 +1,6 @@
 ---
 name: audit-rules
-description: "Use when Claude exhibited unexpected behavior, for periodic rule health checks, or after adding new rules. Audits CLAUDE.md rules from the AI execution perspective for conflicts, loopholes, gaps, and redundancies."
+description: "Manual /audit-rules invocation only (auto-routing disabled). Audits CLAUDE.md rules from the AI execution perspective for conflicts, loopholes, gaps, and redundancies. Use when Claude exhibited unexpected behavior, for periodic rule health checks, or after adding new rules. For automatic CLAUDE.md quality scoring and improvement suggestions, see claude-plugins-official:claude-md-improver (different scope: this skill is deeper rule-conflict analysis, that one is general quality scoring)."
 disable-model-invocation: true
 model: sonnet
 ---

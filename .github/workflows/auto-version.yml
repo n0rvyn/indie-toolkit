@@ -53,6 +53,11 @@ jobs:
       - name: Detect changed plugins and bump versions
         id: bump
         shell: bash
+        env:
+          # Surface webhook-derived SHAs through env to avoid ${{ }} → run: injection patterns.
+          # github.event.before is git-computed (40-char hex or zeros), not user-controllable,
+          # but we follow the env-var convention as defense-in-depth.
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
           set -euo pipefail
 
@@ -130,8 +135,20 @@ jobs:
             echo "$max_bump"
           }
 
-          # Get changed files in this push
-          changed_files="$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD)"
+          # Determine diff range. BEFORE_SHA (from env, sourced from github.event.before)
+          # is the ref's prior tip on push events — using HEAD~1 instead silently drops
+          # earlier commits in a multi-commit push, causing their plugin changes to
+          # skip version bumps. Fall back to HEAD~1 when BEFORE_SHA is unavailable
+          # (workflow_dispatch via workflow_call, or first push to a new branch where
+          # before is all zeros).
+          if [[ -z "${BEFORE_SHA:-}" || "$BEFORE_SHA" == "0000000000000000000000000000000000000000" ]]; then
+            DIFF_RANGE="HEAD~1..HEAD"
+          else
+            DIFF_RANGE="${BEFORE_SHA}..HEAD"
+          fi
+
+          # Get changed files across the entire push range (not just the last commit)
+          changed_files="$(git diff --name-only "$DIFF_RANGE" 2>/dev/null || git diff --name-only HEAD)"
 
           # Find which plugins have changes
           changed_plugins=()
@@ -149,8 +166,11 @@ jobs:
 
           echo "Changed plugins: ${changed_plugins[*]}"
 
-          # Get commit hashes for this push (used to inspect full bodies, not just subjects)
-          commit_hashes="$(git log --format='%H' HEAD~1..HEAD 2>/dev/null || git log --format='%H' -1)"
+          # Get commit hashes across the push range. Must reuse DIFF_RANGE — using
+          # HEAD~1..HEAD here would only inspect the last commit's message, so a
+          # `feat:` in an earlier commit of a multi-commit push would be missed and
+          # the bump silently downgraded to patch.
+          commit_hashes="$(git log --format='%H' "$DIFF_RANGE" 2>/dev/null || git log --format='%H' -1)"
 
           # Bump each changed plugin
           changed=()

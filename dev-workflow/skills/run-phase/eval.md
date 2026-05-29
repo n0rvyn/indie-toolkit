@@ -23,7 +23,9 @@
 - [ ] PushNotification emitted at the three checkpoints: plan decisions pending, reviews complete, phase done
 - [ ] Step 1 uses explicit Bash tool invocation (not legacy `!`cat\`` shorthand)
 - [ ] UI phase + design reference present → Step 5.5 triggers: renders #Preview views, diffs vs design ref, fixes up to 3 rounds, surfaces remaining diffs as informational items, sets phase_step: review
-- [ ] Non-UI phase (no *View.swift modified) OR no design reference → Step 5.5 skips entirely with logged reason, sets phase_step: review, proceeds to Step 6
+- [ ] Non-UI phase (no SwiftUI view files modified) OR no design reference → Step 5.5 skips entirely with logged reason, sets phase_step: review, proceeds to Step 6
+- [ ] UI phase + design reference present BUT modified views contain no #Preview block → Step 5.5 skips with reason `no #Preview blocks in modified views`, sets phase_step: review, proceeds to Step 6
+- [ ] render-preview returns error / no result file for a view → that view is logged as a render failure and skipped, the loop continues to the next view (one failed render does not abort Step 5.5)
 
 ## Redundancy Risk
 Baseline comparison: Base model can execute tasks sequentially but lacks structured phase orchestration with state persistence

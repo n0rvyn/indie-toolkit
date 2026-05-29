@@ -1,7 +1,6 @@
 ---
 name: render-preview
-description: "Internal tool-wrapper that renders a SwiftUI #Preview to a downsampled PNG and returns a structured { channel, pngPath } result for a caller to visually compare. Not user-invocable — dispatched by name from run-phase's visual feedback step. Primary path: Apple Xcode MCP RenderPreview; headless fallback: axe / swiftui-render. Not for: running-app / navigation / animation screenshots or XCUITest visual regression (use apple-dev:xc-ui-test, simctl io, or XcodeBuildMCP), UDID-targeted tests, or design-vs-render diffing (that's the caller's job)."
-compatibility: Requires macOS; RenderPreview path needs Xcode 26.3+ open, headless fallback does not
+description: "Internal tool-wrapper that renders a SwiftUI #Preview to a downsampled PNG and returns a structured { channel, pngPath, downsampled, error } result. Internal callee for run-phase's visual feedback step (hidden from the / menu); not for ad-hoc user requests. Primary path: Apple Xcode MCP RenderPreview; headless fallback: axe / swiftui-render. Not for: running-app / navigation / animation screenshots or XCUITest visual regression (use apple-dev:xc-ui-test, simctl io, or XcodeBuildMCP), UDID-targeted tests, or design-vs-render diffing (that's the caller's job)."
 user-invocable: false
 model: haiku
 context: fork
@@ -18,9 +17,11 @@ context: fork
 
 # render-preview
 
-渲染 SwiftUI `#Preview` 块为 PNG 图片，返回结构化路径 `{ channel, pngPath }`，供调用方（如 run-phase visual feedback step）进行视觉比对。
+渲染 SwiftUI `#Preview` 块为 PNG 图片，返回结构化结果 `{ channel, pngPath, downsampled, error }`，供调用方（如 run-phase visual feedback step）进行视觉比对。
 
-本 skill 不做 diff、不做迭代判断 —— 这些归调用方负责。
+本 skill 不做 diff、不做迭代判断；这些归调用方负责。
+
+**Requires**：macOS。RenderPreview 主路需 Xcode 26.3+ 开着项目；无头 fallback（axe / swiftui-render）不需要。
 
 ---
 
@@ -101,7 +102,11 @@ magick <pngPath> -resize 33.333% <outputDir>/<name>_1x.png
 
 ## Output
 
-返回结构化结果。**`context: fork` 下，subagent 的最终消息必须就是下面的 JSON 对象本身**（不附带其它散文 —— 调用方只收到最终消息）：
+**返回通道（重要）**：`context: fork` 下，forked subagent 的最终消息会被**摘要**后回传（官方文档：results are summarized），逐字节的路径串不保证原样到达调用方。因此结果以**文件**为权威通道，最终消息仅供人读：
+
+1. **结果文件（权威）**：用 Write/Bash 将结果 JSON（成功或失败，见下）写入 `<outputDir>/<name>.result.json`（`<name>` 见 Input 节命名规则）。调用方据此确定性路径 `Read` 该文件解析结果，**不依赖**最终消息回传。
+   - ⚠️ 作为 run-phase 视觉环被调用时，调用方**必须传入显式 `outputDir`**；否则结果文件落在系统临时目录、调用方无法确定其路径。
+2. **最终消息（便于人读）**：最终消息同时输出同一 JSON 对象本身（不附带其它散文）。
 
 成功：
 ```json

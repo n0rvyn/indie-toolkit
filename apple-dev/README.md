@@ -82,6 +82,7 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | Hook | Event | Purpose |
 |------|-------|---------|
 | protect-pbxproj | PreToolUse | Prevents direct editing of `.xcodeproj/project.pbxproj` files |
+| protect-preview | PreToolUse | Asks for confirmation when an Edit/Write/MultiEdit would reduce a Swift file's `#Preview`/`PreviewProvider` count (fail-open; never hard-blocks) |
 | check-xcode-docs | SessionStart | Detects Xcode AI documentation changes and notifies in session header (silent if Xcode not installed) |
 
 ## References (14)

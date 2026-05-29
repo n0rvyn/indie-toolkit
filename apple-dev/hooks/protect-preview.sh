@@ -69,6 +69,9 @@ except:
     # Trigger if #Preview count decreases (includes new_string empty = deleting
     # the matched #Preview fragment while the View elsewhere is retained).
     # Whole-View deletion also asks — confirmation is cheap and the reason explains it.
+    # Scope limit: this protects against removal of the #Preview *token* only. Edits
+    # inside a #Preview body that keep the token (old_count == new_count) are not gated;
+    # body correctness is caught downstream by render-preview, not here.
     if [ "$old_count" -gt 0 ] 2>/dev/null && [ "$new_count" -lt "$old_count" ] 2>/dev/null; then
         echo "$ask_msg"
         exit 0

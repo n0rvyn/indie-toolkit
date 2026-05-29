@@ -39,8 +39,9 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | testing-guide | write-plan / fix-bug / test-changes | Interactive testing guidance |
 | profiling | write-plan / fix-bug / test-changes | Performance profiling guidance |
 | xc-ui-test | write-plan / test-changes | Advanced XCUITest guidance |
+| render-preview | run-phase visual step | 渲染 SwiftUI #Preview 成 PNG（RenderPreview 主 + axe/swiftui-render 无头 fallback） |
 
-## Full Capability Inventory (19)
+## Full Capability Inventory (20)
 
 > **Cross-plugin handoff (2026-05-26)**: design prompt generation (formerly `generate-stitch-prompts`) was merged into `dev-workflow:generate-design-prompt` with platform routing (iOS/macOS → Stitch DSL, Web → Figma, generic → Figma). `project-kickoff` cross-calls it for the Stitch step.
 
@@ -65,6 +66,7 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | project-kickoff | `/project-kickoff` | New project feasibility + requirements |
 | setup-ci-cd | `/setup-ci-cd` | Fastlane + GitHub Actions for TestFlight |
 | update-asc-docs | `/update-asc-docs` | Audit and update ASC legal/marketing documents |
+| render-preview | run-phase (visual step) | 渲染 SwiftUI #Preview 成 PNG（RenderPreview 主 + axe/swiftui-render 无头 fallback） |
 
 ## Agents (4)
 

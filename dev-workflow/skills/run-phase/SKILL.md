@@ -383,9 +383,9 @@ This step closes the visual gap between implemented UI and design reference befo
 
 1. Update state: `phase_step: visual`, `last_updated: <now>`
 
-2. **Gate ①: prerequisites + UI relevance** — first verify apple-dev (which provides `render-preview`) is installed: `ls ~/.claude/plugins/cache/*/apple-dev/ 2>/dev/null`. If no output → skip this entire step: log `Visual step skipped: apple-dev not installed`, set `phase_step: review`, proceed to Step 6. (Step 6 guards apple-dev too, but it runs after this step, so the check is repeated here.) Then derive the list of modified `*View.swift` files independently in this step:
-   - Primary: scan the plan's per-task `**Files:**` sections (always available since Step 4 has completed) and filter for `*View.swift`
-   - Optional cross-check: `git diff --name-only` against the phase's starting commit (only if a baseline ref was recorded), filtered for `*View.swift`
+2. **Gate ①: prerequisites + UI relevance** — first verify apple-dev (which provides `render-preview`) is installed: `ls ~/.claude/plugins/cache/*/apple-dev/ 2>/dev/null`. If no output → skip this entire step: log `Visual step skipped: apple-dev not installed`, set `phase_step: review`, proceed to Step 6. (Step 6 guards apple-dev too, but it runs after this step, so the check is repeated here.) Then derive the list of modified SwiftUI view files independently in this step:
+   - Primary: scan the plan's per-task `**Files:**` sections (always available since Step 4 has completed) for modified `.swift` files. A file counts as a view if EITHER its name matches a view suffix (`*View` / `*Card` / `*Row` / `*Cell` / `*Tab` / `*Screen` / `*Sheet` / `*Banner`) OR it contains a `#Preview` block or a `: View` conformance. Do NOT filter on `*View.swift` alone: SwiftUI views are frequently named `Card`/`Row`/`Tab`/`Screen`, and a name-only filter silently skips them.
+   - Optional cross-check: `git diff --name-only` against the phase's starting commit (only if a baseline ref was recorded), filtered by the same view-detection rule
    - If the resulting list is empty → skip this entire step: log `Visual step skipped: non-UI phase`, set `phase_step: review`, proceed to Step 6.
    - Note: Step 6's ui-reviewer uses the same signal source, but computes it inline at that point. This step derives it independently — Step 6 has not run yet and its inline condition is not a stored artifact. (This step's own fixes may touch additional files, so Step 6's recomputed set can differ slightly — expected.)
 
@@ -398,9 +398,9 @@ This step closes the visual gap between implemented UI and design reference befo
 
 4. **Render-diff-fix loop** (both gates passed) — filter the Gate ① list to views that contain a `#Preview` block. If that filtered list is empty → skip: log `Visual step skipped: no #Preview blocks in modified views`, set `phase_step: review`, proceed to Step 6. Otherwise, for each such view:
 
-   a. Dispatch `apple-dev:render-preview` (by name) → returns `{channel, pngPath, downsampled, error}`.
-      - If `error` is not null: log `Render failed for {ViewName}: {error}` and skip this view; continue to next.
-   b. Read `pngPath` in main context. Compare rendered output against the design reference image — identify visual differences: spacing, layer hierarchy, color, text truncation, overflow.
+   a. Invoke `apple-dev:render-preview` via the Skill tool, passing `swiftFile: <absolute path to this view's .swift file>`, `outputDir: <a caller-controlled dir under the repo, e.g. .claude/visual-phase{N}/>` (REQUIRED; do NOT omit, because render-preview's default system-temp dir is non-deterministic to this caller), and `previewId` when the file has multiple `#Preview` blocks. render-preview is `context: fork`, so its returned message is summarized; do NOT parse the returned message for the path. Instead read the authoritative result file it writes at `<outputDir>/<name>.result.json` (`<name>` = the `.swift` basename, plus `-{previewId}` when set) and parse `{channel, pngPath, downsampled, error}` from that file.
+      - If the result file is missing OR `error` is not null: log `Render failed for {ViewName}: {error or "no result file"}` and skip this view; continue to next.
+   b. Read `pngPath` (the value from the result file) in main context. Compare rendered output against the design reference image: identify visual differences (spacing, layer hierarchy, color, text truncation, overflow).
    c. If differences are **material**: fix the corresponding SwiftUI code in main context, then return to step (a) to re-render.
    d. **Iteration cap: ≤3 rounds per view.** If cap reached with remaining differences, stop and record them.
 

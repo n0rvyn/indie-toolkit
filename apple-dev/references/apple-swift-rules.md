@@ -237,6 +237,17 @@ Write Code -> xcodebuild build -> Check errors -> Fix -> Repeat
 3. **等待用户确认后再改**
 
 
+<!-- section: #Preview Protection keywords: preview, PreviewProvider, visual feedback, unused code, delete -->
+## #Preview Protection
+
+`#Preview` 块（及 `PreviewProvider`）是**受保护的视觉反馈基础设施**。`render-preview` 和 `run-phase` 视觉环依赖它们生成截图以完成视觉验收闭环。
+
+**规则：改 View 时必须维护其 `#Preview`。** 不得以"未使用代码"为由删除 `#Preview`。
+
+**与全局 CLAUDE.md 的切割**：全局 CLAUDE.md「删除未使用的代码（编译器/linter 已标记 unused）免陈述预期」例外条款**不适用于 `#Preview`**。`#Preview` 即使看似 unused（编译器不报错不代表它无用），也不在该例外范围内。删除 `#Preview` 必须陈述预期。
+
+**合法删除出口**：删除整个 View 时，可连同删除其 `#Preview`，但需在改动说明中点明（例：「删除 FooView 及其 #Preview」）。
+
 <!-- section: 删除代码原则 keywords: delete code, search references, dead code -->
 ## 删除代码原则
 

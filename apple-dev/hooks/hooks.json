@@ -20,6 +20,15 @@
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/protect-pbxproj.sh"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/protect-preview.sh"
+          }
+        ]
       }
     ]
   }

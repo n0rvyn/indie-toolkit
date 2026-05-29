@@ -22,6 +22,8 @@
 - [ ] Agent dispatch verification gate present: Step 4/5/6 verify report files on disk before advancing `phase_step`
 - [ ] PushNotification emitted at the three checkpoints: plan decisions pending, reviews complete, phase done
 - [ ] Step 1 uses explicit Bash tool invocation (not legacy `!`cat\`` shorthand)
+- [ ] UI phase + design reference present → Step 5.5 triggers: renders #Preview views, diffs vs design ref, fixes up to 3 rounds, surfaces remaining diffs as informational items, sets phase_step: review
+- [ ] Non-UI phase (no *View.swift modified) OR no design reference → Step 5.5 skips entirely with logged reason, sets phase_step: review, proceeds to Step 6
 
 ## Redundancy Risk
 Baseline comparison: Base model can execute tasks sequentially but lacks structured phase orchestration with state persistence

@@ -15,6 +15,7 @@ Locate/Resume Phase
   → verify plan (dispatch opus agent — unbiased review)
   → execute plan (dispatch sonnet agent — chunked, 5 tasks per batch)
   → test changes (dispatch sonnet agent — build/test/lint suite)
+  → visual feedback loop (main context — render #Preview, diff vs design, fix ≤3x; skipped if non-UI or no design ref)
   → dispatch feature-spec + review agents in parallel (separate contexts)
   → fix all issues (main context — opus: execution + test + review failures)
   → Phase done
@@ -34,7 +35,7 @@ This file tracks progress across sessions. Update it **before** starting each st
   "current_phase": 2,
   "phase_name": "Phase Name",
   "phase_step": "plan",
-  "_comment_phase_step": "one of: plan | ux-review | verify | execute | test | review | fix | done",
+  "_comment_phase_step": "one of: plan | ux-review | verify | execute | test | visual | review | fix | done",
   "dev_guide": "docs/06-plans/YYYY-MM-DD-project-dev-guide.md",
   "plan_file": null,
   "_comment_plan_file": "set to docs/06-plans/YYYY-MM-DD-<name>-plan.md after Step 2",
@@ -374,6 +375,44 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 5. If test failures exist: note them for Step 7 (Fix)
 6. Update state: `test_report: <report path>`, `last_updated: <now>`
 
+### Step 5.5: Visual Feedback Loop (main context — opus)
+
+This step closes the visual gap between implemented UI and design reference before human review (D-010: 把界面拉到八九不离十，最后一公里人工；非全自动像素级). It runs after test-changes and before the review agents, so reviewers see visually-corrected code.
+
+⚠️ 需项目验证：真机 iOS 项目里实跑该 step（渲染→diff→修→收敛/交人）本仓无法验证。
+
+1. Update state: `phase_step: visual`, `last_updated: <now>`
+
+2. **Gate ①: prerequisites + UI relevance** — first verify apple-dev (which provides `render-preview`) is installed: `ls ~/.claude/plugins/cache/*/apple-dev/ 2>/dev/null`. If no output → skip this entire step: log `Visual step skipped: apple-dev not installed`, set `phase_step: review`, proceed to Step 6. (Step 6 guards apple-dev too, but it runs after this step, so the check is repeated here.) Then derive the list of modified `*View.swift` files independently in this step:
+   - Primary: scan the plan's per-task `**Files:**` sections (always available since Step 4 has completed) and filter for `*View.swift`
+   - Optional cross-check: `git diff --name-only` against the phase's starting commit (only if a baseline ref was recorded), filtered for `*View.swift`
+   - If the resulting list is empty → skip this entire step: log `Visual step skipped: non-UI phase`, set `phase_step: review`, proceed to Step 6.
+   - Note: Step 6's ui-reviewer uses the same signal source, but computes it inline at that point. This step derives it independently — Step 6 has not run yet and its inline condition is not a stored artifact. (This step's own fixes may touch additional files, so Step 6's recomputed set can differ slightly — expected.)
+
+3. **Gate ②: Design reference** (only if Gate ① passes) — resolve a design reference **image path** in this order:
+   - (a) `/tmp/design-screenshot-*.png` (understand-design output) — already an image path
+   - (b) `docs/06-plans/*-design-analysis.md` — extract the first referenced image path from the markdown
+   - (c) Design doc path from dev-guide header — extract the first referenced image path from the doc
+   - If no actual image path resolves (none of a/b/c yields an image file) → skip (DP-002=A): log `Visual step skipped: no design reference image`, set `phase_step: review`, proceed to Step 6.
+   - Do NOT attempt self-evaluation without a reference image.
+
+4. **Render-diff-fix loop** (both gates passed) — filter the Gate ① list to views that contain a `#Preview` block. If that filtered list is empty → skip: log `Visual step skipped: no #Preview blocks in modified views`, set `phase_step: review`, proceed to Step 6. Otherwise, for each such view:
+
+   a. Dispatch `apple-dev:render-preview` (by name) → returns `{channel, pngPath, downsampled, error}`.
+      - If `error` is not null: log `Render failed for {ViewName}: {error}` and skip this view; continue to next.
+   b. Read `pngPath` in main context. Compare rendered output against the design reference image — identify visual differences: spacing, layer hierarchy, color, text truncation, overflow.
+   c. If differences are **material**: fix the corresponding SwiftUI code in main context, then return to step (a) to re-render.
+   d. **Iteration cap: ≤3 rounds per view.** If cap reached with remaining differences, stop and record them.
+
+5. **Hand-off** — after the loop:
+   - Collect all remaining differences (cap-reached or skipped views) into a plain-language list using spatial language (screen position and appearance — no code identifiers).
+   - Present as **informational items** (do NOT use AskUserQuestion — same nature as Step 6 human-verification items):
+     > 视觉仍有差异（需真机/人工定夺）：
+     > - [ ] {item, spatial language}
+   - Emit a `PushNotification` (< 80 chars, follow run-phase notification style), e.g.: `Phase {N} visual loop done — {N} diffs remain for human review`
+
+6. Set `phase_step: review`, proceed to Step 6.
+
 ### Step 6: Document Features & Reviews (parallel agent dispatch)
 
 1. Update state: `phase_step: review`, `last_updated: <now>`
@@ -566,6 +605,7 @@ If any of the following have issues: execution report (blocked/failed tasks), te
 - **Phase order matters.** Don't start Phase N+1 if Phase N has unchecked acceptance criteria (unless user explicitly overrides).
 - **Consolidate review output.** Merge all review results into one summary with sections.
 - **State before action.** Update state file before starting each step, not after.
+- Visual feedback (Step 5.5) is conditional — skipped for non-UI phases or when no design reference exists; it never blocks (remaining diffs surface as informational human-verification items).
 
 ## Completion Criteria
 

@@ -632,7 +632,7 @@ project=$(find . -maxdepth 2 -name "*.xcodeproj" -not -path "*/DerivedData/*" | 
 
 如果找到 workspace 或 project：
 
-1. 获取 scheme 列表：`xcodebuild -list -quiet 2>/dev/null`
+1. 获取 scheme 列表：`xcodebuild -list -quiet 2>/dev/null`（如需 build 验证，优先 Apple MCP `BuildProject`；本步仅查元数据，无 MCP 等价，保持 CLI）
 2. 选择主 scheme（排除含 `Tests`/`UI` 后缀的 scheme；仅一个 scheme 时直接使用；多个且无法判断时用 AskUserQuestion 让用户选择）
 3. 采集 build settings：`xcodebuild -showBuildSettings -scheme "{scheme}" -quiet 2>/dev/null`
 4. 从输出中提取以下字段：

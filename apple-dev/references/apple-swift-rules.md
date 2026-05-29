@@ -8,11 +8,13 @@
 <!-- section: Build-Check-Fix Cycle keywords: build, xcodebuild, check, fix, compile cycle, timing -->
 ## Build-Check-Fix Cycle
 
+**编译验证**：优先 Apple Xcode MCP `BuildProject`（需 Xcode 开着项目，返回结构化错误数组，不用啃日志）；MCP 不可用（Xcode 未开）时 fallback 到 CLI 编译验证（SPM 项目 `swift build`、Xcode 工程 `xcodebuild build`）。
+
 ```
-Write Code -> xcodebuild build -> Check errors -> Fix -> Repeat
+Write Code -> Apple MCP BuildProject（主）/ swift build·xcodebuild build（fallback）-> Check（MCP 结构化错误 / CLI 日志）-> Fix -> Repeat
 ```
 
-**运行 xcodebuild 的时机**：
+**运行编译验证（BuildProject/xcodebuild）的时机**：
 - 完成完整文件后
 - 完成相关文件组后
 - 修复错误后验证

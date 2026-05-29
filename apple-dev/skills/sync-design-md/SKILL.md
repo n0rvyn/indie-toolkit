@@ -131,7 +131,11 @@ Generated: {timestamp}
 1. For each 🔴 drift entry: Edit DesignSystem.swift to replace the Swift value with DESIGN.md value
 2. For each 🟡 only-in-design: Edit DesignSystem.swift to add the missing token (in the appropriate enum)
 3. Do NOT touch 🟡 only-in-swift entries (preserve Swift-side extensions)
-4. After edits: detect build target and verify compilation. Use this Bash decision tree:
+4. After edits: detect build target and verify compilation.
+
+   **编译验证**：优先 Apple Xcode MCP `BuildProject`（需 Xcode 开着项目，返回结构化错误数组，不用啃日志）；MCP 不可用（Xcode 未开）时 fallback 到 CLI 编译验证（SPM 项目 `swift build`、Xcode 工程 `xcodebuild build`）。
+
+   Use this Bash decision tree as CLI fallback:
 
    ```bash
    if [ -f Package.swift ]; then
@@ -152,6 +156,7 @@ Generated: {timestamp}
    - If `BUILD_SKIPPED`: record "build verification skipped — no buildable target" in the drift report; do NOT revert edits
    - If build returns non-zero AND output contains compile error markers (`error:`, `cannot find`, `expected`): revert via `git checkout -- {DesignSystem.swift path}` and report the failure
    - If build returns non-zero with infrastructure errors (provisioning, code signing, simulator): record warning, do NOT revert (edits are likely correct; build failure is unrelated)
+   - **若走 `BuildProject`（MCP 主路）**：判据从结构化错误数组取，语义与上面 CLI 路径相同 —— 数组含 compile 错误（如 type/syntax 错误）→ `git checkout -- {DesignSystem.swift path}` 回退并报告；数组仅含签名/provisioning/模拟器类错误 → 保留改动，记录 warning；数组为空 → 通过。（区别仅在错误来源是结构化数组而非日志字符串；具体区分 compile vs infra 的字段以 `BuildProject` 实际输出为准）
 5. Update `docs/02-architecture/design-source.md` `Last sync` field
 
 **Mode `from-swift`**:

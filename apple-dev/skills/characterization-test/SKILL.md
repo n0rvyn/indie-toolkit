@@ -143,7 +143,7 @@ struct {TypeName}CharacterizationTests {
 
 ### Step 4: Run Tests to Establish Baseline
 
-Execute:
+Execute:（test 留 CLI；如先做 build 验证，优先 `BuildProject`）
 
 ```bash
 xcodebuild test \

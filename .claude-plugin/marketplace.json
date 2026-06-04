@@ -117,36 +117,6 @@
       "strict": true
     },
     {
-      "name": "minimax-quota",
-      "source": "./minimax-quota",
-      "description": "MiniMax coding plan quota checker — only requires MINIMAX_API_KEY",
-      "version": "0.2.1",
-      "category": "integration",
-      "tags": [
-        "minimax",
-        "quota",
-        "browser-session",
-        "automation",
-        "internal-tools"
-      ],
-      "strict": true
-    },
-    {
-      "name": "netease-cloud-music",
-      "source": "./netease-cloud-music",
-      "description": "NetEase Cloud Music helper built around the maintained ncmctl CLI for cloud uploads and cookie-based login flows",
-      "version": "0.1.0",
-      "category": "integration",
-      "tags": [
-        "netease",
-        "music",
-        "cloud-drive",
-        "cookiecloud",
-        "cli"
-      ],
-      "strict": true
-    },
-    {
       "name": "readback",
       "source": "./readback",
       "description": "Before-action read-back protocol — model must restate intent in plain language before code/plan changes. Inspired by aviation/medical closed-loop communication.",

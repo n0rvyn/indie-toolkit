@@ -13,8 +13,6 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 | `skill-master` | development | Unified plugin lifecycle: brainstorm, create, eval, review, iterate, package Claude Code plugins. Entry: `/plugin-master` |
 | `wechat-bridge` | integration | WeChat message bridge via MCP `--channels` protocol: permission relay, push messages, reply |
 | `x-api` | integration | X (Twitter) API v2 MCP server: 131+ tools with Bearer Token and OAuth2 PKCE support |
-| `minimax-quota` | integration | MiniMax coding plan quota checker: only requires MINIMAX_API_KEY |
-| `netease-cloud-music` | integration | NetEase Cloud Music helper: cookie-based login flows and cloud-drive upload via maintained CLI |
 | `shared-utils` | development | Reusable utility scripts and skills shared across plugins: Notion API, MongoDB queries, cross-plugin primitives |
 | [readback](readback/README.md) | development | Before-action read-back protocol: force plain-language echo before code/plan changes (3 hooks + 1 agent + 1 skill) |
 
@@ -29,8 +27,6 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 ├── skill-master/
 ├── wechat-bridge/
 ├── x-api/
-├── minimax-quota/
-├── netease-cloud-music/
 ├── shared-utils/
 ├── docs/
 ├── .claude-plugin/   # marketplace manifest
@@ -56,8 +52,6 @@ Install plugins:
 /plugin install skill-master@indie-toolkit
 /plugin install wechat-bridge@indie-toolkit
 /plugin install x-api@indie-toolkit
-/plugin install minimax-quota@indie-toolkit
-/plugin install netease-cloud-music@indie-toolkit
 /plugin install shared-utils@indie-toolkit
 ```
 
@@ -98,6 +92,4 @@ Each plugin has its own `README.md`:
 - `skill-master/README.md` — Plugin lifecycle management
 - `wechat-bridge/README.md` — WeChat bridge
 - `x-api/README.md` — X API v2 MCP server
-- `minimax-quota/README.md` — MiniMax coding plan quota checker
-- `netease-cloud-music/README.md` — NetEase Cloud Music helper
 - `shared-utils/README.md` — Reusable cross-plugin utility scripts and skills

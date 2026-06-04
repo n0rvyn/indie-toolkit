@@ -11,8 +11,6 @@ on:
       - "skill-master/**"
       - "wechat-bridge/**"
       - "x-api/**"
-      - "minimax-quota/**"
-      - "netease-cloud-music/**"
       - "shared-utils/**"
       - "readback/**"
   workflow_call:
@@ -75,7 +73,7 @@ jobs:
           else
             # push path (indie-toolkit's own native trigger)
             MARKET_FILE=".claude-plugin/marketplace.json"
-            ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-master" "wechat-bridge" "x-api" "minimax-quota" "netease-cloud-music" "shared-utils" "readback")
+            ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-master" "wechat-bridge" "x-api" "shared-utils" "readback")
             MARKET_TAG_PREFIX="indie-toolkit-"
           fi
 

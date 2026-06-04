@@ -84,6 +84,8 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | protect-pbxproj | PreToolUse | Prevents direct editing of `.xcodeproj/project.pbxproj` files |
 | protect-preview | PreToolUse | Asks for confirmation when an Edit/Write/MultiEdit would reduce a Swift file's `#Preview`/`PreviewProvider` count (fail-open; never hard-blocks) |
 | check-xcode-docs | SessionStart | Detects Xcode AI documentation changes and notifies in session header (silent if Xcode not installed) |
+| cache-booted-sim | SessionStart | Caches the booted iOS Simulator's runtime version to `~/.claude/.booted-sim-cache`, keeping the slow `simctl` call off the per-WebSearch hot path (silent if no sim booted) |
+| nudge-apple-version | PostToolUse (WebSearch/WebFetch) | When researching Apple-platform topics on the web in an Apple project, injects the project's iOS deployment target + booted-sim version (as `additionalContext`, right as results land) and nudges toward on-device reproduction over citing version-stale web sources. Soft non-blocking nudge; gated on Apple project + Apple-keyword query, with a 10-min cooldown. PostToolUse because non-blocking context injection is unavailable on PreToolUse |
 
 ## References (14)
 

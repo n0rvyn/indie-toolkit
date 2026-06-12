@@ -36,7 +36,7 @@ write-dev-guide                          → docs/04-dev-guide/dev-guide.md (pha
 run-phase
   → write-plan         (in run-phase Step 2)
   → verify-plan        (Step 3, dispatches plan-verifier agent)
-  → execute-plan       (Step 4, dispatches execute-plan agent in chunks of 5)
+  → execute-plan       (Step 4, runs Workflow per segment with hard-stop checkpoint gates)
   → test-changes       (Step 5, dispatches test-runner agent)
   → review agents      (Step 6, parallel: ui/design/feature-reviewer when applicable)
   → feature-spec-writer (Step 6, when phase delivers user-facing feature)
@@ -126,7 +126,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 
 | Agent | Model | Tools | Purpose |
 |-------|-------|-------|---------|
-| execute-plan | sonnet | Glob, Grep, Read, Write, Edit, Bash, LSP | Chunked plan execution — follows verified plan tasks in batches of 5, with per-task state file for auto-resume |
+| execute-plan | sonnet | Glob, Grep, Read, Write, Edit, Bash, LSP | Per-task plan executor — invoked by the execute-plan Workflow, runs one task + Verify, writes per-task checkpoint for cross-session resume |
 | test-runner | sonnet | Glob, Grep, Read, Write, Bash | Runs build/test/lint suite, filters output to errors + summary, writes structured report |
 | design-analyzer | opus | Glob, Grep, Read, Write | Multi-modal design prototype analysis (dual-channel image+code) |
 | design-drift-auditor | opus | Glob, Grep, Read | Design document vs codebase drift detection (read-only) |
@@ -152,7 +152,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 
 | Skill | Type | Description |
 |-------|------|-------------|
-| run-phase | orchestrator | Phase lifecycle: plan → verify → execute (chunked) → test → review → fix → done |
+| run-phase | orchestrator | Phase lifecycle: plan → verify → execute (segmented, checkpoint-gated) → test → review → fix → done |
 | fix-bug | interactive | Systematic diagnosis with value domain tracing |
 | write-plan | interactive | Writes implementation plan with Impact Map and Task Contract |
 | write-dev-guide | interactive | Writes phased dev-guide for multi-unit work |
@@ -165,7 +165,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 
 | Skill | Type | Description |
 |-------|------|-------------|
-| execute-plan | dispatcher | Chunked plan execution — dispatch loop with auto-resume on truncation |
+| execute-plan | dispatcher | Segmented plan execution — Workflow per segment with hard-stop checkpoint gates + cross-session resume |
 | test-changes | dispatcher | Dispatches test-runner agent for build/test/lint suite execution |
 | brainstorm | interactive | Design exploration before implementation |
 | choose-personality | interactive | Lock 6-dimension visual + linguistic personality before design-system generation |

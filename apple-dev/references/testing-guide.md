@@ -477,11 +477,14 @@ final class ShoppingCart {
 # Xcode 中启用覆盖率
 # Edit Scheme → Test → Options → Code Coverage
 
-# 或使用命令行
+# 或使用命令行（跑 tests 真机优先：先扫已连真机取硬件 UDID）
+xcrun xctrace list devices          # 取 == Devices == 下 iPhone 行括号里的 UDID；有 scheme 也可 xcodebuild -showdestinations -scheme MyApp
+# 具体 UDID 不写进插件（每台机 / 每次连接都不同），写进你自己的 ~/.claude/CLAUDE.md
 xcodebuild test \
   -scheme MyApp \
-  -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+  -destination "platform=iOS,id=<上一步取到的真机UDID>" \
   -enableCodeCoverage YES
+# 真机不在位 → 回退 booted 模拟器：-destination "platform=iOS Simulator,id=<booted-sim-UDID>"
 ```
 
 ### 关注未覆盖的关键路径

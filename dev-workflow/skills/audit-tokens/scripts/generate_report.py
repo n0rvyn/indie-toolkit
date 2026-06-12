@@ -20,9 +20,12 @@ from collections import Counter, defaultdict
 from html import escape
 from pathlib import Path
 
-# Pricing (USD per 1M tokens) — Opus 4.7 / Sonnet 4.6 / Haiku 4.5 public list (2026-05)
+# Pricing (USD per 1M tokens) — Fable 5 / Opus 4.8 / Sonnet 4.6 / Haiku 4.5 public list (2026-06)
+# Cache multipliers: cw_5m = 1.25x base, cw_1h = 2x base, cr (cache read) = 0.1x base.
+# Unknown models (class "other") fall back to opus pricing — see turn_cost().
 PRICING = {
-    "opus":   {"in": 15.00, "cw_1h": 30.00, "cw_5m": 18.75, "cr": 1.50, "out": 75.00},
+    "fable":  {"in": 10.00, "cw_1h": 20.00, "cw_5m": 12.50, "cr": 1.00, "out": 50.00},
+    "opus":   {"in":  5.00, "cw_1h": 10.00, "cw_5m":  6.25, "cr": 0.50, "out": 25.00},
     "sonnet": {"in":  3.00, "cw_1h":  6.00, "cw_5m":  3.75, "cr": 0.30, "out": 15.00},
     "haiku":  {"in":  1.00, "cw_1h":  2.00, "cw_5m":  1.25, "cr": 0.10, "out":  5.00},
 }
@@ -66,6 +69,8 @@ def classify_model(model_id: str) -> str:
         return "sonnet"
     if "haiku" in m:
         return "haiku"
+    if "fable" in m or "mythos" in m:
+        return "fable"
     return "other"
 
 
@@ -390,6 +395,7 @@ td.dim { color: #94a3b8; }
 .bar-out  { background: linear-gradient(90deg, #14b8a6, #5eead4); }
 .bar-in   { background: linear-gradient(90deg, #94a3b8, #cbd5e1); }
 .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.tag-fable  { background: #ede9fe; color: #5b21b6; }
 .tag-opus   { background: #fee2e2; color: #991b1b; }
 .tag-sonnet { background: #dbeafe; color: #1e40af; }
 .tag-haiku  { background: #dcfce7; color: #166534; }
@@ -643,7 +649,7 @@ def render(rows, days: int, candidates):
 
     # Footer
     parts.append("<footer>")
-    parts.append("<p>Pricing reflects Anthropic public list prices for Claude Opus 4.7 / Sonnet 4.6 / Haiku 4.5 as of 2026-05. On flat-rate plans the dollar figures are notional — use them as relative ranking, not actual billing.</p>")
+    parts.append("<p>Pricing reflects Anthropic public list prices for Claude Opus 4.8 / Sonnet 4.6 / Haiku 4.5 as of 2026-06. On flat-rate plans the dollar figures are notional — use them as relative ranking, not actual billing.</p>")
     parts.append("<p>Cost-posture heuristic: see <code>skill-master/skills/plugin-master/cost-posture.md</code> in the indie-toolkit repo.</p>")
     parts.append("<p>Data source: <code>~/.claude/projects/*/*.jsonl</code> filtered by mtime within window. Deduped by requestId.</p>")
     parts.append("</footer>")

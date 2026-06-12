@@ -35,11 +35,15 @@ from html import escape
 # Keyed by model FAMILY (substring match), not full model id — model strings
 # in the wild have suffixes (`claude-opus-4-7[1m]`) and version variants
 # (`claude-sonnet-4-5`) that exact-match would miss.
+# USD per 1M tokens — Fable 5 / Opus 4.8 / Sonnet 4.6 / Haiku 4.5 public list (2026-06).
+# cw5 = 1.25x base, cw1 = 2x base, cache_read = 0.1x base.
+# "unknown" mirrors opus pricing, matching generate_report.py's unknown→opus fallback.
 PRICE_PER_M = {
-    "opus":    {"input": 15.0, "cw5": 18.75, "cw1": 30.0, "cache_read": 1.5,  "output": 75.0},
+    "fable":   {"input": 10.0, "cw5": 12.5,  "cw1": 20.0, "cache_read": 1.0,  "output": 50.0},
+    "opus":    {"input": 5.0,  "cw5": 6.25,  "cw1": 10.0, "cache_read": 0.5,  "output": 25.0},
     "sonnet":  {"input": 3.0,  "cw5": 3.75,  "cw1": 6.0,  "cache_read": 0.3,  "output": 15.0},
-    "haiku":   {"input": 0.8,  "cw5": 1.0,   "cw1": 1.6,  "cache_read": 0.08, "output": 4.0},
-    "unknown": {"input": 15.0, "cw5": 18.75, "cw1": 30.0, "cache_read": 1.5,  "output": 75.0},
+    "haiku":   {"input": 1.0,  "cw5": 1.25,  "cw1": 2.0,  "cache_read": 0.1,  "output": 5.0},
+    "unknown": {"input": 5.0,  "cw5": 6.25,  "cw1": 10.0, "cache_read": 0.5,  "output": 25.0},
 }
 
 
@@ -54,6 +58,8 @@ def classify_model(m: str) -> str:
         return "sonnet"
     if "haiku" in m_lower:
         return "haiku"
+    if "fable" in m_lower or "mythos" in m_lower:
+        return "fable"
     return "unknown"
 
 

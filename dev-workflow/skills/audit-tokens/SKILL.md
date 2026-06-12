@@ -64,7 +64,7 @@ open "$OUT"
 Execute the bundled diagnose.py script directly:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/audit-tokens/scripts/diagnose.py \
+python3 ${CLAUDE_SKILL_DIR}/scripts/diagnose.py \
   /tmp/audit-tokens-raw.tsv \
   /tmp/diagnose-fragment.html 2>/tmp/diagnose-stderr.log || true
 ```
@@ -75,7 +75,7 @@ If diagnose.py failed or fragment is missing/empty: substitute the placeholder w
 
 Note: this is a direct script invocation, not a Skill-tool call. The script is bundled under `scripts/diagnose.py` and owned by audit-tokens.
 
-**Internal dependency**: this step invokes `${CLAUDE_PLUGIN_ROOT}/skills/audit-tokens/scripts/diagnose.py`. The script and audit-tokens are bundled together — relocating diagnose.py requires updating this path.
+**Internal dependency**: this step invokes `${CLAUDE_SKILL_DIR}/scripts/diagnose.py` (same variable as Steps 2/3, which run `analyze.sh` and `generate_report.py` from the same `scripts/` dir). The script and audit-tokens are bundled together — relocating diagnose.py requires updating this path.
 
 ### Step 4: Summarize in chat
 
@@ -99,7 +99,7 @@ Do NOT paste the full HTML or large tables into chat. The HTML is the deliverabl
 
 ## Notes
 
-- **Pricing assumption**: uses public Anthropic list pricing as of 2026-05 for Opus 4.7 / Sonnet 4.6 / Haiku 4.5. If the user is on a flat-rate plan, the dollar numbers are notional (treat as relative ranking, not actual billing).
+- **Pricing assumption**: uses public Anthropic list pricing as of 2026-06 for Opus 4.8 ($5/$25 per 1M in/out) / Sonnet 4.6 / Haiku 4.5. If the user is on a flat-rate plan, the dollar numbers are notional (treat as relative ranking, not actual billing).
 - **Cost-posture heuristic**: the recommendations engine cites `skill-master/skills/plugin-master/cost-posture.md` — see that file for the classification rules. If `cost-posture.md` is not installed locally, the report falls back to a built-in subset of the heuristic.
 - **Date semantics**: "last N days" means `find -mtime -N`, i.e. files modified within N × 24h of now. Not calendar days. Supports up to 365 days.
 - **Cache TTL caveat**: 1h vs 5m split is reported but not actionable — Claude Code's harness decides automatically, no user-side knob.

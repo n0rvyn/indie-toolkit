@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Indie toolkit with iOS development, macOS tooling, and more",
-    "version": "1.51.0"
+    "version": "1.51.1"
   },
   "plugins": [
     {
       "name": "dev-workflow",
       "source": "./dev-workflow",
       "description": "Cross-stack development workflow: brainstorm, planning, phase orchestration, execution, review, debugging, design analysis, commits, and session management",
-      "version": "2.31.0",
+      "version": "2.31.1",
       "category": "development",
       "tags": [
         "workflow",
@@ -29,7 +29,7 @@
       "name": "apple-dev",
       "source": "./apple-dev",
       "description": "Complete iOS/macOS/iPadOS development workflow plugin for Claude Code",
-      "version": "1.16.0",
+      "version": "1.16.1",
       "category": "development",
       "tags": [
         "ios",
@@ -120,7 +120,7 @@
       "name": "readback",
       "source": "./readback",
       "description": "Before-action read-back protocol — model must restate intent in plain language before code/plan changes. Inspired by aviation/medical closed-loop communication.",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "category": "development",
       "tags": [
         "dialog",

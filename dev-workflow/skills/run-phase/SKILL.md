@@ -13,7 +13,7 @@ Locate/Resume Phase
   → write plan (main context — opus, full conversation context)
   → UX review checkpoint (main context — if design has UX Assertions)
   → verify plan (dispatch opus agent — unbiased review)
-  → execute plan (dispatch sonnet agent — chunked, 5 tasks per batch)
+  → execute plan (dispatch sonnet agent — segmented via Workflow, hard-stop checkpoints)
   → test changes (dispatch sonnet agent — build/test/lint suite)
   → visual feedback loop (main context — render #Preview, diff vs design, fix ≤3x; skipped if non-UI or no design ref)
   → dispatch feature-spec + review agents in parallel (separate contexts)
@@ -23,7 +23,7 @@ Locate/Resume Phase
 
 ## State File
 
-Location: `.claude/dev-workflow-state.json` (JSON format, matches `execute-plan-state.json` for consistency).
+Location: `.claude/dev-workflow-state.json` (JSON format, matches `execute-plan-checkpoint.json` for consistency).
 
 This file tracks progress across sessions. Update it **before** starting each step (so crash-resume works). Read/write via the Read and Write tools.
 
@@ -57,7 +57,7 @@ This skill dispatches sub-agents at multiple steps (Step 4 execute-plan, Step 5 
 
 **Treat agent stdout as a claim, not a fact**:
 - After every Agent return in Step 4/5/6, before recording the report path into state, verify the claimed report file actually exists on disk (`ls` or `Read`). If missing: do NOT advance `phase_step`; either re-dispatch the agent with explicit Write tool requirement, or surface the failure to the user.
-- For execute-plan (Step 4): the agent claims tasks complete; spot-check at least one file the agent says it wrote per batch. The execute-plan skill itself has internal state, but the run-phase orchestrator should not blindly trust the final summary.
+- For execute-plan (Step 4): the Workflow returns per-task structured results; spot-check by verifying every path in each result's `files_written` array exists on disk (defense-in-depth — the dev-workflow `verify-agent-output.py` hook also intercepts at agent return time). The execute-plan skill itself owns the segment loop and the checkpoint file, but the run-phase orchestrator should not blindly trust the final summary.
 - For test-changes / review agents: their report files (`docs/06-plans/execution-report.md`, `.claude/test-reports/*.md`, `.claude/reviews/*.md`) must exist before the next step.
 
 This gate is non-negotiable: we have a confirmed past case of a sub-agent reporting file writes that never persisted, caught only because the verify-agent-output hook fired.
@@ -350,19 +350,25 @@ Present the remaining issues to the user:
 
 Wait for user choice. If A: stop. If B: mark state `verification_report: "partial"` and continue.
 
-### Step 4: Execute (chunked sonnet agent dispatch)
+### Step 4: Execute (segmented sonnet agent dispatch via Workflow)
 
 1. Update state: `phase_step: execute`, `last_updated: <now>`
-2. Invoke `dev-workflow:execute-plan` to handle execution. The skill manages the full dispatch lifecycle:
-   - Creates `.claude/execute-plan-state.json` with batch size 5
-   - Dispatches the sonnet agent in batches of 5 tasks
-   - Auto-resumes on truncation (reads state file, re-dispatches next batch)
-   - Loops until all tasks complete or are blocked/failed
-   - Cleans up the state file on completion
-3. When execute-plan returns: read the report file at `docs/06-plans/execution-report.md` (or the path from the return message's `Report written to:` line). If the file shows `**Status:** in-progress`, the execution was interrupted — treat the partial results as the execution report.
-4. Present summary: completed/blocked/failed task counts
-5. If blocked or failed tasks exist: note them for Step 7 (Fix)
-6. Update state: `last_updated: <now>`
+2. Invoke `dev-workflow:execute-plan` to handle execution. The skill manages the full segmented dispatch lifecycle:
+   - Runs `compute_checkpoints.py` to derive batches + hard_stops
+   - Creates `.claude/execute-plan-checkpoint.json` (segment metadata: `plan_file`, `total`, `batch_size`, `k`, `hard_stops`, `status`; plus the `completed` map owned by the task agents)
+   - For each segment: invokes `Workflow({scriptPath, args})` with the segment's batches, awaits completion, spot-checks `files_written`, then either auto-continues to the next segment or pauses at a hard-stop for the user to say "continue"
+   - Cross-session resume: the on-disk checkpoint file's `completed` map is authoritative; `Workflow({resumeFromRunId})` is same-session only
+   - Returns an explicit completion signal (the Terminal-write step): `Execution complete: complete` or `Execution complete: completed_with_failures`, or `Paused at hard-stop: waiting for "continue"` — never a silent return
+   - On `complete`: deletes the checkpoint file; on `completed_with_failures`: retains it with `status: "completed_with_failures"` (the cross-session source for the fix pass)
+   - Cross-session resume: the on-disk checkpoint file's `completed` map is authoritative; `Workflow({resumeFromRunId})` is same-session only
+3. **Completion detection — trust execute-plan's explicit return (in-context), not a file grep.** execute-plan runs as the same main agent following nested instructions, so its return is available directly:
+   - `Execution complete: complete` or `completed_with_failures` → execution finished; proceed (route failures to Step 7). Read the report at `docs/06-plans/execution-report.md` for the summary.
+   - `Paused at hard-stop: waiting for "continue"` → NOT finished (see item 4).
+   - Durable backup only (cross-session / truncated return): the report's `**Status:**` line **under this plan's `**Plan:** <path>` section** — `complete`/`completed_with_failures` = done, `in-progress` = interrupted. (Scope to the plan section; the report is a shared append-log with one Status line per plan.)
+4. **Do NOT advance to Step 5 while execution is paused at a hard-stop.** If execute-plan returns `Paused at hard-stop`, execution did NOT complete — surface to the user that it is waiting for "continue"; do not advance to Step 5 and do not route to Step 7. Only a `completed_with_failures` return routes failed/blocked tasks to Step 7 (Fix).
+5. Present summary: completed/blocked/failed task counts
+6. If blocked or failed tasks exist: note them for Step 7 (Fix)
+7. Update state: `last_updated: <now>`
 
 ### Step 5: Test Changes (sonnet agent dispatch)
 

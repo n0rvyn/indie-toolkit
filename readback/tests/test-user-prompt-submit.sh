@@ -65,6 +65,13 @@ run_case "L1 regression: 你理解错了 + 修 — mandate (correction loop must
 run_case "action verb 'fix' with confirmed-state matching session — no mandate (L1: post-stamp window)" \
   "fix the bug in BillImportView" 0 \
   "$(jq -n --arg ts "$FRESH_TS" '{session_id: "test-current-session", created_at: $ts, confirmed_at: $ts, skill: "fix-bug", user_confirmed: true}')"
+# Task-level re-arm: post-stamp matching sid but STALE confirmed_at (>30 min) must
+# RE-FIRE the mandate. Under the old code this suppressed eternally (sid match, no
+# TTL); the re-arm fix gates the post-stamp branch on the same 30-min freshness as
+# the pre-stamp branch, so a new task later in the same session gets readback again.
+run_case "task-level re-arm: post-stamp matching sid + stale confirmed_at (40min) — mandate (re-arm, not eternal suppression)" \
+  "fix another bug in PaymentView" 1 \
+  "$(jq -n --arg stale "$STALE_TS" '{session_id: "test-current-session", created_at: $stale, confirmed_at: $stale, skill: "fix-bug", user_confirmed: true}')"
 run_case "action verb 'fix' with confirmed-state and null stored sid + fresh confirmed_at — no mandate (L1: pre-stamp window)" \
   "fix the bug" 0 \
   "$(jq -n --arg ts "$FRESH_TS" '{session_id: null, created_at: $ts, confirmed_at: $ts, skill: "fix-bug", user_confirmed: true}')"

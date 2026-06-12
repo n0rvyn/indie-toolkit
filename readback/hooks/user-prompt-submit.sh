@@ -90,25 +90,27 @@ if echo "$PROMPT_FILTERED" | grep -qiE "\b(fix|implement|refactor|build|create.*
     CURRENT_SID=$(echo "$INPUT" | jq -r '.session_id // empty' 2>/dev/null || echo "")
     CONFIRMED=$(jq -r '.user_confirmed // false' "$STATE_FILE" 2>/dev/null || echo "false")
     CONFIRMED_AT=$(jq -r '.confirmed_at // empty' "$STATE_FILE" 2>/dev/null || echo "")
-    # Confirmed → suppress mandate when either:
+    # Confirmed → suppress mandate only while the confirmation is FRESH
+    # (< 30 min), regardless of whether the sid has been stamped yet:
     # (a) stored sid matches current stdin sid (same session, post-stamp), or
-    # (b) stored sid is empty BUT confirmation is fresh (< 30 min) — the
-    #     pre-stamp window between user 'go' confirmation and the first
-    #     Write/Edit that triggers pre-tool-use.sh stamping.
-    # Different stored vs current sid → fall through (different session, re-prompt).
-    # Empty stored sid + expired confirmation → fall through (state leaked from
-    # an old session where pre-tool-use.sh never stamped, e.g., skill != fix-bug
-    # or no Write/Edit ever ran). The 30-min TTL matches pre-tool-use.sh phase 1.
-    if [ "$CONFIRMED" = "true" ]; then
-      if [ -n "$STORED_SID" ] && [ "$STORED_SID" = "$CURRENT_SID" ]; then
-        echo "{}"; exit 0
-      fi
-      if [ -z "$STORED_SID" ] && [ -n "$CONFIRMED_AT" ]; then
+    # (b) stored sid is empty (pre-stamp window before the first Write/Edit
+    #     triggers pre-tool-use.sh stamping).
+    # TASK-LEVEL RE-ARM: both branches now share the 30-min freshness gate.
+    # Previously the post-stamp branch suppressed with NO TTL, so a single
+    # confirmation silenced readback for every later task in the same session
+    # (a long session got readback only on its first task). Now, once a
+    # confirmation is older than 30 min, a new action-verb prompt — even in the
+    # SAME session — re-triggers readback. The window is time-based, not
+    # semantically task-aware (true task-boundary detection is a larger design,
+    # deferred); it reuses the plugin's 30-min "working window" constant
+    # (pending TTL + pre-tool-use phase 1). Different stored vs current sid still
+    # falls through immediately (different session). Date-parse failure →
+    # fall-through (fail-closed: show readback rather than trust a corrupt
+    # confirmed_at). Empty confirmed_at → fall-through (no freshness to evaluate).
+    if [ "$CONFIRMED" = "true" ] && [ -n "$CONFIRMED_AT" ]; then
+      if { [ -n "$STORED_SID" ] && [ "$STORED_SID" = "$CURRENT_SID" ]; } \
+         || [ -z "$STORED_SID" ]; then
         # macOS BSD date vs GNU date fallback chain (mirrors pre-tool-use.sh).
-        # Date-parse failure → silent fall-through (fail-closed): the inner `if`
-        # never executes, the outer state-short-circuit block falls out, and
-        # mandate injection proceeds. Safer than fail-open (which would
-        # silently trust a corrupt confirmed_at value and suppress mandate).
         if NOW_TS=$(date -u +%s 2>/dev/null) \
            && CONF_TS=$( (date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "$CONFIRMED_AT" +%s 2>/dev/null) \
                          || (date -d "$CONFIRMED_AT" +%s 2>/dev/null) ); then

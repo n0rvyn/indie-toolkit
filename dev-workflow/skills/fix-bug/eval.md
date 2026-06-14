@@ -7,7 +7,7 @@
 - "The app crashes when I tap save, here's a screenshot"
 - "Build fails with 'ambiguous reference' after my changes"
 
-**Multi-issue loop mode** (must route to `references/multi-issue-loop.md`):
+**Multi-issue loop mode** (must route to `dev-workflow/references/multi-issue-loop.md`):
 - "Fix #12, #15, and #17 and verify each via the API"
 - "Dogfood this batch of 4 bugs against the running platform"
 - "修一批 issue 并通过平台自验证"
@@ -41,8 +41,8 @@
 - [ ] Step 5 value-domain trace prefers `LSP findReferences` when an LSP server is available; grep as fallback
 - [ ] Step 7 Consumer Impact uses `LSP findReferences` to enumerate callers (LSP-available languages)
 - [ ] Agent dispatch verification gate present: after every Agent return, claimed file writes are verified against disk state before advancing
-- [ ] Mode Detection block exists between `## Input` and `## Hard Gate`, with all three conditions enumerated (2+ issues / verification surface present / surface-level verification expected); routes to `references/multi-issue-loop.md` when all three hold
-- [ ] Step 0.8 reads `docs/02-architecture/ubiquitous-language.md` if present (in addition to AI-CONTEXT.md), per `references/ubiquitous-language-pattern.md`
+- [ ] Mode Detection block exists between `## Input` and `## Hard Gate`, with all three conditions enumerated (2+ issues / verification surface present / surface-level verification expected); routes to `dev-workflow/references/multi-issue-loop.md` when all three hold
+- [ ] Step 0.8 reads `docs/02-architecture/ubiquitous-language.md` if present (in addition to AI-CONTEXT.md), per `dev-workflow/references/ubiquitous-language-pattern.md`
 - [ ] `dev-workflow/references/multi-issue-loop.md` exists and defines steps L0 through L5, including L4.0 "route through fix-bug Steps 1-6 for diagnostic"
 
 ## Redundancy Risk

@@ -22,13 +22,13 @@ Ask in one turn, not three. Only include questions for fields you don't already 
 
 ## Mode Detection
 
-Inspect the input. If **all** of these hold, switch to the multi-issue loop documented in `references/multi-issue-loop.md`:
+Inspect the input. If **all** of these hold, switch to the multi-issue loop documented in `dev-workflow/references/multi-issue-loop.md`:
 
 1. Input references 2+ issues (e.g., `#N1 #N2 #N3`, "fix these 4 issues", "dogfood this batch", a list of bug IDs, or 2+ symptom paragraphs separated as items)
 2. The system under repair has an end-to-end verification surface (HTTP API, CLI, REPL, chat agent, mobile deeplink, or equivalent)
 3. The user expects verification through that surface (not just unit-test green) — explicit ("verify via the platform itself"), or implicit (the bugs are user-visible behaviors that only manifest at runtime)
 
-In loop mode, the linear flow below is wrapped by a Baseline → Bundle → per-bundle pipeline. Within each bundle, this skill's Steps 1–6 (diagnostic) still run per-issue — only Step 7 (`/write-plan`) is invoked once per bundle, covering all issues in that bundle. Read `references/multi-issue-loop.md` and follow its L0–L5 process; treat the steps below as the diagnostic substrate that L4.0 calls into.
+In loop mode, the linear flow below is wrapped by a Baseline → Bundle → per-bundle pipeline. Within each bundle, this skill's Steps 1–6 (diagnostic) still run per-issue — only Step 7 (`/write-plan`) is invoked once per bundle, covering all issues in that bundle. Read `dev-workflow/references/multi-issue-loop.md` and follow its L0–L5 process; treat the steps below as the diagnostic substrate that L4.0 calls into.
 
 Otherwise (single bug, OR no end-to-end verification surface): proceed with the steps below as the normal single-bug flow.
 
@@ -68,7 +68,7 @@ In **single-bug mode**, before invoking any Edit / Write / MultiEdit / NotebookE
 
 **Why this exists:** the frustration audit (`.claude/research/frustration-audit-2026-05-23.md`) showed multiple cases where the model fixed the wrong bug or did a partial undo because the misunderstanding wasn't surfaced before code changes. Stating the user-visible target explicitly gives the user a checkpoint to redirect cheaply.
 
-**Multi-issue loop mode:** see `references/multi-issue-loop.md` — that mode's per-bundle reproduction step already serves this function. Skip the block requirement when multi-issue mode is active.
+**Multi-issue loop mode:** see `dev-workflow/references/multi-issue-loop.md` — that mode's per-bundle reproduction step already serves this function. Skip the block requirement when multi-issue mode is active.
 
 ## Process
 
@@ -382,7 +382,7 @@ If no level is constructable, output `[Feedback Loop] level=0 — not constructa
 
      Readback continuity: this skill's Step pre-0 already obtained `user_confirmed: true` for the bug report. write-plan's Step 2.5 echo-only mode will skip re-prompting iff all of: (a) the `Caller:` marker above is present, (b) `.claude/readback-state.json` is fresh (created within last 30 min), (c) no new requirements were introduced after pre-0. **Conservative default: when in doubt about (c), state it explicitly when invoking write-plan so it falls through to the full readback flow.** Re-prompting costs one echo; silently skipping alignment costs a misaligned plan.
 
-     Session-freshness caveat: this continuity claim assumes Step pre-0 and Step 7 ran in the same Claude Code session. If you resumed fix-bug from a prior session (e.g., `references/multi-issue-loop.md` state restore), the readback state file is stale relative to the current session and write-plan's freshness check will fail; full readback will run automatically. To force a fresh readback even within the same session, delete `.claude/readback-state.json` before invoking write-plan.
+     Session-freshness caveat: this continuity claim assumes Step pre-0 and Step 7 ran in the same Claude Code session. If you resumed fix-bug from a prior session (e.g., `dev-workflow/references/multi-issue-loop.md` state restore), the readback state file is stale relative to the current session and write-plan's freshness check will fail; full readback will run automatically. To force a fresh readback even within the same session, delete `.claude/readback-state.json` before invoking write-plan.
 
      Wait for plan approval before proceeding.
 

@@ -30,6 +30,7 @@ Policy for this pass:
 - `audit-rules`
 - `generate-design-prompt`
 - `handoff`
+- `self-pacing` (autonomous gate-suppressing driver — must be a deliberate user choice, never model-routed)
 
 
 `apple-dev` daily entries for the follow-up task:

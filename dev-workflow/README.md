@@ -166,6 +166,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | Skill | Type | Description |
 |-------|------|-------------|
 | execute-plan | dispatcher | Segmented plan execution — Workflow per segment with hard-stop checkpoint gates + cross-session resume |
+| self-pacing | driver (manual entry, inherit) | Drives verified work to green autonomously — suppresses *pacing* hard-stops, gates only on *severity* (blocking DP / severe failure / must-fix / explicit `<!-- checkpoint -->`), auto-takes recommended DPs, accumulates everything into one final review. Two modes: `/self-pacing` = whole dev-guide across all phases; `/self-pacing phase` = one phase/plan then stop at the seam. Prompt-only: reuses execute-plan mechanics + test-changes + reviewers, modifies no other skill |
 | test-changes | dispatcher | Dispatches test-runner agent for build/test/lint suite execution |
 | brainstorm | interactive | Design exploration before implementation |
 | choose-personality | interactive | Lock 6-dimension visual + linguistic personality before design-system generation |

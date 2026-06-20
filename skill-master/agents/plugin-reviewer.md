@@ -263,6 +263,20 @@ When flagging, include the detected class and a citation: e.g. "Detected class: 
 
 If skill has `model: haiku` or `model: sonnet` AND the skill's dominant work is judgment, synthesis, or orchestration (per cost-posture.md examples): flag as Bug — "Downgrading {class} skills risks silent quality loss that costs more downstream than the per-turn savings. See cost-posture.md anti-patterns."
 
+**7.6 Prose economy (deletion test):**
+
+The *context-cost* companion to 7.4 and 7.5. Where 7.4 **relocates** bulk to `references/` (content still needed, wrong place) and 7.5 picks the **compute** tier, 7.6 **deletes** text that is needed *nowhere*. A skill's description and body are loaded on every skill enumeration, so dead text is a standing token cost plus a signal dilution — substance on the cost axis, not "style".
+
+For each sentence, bullet, or paragraph, apply the **deletion test**: *if this span were removed, would the instruction an executor receives — on any entry path into the file — change?*
+- **No → dead text.** Flag **Minor**, naming the exact span and a one-line "cut" or "relocate". Two sub-cases:
+  - Body padding: a paragraph/bullet that restates a rule already stated on the same reader's same path with no added instruction; pure motivational/explanatory prose ("this matters because…") that gates no behavior.
+  - Description carrying post-invocation **mechanism** already present in the body (schema dumps, internal filenames, reuse-mechanics): flag "relocate to body / delete from description" — it inflates the always-loaded description without aiding WHEN-to-invoke.
+- **Yes → keep. Do not flag.**
+
+**Load-bearing-redundancy caveat (mandatory — without it this check strips guard-rails):** deliberate cross-location restatement of the *same* rule across *different* entry paths — e.g. a STOP rule stated in a policy table AND in Hard Rules AND in the relevant step — is **NOT** dead text. Deleting any copy changes what an executor entering at that one location receives. Only flag redundancy when the *same* reader on the *same* path meets the *same* instruction twice. When unsure whether a span is a guard or filler, treat it as a guard and do not flag (Principle 3: false positives are worse than false negatives).
+
+**Boundary with other checks (avoid double-flagging):** description *trigger quality / clarity* → 7.3 (external `skill-reviewer`), not here; gross file size > 500 lines → 7.4; per-span deletable text → here. Threshold: flag only sentence/bullet/paragraph-level spans, never word choice or markdown style (Principle 4).
+
 ---
 
 ### Dimension 8: Plugin Metadata & Documentation

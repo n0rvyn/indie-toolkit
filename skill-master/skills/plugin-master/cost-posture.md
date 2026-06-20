@@ -2,6 +2,8 @@
 
 Reference doc consumed by `plugin-master` (Create route) and `plugin-reviewer` (Dimension 7.5). Classifies a skill/agent by the kind of work it does, then maps that class to a recommended `model` / `effort` / `context` frontmatter configuration.
 
+> **Axis note — keep these separate.** This document is the **compute-cost** axis (which `model` / `effort` / `context` tier a skill runs on). It is orthogonal to the **context-cost** axis (prose economy — dead text that loads on every enumeration), which lives in `plugin-reviewer` **D7.6 (deletion test)**. A skill can sit on the right model yet carry deletable filler, and vice versa. Do not fold one check into the other.
+
 ## Why this exists
 
 Each turn that runs on Opus costs roughly 20× a Sonnet turn (per real usage data: $0.59/turn vs $0.03/turn at the prevailing context sizes). Default session model is typically Opus, so any skill that does NOT set `model:` inherits Opus — even if the work is mechanical and Sonnet handles it correctly.

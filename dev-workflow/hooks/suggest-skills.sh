@@ -120,8 +120,6 @@ elif echo "$lower" | grep -qE 'review.*(code|impl)|代码审查|审查.*实现';
   fi
 elif echo "$lower" | grep -qE 'fork.*this|park.*this|分叉|现场分叉|另一个.*问题|顺便.*问|另起一.?个'; then
   echo "[skill-hint] Related: /fork-this — mid-session orthogonal topic split (parks B in a seed prompt, current session keeps going on A)"
-elif echo "$lower" | grep -qE 'distill.*skill|mine.*pattern|提炼.*skill|挖.*模式|找重复模式|哪些值得做成 skill|repeating pattern'; then
-  echo "[skill-hint] Related: /distill-project-skills — scan project sessions for repeat no-skill patterns and propose new skills"
 fi
 
 # CLAUDE.md change nudge: suggest /audit-rules when CLAUDE.md modified in last N commits

@@ -1,4 +1,0 @@
-2026-05-23T09:15:00Z mechanical-bash-cluster pattern=sqlite3-select count=2 cmd_heads=["sqlite3 ~/.adam/adam.db \"SELECT id","sqlite3 ~/.adam/adam.db \"SELECT cou"]
-2026-05-23T09:45:00Z mechanical-bash-cluster pattern=sqlite3-select count=3 cmd_heads=["sqlite3 ~/.adam/adam.db \"SELECT id","sqlite3 ~/.adam/adam.db \"SELECT tit","sqlite3 ~/.adam/adam.db \"SELECT *"]
-2026-05-23T11:00:00Z same-file-read-3x file=dev-workflow/skills/audit-tokens/SKILL.md count=3
-2026-05-23T14:30:00Z same-file-read-3x file=~/.claude/CLAUDE.md count=4

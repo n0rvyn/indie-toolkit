@@ -100,7 +100,7 @@ Skills are categorized by how they enter the runtime. This governs `user-invocab
 |---|---|---|
 | **Flow entry** (user types or model routes) | `user-invocable: true` | write-dev-guide, run-phase, write-plan, verify-plan, fix-bug, brainstorm, commit, review-before-commit, review-execution, finalize, finish-branch, issue, kb, crystallize, collect-lesson, handoff, fork-this, audit-tokens |
 | **Inline only** (dispatched by other skills, never user-typed) | `user-invocable: false` | execute-plan, test-changes, feature-spec-writer (agent), design-analyzer (agent), reviewer agents (ui/design/feature/apple-reviewer) |
-| **Long-tail / on-demand** (rarely needed, kept for the case when needed) | `user-invocable: true` | design-drift, audit-rules, next-increment, distill-discussion, distill-project-skills, generate-bases-views, audit-finishing-touches (apple-dev), design-parity-build (apple-dev), validate-design-tokens (apple-dev), characterization-test (apple-dev), code-audit (apple-dev) |
+| **Long-tail / on-demand** (rarely needed, kept for the case when needed) | `user-invocable: true` | design-drift, audit-rules, next-increment, distill-discussion, generate-bases-views, audit-finishing-touches (apple-dev), design-parity-build (apple-dev), validate-design-tokens (apple-dev), characterization-test (apple-dev), code-audit (apple-dev) |
 | **Guide / reference** (advisory pattern doc, not executable workflow) | should be a reference, not a skill | parallel-agents (now at references/parallel-agents.md); use EnterWorktree tool directly for worktree operations |
 
 **Adding a new skill?** Decide its role first. Flow-entry skills must map to A/B/C or justify a new flow. Inline-only skills must have a named driver (another skill that dispatches them). Long-tail skills must have a stated trigger condition (typically "when user mentions X" or "when N commits since Y"). Guide-type entries should be reference files under `references/`, not SKILL.md files.
@@ -179,7 +179,6 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | write-feature-spec | dispatcher | Gathers context, dispatches feature-spec-writer agent |
 | audit-rules | dispatcher | Gathers context, dispatches rules-auditor agent |
 | audit-tokens | fork (sonnet) | Multi-dimensional Claude Code token consumption analysis with self-contained HTML report; auto cost-posture recommendations; auto-invokes its own scripts/diagnose.py for root-cause attribution |
-| distill-project-skills | fork (sonnet) | Scans project session jsonl + cost-hint.log for repeat (no skill) main-session patterns and proposes skill candidates with frequency, est wasted cost, and suggested cost-posture |
 | fork-this | fork (sonnet) | Mid-session orthogonal split: when topic A's discussion surfaces problem B, generate minimal seed prompt for B in a new session WITHOUT polluting current A context |
 | design-drift | dispatcher | Design document vs codebase drift audit |
 | crystallize | interactive | Lock settled decisions from current session into a persistent crystal file |

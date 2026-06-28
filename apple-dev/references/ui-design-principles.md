@@ -1118,6 +1118,12 @@ Liquid Glass = 导航/控制层的透光材质，**不用于内容层**。
 
 **本节适用范围**：非 Glass 内容层（卡片、按钮、Modal 内容、浮动元素）。Glass 元素（Tab Bar、Navigation Bar、Sheet chrome）的阴影由系统管理，规则参见 §15.4，不要套用本节内容。
 
+> **Reconcile (prose 互引)：** 本节（深度 / 阴影 / 重叠 / 平面色阶层级）与 refactoring-ui **Part B** 同源——同书《Refactoring UI》。分工：
+> - **refactoring-ui**（canonical 通用版）= `dev-workflow/references/refactoring-ui.md`：跨平台 token-中立的量化 rubric（设计 token 占位、不绑定任何平台的常量）。
+> - **本文件 ui-design-principles §17-20** = Apple 专属扩展：把 Refactoring UI 的通用规则落到 iOS/macOS / SwiftUI 实践（Dynamic Type 配合、Liquid Glass 例外、Color(.systemBackground) 替代阴影等 Apple-specific 细节）。
+>
+> 两文档 **不合并**——跨插件、体量差异大，合并风险高。修改本节深度/阴影规则时，应同步确认通用量化版是否需要等量更新；反之亦然。
+
 ### 17.1 光从上方（Light Comes from Above）
 
 **Refactoring UI 原则**：所有 UI 阴影应假设光源在上方，因此阴影向下偏移且上缘可能有高光（如果有上缘高光，意味着该元素浮得更高）。

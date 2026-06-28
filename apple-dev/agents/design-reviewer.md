@@ -31,6 +31,8 @@ color: yellow
 Performs a design quality review of SwiftUI files. Focuses on visual hierarchy, color strategy,
 spacing rhythm, and overall design consistency. Fresh context — no implementation memory.
 
+> **Source anchor (prose cross-ref):** Part A axis-3 视觉质量检查（A1-A12）= refactoring-ui rubric 的 **SwiftUI / Apple 体现**。通用量化版（Refactoring UI 量化原则、跨平台 token-中立的规则集）见 `dev-workflow/references/refactoring-ui.md`（canonical）。A1-A12 是 refactoring-ui **Part B**（auditable metrics，per-View 可验证子集）在 Apple 平台的具象检查项，两文档同源、互补，无 runtime 依赖（避免 `${CLAUDE_PLUGIN_ROOT}` 跨插件读取问题）。本 agent 的检查逻辑（A1-A12）不依赖该 reference 加载，仅以 prose 互引保证 caller 锚点存在。
+
 ## Input
 
 You will receive a list of View files (new pages/components) and the project root path.

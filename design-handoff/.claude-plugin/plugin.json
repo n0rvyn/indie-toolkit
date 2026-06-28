@@ -1,0 +1,1 @@
+{"name":"design-handoff","version":"0.1.0","description":"Claude Design → Claude Code handoff contract skills (design-spec-contract / flow-navigation-contract / handoff-manifest). Runs INSIDE Claude Design; fetched by repos via raw GitHub URL. NOT a Claude Code marketplace plugin — intentionally absent from marketplace.json.","author":{"name":"norvyn"}}

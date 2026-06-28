@@ -28,7 +28,7 @@
     {
       "name": "apple-dev",
       "source": "./apple-dev",
-      "description": "Complete iOS/macOS/iPadOS development workflow plugin for Claude Code",
+      "description": "Complete iOS/macOS/iPadOS development workflow plugin for Claude Code — design parity, visual audit (per-View screenshots, light/dark, macOS + iOS), runtime feature verification (real e2e, not mock), and window-shot driving",
       "version": "1.16.1",
       "category": "development",
       "tags": [
@@ -37,7 +37,9 @@
         "swift",
         "swiftdata",
         "testing",
-        "ci-cd"
+        "ci-cd",
+        "visual-verify",
+        "screenshot"
       ],
       "strict": true
     },

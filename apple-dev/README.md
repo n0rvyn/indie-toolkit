@@ -41,7 +41,7 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | xc-ui-test | write-plan / test-changes | Advanced XCUITest guidance |
 | render-preview | run-phase visual step | 渲染 SwiftUI #Preview 成 PNG（RenderPreview 主 + axe/swiftui-render 无头 fallback） |
 
-## Full Capability Inventory (20)
+## Full Capability Inventory (23)
 
 > **Cross-plugin handoff (2026-05-26)**: design prompt generation (formerly `generate-stitch-prompts`) was merged into `dev-workflow:generate-design-prompt` with platform routing (iOS/macOS → Stitch DSL, Web → Figma, generic → Figma). `project-kickoff` cross-calls it for the Stitch step.
 
@@ -67,6 +67,9 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | setup-ci-cd | `/setup-ci-cd` | Fastlane + GitHub Actions for TestFlight |
 | update-asc-docs | `/update-asc-docs` | Audit and update ASC legal/marketing documents |
 | render-preview | run-phase (visual step) | 渲染 SwiftUI #Preview 成 PNG（RenderPreview 主 + axe/swiftui-render 无头 fallback） |
+| swiftui-visual-audit | run-phase (visual step) | 逐 View 截图审计（light + dark，macOS + iOS），按 refactoring-ui rubric 评分输出 gap-by-View 列表 |
+| mac-app-shot | run-phase (visual step) | 单窗截图 + 驱动（CoreGraphics 点击/键盘） + edit→rebuild→relaunch 循环，sandboxed view ImageRenderer fallback |
+| runtime-feature-verify | run-phase (visual step) | 运行时 feature 真验（非 mock）：per-feature × real-judge-signal（剪贴板/持久化/真实 LLM/重渲），输出 feature→verdict 表 |
 
 ## Agents (4)
 

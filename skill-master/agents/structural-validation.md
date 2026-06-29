@@ -1,3 +1,8 @@
+---
+name: structural-validation
+description: Supporting strategy file Read by the plugin-reviewer agent (Dimension 1) to check plugin YAML frontmatter and file organization. Read by a parent agent, not a standalone agent; do not invoke directly.
+---
+
 ### Dimension 1: Structural Validation
 
 Check the YAML frontmatter and file organization.

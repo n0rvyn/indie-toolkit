@@ -1,3 +1,8 @@
+---
+name: trigger-baseline
+description: Supporting strategy file Read by the plugin-reviewer agent for trigger-overlap checks (D5.1/D5.2, D7.3, D9.1). Read by a parent agent, not a standalone agent; do not invoke directly.
+---
+
 ### D5.1 Skill description overlap
 
 1. Read the `description` field of the skill being reviewed

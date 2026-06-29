@@ -1,3 +1,8 @@
+---
+name: design-faithfulness
+description: Supporting strategy file Read by the plan-verifier and implementation-reviewer agents to verify a plan/implementation faithfully covers a design doc (Gap A-E). Read by a parent agent, not a standalone agent; do not invoke directly.
+---
+
 #### DF. 设计忠实度验证（有设计文档的计划）
 
 **目的**：验证计划完整且忠实地覆盖设计文档的所有要求，在执行前捕获 Gap A-E。

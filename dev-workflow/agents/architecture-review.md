@@ -1,3 +1,8 @@
+---
+name: architecture-review
+description: Supporting strategy file Read by the plan-verifier agent (plan-verifier.md) to run architecture-change checks — parallel paths, incomplete replacement, dead fallbacks. Read by a parent agent, not a standalone agent; do not invoke directly.
+---
+
 #### AR. 架构审查（架构变更时）
 
 **目的**：检测并行路径、不完整替代、死保底。从 `reviewing-architecture` skill 吸收。

@@ -1,3 +1,8 @@
+---
+name: crystal-fidelity
+description: Supporting strategy file Read by the plan-verifier agent (plan-verifier.md) to verify a plan's fidelity to a referenced crystal decision file. Read by a parent agent, not a standalone agent; do not invoke directly.
+---
+
 #### CF. 决策忠实度验证（有 crystal 文件的计划）
 
 **前置条件**：dispatch prompt 包含 `Crystal file:` 路径且非 "none"。如果无 crystal 文件引用，跳过本策略。

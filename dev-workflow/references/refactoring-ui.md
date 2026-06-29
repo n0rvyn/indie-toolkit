@@ -5,6 +5,8 @@
 > Audience: this file is written so a fresh agent who has **never read the book** can apply it. For a per-View audit, dispatch an agent with **Part B + one View file** — it does not need Parts A or C to score a View.
 >
 > **Project-neutrality note:** This is the canonical, generic version of the rubric. Token names in this file are placeholders (e.g. `<spacing token scale>`, `<primary/secondary/tertiary button style>`, `<elevation/shadow token>`, `<surface token>`). Each project substitutes its own DESIGN.md / token namespace for these placeholders when applying the rubric. The structural rules — not the sample token names — are what an audit scores against.
+>
+> **Apple/SwiftUI companion (prose 互引):** the Apple-specific expression of these metrics lives in `apple-dev/references/ui-design-principles.md` §17-20 (same source book, *Refactoring UI*). This file is the platform-neutral canonical rubric; that one applies it to SwiftUI/macOS. They cross-reference, not duplicate.
 
 ---
 

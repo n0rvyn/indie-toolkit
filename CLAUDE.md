@@ -57,6 +57,8 @@ Every skill and agent SKILL.md / agent.md in this marketplace must declare a del
 
 ### When Creating a New Plugin
 
+> **Exception — Claude Design host plugins:** A plugin that runs *inside Claude Design* (not Claude Code) — currently `design-handoff/` — is intentionally **NOT** added to `marketplace.json`, **NOT** added to `auto-version.yml` (`ALL_PLUGINS` + `paths`), and **NOT** added to `release-plugin.yml`. It is vendored into the repo only for raw-URL distribution to Claude Design's contract pipeline. See `design-handoff/README.md` § "Why in repo but NOT in marketplace". Do **NOT** "fix" its absence from these files — the absence is deliberate. (The steps below apply only to real Claude Code plugins.)
+
 1. **Create plugin directory** with `.claude-plugin/plugin.json`
 2. **Add to `marketplace.json`**: add entry with `name`, `source`, `description`, `version`, `category`, `tags`
 3. **Add to `.github/workflows/auto-version.yml`**:

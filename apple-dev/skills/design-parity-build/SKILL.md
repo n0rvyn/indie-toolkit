@@ -4,6 +4,8 @@ description: "Use when auditing a Claude Design (or similar handoff) against an 
 compatibility: Requires macOS and Xcode
 ---
 
+<!-- cost-posture: inherit (judgment + synthesis + orchestration — gap severity classification, decision point grouping, audit doc synthesis, and bridge to /write-dev-guide are judgment calls; do NOT downgrade to sonnet/haiku per dev-workflow Skill Cost Posture rule) -->
+
 # Design Parity Build
 
 Audit a Claude Design (or equivalent design handoff) against an iOS codebase, classify every gap, and hand off a phased implementation plan to `/write-dev-guide`.

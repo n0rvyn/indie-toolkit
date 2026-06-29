@@ -7,7 +7,7 @@
 > **Consumers** (Phase 4 wiring, recorded here so future readers know what must not break):
 >
 > - `apple-dev/agents/ui-reviewer.md` — Part A1 (spacing scale membership), Part A5 (same-suffix layout consistency)
-> - `apple-dev/agents/design-reviewer.md` — Part A12 (spacing scale membership)
+> - `apple-dev/agents/design-reviewer.md` — Part A12 (spacing scale membership), Part A5 (same-suffix layout consistency)
 > - `apple-dev/skills/sync-design-md/SKILL.md` — Step 4 (per-token color / spacing / shadow drift thresholds)
 > - `apple-dev/skills/validate-design-tokens/SKILL.md` — Section 1 (spacing), Section 6 (same-suffix layout), Section 7 (DESIGN.md cross-check thresholds)
 > - `apple-dev/skills/design-parity-build/SKILL.md` — Gap List classification (Native exception field), 11-field gap taxonomy
@@ -54,9 +54,9 @@ cause silent flag drift between agents:
 
 `ui-reviewer` Part A1 said "8pt 倍数" while `design-reviewer` Part A12 said "4pt 倍数" —
 a value like `12` passes one and fails the other. This block makes the set the single
-rule. **Wiring is Phase 4, pending**: today `ui-reviewer.md:71` still says "8pt 倍数"
-and `design-reviewer.md:180` still says "4pt 倍数"; Phase 4 replaces both with a
-set-membership check against this scale.
+rule. **Wired in Phase 4 (2026-06-28):** `ui-reviewer` Part A1 and `design-reviewer`
+Part A12 now apply a set-membership check against this scale; the old "Npt 倍数"
+phrasing has been removed from both (grep `倍数` = 0 in each).
 
 ### Consumers
 

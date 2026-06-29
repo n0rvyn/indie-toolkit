@@ -155,14 +155,9 @@ Flag ALL occurrences with: "If this is a page-level margin, use `AppLayout.margi
 
 **Purpose**: Detect same-type components with inconsistent sizing/frame behavior.
 
-**Process**:
-1. For each file in `filePaths`, extract the View struct name
-2. Identify the component type suffix (Card, Row, Cell, Badge, Chip, Tile, Banner)
-3. If a suffix is identified, search the project for other components with the same suffix:
-   ```
-   Grep("struct \\w+{suffix}", glob: "*.swift")
-   ```
-4. For each same-type component found, compare these layout attributes:
+**Local scan entry**: For each file in `filePaths`, extract the View struct name.
+
+> **Same-suffix layout consistency (self-contained gloss):** 同后缀组件按 9 后缀闭集（`Card` / `Row` / `Cell` / `Badge` / `Chip` / `Tile` / `Banner` / `Pill` / `Tag`）成组；同组比对五项属性：宽度行为 / 内边距 / 背景 / 圆角 / 阴影。组件名须**以后缀结尾**才计入同组（mid-name 命中视为不同家族，例如 `ScoreCardView` 不属于 `Card` 家族；与 schema §3 over-match guard 一致）。canonical 4 步算法（grep → mid-name filter → 5 项提取 → 比对）见 `apple-dev/references/design-contract-schema.md` § 3. Same-suffix layout consistency algorithm（同源、prose 互引、无 runtime 依赖，沿用 design-reviewer line-34 模式）。
 
 | Attribute | Search Pattern | Consistency Rule |
 |-----------|---------------|-----------------|

@@ -123,7 +123,7 @@ For each file provided, check the following dimensions:
 - [ ] 阴影是否克制？（推荐 `opacity ≤ 0.08, radius ≤ 4`）
 - [ ] 卡片内是否有足够 padding（≥ 12pt）不贴边？
 
-**代码检查（跨文件）**：从当前检查文件的 struct 名提取类型后缀，搜索同后缀组件 `Grep("struct \\w+{suffix}", glob: "*.swift")`（将 `{suffix}` 替换为实际后缀），提取每个组件的 `.frame(` / `.padding(` / `.background(` / `.clipShape(` / `.shadow(` 修饰符，逐项对比。不一致项标记 🔴。
+> **Same-suffix layout consistency (self-contained gloss):** 同后缀组件按 9 后缀闭集（`Card` / `Row` / `Cell` / `Badge` / `Chip` / `Tile` / `Banner` / `Pill` / `Tag`）成组；同组比对五项属性：宽度行为 / 内边距 / 背景 / 圆角 / 阴影。canonical 4 步算法见 `apple-dev/references/design-contract-schema.md` § 3. Same-suffix layout consistency algorithm（同源、prose 互引、无 runtime 依赖，沿用 line-34 模式）。提取每个组件的 `.frame(` / `.padding(` / `.background(` / `.clipShape(` / `.shadow(` 修饰符，逐项对比；不一致项标记 🔴。
 
 ### A6. 图标一致性
 
@@ -179,14 +179,14 @@ For each file provided, check the following dimensions:
 
 ### A12. 间距刻度合规（Spacing Scale Membership）
 
-> 原则：所有间距值必须属于项目定义的间距刻度（4pt 倍数优先）。
+> 原则：所有间距值必须属于 canonical 间距刻度（`apple-dev/references/design-contract-schema.md` § 1. Canonical spacing scale——同源、prose 互引、无 runtime 依赖，沿用 line-34 模式）。"on scale" 当且仅当值 ∈ `{2, 4, 8, 12, 16, 24, 32, 48, 64}`；set 已 inline 自包含。
 
 **检查项**：
-- [ ] 所有 `.padding()` / `spacing:` 数值是否在项目 Spacing Token 列表内？
-- [ ] 是否存在非 4pt 倍数的间距值？（如 13pt、15pt、22pt）
+- [ ] 所有 `.padding()` / `spacing:` 数值是否在 canonical 间距刻度内（即 ∈ `{2, 4, 8, 12, 16, 24, 32, 48, 64}`）？
+- [ ] 是否存在不属于该刻度集合的间距值？（如 13pt、15pt、20pt、22pt）
 - [ ] 同一文件内是否存在 hardcoded 间距值与 Token 混用？
 
-**代码检查**：提取所有数字型 padding/spacing 参数，检查是否为 4 的倍数且在 Token 范围内。非 4pt 倍数 → 🔴；hardcoded 与 Token 混用 → 🟡。
+**代码检查**：提取所有数字型 padding/spacing 参数，判定是否为上述 set 的成员（set-membership 唯一判据，非 multiplier）。非 set 成员 → 🔴；hardcoded 与 Token 混用 → 🟡。
 
 ---
 

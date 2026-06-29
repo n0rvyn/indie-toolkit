@@ -63,12 +63,12 @@ For each UI file provided, check the following dimensions:
 
 #### A1. 间距与布局（增强：Token 检查）
 
-- [ ] 间距值是否在 AppSpacing scale 上？（2/4/8/12/16/24/32/48/64）
+- [ ] 间距值是否在 canonical 间距刻度上？（见 `apple-dev/references/design-contract-schema.md` § 1. Canonical spacing scale——同源、prose 互引、无 runtime 依赖，沿用 design-reviewer line-34 模式；set = `{2, 4, 8, 12, 16, 24, 32, 48, 64}`）
 - [ ] 是否使用项目 Design System Token？（`AppSpacing._4xs/_3xs/_2xs/xs/sm/md/lg/xl/_2xl` + `AppLayout.marginCompact/marginRegular` 而非硬编码）
 - [ ] 触摸目标是否 ≥ 44pt？
 - [ ] 安全区域是否正确处理？
 
-**Token 检查**：搜索硬编码 `.padding(N)` 或 `.spacing(N)`，N 不是 8pt 倍数即标记。
+**Token 检查**：搜索硬编码 `.padding(N)` 或 `.spacing(N)`，N 不是 §1 canonical 间距刻度 set 成员即标记（set-membership 唯一判据，非 multiplier）。
 
 #### A2. 颜色合规性
 
@@ -92,6 +92,8 @@ For each UI file provided, check the following dimensions:
 #### A5. 同类组件一致性
 
 检查同后缀组件是否使用一致的布局修饰符。
+
+> **Same-suffix layout consistency (self-contained gloss):** 同后缀组件按 9 后缀闭集（`Card` / `Row` / `Cell` / `Badge` / `Chip` / `Tile` / `Banner` / `Pill` / `Tag`）成组；同组比对五项属性：宽度行为 / 内边距 / 背景 / 圆角 / 阴影。canonical 4 步算法见 `apple-dev/references/design-contract-schema.md` § 3. Same-suffix layout consistency algorithm（同源、prose 互引、无 runtime 依赖，沿用 design-reviewer line-34 模式）。
 
 **代码检查**：从 struct 名提取类型后缀，`Grep("struct \\w+{suffix}", glob: "*.swift")` 搜索同类，对比：
 

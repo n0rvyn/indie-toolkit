@@ -2,6 +2,10 @@
 
 ## docs/00-AI-CONTEXT.md 模板
 
+> **平台门控（标记本身是 prose 指令，不写入生成的 AI-CONTEXT.md）**：
+> - `platform==apple`：写入完整模板——含 `本地化` 段（`String(localized:)` / `.xcstrings`），技术栈/关键路径按 step 6 选型 + iOS 项目实际入口文件填充。
+> - `platform==other`：仅写通用骨架——跳过 `本地化` 整段；技术栈/关键路径按 step 6 + 项目实际入口填充，**不留下 iOS / `.swift` 示例**。
+
 ```markdown
 # [项目名] - AI 上下文
 
@@ -18,39 +22,35 @@
 简述功能做什么。
 
 **关键文件**：
-- `路径/文件A.swift` - 职责
-- `路径/文件B.swift` - 职责
+{{按 step 6 / 项目实际入口文件填充（非 iOS 不使用 .swift 示例）}}
 
 ### 功能 B
 
 简述功能做什么。
 
 **关键文件**：
-- `路径/文件C.swift` - 职责
+{{按 step 6 / 项目实际入口文件填充（非 iOS 不使用 .swift 示例）}}
 
 ## 技术栈
 
 | 技术 | 版本 | 用途 |
 |------|------|------|
-| iOS | 18+ | 最低支持 |
-| Swift | 6.2 | 主语言 |
-| SwiftUI | - | UI 框架 |
-| SwiftData | - | 本地存储 |
+{{按 step 6 技术选型填充（非 iOS 不使用 iOS/Swift/SwiftUI/SwiftData 占位）}}
+
+{{platform==apple:
 
 ## 本地化
 
 - 所有 UI 文本使用 `String(localized: "中文", table: "模块名")`
 - table 按功能模块命名
 - 翻译文件：`[项目名]/*.xcstrings`
+}}
 
 ## 关键路径
 
 | 功能 | 入口文件 |
 |------|---------|
-| 主界面 | `ContentView.swift` |
-| 数据模型 | `Models/` |
-| 服务层 | `Services/` |
-| 视图层 | `Views/` |
+{{按项目实际架构填充（非 iOS 不使用 ContentView.swift / Models/ / Services/ / Views/ 占位）}}
 
 ## 详细文档索引
 

@@ -1,15 +1,22 @@
 # project-kickoff Eval
 
 ## Trigger Tests
-<!-- Prompts that SHOULD trigger this skill -->
+<!-- Skill has disable-model-invocation: true — ONLY slash invocations should trigger (auto-routing + instructed dispatch are both off) -->
+- "/project-kickoff"
+- "/project-kickoff 做一个记账 App"
+- "/project-kickoff a Web expense tracker"
+- "/project-kickoff a CLI script runner"
+
+## Negative Trigger Tests
+<!-- These read like kickoff requests, but auto-routing is disabled — they must NOT fire; only the /project-kickoff slash invokes this skill -->
 - "I want to build a fitness tracking app"
 - "Kickoff a new project for expense tracking"
 - "新项目开题：做一个 AI 记账助手"
 - "Help me validate this app idea"
 - "Run a project kickoff flow"
-
-## Negative Trigger Tests
-<!-- Prompts that should NOT trigger this skill -->
+- "新项目开题：做一个 Web 记账工具"
+- "Kickoff a new project for a CLI script runner"
+- "New project: a cross-platform note-taking app"
 - "Write a plan for this feature"
 - "Fix this bug"
 - "Review my code"

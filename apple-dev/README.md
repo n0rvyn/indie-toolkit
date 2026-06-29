@@ -22,7 +22,7 @@ For Codex/OpenCode: see `.codex/INSTALL.md` or `.opencode/INSTALL.md`.
 
 | Skill | Trigger | Description |
 |-------|---------|-------------|
-| project-kickoff | `/project-kickoff` | New project feasibility + requirements |
+| project-kickoff | `/project-kickoff` | New project feasibility + requirements (any platform; iOS/macOS also gets full Apple-native init) |
 | design-parity-build | `/design-parity-build` | Audit Claude Design ↔ iOS parity, produce classified Gap List, hand off to /write-dev-guide |
 | asc-submit-preview | `/asc-submit-preview` | App Review Guidelines pre-check |
 | asc-listing | `/asc-listing` | ASC submission material check |
@@ -63,7 +63,7 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | generate-design-system | internal route | Generate SwiftUI design system from tokens |
 | sync-design-md | internal route | Bidirectional sync between Stitch DESIGN.md and DesignSystem.swift |
 | design-parity-build | `/design-parity-build` | Audit Claude Design ↔ iOS parity, produce classified Gap List, hand off to /write-dev-guide |
-| project-kickoff | `/project-kickoff` | New project feasibility + requirements |
+| project-kickoff | `/project-kickoff` | New project feasibility + requirements (any platform; iOS/macOS also gets full Apple-native init) |
 | setup-ci-cd | `/setup-ci-cd` | Fastlane + GitHub Actions for TestFlight |
 | update-asc-docs | `/update-asc-docs` | Audit and update ASC legal/marketing documents |
 | render-preview | run-phase (visual step) | 渲染 SwiftUI #Preview 成 PNG（RenderPreview 主 + axe/swiftui-render 无头 fallback） |

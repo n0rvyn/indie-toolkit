@@ -27,6 +27,10 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 
 在 /init 生成的 CLAUDE.md 末尾追加以下内容（不替换 /init 生成的部分）：
 
+> **平台门控（标记本身是 prose 指令，不写入生成的 CLAUDE.md）**：
+> - `platform==apple`：写完整追加模板——含 `## Swift 6 并发（本项目）` 段、`编码规范` 下的 Swift Design System token 表（间距/布局/圆角/颜色/阴影）、`项目特定约束` 的 `必须：[由 9.2.1 生成的平台 API 规则]` 占位行。iOS 路径 = 现状（字节级不变）。
+> - `platform==other`：仅写通用骨架段（文档真相源 / 搜索约定 / 计划执行规则 / 完成功能后留档 / `## 编码规范` 的通用部分[通用规范指针 + UI 约束] / 遇到困惑 + 通用约束行如色觉无障碍），不写苹果专属段（`## Swift 6 并发` / Design System token 表 / 9.2.1 平台 API 占位）。
+
 ```markdown
 ## 文档真相源
 
@@ -92,9 +96,11 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 禁止：[项目特定禁止项]
 
 必须：[项目特定必须项]
-必须：[由步骤 9.2.1 生成的平台 API 规则]
+{{platform==apple:必须：[由步骤 9.2.1 生成的平台 API 规则]}}
 必须：正面/负面/警告状态同时使用图标区分，不只靠颜色（色觉无障碍）
 \```
+
+{{platform==apple:
 
 ## Swift 6 并发（本项目）
 
@@ -103,11 +109,13 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 
 **本项目 Service 单例**（均为 `@MainActor final class`）：
 - `ServiceA.shared`, `ServiceB.shared`, ...
+}}
 
 ## 编码规范
 
 通用规范见 `~/.claude/CLAUDE.md`
 
+{{platform==apple:
 **项目 Design System**：
 | 类型 | Token | 示例 |
 |------|-------|------|
@@ -116,6 +124,7 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 | 圆角 | `AppCornerRadius.small/medium/large` | 8/12/16 |
 | 颜色 | `Color.appPrimary/appSecondary/...` | 见 DesignSystem.swift |
 | 阴影 | `AppShadow.flat/subtle/small/medium/large` | 5 级 z 轴语义 |
+}}
 
 **UI 约束**：
 - 颜色调整时用 HSL 维度思考（独立调色相/饱和度/亮度），不在代码中硬编码 hex

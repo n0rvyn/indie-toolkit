@@ -15,7 +15,6 @@ description: |
 
 model: sonnet
 maxTurns: 30
-effort: medium
 tools: Glob, Grep, Read, Write, Bash
 color: yellow
 ---

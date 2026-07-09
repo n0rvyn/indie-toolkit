@@ -22,7 +22,6 @@ model: opus
 tools: Glob, Grep, Read, Bash, Write, LSP
 allowed-tools: Bash(mkdir*) Bash(date*) Bash(ls*) Bash(find*) Write(*/.claude/reviews/*)
 maxTurns: 80
-effort: high
 color: yellow
 memory: project
 ---

@@ -22,7 +22,6 @@ description: |
 
 model: sonnet
 maxTurns: 120
-effort: medium
 tools: Glob, Grep, Read, Write, Edit, Bash, LSP
 color: green
 ---

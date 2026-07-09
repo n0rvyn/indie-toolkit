@@ -30,7 +30,6 @@ model: opus
 tools: Glob, Grep, Read, Bash, Write
 allowed-tools: Bash(git diff*) Bash(git log*) Bash(git status*) Bash(git show*) Bash(cd * && git diff*) Bash(cd * && git log*) Bash(cd * && git status*) Bash(cd * && git show*) Bash(date*) Bash(mkdir*)
 maxTurns: 80
-effort: high
 color: yellow
 memory: project
 ---

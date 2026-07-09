@@ -22,7 +22,6 @@ tools: Glob, Grep, Read, Write
 disallowedTools: [Edit, Bash, NotebookEdit]
 allowed-tools: Write(*/.claude/reviews/*)
 maxTurns: 50
-effort: high
 color: cyan
 ---
 

@@ -21,7 +21,7 @@ Decide what a skill **does at runtime**, not what it's named. Ask: when the skil
 | **Mechanical execution** | Follows already-written instructions, applies edits, runs commands, collects output | `model: sonnet` | Plan/spec exists. The skill executes; it does not judge. Sonnet has plenty of headroom. |
 | **Retrieval + extract** | Searches a corpus, filters matches, returns relevant snippets | `model: sonnet` + `context: fork agent: Explore` | Read-only work in isolated context. CLAUDE.md not needed. |
 | **Tool wrapper** | Wraps a CLI / API call, formats structured output | `model: haiku` + `context: fork` | Pure I/O. No reasoning. |
-| **Judgment** | Finds defects, critiques quality, infers root cause | inherit (default Opus) + optional `effort: high` | Catching subtle problems requires deep reasoning. |
+| **Judgment** | Finds defects, critiques quality, infers root cause | inherit (default Opus); do **not** pin `effort:` | Catching subtle problems requires deep reasoning. A pinned `effort:` is a *ceiling* on the session, not a floor — see anti-pattern 6. |
 | **Synthesis** | Writes new plans, designs solutions, brainstorms options | inherit (default Opus) — **do not downgrade** | Creative output. Quality compounds downstream. |
 | **Orchestration** | Dispatches multiple skills/agents and coordinates a multi-step flow | inherit (default Opus) — **do not downgrade** | Routing errors at this layer cascade; the orchestrator is the most expensive thing to get wrong. |
 
@@ -62,7 +62,11 @@ Decide what a skill **does at runtime**, not what it's named. Ask: when the skil
 2. **`model: haiku` on judgment/synthesis work**: Haiku misses subtle defects; downstream cost > savings. Flag as Bug.
 3. **`context: fork` on multi-step interactive skill**: the forked context loses conversation state mid-flow. Flag as Logic.
 4. **`context: fork` without an actionable prompt in skill body**: the subagent receives guidelines but no task; returns empty. Flag as Logic.
-5. **`model:` set but `effort:` mismatched**: e.g. `model: haiku, effort: high` — Haiku doesn't support high effort; the field is silently ignored. Flag as Minor.
+5. **`model:` set but `effort:` mismatched**: e.g. `model: haiku, effort: high` — Haiku supports *no* effort level at all; the field is silently ignored. Flag as Minor.
+6. **Pinned `effort:` on a judgment/review agent**: `effort:` **overrides the session effort level** (docs: "Overrides the session effort level. Default: inherits from session"). It is a ceiling, not a floor. `effort: high` looks inert because `high` is the default on Opus 4.8 / Sonnet 5 / Fable 5, but it silently caps `/effort xhigh`, `/effort max`, and ultracode back down to `high` — precisely in the deep sessions where depth was requested. Flag as Bug.
+7. **Below-default `effort:` on an agent with verification duty**: `effort: medium` on anything that must run tests, execute a `**Verify:**` step, or decide pass/fail. Below-default effort is the documented cause of "skipping a file, not running the tests, not double-checking." Below-default effort is only legitimate for agents with no verification duty (pure generation, extraction, classification). Flag as Bug.
+
+**Axis reminder.** `model:` and `effort:` are orthogonal. `model` = *knowing more* (capability; raise for subtle bugs, unfamiliar domains, architecture calls). `effort` = *trying harder* (how many files read, how much verified; raise when the failure was visibly lazy). A fixed-rubric checker is a *specific instruction set* and belongs on Sonnet; open-ended defect discovery is *ambiguity* and belongs on Opus. Full reference: `~/.claude/knowledge/api-usage/2026-07-09-skillsubagent-effort-overrides-session-e.md`.
 
 ## Constraints on recommendation
 

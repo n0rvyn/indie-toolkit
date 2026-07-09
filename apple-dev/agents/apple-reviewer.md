@@ -25,7 +25,7 @@ description: |
   user: "Review these changes"
   assistant: DO NOT use apple-reviewer — this is not an Apple platform project.
   </example>
-model: sonnet
+model: opus
 tools: Glob, Grep, Read, Bash
 maxTurns: 40
 color: green

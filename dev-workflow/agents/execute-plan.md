@@ -4,9 +4,9 @@ description: |
   Use this agent to execute a single task (or a small batch) of a verified implementation
   plan. Invoked by the execute-plan Workflow script via agent() with model=sonnet. Receives
   a canonical task id ("<N>" / "<N>-tests" / "<N>-impl") and a checkpoint-file path, runs
-  the task's **Verify:**, writes its per-task report increment + checkpoint completion
-  entry, and returns a structured object the workflow aggregates. Does not fix failures;
-  reports them for the orchestrator.
+  the task's **Verify:**, and returns a structured object the workflow aggregates. Writes no
+  bookkeeping files — the main agent is the sole writer of the checkpoint and the execution
+  report. Does not fix failures; reports them for the orchestrator.
 
   Examples:
 

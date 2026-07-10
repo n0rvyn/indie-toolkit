@@ -126,7 +126,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 
 | Agent | Model | Tools | Purpose |
 |-------|-------|-------|---------|
-| execute-plan | sonnet | Glob, Grep, Read, Write, Edit, Bash, LSP | Per-task plan executor — invoked by the execute-plan Workflow, runs one task + Verify, writes per-task checkpoint for cross-session resume |
+| execute-plan | sonnet | Glob, Grep, Read, Write, Edit, Bash, LSP | Per-task plan executor — invoked by the execute-plan Workflow, runs one task + Verify, returns a structured result. Writes no bookkeeping files; the main agent is sole writer of the checkpoint and execution report |
 | test-runner | sonnet | Glob, Grep, Read, Write, Bash | Runs build/test/lint suite, filters output to errors + summary, writes structured report |
 | design-analyzer | opus | Glob, Grep, Read, Write | Multi-modal design prototype analysis (dual-channel image+code) |
 | design-drift-auditor | opus | Glob, Grep, Read | Design document vs codebase drift detection (read-only) |

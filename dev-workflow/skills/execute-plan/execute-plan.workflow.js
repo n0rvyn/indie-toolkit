@@ -2,7 +2,7 @@ export const meta = {
   name: 'execute-plan',
   description: 'Execute one segment of an execute-plan: dispatch one agent() per not-yet-completed task (model=sonnet) with a structured-output schema, honor dependency-skip, return the per-task results array. Segments end at hard-stop batches; the main agent invokes this script once per segment and presents the summary at hard-stops.',
   phases: [
-    { title: 'Execute Segment', detail: 'Iterate args.batches, dispatch one agent() per not-yet-done task, collect structured results.' },
+    { title: 'Execute Segment', detail: "Iterate the segment's batches, dispatch one agent() per not-yet-done task, collect structured results." },
   ],
 }
 
@@ -46,9 +46,47 @@ const RESULT_SCHEMA = {
   },
 }
 
+// Established before the guard below so `log()` and any throw always run inside
+// a phase, whatever the runtime's rule about phase-less output is.
 phase('Execute Segment')
 
-// `args` is the segment payload passed from the main agent:
+// The Workflow tool passes `args` through verbatim. A caller that JSON-stringifies
+// the payload therefore hands this script a string, every `args.x` deref yields
+// undefined, the loop runs zero times, and the segment "succeeds" with `[]` —
+// no agents, no journal, no code written. Normalize, then reject any shape that
+// cannot produce a batch loop. `batches` is the load-bearing field: a segment
+// whose tasks are all dependency-blocked still has an array here (and correctly
+// dispatches zero agents), so key the guard on shape, never on dispatch count.
+//
+// Every throw here fires before the first agent() dispatch, so a failed guard
+// means zero tasks ran and zero state changed — the caller can fix the payload
+// and re-invoke with nothing to reconcile.
+let input = args
+if (typeof input === 'string') {
+  try {
+    input = JSON.parse(input)
+  } catch (err) {
+    throw new Error(
+      `execute-plan: args arrived as a string and is not valid JSON (${err.message}). ` +
+      `Pass the segment payload as a JSON object, not a stringified one.`
+    )
+  }
+  log('args arrived as a JSON string; parsed it. Callers should pass an object.')
+}
+if (!input || typeof input !== 'object' || Array.isArray(input)) {
+  throw new Error(
+    `execute-plan: args must be a JSON object (got ${input === null ? 'null' : Array.isArray(input) ? 'array' : typeof input}). ` +
+    `Pass the segment payload as a JSON object, not a stringified one.`
+  )
+}
+if (!Array.isArray(input.batches)) {
+  throw new Error(
+    `execute-plan: args.batches must be an array (got ${typeof input.batches}; ` +
+    `payload keys: ${Object.keys(input).join(', ') || 'none'}).`
+  )
+}
+
+// `input` is the segment payload passed from the main agent:
 //   {
 //     plan_file: string,
 //     checkpoint_file: string,
@@ -67,19 +105,19 @@ phase('Execute Segment')
 // dependency that failed in an EARLIER segment still blocks its dependents here
 // (inRunStatus would otherwise be empty at the start of each invocation).
 const inRunStatus = {} // taskId -> 'done' | 'failed' | 'blocked'
-for (const id of (args.failed_or_blocked || [])) {
+for (const id of (input.failed_or_blocked || [])) {
   inRunStatus[id] = 'failed'
 }
 const results = []
 
-// Build a taskId -> {id, depends_on[]} lookup from args.tasks for the IDs we
+// Build a taskId -> {id, depends_on[]} lookup from input.tasks for the IDs we
 // might dispatch in this segment.
 const taskMeta = {}
-for (const t of (args.tasks || [])) {
+for (const t of (input.tasks || [])) {
   taskMeta[t.id] = t
 }
 
-for (const batch of (args.batches || [])) {
+for (const batch of (input.batches || [])) {
   for (const taskId of batch) {
     const meta = taskMeta[taskId]
     const deps = (meta && meta.depends_on) || []
@@ -109,9 +147,9 @@ for (const batch of (args.batches || [])) {
     const prompt = [
       `Execute task ${taskId} of the implementation plan.`,
       ``,
-      `Plan file: ${args.plan_file}`,
-      `Project root: ${args.project_root}`,
-      `Checkpoint file: ${args.checkpoint_file}`,
+      `Plan file: ${input.plan_file}`,
+      `Project root: ${input.project_root}`,
+      `Checkpoint file: ${input.checkpoint_file}`,
       ``,
       `Workflow context: you are being dispatched by execute-plan.workflow.js for one task of a segment.`,
       `Process: read the task, make its code/file changes, run its **Verify:**.`,

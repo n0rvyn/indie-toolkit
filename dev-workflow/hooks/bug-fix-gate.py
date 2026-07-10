@@ -42,8 +42,8 @@ BUG_PATTERNS = [
     re.compile(r'(?:\bfix\b|修\s*(?:这个|一下|个|下)\s*(?:bug|问题|这|这里|它)?|修复|\bbroken\b|出错|失败)', re.I),
     re.compile(r'\[Image[^\]]*\].{0,200}(?:错|崩|fail|error|失败|wrong|不对|bug)', re.I | re.S),
     # Restrict to line-start so casual mentions ("讲讲 /fix-bug 的逻辑") don't trigger
-    re.compile(r'(?:^|\n)\s*/fix-bug\b'),
-    re.compile(r'<command-name>/fix-bug</command-name>'),
+    re.compile(r'(?:^|\n)\s*/(?:[\w.-]+:)?fix-bug\b'),
+    re.compile(r'<command-name>/(?:[\w.-]+:)?fix-bug</command-name>'),
 ]
 
 # Format detection for 现状/预期 anchor.
@@ -111,9 +111,11 @@ def is_bug_shaped(text: str) -> bool:
     return False
 
 
+# The namespace is optional: a plugin skill records as `/dev-workflow:fix-bug`, but a
+# `context: fork` skill or a user-level copy records the bare `/fix-bug`.
 _FIXBUG_INVOKE_RE = re.compile(
-    r'<command-name>/fix-bug</command-name>'   # explicit slash-command wrap
-    r'|(?:^|\n)\s*/fix-bug\b',                  # or line-start mention (real invocation)
+    r'<command-name>/(?:[\w.-]+:)?fix-bug</command-name>'   # explicit slash-command wrap
+    r'|(?:^|\n)\s*/(?:[\w.-]+:)?fix-bug\b',                 # or line-start mention (real invocation)
 )
 
 

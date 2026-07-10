@@ -66,6 +66,13 @@ run_case "hard-when-fixbug-active-no-block" \
     "Edit" '{"file_path": "/tmp/some.swift"}' \
     "fix-gate" 2
 
+# Case 3b: same, but recorded the way Claude Code actually records a plugin skill —
+# `/dev-workflow:fix-bug`, not the bare name. This is the real invocation form.
+run_case "hard-when-fixbug-active-namespaced" \
+    "${FIXTURES}/transcript_bug_fix_bug_active_namespaced.jsonl" \
+    "Edit" '{"file_path": "/tmp/some.swift"}' \
+    "fix-gate" 2
+
 # Case 4: non-bug user message → no fire
 run_case "no-fire-on-non-bug-message" \
     "${FIXTURES}/transcript_non_bug.jsonl" \

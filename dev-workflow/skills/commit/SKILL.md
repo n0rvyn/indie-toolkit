@@ -2,17 +2,16 @@
 name: commit
 description: "Use when the user says 'commit' or wants to save progress after completing a task. Analyzes uncommitted changes, groups them logically, and commits with conventional format messages."
 context: fork
-model: haiku
+model: sonnet
 allowed-tools: Bash(git add:*) Bash(git commit:*) Bash(git diff:*) Bash(git status:*) Bash(git log:*) Bash(wc:*)
 ---
 
 ## Input
 
-Trigger this command when:
-- User says "commit", "提交", or similar
-- After completing a task, user wants to save progress
+Commit the repository's uncommitted changes now. Do not answer conversationally, do not
+summarize your context, and do not suggest that the user run a commit command — you *are*
+the commit run. Start with tool calls:
 
-On trigger:
 1. Run `git status` and `git diff --stat` to understand current state
 2. If no uncommitted changes, inform user and stop
 3. If changes exist, proceed with analysis

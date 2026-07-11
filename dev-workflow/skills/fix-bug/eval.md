@@ -30,7 +30,7 @@
 - [ ] Skill Step 0.9 body (between `## Step 0.9:` header and the line starting with `1. Reproduce first`) remains ≤ 35 lines (re-bloat guard: if a future maintainer re-inlines the full prose ladder alongside the pointer, this fails).
 - [ ] Step 7 (Plan the fix) must contain "Expectation Gate" sub-block requiring [Expected behavior] and [Verifiable steps] before the Task Contract block.
 - [ ] No code edits occur before expected behavior, current behavior, verification method, and regression shield are written
-- [ ] Step 7 gate: simple fix enters native plan mode (EnterPlanMode), complex fix invokes `dev-workflow:write-plan` (skill identifier form, not `/write-plan` slash)
+- [ ] Step 7 gate: both Simple and Complex branches invoke `dev-workflow:write-plan` (skill identifier form, not `/write-plan` slash); Simple expects a 1–2 task plan. `EnterPlanMode` must NOT appear as a required action (global CLAUDE.md forbids native plan mode for planning)
 - [ ] Step 7 Complex branch invocation prompt's first non-empty line is the literal `Caller: dev-workflow:fix-bug` marker (single source of truth for write-plan's caller detection — gates both Step 1 item 12 Bug-diagnosis population AND Step 2.5 echo-only mode)
 - [ ] Step 7 Complex branch emits a 4-item structured diagnosis bundle (confirmed assertions / `[值域检查]` table / `[路径检查]` table / `[Consumer Impact]` list), with explicit Readback continuity declaration covering caller marker + 30-min freshness + no-new-requirements + conservative-default-on-doubt, AND a session-freshness caveat for cross-session resume
 - [ ] No assertion confirmation gate blocks diagnosis (Step 3 flows directly to Step 4)

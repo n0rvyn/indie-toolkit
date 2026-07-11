@@ -176,7 +176,7 @@ User responds:
    - User confirms without additions → proceed to Step 2
    - User corrects scope → edit the Phase's `**Scope:**` bulleted list in the dev-guide file to match user's corrections, then check acceptance criteria sync (see below), re-present for confirmation
    - User adds visual/interaction details → proceed to step 4 (auto-crystal)
-   - Max 2 correction cycles; after that, proceed with last-confirmed content
+   - Max 2 correction cycles; after that, ask via AskUserQuestion (three options: proceed with last-confirmed content / one more correction round / switch to `/dev-workflow:brainstorm` to re-align). Do NOT proceed unilaterally — global CLAUDE.md: any "先这样" moment must ask. If brainstorm is chosen: re-enter this Step after brainstorm concludes; do not advance `phase_step`.
 
    **Acceptance criteria sync** (after scope correction): Compare the Phase's `**Acceptance criteria:**` with the updated scope:
    - If any criterion references a removed scope item → flag: "验收标准 '{criterion}' 对应的范围项已移除，是否同步删除？"
@@ -313,7 +313,7 @@ Confirm this mapping is correct, or provide corrections.
      - For minor fixes (add/correct `UX ref:` lines, adjust `User interaction:` text): edit the plan file directly
      - For structural changes (add missing tasks, redesign task scope): revise the plan directly in main context
      - Re-present the mapping for confirmation after corrections
-   - Max 2 correction cycles; after that, proceed with noted gaps
+   - Max 2 correction cycles; after that, ask via AskUserQuestion (three options: proceed with noted gaps / one more correction round / switch to `/dev-workflow:brainstorm` to re-align). Do NOT proceed unilaterally — the noted gaps are UX-mapping gaps, exactly the "先这样" case global CLAUDE.md forbids deciding alone. If brainstorm is chosen: re-enter this Step after brainstorm concludes; do not advance `phase_step`.
 
 7. Update state: `last_updated: <now>`
 

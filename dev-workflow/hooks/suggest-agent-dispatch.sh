@@ -138,7 +138,7 @@ SHOULD_HINT=$(echo "$STATE" | cut -d: -f2)
 
 # ── Emit hint if warranted ────────────────────────────────────────────────────
 if [ "$SHOULD_HINT" = "1" ]; then
-  echo "[cost-hint] ${COUNT} mechanical探查 detected; consider Agent(subagent_type=general-purpose) for batching" >&2
+  echo "[cost-hint] ${COUNT} mechanical探查 detected; consider Agent(subagent_type=Explore) for batching — use general-purpose only if you will act on the results (see CLAUDE.md Bash 路由)" >&2
 
   # Append to log
   ISO=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")

@@ -361,9 +361,11 @@ If no level is constructable, output `[Feedback Loop] level=0 — not constructa
 
    **Required actions:**
 
-   → If **Simple**: enter Claude Code native plan mode (`EnterPlanMode`).
-     Present diagnosis context (confirmed assertions, consumer impact) in the plan.
-     User reviews and approves within plan mode, then proceed to Step 8.
+   → If **Simple**: invoke `dev-workflow:write-plan` with the same caller marker and diagnosis
+     bundle as the Complex branch below (the bundle will be small — at minimum the confirmed
+     assertions and the `[Consumer Impact]` list, which Step 7 produces before classification). Expect a 1–2 task plan; user approves the plan file, then proceed to
+     Step 8. Do NOT use Claude Code native plan mode (`EnterPlanMode`) — global CLAUDE.md
+     forbids it for planning.
 
    → If **Complex**: invoke `dev-workflow:write-plan` with a **structured diagnosis bundle** as input. The invocation prompt MUST begin with this caller marker line (literal, on its own line as the first non-empty line of the prompt):
 

@@ -43,7 +43,7 @@ Validate preconditions (all phases done?)
    - `Cargo.toml` exists → `cargo test`
    - `pyproject.toml` or `setup.py` exists → `pytest`
    - `go.mod` exists → `go test ./...`
-   - `*.xcodeproj` or `*.xcworkspace` exists → detect scheme via `xcodebuild -list -json` (pick scheme containing "Tests" or the main app scheme); for simulator destination, follow the booted-sim-UDID pattern from `test-changes` Step A3 (if 0 booted → `xcrun simctl boot "iPhone 16 Pro"`; if >1 booted → `xcrun simctl shutdown all && sleep 3 && xcrun simctl boot "iPhone 16 Pro" && sleep 8`; then capture `BOOTED_UDID=$(xcrun simctl list devices booted | grep -oE '[A-F0-9-]{36}' | head -1)`). Use `-destination "platform=iOS Simulator,id=$BOOTED_UDID"` (never `name=` — global CLAUDE.md hard rule). Fallback: `platform=macOS`. If detection fails, ask user via AskUserQuestion.
+   - `*.xcodeproj` or `*.xcworkspace` exists → detect scheme via `xcodebuild -list -json` (pick scheme containing "Tests" or the main app scheme); for destination, follow `test-changes` Step A2.5/A3: real device first (`xcrun xctrace list devices` hardware UDID → `-destination "platform=iOS,id=$DEVICE_UDID"`); else an already-booted sim's UDID (never `name=`, never auto-boot — both global CLAUDE.md hard rules; if >1 booted → `xcrun simctl shutdown all`, then treat as 0 booted); if 0 booted and the user did not explicitly request a sim run → run `build-for-testing` only and report `⚠️ Tests not run` instead of booting. Fallback: `platform=macOS`. If detection fails, ask user via AskUserQuestion.
    - None found → ask user for the test command via AskUserQuestion
 2. Run the full test suite. Capture output.
 3. Parse results: total, passed, failed, skipped

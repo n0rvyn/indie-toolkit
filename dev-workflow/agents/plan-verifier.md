@@ -109,7 +109,7 @@ Do NOT modify the plan file. Return revision instructions only.
 | 多步骤执行 | 步骤 >= 5 且有编译/运行时依赖 | S2 |
 | 有设计文档的计划 | 计划引用了设计文档 | DF |
 | 有 crystal 文件的计划 | 计划引用了 crystal 文件 | CF |
-| 有 Bug diagnosis 的计划 | 计划头部 `**Bug diagnosis:**` 字段非 `not applicable`（fix-bug Complex 修复路径产物） | BD |
+| 有 Bug diagnosis 的计划 | 计划头部 `**Bug diagnosis:**` 字段非 `not applicable`（fix-bug Step 7 产物，Simple/Complex 两分支均有） | BD |
 | 安全/资源敏感 | sandbox, permission, auth, RBAC, deny, allow, isolation, encrypt, token, credential, secret, certificate, injection, escape, validate, process spawn, child process, tmp/temp | S1 + S2 + S3 |
 
 ### 2. 执行适用策略
@@ -304,7 +304,7 @@ Read `{Plugin agents dir}/crystal-fidelity.md` and execute all verification step
 
 #### BD. Bug Diagnosis Fidelity（有 Bug diagnosis 字段的计划）
 
-**前置条件**：计划头部 `**Bug diagnosis:**` 字段非 `not applicable`。fix-bug Complex 修复路径产生此字段；其他来源不应触发此策略。如果字段为 `not applicable`，跳过本策略。
+**前置条件**：计划头部 `**Bug diagnosis:**` 字段非 `not applicable`。fix-bug Step 7（Simple/Complex 两分支均经 write-plan）产生此字段；其他来源不应触发此策略。Simple 产的 bundle 较小（至少含 confirmed assertions + Consumer Impact），覆盖检查按 bundle 实际含有的项做，不强求四项俱全。如果字段为 `not applicable`，跳过本策略。
 
 **目的**：验证 fix-bug Complex 修复诊断证据已被 plan tasks 充分覆盖。本策略是 fix-bug → write-plan handoff 的下游消费者，存在的意义就是确保诊断证据不会被写进 header 后失能。
 

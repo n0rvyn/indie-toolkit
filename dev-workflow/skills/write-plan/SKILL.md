@@ -1,6 +1,6 @@
 ---
 name: write-plan
-description: "Use when the user says 'write a plan', 'plan this', 'break this into tasks', '写计划', '拆分任务', or has requirements/specs for a multi-step task before touching code. Also invoked programmatically by `fix-bug` Step 7 for Complex fixes (consumes a structured diagnosis bundle into the plan's `**Bug diagnosis:**` field). Creates structured implementation plans with self-contained, verifiable tasks — each task lists files to touch, steps to take, and verification commands. Not when: trivial single-file change with no consumer fan-out (just do it), plan file already exists (use verify-plan), or requirements still unclear (use brainstorm). For phase-driven development, run-phase calls this internally."
+description: "Use when the user says 'write a plan', 'plan this', 'break this into tasks', '写计划', '拆分任务', or has requirements/specs for a multi-step task before touching code. Also invoked programmatically by `fix-bug` Step 7 for both Simple and Complex fixes (consumes a structured diagnosis bundle into the plan's `**Bug diagnosis:**` field; Simple bundles are small — expect a 1–2 task plan). Creates structured implementation plans with self-contained, verifiable tasks — each task lists files to touch, steps to take, and verification commands. Not when: trivial single-file change with no consumer fan-out (just do it — exception: invocations carrying the `Caller: dev-workflow:fix-bug` marker always proceed, fix-bug routes ALL fixes here for plan-file approval), plan file already exists (use verify-plan), or requirements still unclear (use brainstorm). For phase-driven development, run-phase calls this internally."
 ---
 
 ## Behavior Note
@@ -49,7 +49,7 @@ Collect the following before writing:
 9. **Project Context Contract + Ubiquitous Language** — read `dev-workflow/references/project-context-contract.md`. If `docs/00-AI-CONTEXT.md` exists, read it and use it as the project language/source contract. `CLAUDE.md` and `AGENTS.md` remain rule files. If it is missing, continue and mark `Project context contract: missing`. Do not create `CONTEXT.md`. Additionally, read `docs/02-architecture/ubiquitous-language.md` if present (per `dev-workflow/references/ubiquitous-language-pattern.md`); when present, use its canonical terms in every task's `Expected behavior`, `User interaction`, and `Touched surface` fields. Mismatch between the plan's vocabulary and the ubiquitous-language file is a verifier-flagged issue.
 10. **Project Health** — if `dev-workflow/scripts/project_health_scan.py` exists, read `.claude/dev-workflow-health.json` first; if state is missing, has any red signal, or older than 7 days, run scanner full mode with `--check-staleness 7 --max-ms 5000 --reason plan --write-state`; otherwise use cached `last_health`. Include red/yellow signals as `**Project health:**` in the plan header.
 11. **Impact Map** — before task generation, write the plan-level Impact Map: user path, data path, shared surfaces, existing consumers, must remain unchanged, and regression checks.
-12. **Bug diagnosis** (only when the invocation prompt's first non-empty line is the literal marker `Caller: dev-workflow:fix-bug`, emitted by fix-bug Step 7's Complex branch). Detection is marker-based, not content-based — without the explicit marker, do not populate this field even if the prompt contains diagnosis-shaped content (the user may be drafting a plan with diagnostic context, but only the orchestrated fix-bug path guarantees the bundle's structural shape). Receive the following diagnosis bundle from the caller:
+12. **Bug diagnosis** (only when the invocation prompt's first non-empty line is the literal marker `Caller: dev-workflow:fix-bug`, emitted by both branches of fix-bug Step 7). Detection is marker-based, not content-based — without the explicit marker, do not populate this field even if the prompt contains diagnosis-shaped content (the user may be drafting a plan with diagnostic context, but only the orchestrated fix-bug path guarantees the bundle's structural shape). Complex bundles carry all four items below; Simple bundles carry at minimum items 1 and 4 (items 2–3 only when their steps were triggered). Receive the following diagnosis bundle from the caller:
     - Confirmed assertions from fix-bug Step 4 (the `[Bug Assertion N]` items that resolved to "confirmed", with their file:line evidence)
     - `[值域检查]` table from fix-bug Step 5 (if Step 5 was triggered), including every ❌ consumer
     - `[路径检查]` table from fix-bug Step 6 (if Step 6 was triggered), with the coordination-mechanism finding
@@ -71,10 +71,10 @@ Save the plan to `docs/06-plans/YYYY-MM-DD-<feature-name>-plan.md`.
 Caller detection:
 - If invoked from `dev-workflow:run-phase` orchestration → skip this step entirely
 - If invoked from `dev-workflow:next-increment` orchestration → skip
-- If invoked from `dev-workflow:fix-bug` Complex-fix path → **echo-only mode** (see below)
+- If invoked from `dev-workflow:fix-bug` (Simple or Complex branch) → **echo-only mode** (see below)
 - Else (standalone `/write-plan` or hook-driven) → execute full readback flow
 
-**Echo-only mode** (fix-bug Complex path):
+**Echo-only mode** (fix-bug path, both branches):
 
 fix-bug's Step pre-0 already ran `readback:intent-echoer` and obtained `user_confirmed: true` for the bug report. The plan written here is a direct artifact of the diagnosis steps that followed under the same alignment. Re-running the full readback would force the user to confirm twice without new information. In multi-issue loop mode (`references/multi-issue-loop.md`), each bundle's `dev-workflow:write-plan` invocation independently enters echo-only mode against the same pre-0 confirmation — each echo summarises that bundle's plan while all bundles share the original readback alignment.
 

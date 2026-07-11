@@ -104,42 +104,48 @@ while IFS= read -r f; do
 done <<< "$TEST_FILES"
 ```
 
-**Fallback policy**: if `ONLY_TESTING_FLAGS` is empty, do **NOT** run the full test suite — full-suite runs are 5–15 minutes on real projects and waste CI time when the diff doesn't touch any test files. Instead, run **build only** in A4 and report:
+**Fallback policy**: if `ONLY_TESTING_FLAGS` is empty, do **NOT** run the full test suite — full-suite runs are 5–15 minutes on real projects and waste CI time when the diff doesn't touch any test files. Instead, run **build only** in A4 (or, on the A3 degraded path, the build-for-testing that already subsumes it) and report:
 
 > `No *Tests.swift files in diff — ran build only. Re-invoke with explicit -only-testing targets to run tests.`
 
-#### A3. Simulator pre-flight
+#### A2.5 Device scan (real device first — global CLAUDE.md hard rule)
+
+```bash
+DEVICE_UDID=$(xcrun xctrace list devices 2>/dev/null | sed -n '/^== Devices ==/,/^== /p' \
+  | grep -v '^== ' | grep -iE 'iPhone|iPad' | grep -viE 'Watch|Connecting|unavailable' \
+  | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16}' | head -1)
+```
+
+- `DEVICE_UDID` non-empty → `DESTINATION="platform=iOS,id=$DEVICE_UDID"`, `DEVICE_NAME` from the matching `xctrace` line; **skip A3 entirely** (no simulator involved). If the test run fails with `code 74` / `XCTestManager_IDEInterface` / `Exiting due to IDE disconnection`, Xcode.app is holding the device's test-driver session — quit Xcode and retry (global CLAUDE.md xcodebuild SOP rule 9). Do NOT fall back to the simulator for that error.
+- Empty → A3 simulator fallback.
+
+#### A3. Simulator fallback (never auto-boot — global CLAUDE.md forbids unapproved `simctl boot`)
 
 ```bash
 BOOTED=$(xcrun simctl list devices booted | grep -oE '[A-F0-9-]{36}')
 COUNT=$(echo "$BOOTED" | grep -c .)
 
 if [[ "$COUNT" -gt 1 ]]; then
+  # clone-storm risk state — reset, then treat as 0 booted below
   xcrun simctl shutdown all
-  sleep 3
-  xcrun simctl boot "iPhone 16 Pro"
-  sleep 8
-elif [[ "$COUNT" -eq 0 ]]; then
-  xcrun simctl boot "iPhone 16 Pro"
-  sleep 8
+  COUNT=0
 fi
-
-BOOTED_UDID=$(xcrun simctl list devices booted | grep -oE '[A-F0-9-]{36}' | head -1)
-[[ -z "$BOOTED_UDID" ]] && { echo "❌ Could not boot simulator"; exit 1; }
-
-# Capture the actual device name for the report (the booted sim may not be iPhone 16 Pro
-# if the user already had a different sim running before this skill ran).
-DEVICE_NAME=$(xcrun simctl list devices | grep "$BOOTED_UDID" | head -1 | sed -E 's/^[[:space:]]+//; s/ \([A-F0-9-]+\).*$//')
 ```
 
-Note: `xcodebuild test` shuts down the destination sim on completion (§9), so on the next invocation `COUNT == 0` is normal — auto-boot recovers.
+- `COUNT == 1` → use the already-booted sim (using it is not booting it): `BOOTED_UDID=$(xcrun simctl list devices booted | grep -oE '[A-F0-9-]{36}' | head -1)`, `DESTINATION="platform=iOS Simulator,id=$BOOTED_UDID"`, and capture the device name for the report: `DEVICE_NAME=$(xcrun simctl list devices | grep "$BOOTED_UDID" | head -1 | sed -E 's/^[[:space:]]+//; s/ \([A-F0-9-]+\).*$//')`.
+- `COUNT == 0` → **do not boot**. Two cases:
+  - The user's current-turn message explicitly requested running tests on the simulator → booting is user-authorized (the approval exception in global CLAUDE.md 禁止行为「未经批准启动模拟器」): `xcrun simctl boot "iPhone 16 Pro" && sleep 8`, then proceed as `COUNT == 1`.
+  - Otherwise → degrade: run `xcodebuild build-for-testing -scheme "$SCHEME" -destination 'generic/platform=iOS Simulator'` in place of BOTH A4 and A5 (build-for-testing compiles app + test targets, subsuming A4's plain build — running both would compile twice for nothing; this still catches test-target compile breaks, the `build`-is-false-green class from global SOP rule 7) and report:
+    > `⚠️ Tests not run: no real device connected and no booted simulator. Ran build-for-testing (app + test targets compile). To run tests: connect a device, boot a simulator yourself, or explicitly ask for a sim run (unapproved auto-boot is forbidden by global CLAUDE.md).`
 
-#### A4. Build (always run)
+Note: `xcodebuild test` shuts down the destination sim on completion (§9), so `COUNT == 0` on the next invocation is normal — the run degrades to build-for-testing unless a device is connected or the user asks for a sim run.
+
+#### A4. Build (skipped when A3 degraded — its build-for-testing subsumes this step)
 
 ```bash
 xcodebuild build \
   -scheme "$SCHEME" \
-  -destination "platform=iOS Simulator,id=$BOOTED_UDID" \
+  -destination "${DESTINATION:-generic/platform=iOS Simulator}" \
   -quiet 2>&1 | tee /tmp/test-changes-build.log
 BUILD_EXIT=${PIPESTATUS[0]}
 ```
@@ -154,7 +160,7 @@ LOG="/tmp/test-changes-test.log"
 
 xcodebuild test \
   -scheme "$SCHEME" \
-  -destination "platform=iOS Simulator,id=$BOOTED_UDID" \
+  -destination "$DESTINATION" \
   $ONLY_TESTING_FLAGS \
   -resultBundlePath "$RESULT_BUNDLE" \
   2>&1 | tee "$LOG"
@@ -173,20 +179,23 @@ if [[ "$TEST_EXIT" -ne 0 ]]; then
   [[ -n "$TRIGGER_TOKEN" ]] && NEEDS_RECOVERY=1
 fi
 
-if [[ "$NEEDS_RECOVERY" -eq 1 ]]; then
+if [[ "$NEEDS_RECOVERY" -eq 1 && "$DESTINATION" == *"iOS Simulator"* ]]; then
+  # The re-boot below restores the sim already in use this run (state restoration,
+  # not a new auto-boot — global CLAUDE.md xcodebuild SOP rule 6).
   xcrun simctl shutdown all
   killall -9 com.apple.CoreSimulator.CoreSimulatorService 2>/dev/null
   sleep 5
-  xcrun simctl boot "iPhone 16 Pro"
+  xcrun simctl boot "$BOOTED_UDID"   # restore the SAME sim that was in use — never a different model
   sleep 8
   BOOTED_UDID=$(xcrun simctl list devices booted | grep -oE '[A-F0-9-]{36}' | head -1)
   DEVICE_NAME=$(xcrun simctl list devices | grep "$BOOTED_UDID" | head -1 | sed -E 's/^[[:space:]]+//; s/ \([A-F0-9-]+\).*$//')
+  DESTINATION="platform=iOS Simulator,id=$BOOTED_UDID"
 
   # Retry once with same flags. Use a separate log so A8 can include both runs if needed.
   RETRY_LOG="/tmp/test-changes-test-retry.log"
   xcodebuild test \
     -scheme "$SCHEME" \
-    -destination "platform=iOS Simulator,id=$BOOTED_UDID" \
+    -destination "$DESTINATION" \
     $ONLY_TESTING_FLAGS \
     -resultBundlePath "${RESULT_BUNDLE}-retry" \
     2>&1 | tee "$RETRY_LOG"
@@ -203,7 +212,7 @@ Keep only these line patterns in the report. Build phase reads `/tmp/test-change
 
 - Compile errors/warnings: `error:`, `warning:`
 - XCTest: `Test Case '-[…]' passed|failed`
-- Swift Testing: lines starting with `✓ ` or `✗ `, plus `◇ Test run`
+- Swift Testing: lines starting with `✔ ` (U+2714) or `✘ ` (U+2718), plus `◇` lines and the trailing `Test run with N tests` summary. NOT `✓`(U+2713)/`✗`(U+2717) — Swift Testing never emits those (verified against Testing.framework binary; see global CLAUDE.md xcodebuild SOP rule 8)
 - Suite summary: `Test Suite '…' passed|failed`, `Executed N tests, with M failures`
 - Crash tokens: `0x8BADF00D`, `FRONTBOARD`, `RequestDenied`
 
@@ -220,11 +229,11 @@ Create `.claude/test-reports/` if missing. Write `.claude/test-reports/test-run-
 **Project:** {root basename}
 **Path:** apple
 **Scheme:** {SCHEME}
-**Simulator:** {DEVICE_NAME} ({BOOTED_UDID})
+**Destination:** {DEVICE_NAME} ({DEVICE_UDID or BOOTED_UDID}) — {real device | simulator | degraded: build-for-testing only}
 **Status:** {PASS | FAIL}
 
 ### Build
-**Command:** `xcodebuild build -scheme {SCHEME} -destination "...,id={UDID}"`
+**Command:** {actual build command — plain `build`, or `build-for-testing` on the degraded path}
 **Result:** {PASS | FAIL} (exit code {N})
 {filtered build output if FAIL}
 
@@ -241,7 +250,7 @@ Create `.claude/test-reports/` if missing. Write `.claude/test-reports/test-run-
 
 #### A9. Plan-supplied commands — ignored on Apple path
 
-The `test-runner` agent (non-Apple) extracts verification commands from the plan file. The Apple path **ignores** plan-supplied commands to keep all `xcodebuild test` invocations on the established invocation template (`id=$BOOTED_UDID` + `-only-testing` + isolated `-resultBundlePath`). A plan-supplied command using `name=` instead of `id=`, or omitting `-only-testing`, would re-introduce the failure modes Step 2A is designed to prevent. If the plan needs different test targets, surface that in the report and let the user decide.
+The `test-runner` agent (non-Apple) extracts verification commands from the plan file. The Apple path **ignores** plan-supplied commands to keep all `xcodebuild test` invocations on the established invocation template (`-destination "$DESTINATION"` — device or booted-sim UDID — + `-only-testing` + isolated `-resultBundlePath`). A plan-supplied command using `name=` instead of `id=`, or omitting `-only-testing`, would re-introduce the failure modes Step 2A is designed to prevent. If the plan needs different test targets, surface that in the report and let the user decide.
 
 ### Step 2B: Other Projects (dispatch sub-agent)
 

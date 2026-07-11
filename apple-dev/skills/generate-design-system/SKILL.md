@@ -268,6 +268,30 @@ extension Color {
     static let appSurface = OKLCHColor(l: {L_100_neutral}, c: {C_100_neutral}, h: {H₀}).adaptive(darkL: {L_900_neutral})
     static let appText = OKLCHColor(l: {L_900_neutral}, c: {C_900_neutral}, h: {H₀}).adaptive(darkL: {L_100_neutral})
     static let appTextSecondary = OKLCHColor(l: {L_600_neutral}, c: {C_600_neutral}, h: {H₀}).adaptive(darkL: {L_400_neutral})
+    static let appTextTertiary = OKLCHColor(l: {L_500_neutral}, c: {C_500_neutral}, h: {H₀}).adaptive(darkL: {L_500_neutral})
+
+    // MARK: - Glass surface tint — REQUIRED if the design uses a translucent material
+    //
+    // `.glassEffect` adapts to the colour scheme, but it can only apply the surface
+    // colour you hand it. There is no "the dark value is the light value, darker":
+    // untinted native glass over a *dark* backdrop renders LIGHTER than that backdrop,
+    // and the elevation relationship inverts — the card that should recede advances.
+    //
+    // In a controlled test, a contract that shipped without a dark surface colour
+    // produced a card at L* 53.6 where the design called for 25.7: a dark card
+    // rendered brighter than the wallpaper behind it, with white text on top.
+    // Nothing upstream caught it, because the defect is an *absence*.
+    //
+    // Ship both, or the ladder is incomplete.
+    static let appGlassTint = Color.adaptiveRGBA(
+        light: ({R_glass_light}, {G_glass_light}, {B_glass_light}, {A_glass_light}),  // e.g. 255,255,255,0.62
+        dark:  ({R_glass_dark},  {G_glass_dark},  {B_glass_dark},  {A_glass_dark})    // e.g.  28, 28, 30,0.78
+    )
+
+    // Consume it as: `.glassEffect(.regular.tint(Color.appGlassTint), in: shape)`
+    // Never as: `.glassEffect(.regular)` on a screen that has a dark appearance and a
+    // non-neutral backdrop. Untinted is correct only when the backdrop is neutral in
+    // both schemes.
 
     // MARK: - Status Colors (system semantic — not theme-derived)
 
@@ -329,8 +353,16 @@ Return:
 - 想用 screenshot-driven 视觉迭代生成具体 view → `design-parity-build` skill
 
 **实施时**：
-- 应用 token 到具体 view → `sync-design-md` 双向同步（run-phase auto-routes）
-- 检测 hardcoded value → `validate-design-tokens` skill（run-phase review step auto-routes）
+- 应用 token 到具体 view → `sync-design-md` 双向同步（**手动调用** —— 见下）
+- 检测 hardcoded value → `validate-design-tokens` skill（**手动调用** —— 见下）
+
+> **⚠️ 这两条路由曾经写着 "run-phase auto-routes"。它们不存在。**
+> `grep -c "sync-design-md" dev-workflow/skills/run-phase/SKILL.md` → **0**
+> `grep -c "validate-design-tokens" dev-workflow/skills/run-phase/SKILL.md` → **0**
+>
+> 这是一条**可证伪的虚假声称**，而且它自己解释了一个现象：这两个 skill 在 30 天的使用记录里**零调用**。它们的调用方是幻觉 —— 用户以为 `run-phase` 会自动跑它们，于是从不手动跑；`run-phase` 从来不知道它们存在。
+>
+> 一个 skill 描述一套自己没有接线的能力，和一份契约引用一个不存在的章节，是**同一类缺陷**。前者骗的是用户，后者骗的是 agent。
 
 ## Success Criteria
 

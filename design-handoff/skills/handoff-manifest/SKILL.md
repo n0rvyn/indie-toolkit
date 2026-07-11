@@ -99,7 +99,8 @@ then satisfy DESIGN's states + material for it.
 ### Done = every gate green (a script decides, not you)
 - **CONTRACT lint:** `python3 apple-dev/scripts/design-detectors/n4_contract_lint.py <contract-dir>` → **exit 0**. Dangling anchors = 0 · ghost symbols = 0 · mirror difference = ∅ · every colour ladder resolves in **both** light and dark.
 - **FLOW coverage:** `{./flow-coverage.sh}` → nodes implemented = N/N · `grep -rc "FLOW-STUB"` = 0 · dead edges = 0
-- **PARADIGM:** every `never X` / `always X` line in the Do's and Don'ts below has been grepped against the target sources → 0 violations. (`apple-dev/scripts/design-detectors/n1_paradigm.py`)
+- **PARADIGM:** every `never X` / `always X` line in the Do's and Don'ts below has been grepped against the target sources → 0 violations.
+  `python3 apple-dev/scripts/design-detectors/n1_paradigm.py --contract <contract-dir> --arm <target>` — the assertions are compiled from the contract's `## Platform Mapping` table, not hardcoded, so it needs the contract path.
 - **STATE LIVENESS:** every `@State` / `@Published` has ≥ 1 write → 0 `DEAD-STATE`. (`n2_dead_state.py`)
 - **SCAFFOLD:** no View has `.ignoresSafeArea()` on a content container together with a literal edge padding ≥ 48. (`n3_scaffold_leak.py`)
 

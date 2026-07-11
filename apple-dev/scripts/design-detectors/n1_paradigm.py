@@ -226,11 +226,29 @@ def check_arm(arm: str, rule: Rule) -> list[Finding]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--arm", action="append", default=None)
-    ap.add_argument("--contract", default=str(repo_root() / "run2" / "contract"))
+    ap.add_argument("--contract", default=None,
+                    help="directory holding DESIGN.md. Required — the assertions are "
+                         "compiled from the contract, not hardcoded.")
     a = ap.parse_args()
     arms = a.arm or ARMS
 
-    rules, skipped = compile_rules(FSPath(a.contract) / "DESIGN.md")
+    # Locate the contract. A detector that cannot find its ruler must say so — exit 2
+    # ("could not run") — and must never crash, and must never fall through to a green
+    # exit. A green that means "I could not look" is the failure mode this whole toolkit
+    # is being repaired for.
+    if a.contract:
+        contract_dir = FSPath(a.contract)
+    else:
+        contract_dir = FSPath(repo_root()) / "run2" / "contract"   # the experiment's layout
+    design_md = contract_dir / "DESIGN.md"
+    if not design_md.is_file():
+        print(f"{RED}✖ contract not found: {design_md}{RESET}", file=sys.stderr)
+        print("  N1 compiles its assertions FROM the contract's ## Platform Mapping table.", file=sys.stderr)
+        print("  Without it there is nothing to assert. Pass --contract <dir-holding-DESIGN.md>.", file=sys.stderr)
+        print("  (exit 2 = the check did not run. This is NOT a pass.)", file=sys.stderr)
+        return 2
+
+    rules, skipped = compile_rules(design_md)
     print(f"{DIM}N1 — paradigm compliance. Assertions compiled from the contract.{RESET}")
     for r in rules:
         print(f"\n  rule <- {r.source}")

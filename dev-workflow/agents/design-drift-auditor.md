@@ -122,10 +122,18 @@ Anti-scope violations are high-priority findings — the project explicitly decl
 | CLAUDE.md | **Only** `## Project-Specific Constraints` section: `Required:` / `必须:` lines | "forbidden alternative does NOT appear" |
 | CLAUDE.md | **Only** `## Project-Specific Constraints` section: `Forbidden:` / `禁止:` lines | "pattern {P} does NOT appear" |
 | CLAUDE.md | **Only** `## Coding Standards` section: Design System tokens table | "token {name} is defined in DesignSystem file" |
+| CLAUDE.md | **Only** `## Build Contract` section: `**Don't**` / `never` / `禁止` lines | "forbidden pattern {P} does NOT appear in the target sources" |
+| CLAUDE.md | **Only** `## Build Contract` section: `**Do**` / `always` / `必须` lines naming a symbol or API | "required symbol {S} DOES appear at least once" |
 | Architecture docs | Layer definitions (H2/H3 headings) | "layer directory/structure exists" |
 | Architecture docs | Dependency rules ("X must not import Y") | "no import violations" |
 
-**CLAUDE.md scoping rule:** Only extract assertions from `## Project-Specific Constraints` and `## Coding Standards` sections. Ignore all other sections (build commands from /init, document truth source table, plan execution rules, etc.) — those are not design assertions.
+**CLAUDE.md scoping rule:** Only extract assertions from `## Project-Specific Constraints`, `## Coding Standards`, and `## Build Contract` sections. Ignore all other sections (build commands from /init, document truth source table, plan execution rules, etc.) — those are not design assertions.
+
+> **Why `## Build Contract` is in this list.** `design-handoff:handoff-manifest` appends exactly that heading to the target repo's CLAUDE.md (`handoff-manifest/SKILL.md:45`) — it is where a design handoff's Do's and Don'ts physically land. Before this was listed, the scoping rule above excluded it, so the Forbidden-pattern grep below had **no pattern source at all** in any repo produced by this toolkit: a grep with nothing to grep for. If a design handoff shipped `**Don't** transliterate JSX — use Swift Charts, never a hand-rolled Path`, no assertion was ever extracted from it and the violation shipped silently.
+>
+> **Symbol-level extraction, not prose matching.** A Don't line is only actionable if it names a **symbol** (`Path`, `.ignoresSafeArea()`, `.ultraThinMaterial`) or an **API** (`Swift Charts`, `GlassEffectContainer`). Lines that name only a *concept* ("don't make it feel generic") are **not extractable** — list them under "Cannot verify mechanically" rather than guessing at a pattern. Inventing a regex for a vague line produces false positives, and a check that cries wolf gets ignored, which is worse than no check.
+>
+> **Scope the forbidden symbol to the component family the rule names.** `never a hand-rolled Path` forbids `Path` **in charts**, not everywhere — an icon legitimately draws a `Path`. A naive project-wide `grep 'Path {'` flags every custom icon and trains the user to ignore the check. Restrict the scan to the brace-matched body of types whose names tokenize to the rule's subject (`Spark` / `MiniBars` / `Chart`), and tokenize CamelCase before comparing (`SparkleIcon` → `[sparkle, icon]` ≠ `[spark]`). A reference implementation is `apple-dev/scripts/design-detectors/n1_paradigm.py`, validated against a corpus where the naive rule produced a false positive on a known-clean target.
 
 **Verification method:**
 

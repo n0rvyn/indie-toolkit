@@ -23,16 +23,43 @@ A native build spans many sessions; a paste-box prompt evaporates after the firs
 
 ---
 
-## Step 1 — Inventory the artifacts the two skills produced
+## Step 1 — Lint the contract. Do not hand off a contract that does not pass.
 
-Before writing the manifest, confirm what exists (paths vary per project):
+This skill stands at the **only** gate the contract passes through on its way out. Everything downstream — the reviewers, the drift auditors, the build agent — treats the contract as **ground truth**. Nothing downstream ever checks it. If it ships broken, it is never checked again.
+
+### 1a. Confirm the artifacts exist (paths vary per project)
 
 - `tokens.css` (+ mirrored `Tokens.swift` / asset catalog) — atomic values *(spec-contract L1)*
 - `DESIGN.md` — token contract + materials/motion + **Platform Mapping** + DO-NOT-PORT *(spec-contract L2/L4)*
 - `components/` reference components, each with a `// CANONICAL` header *(spec-contract L3)*
-- **Empty-State Audit** table *(spec-contract 4e)*
+- **Empty-State Audit** table *(spec-contract, `## Empty-State Audit` section)*
+- **`## Screen Composition`** — per-screen block order *(spec-contract; without it the builder invents the layout)*
 - `FLOW.md` — node/edge list + stub sentinels *(flow-navigation-contract)*
 - coverage script (parses FLOW.md, greps `FLOW-STUB`, lists dead edges) *(flow-navigation-contract Step 3)*
+
+### 1b. Run the contract lint. **RED > 0 → stop. Do not write the manifest.**
+
+```sh
+python3 apple-dev/scripts/design-detectors/n4_contract_lint.py <contract-dir>
+# exit 0 = ship it   ·   exit 1 = the contract is broken, fix it before handing off
+```
+
+Four predicates, all pure grep / set-difference — no judgment, no model:
+
+| # | Predicate | What it catches |
+|---|---|---|
+| **a** | **Dangling anchor** — every cross-file reference (`statesRef: "DESIGN.md 4c"`) resolves to a heading that actually exists in the target file | A contract that tells the builder to go read a section that was never written |
+| **b** | **Ghost symbol** — every type named in a header comment or in prose (`` Views consume `RColor` ``) exists in that file's symbol table | A native mirror that advertises an API it does not have |
+| **c** | **Mirror set-difference** — two stores that claim to be lockstep mirrors have a **bidirectional** empty difference | A `Tokens.swift` whose header says "does NOT author new values" while 12 CSS tokens have no Swift counterpart |
+| **d** | **Ladder completeness** — every semantic colour step (`ink`, `surface`, glass tint, wallpaper base) resolves in **both** light and dark | The one that hurts most — see below |
+
+> **Predicate (d) is the expensive one, and it is invisible without a script.**
+> In a controlled test, the contract's ink ladder existed **only in light**. The builder had no dark surface colour to apply, so it left the native glass untinted. On a dark wallpaper, untinted `.glassEffect` renders **lighter** than its backdrop: the card came out at `L* 53.6` where the design called for `25.7` — a card that should be darker than the wall rendered **brighter** than it. The elevation relationship inverted.
+> **Nothing upstream caught it, because the missing value is an absence, and no reviewer greps for absences.** A ~40-line set-difference at this gate would have.
+
+### 1c. This skill has been a source of predicate (a) failures. Do not reintroduce them.
+
+The Build Contract block below is appended to the target repo's `CLAUDE.md`. **Reference DESIGN.md sections by their literal heading text, never by an outline number** (`4c` / `4e`) — those numbers live in `design-spec-contract`'s own internal outline and **are not part of the section order it emits**. A `statesRef: "DESIGN.md 4c"` in a shipped FLOW.md points at a heading that does not exist, and predicate (a) will fail the very handoff this skill is writing.
 
 If FLOW.md was emitted from the prototype's router with the dead-edge self-check (it should be), it is already verified-complete intent.
 
@@ -64,12 +91,19 @@ then satisfy DESIGN's states + material for it.
 ### Watch for — where generated apps break
 - **Placeholder subviews** — every unbuilt screen carries `#warning("FLOW-STUB: <node-id>")`. Delete only when the screen is real, never to silence the count.
 - **Missing empty / zero-data / device-missing states** — see the Empty-State Audit. The prototype renders mock data everywhere; build the absences. Prefer hiding over faking.
-- **State branches no screenshot shows** — enumerate each component's states from its prop signature (DESIGN 4c); `onX` callbacks imply transitions / reverse-flows.
+- **State branches no screenshot shows** — enumerate each component's states from its prop signature (see DESIGN.md § *State & tweak mapping*); `onX` callbacks imply transitions / reverse-flows.
+  **A branch that is built is not a branch that is reachable.** Every state-bearing property must have at least one write. A `@State` that is declared, read by four branches, and never assigned is a constant wearing a state annotation — and it looks *complete* to a screenshot, to a render-diff, and to a "did you handle all the states?" checklist.
 - **DO-NOT-PORT scaffolding** — pan/zoom canvas, tweaks panel, device bezel, faked `backdrop-filter`. Delete, don't translate.
+  **And delete the values the scaffolding forced.** The prototype's fake bezel gave the content container a clearance (`padding: '64px 20px 100px'`). Deleting `ios-frame.jsx` does not delete that padding — it stays behind in the screen container and gets ported as `.padding(.top, 64)` + `.ignoresSafeArea()`. **A file-level DO-NOT-PORT list does not stop a value-level leak**; in a controlled test this leaked into two of seven builds, including one whose contract explicitly named the fake bezel. List the geometry constants the scaffolding imposed, and name the native replacement (`safeAreaInset`, `.toolbar`) for each.
 
-### Done = both gates green (a script decides, not you)
+### Done = every gate green (a script decides, not you)
+- **CONTRACT lint:** `python3 apple-dev/scripts/design-detectors/n4_contract_lint.py <contract-dir>` → **exit 0**. Dangling anchors = 0 · ghost symbols = 0 · mirror difference = ∅ · every colour ladder resolves in **both** light and dark.
 - **FLOW coverage:** `{./flow-coverage.sh}` → nodes implemented = N/N · `grep -rc "FLOW-STUB"` = 0 · dead edges = 0
-- **DESIGN (optional, if wired):** `design.md lint` passes (token refs, section order)
+- **PARADIGM:** every `never X` / `always X` line in the Do's and Don'ts below has been grepped against the target sources → 0 violations. (`apple-dev/scripts/design-detectors/n1_paradigm.py`)
+- **STATE LIVENESS:** every `@State` / `@Published` has ≥ 1 write → 0 `DEAD-STATE`. (`n2_dead_state.py`)
+- **SCAFFOLD:** no View has `.ignoresSafeArea()` on a content container together with a literal edge padding ≥ 48. (`n3_scaffold_leak.py`)
+
+> **Why these are gates and not suggestions.** Each one catches a defect class that renders **pixel-identically to a correct build**: a chart hand-rolled with `Path` looks exactly like a `Swift Charts` chart; a dead `@State` renders its default branch perfectly; a ported bezel clearance lines up on the one device it was ported from. **No screenshot, render-diff, or visual review can see any of them.** A grep can see all three.
 <!-- ───────── END Build Contract ───────── -->
 ````
 

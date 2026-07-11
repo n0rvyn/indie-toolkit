@@ -113,11 +113,13 @@ Write Code -> Apple MCP BuildProject（主）/ swift build·xcodebuild build（f
 | 意图 | Modifier | 适用场景 |
 |------|----------|---------|
 | 撑满（Full-width） | `.frame(maxWidth: .infinity)` | ScrollView > VStack/LazyVStack 内的卡片、区块、操作按钮、Banner |
-| 抱住内容（Content-hugging） | 无 frame 或 `.fixedSize()` | Badge、Tag、inline chip、图标按钮 |
+| 抱住内容（Content-hugging） | 无 frame 或 `.fixedSize()` | Badge、Tag、inline chip、图标按钮（均限不与全宽按钮并列的场景） |
 | 约束最大宽（Constrained） | `.frame(maxWidth: 400)` | iPad 上不需要撑满的内容卡片 |
 | 自适应（Adaptive） | `.frame(idealWidth: 300, maxWidth: .infinity)` | 有理想宽度但需要自适应增长的卡片 |
 
 常见错误：ScrollView > VStack 内的卡片/区块忘了 `.frame(maxWidth: .infinity)`，导致容器抱住内容宽度，在宽屏上显示为半宽。
+
+按钮组同宽（强制）：同一组并列的行动按钮必须同宽。判据不是「它是不是 button」（button 单独看可以 hug），而是「它和谁并排」——一个 VStack 里主行动全宽、次级 hug content = 一组两种宽度，用户会看见。机制：`.frame(maxWidth: .infinity)` 必须贴在 **Button 的 label** 上，贴在 Button 外面撑开的是布局槽位，不是按钮本体。⛔ `Button("标题") { }` 字符串 title 构造器没有暴露 label，无处贴 frame，必然抱住内容——一组按钮统一写 `Button { } label: { Text(...).frame(maxWidth: .infinity) }`。例外：设计源本身就是 hug 的药丸/胶囊按钮——1:1 复刻，不得为「统一」而改（未授权 UX 变更）。这类不一致纯代码审计抓不到（每一处单看都没错），必须并排看多屏渲染。详见 `~/.claude/knowledge/api-misuse/2026-07-10-swiftui-button-string-init-cannot-fill-width.md`。
 
 自检：写完容器 View 后问自己："这个容器在宽屏（iPad / 大 iPhone）上是正确撑满还是尴尬地抱住内容？"
 
@@ -147,7 +149,7 @@ Write Code -> Apple MCP BuildProject（主）/ swift build·xcodebuild build（f
 ## 计划编写原则
 
 - **约束前置** 计划开头列出：用户明确要求、技术约束、禁止事项
-- **UX 决策显式化** 导航方式、过渡动画、交互反馈需在计划中列出，不留给实现时判断
+- **UX 决策显式化** 全局 CLAUDE.md「决策权归属」列出的 UX 决策类别必须在计划中列出，不留给实现时判断（全局清单为权威源；不可见时最小集 = 导航方式、过渡动画、交互反馈）
 
 <!-- section: 计划自检（M&M 测试） keywords: plan self-check, M&M test, surface, hidden, reinventing -->
 ## 计划自检（M&M 测试）
@@ -363,6 +365,12 @@ macOS 特有交互：
 - `.contextMenu { ... }` 右键菜单在 macOS 上比 iOS 更常用
 - 拖放：`.draggable()` / `.dropDestination()` 修饰符通用，但 macOS 支持文件 promise
 - `.help("tooltip text")` 添加鼠标悬停提示（macOS only）
+
+<!-- section: 测试框架与文件放置 keywords: Swift Testing, XCTest, @Test, #expect, XCUITest, synchronized folders, pbxproj -->
+## 测试框架与文件放置
+
+- 测试一律用 Swift Testing（`@Test`、`#expect`、`#require`），不使用 XCTest。例外：项目已有 XCTest 且不在本次重构范围；XCUITest（UI 自动化）没有 Swift Testing 等价物，仍用 `XCTestCase`
+- Xcode 16+ 项目默认自动同步文件夹内的 Swift 文件：新文件放到对应目录即可生效。禁止写「需要手动编辑 pbxproj」或「需要拖进 Xcode」
 
 ## SwiftUI Correctness Checklist (vendored from vabole/apple-skills:ios-dev)
 

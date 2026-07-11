@@ -5,32 +5,29 @@
 
 iOS/Swift 测试最佳实践，涵盖 Unit Test、UI Test、Mock 模式和 TDD 流程。
 
-<!-- section: 1. Unit Test 组织 keywords: unit test, Given-When-Then, setUp, tearDown, XCTestCase, naming -->
+> ⚠️ 本文 unit test 示例使用 Swift Testing（`@Test` / `#expect` / `#require`，见 apple-swift-rules.md「测试框架与文件放置」）；组织原则（Given-When-Then、Mock 模式、命名）与框架无关。XCUITest 章节例外——UI 自动化没有 Swift Testing 等价物，保留 `XCTestCase`。
+
+<!-- section: 1. Unit Test 组织 keywords: unit test, Given-When-Then, @Suite, @Test, init, deinit, naming -->
 ## 1. Unit Test 组织
 
 ### Given-When-Then 模式
 
 ```swift
-import XCTest
+import Testing
 @testable import MyApp
 
-final class ItemServiceTests: XCTestCase {
-    var sut: ItemService!  // System Under Test
-    var mockRepository: MockItemRepository!
+@Suite struct ItemServiceTests {
+    let sut: ItemService  // System Under Test
+    let mockRepository: MockItemRepository
 
-    override func setUp() {
-        super.setUp()
+    // Swift Testing 对每个 @Test 都新建一个 suite 实例，
+    // init 里的准备代码对每个测试独立执行（对应 XCTest 的 setUp）
+    init() {
         mockRepository = MockItemRepository()
         sut = ItemService(repository: mockRepository)
     }
 
-    override func tearDown() {
-        sut = nil
-        mockRepository = nil
-        super.tearDown()
-    }
-
-    func testCreateItem_WithValidName_InsertsItemAndSaves() {
+    @Test func createItem_withValidName_insertsItemAndSaves() {
         // Given
         let itemName = "Test Item"
 
@@ -38,49 +35,57 @@ final class ItemServiceTests: XCTestCase {
         sut.createItem(name: itemName)
 
         // Then
-        XCTAssertEqual(mockRepository.insertedItems.count, 1)
-        XCTAssertEqual(mockRepository.insertedItems.first?.name, itemName)
-        XCTAssertTrue(mockRepository.saveCalled)
+        #expect(mockRepository.insertedItems.count == 1)
+        #expect(mockRepository.insertedItems.first?.name == itemName)
+        #expect(mockRepository.saveCalled)
     }
 }
 ```
 
 ### 测试命名规范
 
-**格式**: `test<MethodName>_<Scenario>_<ExpectedResult>`
+**格式**: `<methodName>_<scenario>_<expectedResult>`（Swift Testing 不需要 `test` 前缀；需要更可读的报告时用 `@Test("显示名")`）
 
 ```swift
-func testLogin_WithValidCredentials_ReturnsSuccess()
-func testLogin_WithInvalidPassword_ReturnsError()
-func testLogin_WhenNetworkFails_ThrowsNetworkError()
+@Test func login_withValidCredentials_returnsSuccess()
+@Test func login_withInvalidPassword_returnsError()
+@Test("登录：网络失败时抛 NetworkError")
+func login_whenNetworkFails_throwsNetworkError()
 ```
 
-### Setup 和 Teardown
+### Setup 和 Teardown（init / deinit）
 
 ```swift
-final class ViewModelTests: XCTestCase {
-    var sut: HomeViewModel!
-    var mockService: MockDataService!
+// struct suite：每个 @Test 各自拿到一个全新实例，
+// init 即「每个测试前执行」（对应 setUp）；值语义天然隔离状态，通常不需要 teardown
+@Suite struct ViewModelTests {
+    let sut: HomeViewModel
+    let mockService: MockDataService
 
-    // 每个测试前执行
-    override func setUp() {
-        super.setUp()
+    init() {
         mockService = MockDataService()
         sut = HomeViewModel(service: mockService)
     }
+}
 
-    // 每个测试后执行
-    override func tearDown() {
-        sut = nil
-        mockService = nil
-        super.tearDown()
+// 需要清理资源（临时文件、数据库连接）时改用 final class suite：
+// deinit 在每个测试结束、实例销毁时执行（对应 tearDown）
+@Suite final class DatabaseTests {
+    let tempDB: TemporaryDatabase
+
+    init() throws {
+        tempDB = try TemporaryDatabase()
     }
 
-    // 所有测试前执行一次
-    override class func setUp() {
-        super.setUp()
-        // 全局配置
+    deinit {
+        tempDB.cleanUp()
     }
+}
+
+// 「所有测试前执行一次」：Swift Testing 没有 class setUp 等价物，
+// 共享只读资源用 static let（首次访问时惰性初始化一次）
+@Suite struct AppConfigTests {
+    static let sharedConfig = loadTestConfig()
 }
 ```
 
@@ -276,9 +281,9 @@ final class ItemListViewModel: ObservableObject {
 }
 
 // Test
-final class ItemListViewModelTests: XCTestCase {
-    @MainActor
-    func testLoadItems_WithSuccessfulFetch_UpdatesItems() async {
+@Suite struct ItemListViewModelTests {
+    @Test @MainActor
+    func loadItems_withSuccessfulFetch_updatesItems() async {
         // Given
         let mockRepo = MockItemRepository()
         mockRepo.items = [Item(name: "Test")]
@@ -288,7 +293,7 @@ final class ItemListViewModelTests: XCTestCase {
         await sut.loadItems()
 
         // Then
-        XCTAssertTrue(mockRepo.fetchItemsCalled)
+        #expect(mockRepo.fetchItemsCalled)
     }
 }
 ```
@@ -324,7 +329,7 @@ final class MockAnalytics: AnalyticsProtocol {
 }
 
 // Test
-XCTAssertEqual(mockAnalytics.events, ["screen_viewed", "button_tapped"])
+#expect(mockAnalytics.events == ["screen_viewed", "button_tapped"])
 ```
 
 **Fake**: 简化的可工作实现
@@ -342,13 +347,13 @@ final class FakeDatabase: DatabaseProtocol {
 }
 ```
 
-<!-- section: 4. 异步测试 keywords: async test, await, XCTestExpectation, actor, concurrency testing -->
+<!-- section: 4. 异步测试 keywords: async test, await, confirmation, actor, concurrency testing -->
 ## 4. 异步测试
 
 ### async/await 测试
 
 ```swift
-func testFetchData_WhenSuccessful_ReturnsItems() async throws {
+@Test func fetchData_whenSuccessful_returnsItems() async throws {
     // Given
     let mockService = MockDataService()
     mockService.items = [Item(name: "Test")]
@@ -358,36 +363,30 @@ func testFetchData_WhenSuccessful_ReturnsItems() async throws {
     let items = try await sut.fetchItems()
 
     // Then
-    XCTAssertEqual(items.count, 1)
-    XCTAssertEqual(items.first?.name, "Test")
+    #expect(items.count == 1)
+    #expect(items.first?.name == "Test")
 }
 ```
 
-### XCTestExpectation
+### confirmation（替代 XCTestExpectation）
 
 ```swift
-func testNotification_WhenPosted_TriggersCallback() {
-    // Given
-    let expectation = XCTestExpectation(description: "Notification received")
-    var receivedNotification = false
+// confirmation 用于验证「事件发生过」：body 返回前必须已调用 confirmed()，
+// 否则测试失败。事件在 body 结束后才发生的场景，改用 async/await 直等结果
+@Test func notification_whenPosted_triggersCallback() async {
+    await confirmation("Notification received") { confirmed in
+        let observer = NotificationCenter.default.addObserver(
+            forName: .dataUpdated,
+            object: nil,
+            queue: nil
+        ) { _ in
+            confirmed()
+        }
 
-    let observer = NotificationCenter.default.addObserver(
-        forName: .dataUpdated,
-        object: nil,
-        queue: nil
-    ) { _ in
-        receivedNotification = true
-        expectation.fulfill()
+        NotificationCenter.default.post(name: .dataUpdated, object: nil)
+
+        NotificationCenter.default.removeObserver(observer)
     }
-
-    // When
-    NotificationCenter.default.post(name: .dataUpdated, object: nil)
-
-    // Then
-    wait(for: [expectation], timeout: 1.0)
-    XCTAssertTrue(receivedNotification)
-
-    NotificationCenter.default.removeObserver(observer)
 }
 ```
 
@@ -398,7 +397,7 @@ func testNotification_WhenPosted_TriggersCallback() {
 
 **1. Red - 写失败的测试**
 ```swift
-func testCalculateTotal_WithMultipleItems_ReturnsSum() {
+@Test func calculateTotal_withMultipleItems_returnsSum() {
     // Given
     let cart = ShoppingCart()
     cart.addItem(Item(price: 10.0))
@@ -408,7 +407,7 @@ func testCalculateTotal_WithMultipleItems_ReturnsSum() {
     let total = cart.calculateTotal()
 
     // Then
-    XCTAssertEqual(total, 25.0)
+    #expect(total == 25.0)
 }
 // 运行：❌ 失败（方法不存在）
 ```
@@ -501,35 +500,35 @@ xcodebuild test \
 
 ```swift
 // ❌ 脆弱：测试内部实现
-func testLoadData_CallsFetchAndTransform() {
+@Test func loadData_callsFetchAndTransform() {
     sut.loadData()
-    XCTAssertTrue(mockService.fetchCalled)
-    XCTAssertTrue(mockTransformer.transformCalled)
+    #expect(mockService.fetchCalled)
+    #expect(mockTransformer.transformCalled)
 }
 
 // ✅ 健壮：测试行为和结果
-func testLoadData_WhenSuccessful_UpdatesItems() async {
+@Test func loadData_whenSuccessful_updatesItems() async {
     await sut.loadData()
-    XCTAssertEqual(sut.items.count, 3)
-    XCTAssertEqual(sut.items.first?.name, "Item 1")
+    #expect(sut.items.count == 3)
+    #expect(sut.items.first?.name == "Item 1")
 }
 ```
 
 ### 保持测试独立
 
 ```swift
-// ❌ 错误：测试间有依赖
-func test1_CreateItem() {
+// ❌ 错误：测试间有依赖（Swift Testing 默认并行执行且每个测试独立实例，顺序依赖必挂）
+@Test func step1_createItem() {
     sut.createItem("Item 1")
-    // Test 2 依赖这个状态
+    // 下一个测试依赖这个状态
 }
 
-func test2_DeleteItem() {
+@Test func step2_deleteItem() {
     sut.deleteItem(0)  // 假设 Item 1 存在
 }
 
 // ✅ 正确：每个测试独立设置
-func testDeleteItem_WithExistingItem_RemovesIt() {
+@Test func deleteItem_withExistingItem_removesIt() {
     // Given
     sut.createItem("Item 1")
 
@@ -537,13 +536,14 @@ func testDeleteItem_WithExistingItem_RemovesIt() {
     sut.deleteItem(0)
 
     // Then
-    XCTAssertEqual(sut.items.count, 0)
+    #expect(sut.items.count == 0)
 }
 ```
 
 ## 参考
 
-- [Apple Testing Documentation](https://developer.apple.com/documentation/xctest)
+- [Swift Testing Documentation](https://developer.apple.com/documentation/testing)
+- [XCTest Documentation（XCUITest 用）](https://developer.apple.com/documentation/xctest)
 - [WWDC21: Meet async/await in Swift](https://developer.apple.com/videos/play/wwdc2021/10132/)
 - [Test Driven Development: By Example - Kent Beck](https://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530)
 

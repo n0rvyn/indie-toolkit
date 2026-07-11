@@ -150,6 +150,21 @@ Cross-references: {N} related entries found, {M} mutual links added, {C} contrad
 
 If no related entries: `Cross-references: no related entries (< 2 keyword overlap)`
 
+### Step 5.5: Promotion Check (升格提示)
+
+Global-scope entries only (skip for project-local saves). After ripple, check two conditions:
+
+1. **跨项目通用** — the failure class is not tied to one project's code. Platform quirks, harness behavior, workflow methods qualify; single-app bugs do not.
+2. **重复代价** — the same failure class has cost ≥2 incidents: this session plus a prior related entry (Step 5a's related-entry scan is the evidence), or the user states it has recurred.
+
+If BOTH hold, append after the ripple report:
+
+```
+⬆️ 升格候选：该教训跨项目通用且已付出 ≥2 次代价。知识库只保证可检索，不保证被想起——考虑升格进全局 CLAUDE.md（建议落点：{section 名}），或跑 claude-md-audit workflow 的 gaps 视角复查全部升格候选。
+```
+
+Do NOT edit CLAUDE.md yourself; the hint is for the user to decide. Rationale: the 2026-07-11 global-rules audit found lessons that sat retrievable-but-unread in the KB for a month while the same failure class kept recurring — the KB has a write path (this skill) but had no promotion path.
+
 ### Step 6: Next Steps
 
 After saving, inform the user:
@@ -163,3 +178,4 @@ Optional: Run `/generate-bases-views --target lessons` to update the Obsidian Ba
 - Entry saved to `~/.claude/knowledge/{category}/` or `docs/09-lessons-learned/` with correct frontmatter
 - User confirmed the draft before saving
 - Related entries (>=2 keyword overlap) have mutual `related:` cross-references in frontmatter
+- Promotion check (Step 5.5) evaluated for global-scope saves — hint emitted, or conditions noted as unmet

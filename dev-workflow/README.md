@@ -198,7 +198,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | PreToolUse (Read) | suggest-read-routing.sh | Cost-routing nudge: emits stderr hint when same file Read ≥2× (Read pollution) OR ≥2 large Reads (>300 lines) in window. Always exit 0; never blocks |
 | UserPromptSubmit | suggest-skills.sh | Pattern-matches user prompt and suggests relevant skills |
 | PostToolUse (Agent) | verify-agent-output.py | Detects "wrote/saved/created PATH" claims in sub-agent responses; warns the main session if those files are missing or empty on disk |
-| PostToolUse (Edit\|Write) | check-repeated-edit.py | Warns when same file is edited multiple times in a 10-min window — nudges toward hypothesis statement before next edit |
+| PostToolUse (Edit\|Write) | check-repeated-edit.py | Warns when same file gets 3+ edit BURSTS in a 10-min window (edits ≤30s apart collapse into one burst, so planned batches stay silent) or the same old_string is retried — nudges toward hypothesis statement before next edit |
 
 ## Workflow State
 

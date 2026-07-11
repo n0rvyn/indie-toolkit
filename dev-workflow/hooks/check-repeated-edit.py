@@ -1,21 +1,32 @@
 #!/usr/bin/env python3
 """PostToolUse(Edit|Write) hook: detect repeated edits to the same file.
 
-When the same file is edited 3+ times within a 10-minute window, inject a
-system-reminder asking the assistant to state an explicit hypothesis and
-evidence before the next edit. Targets the "patch on top of patch" pattern
-identified in the 2026-04 — 2026-05 Claude Code Insights review.
+Fires in two situations:
+1. The same file receives edits in 3+ separate BURSTS within a 10-minute
+   window — a burst is a run of edits whose inter-edit gap is <= 30 s.
+   Batched multi-location edits landed in one assistant turn collapse into
+   a single burst and stay silent; a debug loop (edit -> build/test ->
+   edit again) produces one burst per round and trips the threshold.
+   Targets the "patch on top of patch" pattern identified in the
+   2026-04 — 2026-05 Claude Code Insights review.
+2. The same Edit old_string reappears for the same file within the window —
+   a deterministic retry signal, fires immediately regardless of bursts.
+
+(2026-07-11 noise fix: the previous per-edit counter fired ~50 times on a
+single approved batch of distinct-location edits. Burst grouping keeps the
+original target — separated edit rounds — while ignoring planned batches.)
 
 Silent on success. State persisted to .claude/edit-history.json (per project).
 
-Window: 10 minutes (600 seconds). Threshold: 3rd edit (so first 2 pass silently).
-Cap: keep at most 100 entries (FIFO eviction); per-file lists keep last 10 timestamps.
+Window: 10 minutes (600 s). Burst gap: 30 s. Threshold: 3rd burst fires.
+Cap: keep at most 100 files (FIFO eviction); per-file lists keep last 20 entries.
 
 Sentinel guard: only persist when CWD looks like a project (has .claude/,
 CLAUDE.md, or .git/). Prevents scattering .claude/ directories in scratch /
 temp directories where the discipline signal is not useful.
 """
 
+import hashlib
 import json
 import os
 import sys
@@ -24,15 +35,19 @@ import tempfile
 
 HISTORY_FILE = ".claude/edit-history.json"
 WINDOW_SECONDS = 600  # 10 minutes
-THRESHOLD = 3  # 3rd edit fires
+BURST_GAP_SECONDS = 30  # edits closer than this belong to the same burst
+BURST_THRESHOLD = 3  # 3rd burst fires
 MAX_FILES = 100
-MAX_TIMESTAMPS_PER_FILE = 10
+MAX_ENTRIES_PER_FILE = 20
 
 
 def read_history():
     try:
         with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+        # Valid JSON that is not a dict (null / list / scalar) would crash
+        # prune() and never self-heal — treat as empty.
+        return data if isinstance(data, dict) else {}
     except (FileNotFoundError, json.JSONDecodeError, OSError):
         return {}
 
@@ -41,10 +56,7 @@ def write_history(history):
     """Atomic file-replacement via tempfile + os.replace.
 
     Single-writer assumption (one Claude Code session); cross-session races
-    at worst lose one timestamp. Not a true multi-writer atomic write.
-    SIGKILL during the tempfile-write window can leak a .tmp file
-    (cleanup on next session's prune cycle is not implemented — accepted
-    low-impact leak, see pre-flight risks).
+    at worst lose one entry. Not a true multi-writer atomic write.
     """
     try:
         os.makedirs(os.path.dirname(HISTORY_FILE), exist_ok=True)
@@ -65,18 +77,7 @@ def write_history(history):
 
 
 def is_project_cwd():
-    """Return True if CWD looks like a project directory.
-
-    Project sentinels (any one match → True):
-    - .claude/ directory already exists (any prior Claude Code activity)
-    - CLAUDE.md file present (explicit project memory file)
-    - .git/ directory present (git repository)
-
-    Used to gate persistence: edits in scratch/temp dirs without sentinels
-    do not create a .claude/edit-history.json. Trade-off: in a fresh project
-    init where none of these exist yet, the first edits will not be tracked
-    until one of these markers appears.
-    """
+    """Return True if CWD looks like a project directory."""
     return (
         os.path.isdir(".claude")
         or os.path.isfile("CLAUDE.md")
@@ -97,20 +98,60 @@ def extract_file_path(payload):
     return None
 
 
+def extract_fingerprint(payload):
+    """Short hash of Edit's old_string; empty for Write / missing input."""
+    try:
+        old = payload.get("tool_input", {}).get("old_string")
+        if isinstance(old, str) and old:
+            return hashlib.sha1(old.encode("utf-8")).hexdigest()[:10]
+    except (AttributeError, TypeError):
+        pass
+    return ""
+
+
+def normalize_entry(entry):
+    """Accept both legacy bare-float entries and [ts, fp] pairs."""
+    if isinstance(entry, (int, float)):
+        return [float(entry), ""]
+    if (
+        isinstance(entry, list)
+        and len(entry) == 2
+        and isinstance(entry[0], (int, float))
+        and isinstance(entry[1], str)
+    ):
+        return [float(entry[0]), entry[1]]
+    return None
+
+
 def prune(history, now):
-    """Drop timestamps older than the window and files with empty lists."""
+    """Drop entries older than the window and files with empty lists."""
     cutoff = now - WINDOW_SECONDS
     pruned = {}
-    for path, timestamps in history.items():
-        kept = [t for t in timestamps if t >= cutoff]
+    for path, entries in history.items():
+        kept = []
+        for e in entries if isinstance(entries, list) else []:
+            norm = normalize_entry(e)
+            if norm and norm[0] >= cutoff:
+                kept.append(norm)
         if kept:
-            pruned[path] = kept[-MAX_TIMESTAMPS_PER_FILE:]
+            pruned[path] = kept[-MAX_ENTRIES_PER_FILE:]
     # FIFO cap on total files tracked.
     if len(pruned) > MAX_FILES:
-        # Sort by most-recent timestamp ascending, drop oldest.
-        sorted_paths = sorted(pruned.items(), key=lambda kv: kv[1][-1])
+        sorted_paths = sorted(pruned.items(), key=lambda kv: kv[1][-1][0])
         pruned = dict(sorted_paths[-MAX_FILES:])
     return pruned
+
+
+def count_bursts(entries):
+    """Group timestamps into bursts separated by > BURST_GAP_SECONDS."""
+    timestamps = sorted(e[0] for e in entries)
+    if not timestamps:
+        return 0
+    bursts = 1
+    for prev, cur in zip(timestamps, timestamps[1:]):
+        if cur - prev > BURST_GAP_SECONDS:
+            bursts += 1
+    return bursts
 
 
 def main():
@@ -124,34 +165,42 @@ def main():
         sys.exit(0)
 
     # Sentinel guard: only track edits in project directories.
-    # Skips scratch/temp CWDs without project markers to avoid scattering
-    # .claude/ directories across the filesystem.
     if not is_project_cwd():
         sys.exit(0)
 
     now = time.time()
-    history = read_history()
-    history = prune(history, now)
+    fp = extract_fingerprint(payload)
 
-    timestamps = history.get(path, [])
-    timestamps.append(now)
-    history[path] = timestamps[-MAX_TIMESTAMPS_PER_FILE:]
+    history = prune(read_history(), now)
+    entries = history.get(path, [])
 
+    # Deterministic retry signal: same old_string seen before in the window.
+    same_fp_count = sum(1 for e in entries if e[1] == fp) if fp else 0
+    same_fp_repeat = same_fp_count > 0
+
+    entries.append([now, fp])
+    history[path] = entries[-MAX_ENTRIES_PER_FILE:]
     write_history(history)
 
-    # Count edits in the window for this file.
-    count_in_window = sum(1 for t in timestamps if t >= now - WINDOW_SECONDS)
-
-    if count_in_window >= THRESHOLD:
-        # Emit JSON envelope so the runtime injects additionalContext back into
-        # the model's view. Plain stdout from PostToolUse hooks surfaces only
-        # to the human in transcript mode and would not reach the assistant
-        # about to make the next edit.
+    message = None
+    if same_fp_repeat:
         message = (
-            f"[check-repeated-edit] ⚠️ `{path}` 在 10 分钟内被编辑了 "
-            f"{count_in_window} 次。下一次 Edit 之前，先一句话陈述：当前假说 / "
-            f"上一次为何失败 / 这次基于什么新证据。"
+            f"[check-repeated-edit] ⚠️ `{path}` 的同一处 old_string 在 10 分钟内"
+            f"被第 {same_fp_count + 1} 次编辑——这是在重试同一个补丁。下一次 Edit 之前，先一句话陈述："
+            f"当前假说 / 上一次为何失败 / 这次基于什么新证据。"
         )
+    else:
+        bursts = count_bursts(entries)
+        if bursts >= BURST_THRESHOLD:
+            message = (
+                f"[check-repeated-edit] ⚠️ `{path}` 在 10 分钟内经历了第 {bursts} 轮"
+                f"修改（同轮内的批量编辑只算一轮）。下一次 Edit 之前，先一句话陈述："
+                f"当前假说 / 上一次为何失败 / 这次基于什么新证据。"
+            )
+
+    if message:
+        # JSON envelope so the runtime injects additionalContext back into
+        # the model's view; plain stdout would only reach the human transcript.
         print(
             json.dumps(
                 {

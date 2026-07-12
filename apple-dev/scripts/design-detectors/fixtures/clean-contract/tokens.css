@@ -1,0 +1,148 @@
+/* =============================================================================
+   RUNETIC — APP SEMANTIC TOKENS  (single source of truth)
+   -----------------------------------------------------------------------------
+   This file owns the values that are SPECIFIC to Runetic and were previously
+   re-typed in more than one place (src/shared.jsx::READINESS + CLAUDE.md table).
+   From now on this is their ONE home — JS reads them, Tokens.swift mirrors them,
+   DESIGN.md documents them. Do not hand-copy a value out of here.
+
+   The BASE design system (glass recipe, iOS type scale, spacing, radius, motion,
+   system colors) already has a single home in lib/liquid-glass.css. This file
+   does NOT duplicate those — it layers the Runetic app semantics on top and
+   points at them. Load liquid-glass.css first, then this file.
+   ============================================================================= */
+
+:root {
+  /* ── Readiness: the one value that drives accent + wallpaper ──────────────
+     4 states. score is illustrative mock data, NOT a token to theme against.
+     accent/accent2 build every gradient (ring, spark, wallpaper blobs).
+     onWp = text color for copy sitting DIRECTLY on the wallpaper.
+     Don't add, rename, or recolor states without sign-off (constitution #3). */
+
+  /* recovery — 已恢复 / Ready to build */
+  --r-recovery-accent:   #34C759;            /* system-green */
+  --r-recovery-accent2:  #00C7BE;            /* system-mint  */
+  --r-recovery-on-wp:    #0a3520;            /* dark ink on light wallpaper */
+  --r-recovery-chip-bg:  rgba(255,255,255,0.55);
+
+  /* normal — 可训练 / Standard day */
+  --r-normal-accent:     #007AFF;            /* system-blue   */
+  --r-normal-accent2:    #5856D6;            /* system-indigo */
+  --r-normal-on-wp:      #0a1a3a;
+  --r-normal-chip-bg:    rgba(255,255,255,0.55);
+
+  /* fatigue — 需谨慎 / Fatigue elevated */
+  --r-fatigue-accent:    #FF9500;            /* system-orange */
+  --r-fatigue-accent2:   #FF6B9D;            /* pink          */
+  --r-fatigue-on-wp:     #3a1a05;
+  --r-fatigue-chip-bg:   rgba(255,255,255,0.55);
+
+  /* warning — 建议休息 / Rest advised  (the only dark/ink-text state) */
+  --r-warning-accent:    #FF3B30;            /* system-red  */
+  --r-warning-accent2:   #FF2D55;            /* system-pink */
+  --r-warning-on-wp:     #ffffff;            /* light text — dark wallpaper */
+  --r-warning-chip-bg:   rgba(255,255,255,0.18);
+
+  /* Active accent is rebound to the current readiness state at runtime.
+     Components consume --accent / --accent2, never a per-state literal. */
+  --accent:  var(--r-normal-accent);
+  --accent2: var(--r-normal-accent2);
+
+  /* ── Wallpaper recipe (LIGHT) ─────────────────────────────────────────────
+     3 radial "blobs" over a linear base, per state. Stored as the raw stops so
+     SwiftUI can rebuild them as a MeshGradient (see DESIGN.md Platform Mapping).
+     Format per blob: <center-pos> <color> <inner-stop> <outer-transparent-stop>.
+     This is a RECIPE, mirrored here for completeness — the canonical builder is
+     src/shared.jsx::wpFromState(). */
+  --wp-recovery-base: linear-gradient(135deg, #D5F7DE 0%, #E5F5C8 45%, #C7F0EA 100%);
+  --wp-normal-base:   linear-gradient(135deg, #D6E5FF 0%, #E0D8FF 50%, #F5E8FF 100%);
+  --wp-fatigue-base:  linear-gradient(135deg, #FFE3C4 0%, #FFD3CC 50%, #FFE9B5 100%);
+  --wp-warning-base:  linear-gradient(135deg, #3A0B14 0%, #5A1530 50%, #2A0A28 100%);
+  /* recovery blobs */  --wp-recovery-b1: #A4F4C0; --wp-recovery-b2: #7CE6E0; --wp-recovery-b3: #FFE38A;
+  /* normal blobs   */  --wp-normal-b1:   #7CB3FF; --wp-normal-b2:   #B5A2FF; --wp-normal-b3:   #E5C8FF;
+  /* fatigue blobs  */  --wp-fatigue-b1:  #FFC078; --wp-fatigue-b2:  #FF9C80; --wp-fatigue-b3:  #FFD8A0;
+  /* warning blobs  */  --wp-warning-b1:  #FF3B30; --wp-warning-b2:  #FF6B9D; --wp-warning-b3:  #9B4DFF;
+
+  /* ── Wallpaper recipe (DARK) ──────────────────────────────────────────────
+     Dark wallpapers use near-black bases + saturated blobs. warning is already
+     dark in light mode, so its dark variant barely shifts. */
+  --wp-recovery-base-dark: linear-gradient(150deg, #05130D 0%, #081C15 50%, #03100B 100%);
+  --wp-normal-base-dark:   linear-gradient(150deg, #070C1C 0%, #0C1230 50%, #05091A 100%);
+  --wp-fatigue-base-dark:  linear-gradient(150deg, #1A0E04 0%, #251406 50%, #160A03 100%);
+  --wp-warning-base-dark:  linear-gradient(135deg, #2A0810 0%, #3E0F22 50%, #1C0718 100%);
+
+  /* ── On-wallpaper text tint (RUI: tint to hue, don't dim with opacity) ────
+     On dark wallpapers, primary text = accent mixed 93% toward white; the rgb
+     base for secondary/tertiary tiers = accent mixed 80% toward white. The mix
+     fn is src/shared.jsx::tintRGB(hex, amount). Mirrored as a rule, not a value,
+     because it's per-state derived. */
+  --fg-tint-primary-mix: 0.93;
+  --fg-tint-base-mix:    0.80;
+
+  /* ── Editorial display type (Apple-Music 灵动感 headlines) ────────────────
+     These extend the iOS Dynamic Type scale in liquid-glass.css with the big,
+     tight, heavy headline treatment unique to Runetic. weight/tracking/leading
+     here ARE the contract — small text gets BIGGER weight (counter-intuitive). */
+  --display-weight:         800;     /* .heavy in SwiftUI */
+  --display-tracking-min:   -0.040em;
+  --display-tracking-max:   -0.025em;
+  --display-tracking-tight: -1.2px;  /* the em range converted at ~30pt — the value the native mirror carries */
+  --display-leading-min:  0.95;    /* line-height multiple — NO direct SwiftUI API, see mapping */
+  --display-leading-max:  1.05;
+
+  /* Eyebrow / section label — 10–11pt, weight 800, uppercase, wide tracking.
+     Color is an explicit value (NOT opacity) per RUI. */
+  --eyebrow-size:      11px;
+  --eyebrow-weight:    800;
+  --eyebrow-tracking:  1.4px;
+  --eyebrow-color:     rgba(0,0,0,0.55);
+  --eyebrow-transform: uppercase;
+
+  /* Text hierarchy by COLOR, not opacity (RUI rule — opacity over wallpaper
+     makes text disappear). Use these three over solid card surfaces.
+     BOTH SIDES: 深色 is a real setting, so every rung has a dark twin. Never
+     reuse a light ink under dark — the L* relation inverts and the card reads
+     lighter than the wallpaper it sits on. */
+  --ink-primary:   #0a0a0a;
+  --ink-secondary: rgba(0,0,0,0.65);
+  --ink-tertiary:  rgba(0,0,0,0.50);
+
+  --ink-primary-dark:   #f5f5f7;
+  --ink-secondary-dark: rgba(255,255,255,0.68);
+  --ink-tertiary-dark:  rgba(255,255,255,0.48);
+
+  /* ── Numerics ─────────────────────────────────────────────────────────────
+     Every aligned digit is tabular. Surfaced via the <Num> primitive in JS and
+     .monospacedDigit() in SwiftUI. */
+  --num-feature: "tnum";
+
+  /* ── Coach engagement (frequency, not tone) + tone axis ──────────────────
+     Product config, not visual — kept here because it's a fixed enum the UI
+     binds to. active/balanced/passive = intervention frequency. */
+  --coach-tiers:    "active balanced passive";
+  --coach-tones:    "calm-pro warm-encouraging data-driven";
+
+  /* ── Press feedback ───────────────────────────────────────────────────────
+     Every tappable surface. Owned here because Tokens.swift mirrors, never
+     authors — RMotion.pressScale / pressOpacity read these. (Durations/easings
+     stay in the base store: --dur-quick / --ease-control.) */
+  --press-scale:   0.96;
+  --press-opacity: 0.70;
+
+  /* ── Page layout ──────────────────────────────────────────────────────────
+     gutter + standard card gaps. (Base spacing scale lives in liquid-glass.css.) */
+  --page-gutter: 20px;          /* mirrors --page-gutter in base; restated as app intent */
+  --card-gap-min: 14px;
+  --card-gap-max: 32px;
+}
+
+/* =============================================================================
+   READINESS BINDING
+   -----------------------------------------------------------------------------
+   Put data-readiness="recovery|normal|fatigue|warning" on the app root; the
+   active accent rebinds. This replaces per-state literals scattered in JS.
+   ============================================================================= */
+[data-readiness="recovery"] { --accent: var(--r-recovery-accent); --accent2: var(--r-recovery-accent2); --on-wp: var(--r-recovery-on-wp); }
+[data-readiness="normal"]   { --accent: var(--r-normal-accent);   --accent2: var(--r-normal-accent2);   --on-wp: var(--r-normal-on-wp); }
+[data-readiness="fatigue"]  { --accent: var(--r-fatigue-accent);  --accent2: var(--r-fatigue-accent2);  --on-wp: var(--r-fatigue-on-wp); }
+[data-readiness="warning"]  { --accent: var(--r-warning-accent);  --accent2: var(--r-warning-accent2);  --on-wp: var(--r-warning-on-wp); }

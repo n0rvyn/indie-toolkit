@@ -66,7 +66,9 @@ materials:
   glass-regular:
     web: "backdrop-filter: blur(30px) saturate(180%)"   # what the prototype fakes
     swift: ".glassEffect(.regular, in: .rect(cornerRadius: {rounded.lg}))"  # iOS 26+ native
-    tint: "rgba(255,255,255,0.62)"
+    tint:                                                  # REQUIRED — both schemes. See below.
+      light: "rgba(255,255,255,0.62)"
+      dark:  "rgba(28,28,30,0.78)"
     edge: "inset 0 1px 0 rgba(255,255,255,0.45)"          # refraction highlight — NATIVE provides this; do not hand-draw
     note: "Wrap adjacent glass cards in GlassEffectContainer to merge refraction."
 motion:
@@ -76,13 +78,37 @@ motion:
 ```
 
 Document the body sections in this order so `lint`/`diff` (if used) don't flag drift:
-`## Overview · ## Colors · ## Typography · ## Layout · ## Elevation & Depth · ## Shapes · ## Materials & Motion · ## Components · ## Platform Mapping · ## Do's and Don'ts`.
+`## Overview · ## Colors · ## Typography · ## Layout · ## Screen Composition · ## Elevation & Depth · ## Shapes · ## Materials & Motion · ## Components · ## Platform Mapping · ## Empty-State Audit · ## Do's and Don'ts`.
+
+> **Two of these sections are new, and both were added because a controlled test showed what happens without them.**
+>
+> **`## Screen Composition` — the single highest-leverage section in this document.**
+> Everything else here describes *how things look*. Nothing describes *what goes where*. A builder given the full token contract, the full material recipe, the full platform mapping, and the complete FLOW graph — but no composition — **built the right screen with the right elements in an invented layout**. Measured against the actual design, its block structure scored **0.51** on a shift-tolerant block-correlation metric. The designer's own *alternative* composition of that same screen scored **0.56** — i.e. the build was as different from the target as a legitimate second draft would be. Adding a per-component composition spec — and **nothing else, no source, no screenshots** — took it to **0.92**, level with a build that had the full prototype in hand.
+> Per screen, list the blocks **top to bottom**: block name · which component renders it · what it contains · the gap token below it. That is all. It costs a page and it is the difference between "a plausible app" and "this app."
+>
+> **`## Empty-State Audit`** — `handoff-manifest` indexes this table as a deliverable (`handoff-manifest/SKILL.md:33`), and the prose in §4e below mandates it. It was never in the enforced section order, so it was routinely absent from the emitted contract. Now it is.
+
+> **Reference sections by their heading text, never by an outline number.**
+> The `4a`/`4b`/`4c`/`4d`/`4e` numbering used further down belongs to **this skill's internal outline**. It is not part of the section order above, so it never appears in the emitted DESIGN.md. The sibling `flow-navigation-contract` used to be told to point back at "4c/4e" — producing a FLOW.md full of `statesRef: "DESIGN.md 4c/4e"` references to headings **that do not exist in any contract this skill has ever emitted**. Say `see DESIGN.md § Platform Mapping / State & tweak mapping`. `n4_contract_lint.py` predicate (a) fails the handoff on a dangling anchor.
 
 **Motion tokens are the source of axis-1 curve checks.** The `motion:` block declares the canonical easing curves (web cubic-bezier → SwiftUI `.spring` / `.easeInOut`) and the timing shape of each interaction. Downstream parity checks — including the cross-project `design-parity-build` skill — read these tokens as the single source of truth for what "matches" means on motion: an implementation that uses a different curve (e.g. a plain `.linear` or a different spring `response/dampingFraction`) is an axis-1 regression even if the visual end-state looks right. Always emit motion tokens, even for prototypes with no animation; silence there means reviewers have nothing to compare against and accept whatever the coder produces.
 
 **Native exceptions** — components the system provides and the prototype only fakes. List them in a `## Native Exceptions` block in DESIGN.md, with the canonical list anchored to `apple-dev/references/design-contract-schema.md` §6 (Tab Bar / SF Symbols / system keyboard / system sheet / safe-area / standard platform controls). These components are **screen-captured but excluded from axis-1 design diff** — they render via the OS, so comparing pixel-by-pixel against the prototype is meaningless. Augment or trim the list per project (e.g. a project that builds a custom keyboard adds it back into the diff set); the baseline list is a default, not a fixed contract. The downstream checker (e.g. `design-parity-build`) reads this list to know what to skip.
 
-**Optional tooling (skip for solo / one-shot handoffs):** the design.md CLI's `lint` (broken refs, WCAG AA, section order), `diff` (token regressions), and `export` (emit tokens into the build) are worth wiring into **CI for a multi-person, long-lived system**. For a single designer handing a prototype to one coding agent once, they are overhead — and contrast lint misfires on dynamic gradient backgrounds. Keep the machine-readable front matter (agents parse it well); drop the CI gate unless the project's lifespan justifies it.
+**Tooling — the contract lint is not optional. The CI wiring is.**
+
+Two different things used to be bundled under one "skip this for solo handoffs" exemption. Separate them:
+
+| | Run it when? | Why |
+|---|---|---|
+| **Contract lint** — `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/design-detectors/n4_contract_lint.py" <contract-dir>` (dangling anchors · ghost symbols · mirror set-difference · light+dark ladder completeness; ships inside this plugin — never a repo-relative path, your CWD is the handoff project) | **Always. Before every handoff, solo included.** `handoff-manifest` Step 1b gates on it. | It takes seconds and it is the **only** check the contract ever receives. Everything downstream — reviewers, drift auditors, the build agent — treats the contract as ground truth and never questions it. A defect that ships here is never caught again. |
+| **CI wiring** — running that lint (plus `diff` for token regressions, `export` for build-time tokens) on every commit in a shared repo | Multi-person, long-lived system. | This is the part that is genuine overhead for a one-shot handoff. Skipping the *automation* is fine. Skipping the *check* is not. |
+
+The design.md CLI's WCAG-contrast lint does misfire on dynamic gradient backgrounds — **that is an argument for muting that one rule, not for dropping the gate.**
+
+> **Why this used to say "skip it, it's overhead."**
+> A solo, one-shot handoff feels like the case where a lint is least necessary — one author, one reader, one pass. It is the exact opposite. A long-lived shared contract gets read by many people who notice when a reference points nowhere. A one-shot contract gets read **once, by an agent, which does not notice.** It follows the contract into the wall.
+> In a controlled test, a contract that shipped without this lint carried: 6 references to a section that was never written, a header comment advertising a type (`RColor`) that does not exist, 12 CSS tokens its "lockstep mirror" never mirrored, and **no dark-mode ink ladder at all** — which is why the build's dark cards rendered brighter than the wall they sat on. Two independent builders each hit all four, independently. Every one of them is a four-line grep.
 
 ## Step 3 — Reference components: code is the least-ambiguous spec
 
@@ -150,13 +176,29 @@ For every tweak, write a row: *control → kind → for state-demonstrators, the
 
 **The authoritative state set is each component's prop signature — not only the panel.** A tweaks panel demonstrates *some* states; the props enumerate *all* of them, including ones no control exposes. Read every component's signature and treat it as the branch list: each boolean/enum prop (`hasFinding`, `building`, `rest`, `phase`, `planState`, `loadData`) is a runtime branch to build; each `onX` callback (`onRecall`, `onSetGoal`, `onOpenTomorrow`) usually implies an **action-triggered UI, transition, or reverse-flow** the default render never shows — open its implementation to see what it triggers. The spec is the **union** of: prop signatures + the tweaks panel (4c) + the empty-state audit (4e). A screenshot shows one state; the signature names them all.
 
-### 4d. The DO-NOT-PORT list
+### 4d. The DO-NOT-PORT list — files **and** the values those files forced
+
 Name the prototype-only scaffolding explicitly so the agent deletes rather than translates it:
+
+**Files / components to delete, not translate:**
 - the design canvas / pan-zoom host
 - the tweaks/variations **panel UI** and its persistence (but first run 4c on what it enumerates)
 - the device-bezel frame and faked status bar
 - any `backdrop-filter` / box-shadow stack that exists only to fake a native material
 - mock-data fixtures and dev route pickers (keep their SHAPES as the model contract)
+
+**Values the scaffolding forced — list every one, with its native replacement:**
+
+| Prototype value | Why it exists | Native replacement |
+|---|---|---|
+| `padding: '64px 20px 100px'` on the screen container | clearance for the **fake bezel's** status bar and home indicator | `.safeAreaInset` / the system's own insets — **and never `.ignoresSafeArea()` on a content container to make a literal number line up** |
+| fixed `width: 402 / height: 874` on the frame | the fake device's screen size | the real screen; layout adapts |
+| a hardcoded status-bar height / notch offset | drawn, not measured | the platform provides it |
+
+> **This half of the list is the half that actually leaks.**
+> A file-level DO-NOT-PORT list is easy for a competent agent to honour — the scaffolding *looks* like scaffolding (`ios-frame.jsx`, a header comment that says "device simulator", no business references). In a controlled test, **every** build correctly deleted the bezel component.
+> **Then two of seven ported its padding anyway** — including one holding this very list, which explicitly named "faked status bar / bezel — the OS provides these." Deleting `ios-frame.jsx` does not delete the `64` and the `100`: those live in the *content* container, which is real. They read as design intent, they land on a plausible spacing scale (`64` is on most canonical scales), and on the one device they were ported from they look correct.
+> **What leaks is a value, not a file.** A value has no filename to recognise it by. The only thing that stops it is naming it here — and a co-occurrence grep downstream (`n3_scaffold_leak.py` — design-detectors, shipped in the apple-dev plugin and vendored into handed-off repos at `scripts/design-gates/`: `.ignoresSafeArea()` on a content container **∧** a literal edge padding ≥ 48 → 🔴).
 
 > A prototype is a **specification of appearance and behavior**, not a codebase to transpile. The mapping tells the agent which lines are spec and which are scaffolding — and 4c keeps the scaffolding from hiding real spec.
 
@@ -189,6 +231,8 @@ Ship this as a **first-class artifact**, the same way you ship reference compone
 2. Pull atomic values via `Color.token` / `Tokens.swift` — never paste literals from the prototype.
 3. For any material/motion/composition, open the named reference component, read its `// CANONICAL` header, and use the **SwiftUI equivalent it points to** — do not transliterate the browser hack.
 4. Apply Platform Mapping for every state/navigation/layout construct — idiomatic SwiftUI, not a JSX clone. For tweaks, follow 4c: build every branch of a state-demonstrator; wire real settings to native controls. Enumerate each component's states from its **prop signature** (bool/enum props = branches; `onX` = transitions / reverse-flows), and build the **empty / zero-data / device-missing** branches from the empty-state audit (4e) — including states the prototype never rendered. After translating a component, count: its signature has N state-bearing params — did you build N branches?
+
+   **Then answer the harder question: who *writes* each one?** For every `@State` / `@Published` / `@Observable var` you introduced, name the line that assigns it — a user action, a data-layer callback, a sensor reading. **A property with zero writes is a constant wearing a state annotation.** Its four branches compile, render, and look complete; exactly one of them is reachable. This is the failure that survives every check we have: a screenshot shows the default branch rendering perfectly, a render-diff compares two correct pictures, and a "did you handle all the states?" checklist ticks green because the branches are *there*. In a controlled test, the build with the **most** information — full contract, full source, reference screenshots — shipped a four-state enum whose driving `@State` was assigned exactly once, at its declaration, and never again. Downstream, `n2_dead_state.py` greps for this; upstream, just say who writes it.
 5. Skip everything on the DO-NOT-PORT list.
 6. Verify visually against the **running reference components**, not against memory or the JSX source — **and verify each surface in its empty / zero-data / device-missing state too.** The prototype likely never rendered these, so construct them from the empty-state audit (4e) rather than screenshot-matching a frame that doesn't exist.
 
@@ -206,4 +250,6 @@ Ship this as a **first-class artifact**, the same way you ship reference compone
 - **Don't** let DESIGN.md invent values the token store lacks; it mirrors, it doesn't author.
 - **Don't** over-tokenize — a composite surface is a recipe, not a token.
 - **Don't** transliterate the prototype. Browser hacks and scaffolding are not the design.
-- **Don't** wire CLI lint/diff/CI for a solo, one-shot handoff — keep the structured front matter, drop the gate.
+- **Don't** ship a contract that has not passed `n4_contract_lint.py`. Skipping the *CI automation* on a one-shot handoff is fine; skipping the *check* is not — a one-shot contract is read once, by an agent, which does not notice that a reference points nowhere.
+- **Don't** publish a single-appearance token set. `.glassEffect` adapts to the colour scheme, but it can only apply the surface colour **you gave it** — and there is no such thing as "the dark value is the light value, darker." Untinted native glass over a dark wallpaper renders *lighter* than its backdrop; the elevation relationship inverts. Every semantic colour step ships light **and** dark, or the ladder is incomplete.
+- **Don't** stop at "I built all four branches." Say who **writes** the state. A `@State` that is declared, read by four branches, and never assigned is a constant wearing a state annotation — and it looks complete to every check that exists.

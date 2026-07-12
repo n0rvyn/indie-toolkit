@@ -34,6 +34,26 @@ Performs a full UI + UX compliance review of SwiftUI files. Input: list of UI fi
 
 You will receive a list of `*View.swift` / `*Screen.swift` files and the project root path.
 
+### Also read the project's design contract (if present)
+
+Before reviewing, read whichever of these exist — they are the **project's own** rules, and they outrank the generic checklist below wherever the two disagree:
+
+| File | What it carries | If absent |
+|---|---|---|
+| `docs/02-architecture/design-rules.md` | The Do's and Don'ts lifted from the design handoff. `apple-dev:project-kickoff` (SKILL.md:518) writes it. | Skip — no project rules to enforce. |
+| The `## Build Contract` section of the repo's `CLAUDE.md` | The same thing, when the handoff came through `design-handoff:handoff-manifest` (it appends that heading). | Skip. |
+
+**For every `never X` / `always X` / `禁止 X` / `必须 X` line in those files that names a concrete symbol or API, run a Grep and report the result as a 🔴, not a 🟡.** A project rule is not a style preference — the design contract already decided it.
+
+Two rules on how to grep them, both learned from a real miss:
+
+1. **Scope the symbol to the family the rule names.** `never a hand-rolled Path` forbids `Path` **inside charts**, not everywhere — an icon legitimately draws a `Path`. Scan the brace-matched body of types whose names tokenize to the rule's subject (`Spark`, `MiniBars`, `Chart`); tokenize CamelCase first (`SparkleIcon` → `[sparkle, icon]` ≠ `[spark]`). A project-wide `grep 'Path {'` flags every custom icon, and a check that cries wolf gets ignored.
+2. **A line that names only a concept** ("don't make it feel generic") **is not mechanically checkable.** List it under "Cannot verify mechanically" rather than inventing a regex for it.
+
+Reference implementation of both rules: `n1_paradigm.py` in this plugin's `scripts/design-detectors/` — also vendored into handed-off repos at `scripts/design-gates/` (validated on a corpus where the naive rule false-positived a known-clean target).
+
+> **Why this section exists.** `project-kickoff/SKILL.md:518` states that `design-rules.md` is written *to feed this reviewer* — but until now no reviewer file mentioned it, so the file was produced and never read. A design contract that says `charts → Swift Charts, never hand-rolled Path` was, in a controlled test, the **only** thing separating a build that used `import Charts` from one that hand-rolled the chart with `Path`. The two render **pixel-identically**, so no screenshot, render-diff, or visual review can ever catch it. This grep is the only thing that can.
+
 ## Output Contract
 
 1. Generate timestamp: `date +%Y-%m-%d-%H%M%S`
@@ -66,9 +86,30 @@ For each UI file provided, check the following dimensions:
 - [ ] 间距值是否在 canonical 间距刻度上？（见 `apple-dev/references/design-contract-schema.md` § 1. Canonical spacing scale——同源、prose 互引、无 runtime 依赖，沿用 design-reviewer line-34 模式；set = `{2, 4, 8, 12, 16, 24, 32, 48, 64}`）
 - [ ] 是否使用项目 Design System Token？（`AppSpacing._4xs/_3xs/_2xs/xs/sm/md/lg/xl/_2xl` + `AppLayout.marginCompact/marginRegular` 而非硬编码）
 - [ ] 触摸目标是否 ≥ 44pt？
-- [ ] 安全区域是否正确处理？
+
+**安全区检查（确定性共现规则 — 🔴，不是判断题）**
+
+Grep each View for the co-occurrence of **both**:
+
+1. `.ignoresSafeArea()` applied to a **content container** (`ScrollView`, `VStack`, `List`, the root `ZStack` that holds content) — **not** to a background layer (`Color`, `LinearGradient`, `MeshGradient`, a wallpaper view), where it is correct and expected; **and**
+2. a **literal** `.padding(.top, N)` or `.padding(.bottom, N)` in the same View with **N ≥ 48** (a literal, not a token reference).
+
+Both present → **🔴 `SCAFFOLD-INSET`**. Report the two line numbers and ask where `N` came from.
+
+**What this catches, and why the old checkbox did not.** A design prototype rendered in a browser draws its own fake device bezel, and its content container carries the clearance for it — e.g. `padding: '64px 20px 100px'`. A builder porting that prototype copies the number, then reaches for `.ignoresSafeArea()` to make it line up. On the device it was ported for, it looks right. On any other device it is wrong, and the platform mechanism that would have made it right is switched off. In a controlled test this leaked into **two of seven** builds — including one whose contract explicitly said *"faked status bar / bezel — the OS provides these"*. A file-level DO-NOT-PORT list does not stop it, because **what leaks is a value, not a file**.
+
+**⚠️ This check must run before the Token check below, and it overrides it.** A `SCAFFOLD-INSET` value must be **deleted** in favour of `.safeAreaInset` / `.toolbar`, **never rounded onto the spacing scale.** See the warning in that check.
+
+Reference implementation: `n3_scaffold_leak.py` in this plugin's `scripts/design-detectors/` — also vendored into handed-off repos at `scripts/design-gates/` (validated: hits both known-leaking builds, clean on both known-good ones).
 
 **Token 检查**：搜索硬编码 `.padding(N)` 或 `.spacing(N)`，N 不是 §1 canonical 间距刻度 set 成员即标记（set-membership 唯一判据，非 multiplier）。
+
+> **⚠️ 先问「这个数该不该存在」，再问「这个数在不在刻度上」。**
+> 本检查的判据是 set-membership，它对**脚手架泄漏是有害的**，实测两次：
+> - `.padding(.top, 64)` —— **64 ∈ canonical set**，直接合规放行。而它可能正是原型假设备外框的净空。
+> - `.padding(.bottom, 100)` —— 100 ∉ set，被标记，建议「用 AppSpacing token」。**照办就把 100 圆成 96 —— bug 原样出货，还多了一个 token 名字。诊断方向和真实病因正好相反。**
+>
+> 所以：命中 `SCAFFOLD-INSET`（上面那条）的 padding，**不进本检查** —— 它要被删掉，不是被对齐。
 
 #### A2. 颜色合规性
 
@@ -115,6 +156,26 @@ For each UI file provided, check the following dimensions:
 
 #### B1. 状态完整性
 
+**先跑活性检查（确定性，🔴），再看分支覆盖。** 分支建全了但驱动它们的状态永远不变，是**看起来最完整的那一种坏法**。
+
+**B1a — 状态活性（`DEAD-STATE`，🔴）**
+
+对每一个 `@State` / `@Published` / `@Observable var X`，在模块内 grep 它的**写点**：
+
+```
+\bX\s*=[^=]     |     $X（binding 传出去）     |     X.toggle()     |     X.append     |     X.removeAll
+```
+
+**写点 = 0 → 🔴 `DEAD-STATE: <View>.<X>`** —— 它是一个戴着状态注解的常量。
+
+> **为什么这条必须先跑。** 一个四态枚举，四个分支全建了、全编译、全能渲染 —— 但驱动它的 `@State` 从声明之后再没被赋值过。**它对截图是完整的，对渲染 diff 是完整的，对「你处理了所有状态吗？」这个 checklist 也是完整的。** 只有一个分支永远可达，其余三个是死代码。
+> 实测：一次受控对比里，**拿到最完整信息、且手握设计契约的那一臂**，它的 `@State readiness` 声明后 **0 次赋值** —— 而它的 mock 数据层四个状态一应俱全。下面的 B1 分支表会判它 pass。
+>
+> 参考实现：`n2_dead_state.py`（本插件 `scripts/design-detectors/`；交接过的 repo 另有 vendored 拷贝在 `scripts/design-gates/`）。
+> 同一缺陷在 `dev-workflow:flow-tracer` 的 break 表里叫 `field-never-written`（`field-never-read` 的镜像）。
+
+**B1b — 分支覆盖**
+
 检查每个异步操作（网络请求、数据库查询）是否处理四态：
 
 | 状态 | 代码特征 |
@@ -123,6 +184,8 @@ For each UI file provided, check the following dimensions:
 | Success | 正常内容展示 |
 | Error | 错误视图 + 明确下一步 |
 | Empty | `ContentUnavailableView` 或空状态占位 |
+
+⚠️ **本表只证明分支「建了」，不证明分支「进得去」。** 判 pass 之前，B1a 必须先绿。
 
 **常见问题**：
 - ❌ 只处理 success，无 loading/error/empty

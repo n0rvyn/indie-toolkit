@@ -53,7 +53,13 @@ Verdict: {pass | fail}
 检查文件数: {N}
 ```
 
-Verdict rule: any 🔴 issue = `fail`; otherwise `pass`.
+Verdict rule: **advisory** — report `needs-attention` when 🔴 issues exist, never `fail`.
+
+> **Why this is not a blocking gate.** Every check in this file is a *judgment*: is the hierarchy clear, is the palette coherent, does this feel generic. Those are real and worth reporting, but they are the reviewer's opinion, and an opinion that blocks a merge will be argued with, overridden, and eventually ignored — taking the genuinely load-bearing findings down with it.
+>
+> **Blocking belongs to checks that cannot be argued with.** `n1_paradigm` (the contract said `never a hand-rolled Path`, and here is one, at this line). `n2_dead_state` (this `@State` has zero writes). `n3_scaffold_leak` (`.ignoresSafeArea()` and a literal 64pt inset in the same View). `n4_contract_lint` (this reference points at a heading that does not exist). Those fail the build. This file advises.
+>
+> Keep the 🔴/🟡 severities — they rank the report. They no longer decide the verdict.
 
 ## Process
 

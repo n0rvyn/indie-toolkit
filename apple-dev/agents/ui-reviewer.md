@@ -50,7 +50,7 @@ Two rules on how to grep them, both learned from a real miss:
 1. **Scope the symbol to the family the rule names.** `never a hand-rolled Path` forbids `Path` **inside charts**, not everywhere — an icon legitimately draws a `Path`. Scan the brace-matched body of types whose names tokenize to the rule's subject (`Spark`, `MiniBars`, `Chart`); tokenize CamelCase first (`SparkleIcon` → `[sparkle, icon]` ≠ `[spark]`). A project-wide `grep 'Path {'` flags every custom icon, and a check that cries wolf gets ignored.
 2. **A line that names only a concept** ("don't make it feel generic") **is not mechanically checkable.** List it under "Cannot verify mechanically" rather than inventing a regex for it.
 
-Reference implementation of both rules: `apple-dev/scripts/design-detectors/n1_paradigm.py` (validated on a corpus where the naive rule false-positived a known-clean target).
+Reference implementation of both rules: `n1_paradigm.py` in this plugin's `scripts/design-detectors/` — also vendored into handed-off repos at `scripts/design-gates/` (validated on a corpus where the naive rule false-positived a known-clean target).
 
 > **Why this section exists.** `project-kickoff/SKILL.md:518` states that `design-rules.md` is written *to feed this reviewer* — but until now no reviewer file mentioned it, so the file was produced and never read. A design contract that says `charts → Swift Charts, never hand-rolled Path` was, in a controlled test, the **only** thing separating a build that used `import Charts` from one that hand-rolled the chart with `Path`. The two render **pixel-identically**, so no screenshot, render-diff, or visual review can ever catch it. This grep is the only thing that can.
 
@@ -100,7 +100,7 @@ Both present → **🔴 `SCAFFOLD-INSET`**. Report the two line numbers and ask 
 
 **⚠️ This check must run before the Token check below, and it overrides it.** A `SCAFFOLD-INSET` value must be **deleted** in favour of `.safeAreaInset` / `.toolbar`, **never rounded onto the spacing scale.** See the warning in that check.
 
-Reference implementation: `apple-dev/scripts/design-detectors/n3_scaffold_leak.py` (validated: hits both known-leaking builds, clean on both known-good ones).
+Reference implementation: `n3_scaffold_leak.py` in this plugin's `scripts/design-detectors/` — also vendored into handed-off repos at `scripts/design-gates/` (validated: hits both known-leaking builds, clean on both known-good ones).
 
 **Token 检查**：搜索硬编码 `.padding(N)` 或 `.spacing(N)`，N 不是 §1 canonical 间距刻度 set 成员即标记（set-membership 唯一判据，非 multiplier）。
 
@@ -171,7 +171,7 @@ Reference implementation: `apple-dev/scripts/design-detectors/n3_scaffold_leak.p
 > **为什么这条必须先跑。** 一个四态枚举，四个分支全建了、全编译、全能渲染 —— 但驱动它的 `@State` 从声明之后再没被赋值过。**它对截图是完整的，对渲染 diff 是完整的，对「你处理了所有状态吗？」这个 checklist 也是完整的。** 只有一个分支永远可达，其余三个是死代码。
 > 实测：一次受控对比里，**拿到最完整信息、且手握设计契约的那一臂**，它的 `@State readiness` 声明后 **0 次赋值** —— 而它的 mock 数据层四个状态一应俱全。下面的 B1 分支表会判它 pass。
 >
-> 参考实现：`apple-dev/scripts/design-detectors/n2_dead_state.py`。
+> 参考实现：`n2_dead_state.py`（本插件 `scripts/design-detectors/`；交接过的 repo 另有 vendored 拷贝在 `scripts/design-gates/`）。
 > 同一缺陷在 `dev-workflow:flow-tracer` 的 break 表里叫 `field-never-written`（`field-never-read` 的镜像）。
 
 **B1b — 分支覆盖**

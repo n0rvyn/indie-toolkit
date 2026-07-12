@@ -40,8 +40,11 @@ This skill stands at the **only** gate the contract passes through on its way ou
 ### 1b. Run the contract lint. **RED > 0 → stop. Do not write the manifest.**
 
 ```sh
-python3 apple-dev/scripts/design-detectors/n4_contract_lint.py <contract-dir>
-# exit 0 = ship it   ·   exit 1 = the contract is broken, fix it before handing off
+# The lint ships inside THIS plugin — resolve it from the plugin root, never from
+# a repo-relative path (your CWD is the handoff project, not the toolkit repo).
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/design-detectors/n4_contract_lint.py" <contract-dir>
+# exit 0 = ship it · exit 1 = the contract is broken, fix it before handing off
+# exit 2 = the lint DID NOT RUN — say so explicitly; never treat it as a pass
 ```
 
 Four predicates, all pure grep / set-difference — no judgment, no model:
@@ -63,7 +66,28 @@ The Build Contract block below is appended to the target repo's `CLAUDE.md`. **R
 
 If FLOW.md was emitted from the prototype's router with the dead-edge self-check (it should be), it is already verified-complete intent.
 
-## Step 2 — Append the Build Contract to the repo's CLAUDE.md
+## Step 2 — Vendor the gates, then append the Build Contract to the repo's CLAUDE.md
+
+### 2a. Copy the four code-gates INTO the target repo
+
+The Build Contract below tells every future builder to run these gates. That promise
+must hold **forever, on any machine, with no plugin installed** — a gate the project
+cannot run is an agent's say-so. So the gates travel with the project:
+
+```sh
+mkdir -p scripts/design-gates
+cp "${CLAUDE_PLUGIN_ROOT}"/scripts/design-detectors/common.py \
+   "${CLAUDE_PLUGIN_ROOT}"/scripts/design-detectors/n1_paradigm.py \
+   "${CLAUDE_PLUGIN_ROOT}"/scripts/design-detectors/n2_dead_state.py \
+   "${CLAUDE_PLUGIN_ROOT}"/scripts/design-detectors/n3_scaffold_leak.py \
+   "${CLAUDE_PLUGIN_ROOT}"/scripts/design-detectors/n4_contract_lint.py \
+   scripts/design-gates/
+```
+
+They are stdlib-only Python, ~2k lines total, and they exit `0` clean / `1` findings /
+`2` could-not-run. Nothing to install, nothing to update.
+
+### 2b. Append the Build Contract
 
 Append (never overwrite) this section. Fill the `{…}` from Step 1. It compresses the two skills' "Implementation loop" sections — it is not new instruction, just the pointer + the gates.
 
@@ -97,12 +121,12 @@ then satisfy DESIGN's states + material for it.
   **And delete the values the scaffolding forced.** The prototype's fake bezel gave the content container a clearance (`padding: '64px 20px 100px'`). Deleting `ios-frame.jsx` does not delete that padding — it stays behind in the screen container and gets ported as `.padding(.top, 64)` + `.ignoresSafeArea()`. **A file-level DO-NOT-PORT list does not stop a value-level leak**; in a controlled test this leaked into two of seven builds, including one whose contract explicitly named the fake bezel. List the geometry constants the scaffolding imposed, and name the native replacement (`safeAreaInset`, `.toolbar`) for each.
 
 ### Done = every gate green (a script decides, not you)
-- **CONTRACT lint:** `python3 apple-dev/scripts/design-detectors/n4_contract_lint.py <contract-dir>` → **exit 0**. Dangling anchors = 0 · ghost symbols = 0 · mirror difference = ∅ · every colour ladder resolves in **both** light and dark.
+- **CONTRACT lint:** `python3 scripts/design-gates/n4_contract_lint.py <contract-dir>` → **exit 0**. Dangling anchors = 0 · ghost symbols = 0 · mirror difference = ∅ · every colour ladder resolves in **both** light and dark.
 - **FLOW coverage:** `{./flow-coverage.sh}` → nodes implemented = N/N · `grep -rc "FLOW-STUB"` = 0 · dead edges = 0
 - **PARADIGM:** every `never X` / `always X` line in the Do's and Don'ts below has been grepped against the target sources → 0 violations.
-  `python3 apple-dev/scripts/design-detectors/n1_paradigm.py --contract <contract-dir> --arm <target>` — the assertions are compiled from the contract's `## Platform Mapping` table, not hardcoded, so it needs the contract path.
-- **STATE LIVENESS:** every `@State` / `@Published` has ≥ 1 write → 0 `DEAD-STATE`. (`n2_dead_state.py`)
-- **SCAFFOLD:** no View has `.ignoresSafeArea()` on a content container together with a literal edge padding ≥ 48. (`n3_scaffold_leak.py`)
+  `python3 scripts/design-gates/n1_paradigm.py --contract <contract-dir> --arm <sources-root>` — the assertions are compiled from the contract's `## Platform Mapping` table, not hardcoded, so it needs the contract path.
+- **STATE LIVENESS:** every `@State` / `@Published` has ≥ 1 write → 0 `DEAD-STATE`. (`scripts/design-gates/n2_dead_state.py --arm <sources-root>`)
+- **SCAFFOLD:** no View has `.ignoresSafeArea()` on a content container together with a literal edge padding ≥ 48. (`scripts/design-gates/n3_scaffold_leak.py --arm <sources-root>`)
 
 > **Why these are gates and not suggestions.** Each one catches a defect class that renders **pixel-identically to a correct build**: a chart hand-rolled with `Path` looks exactly like a `Swift Charts` chart; a dead `@State` renders its default branch perfectly; a ported bezel clearance lines up on the one device it was ported from. **No screenshot, render-diff, or visual review can see any of them.** A grep can see all three.
 <!-- ───────── END Build Contract ───────── -->

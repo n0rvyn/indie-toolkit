@@ -257,23 +257,28 @@ The five matrices live inside the audit doc as sections 1–5; they are not sepa
 Before reading a single line of the design doc, run these. They take seconds, they need no judgment, and each one catches a defect class that **renders pixel-identically to a correct build** — meaning no amount of careful looking, by you or by a human, will ever find it.
 
 ```sh
-DET=apple-dev/scripts/design-detectors
+# Resolve the detectors from THIS plugin's root — never from a repo-relative path.
+# (Your CWD is the user's project; `apple-dev/…` does not exist there. A handed-off
+# project also carries a vendored copy at scripts/design-gates/ — either works.)
+DET="${CLAUDE_PLUGIN_ROOT}/scripts/design-detectors"
+[ -d "$DET" ] || DET=scripts/design-gates
+[ -d "$DET" ] || { echo "⚠️ detectors not found — report Step 0 as NOT RUN, do not call it clean"; }
 
 # 0a. The contract itself. If this fails, STOP — you are about to audit code
 #     against a broken ruler.
-python3 $DET/n4_contract_lint.py <contract-dir>   || exit 1
+python3 "$DET"/n4_contract_lint.py <contract-dir>   || exit 1
 
 # 0b. The code, against what the contract actually said.
 #     n1 compiles its assertions FROM the contract's ## Platform Mapping table — it has
 #     no hardcoded rule list, so it needs to be told where the contract is.
-python3 $DET/n1_paradigm.py     --contract <contract-dir> --arm <target>
-python3 $DET/n2_dead_state.py   --arm <target>    # a @State with zero writes: every branch built, one reachable
-python3 $DET/n3_scaffold_leak.py --arm <target>   # the prototype's fake-bezel clearance, ported as a literal
+python3 "$DET"/n1_paradigm.py     --contract <contract-dir> --arm <target>
+python3 "$DET"/n2_dead_state.py   --arm <target>    # a @State with zero writes: every branch built, one reachable
+python3 "$DET"/n3_scaffold_leak.py --arm <target>   # the prototype's fake-bezel clearance, ported as a literal
 
 # 0c. If you have a render and a reference (device screenshot + prototype render,
 #     same resolution), also:
-python3 $DET/n5_block_layout.py  --render R --ref F   # is this even the right composition?
-python3 $DET/n6_surface_color.py --render R           # does the glass hit its declared surface colour?
+python3 "$DET"/n5_block_layout.py  --render R --ref F   # is this even the right composition?
+python3 "$DET"/n6_surface_color.py --render R           # does the glass hit its declared surface colour?
 ```
 
 **Every finding goes into the Gap List, or is explicitly waived with a reason.** A detector finding you neither fixed nor waived is a finding you suppressed.

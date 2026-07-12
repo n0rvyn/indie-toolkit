@@ -16,9 +16,17 @@ description: Supporting strategy file Read by the plan-verifier and implementati
 **这一步是脚本，不是目视。** 在拿设计文档去判计划「忠实不忠实」之前，先证明这份设计文档本身是自洽的：
 
 ```sh
-python3 apple-dev/scripts/design-detectors/n4_contract_lint.py <设计文档所在目录>
-# exit 0 → 基准可用，继续 DF-1
-# exit 1 → 基准本身是坏的。**停。** 报告契约缺陷，不要继续判计划。
+# 定位 lint：交接过的项目自带 vendored 拷贝（handoff-manifest Step 2a 放进去的）。
+# 你的 CWD 是被审项目，不是 toolkit repo —— 禁止写 apple-dev/… 这种 repo 相对路径。
+if [ -f scripts/design-gates/n4_contract_lint.py ]; then
+  python3 scripts/design-gates/n4_contract_lint.py <设计文档所在目录>
+  # exit 0 → 基准可用，继续 DF-1
+  # exit 1 → 基准本身是坏的。**停。** 报告契约缺陷，不要继续判计划。
+  # exit 2 → lint 没跑成。按「未跑」处理，不是 pass。
+else
+  echo "⚠️ 契约 lint 未跑 — 项目没有 scripts/design-gates/（早于 vendored gates 的交接）"
+  # 把这一行原样写进报告的 DF-0 结论。禁止把「没跑」写成「通过」。
+fi
 ```
 
 四条谓词全是纯 grep / 集合差：悬空锚点 · 幽灵符号 · 镜像差集 · 色阶明暗完整性。

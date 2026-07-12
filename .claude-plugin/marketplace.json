@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Indie toolkit with iOS development, macOS tooling, and more",
-    "version": "1.55.3"
+    "version": "1.56.0"
   },
   "plugins": [
     {
       "name": "dev-workflow",
       "source": "./dev-workflow",
       "description": "Cross-stack development workflow: brainstorm, planning, phase orchestration, execution, review, debugging, design analysis, commits, and session management",
-      "version": "2.34.3",
+      "version": "2.35.0",
       "category": "development",
       "tags": [
         "workflow",
@@ -29,7 +29,7 @@
       "name": "apple-dev",
       "source": "./apple-dev",
       "description": "Complete iOS/macOS/iPadOS development workflow plugin for Claude Code — design parity, visual audit (per-View screenshots, light/dark, macOS + iOS), runtime feature verification (real e2e, not mock), and window-shot driving",
-      "version": "1.18.1",
+      "version": "1.18.2",
       "category": "development",
       "tags": [
         "ios",

@@ -88,25 +88,9 @@ Downstream repos must pin to a specific tag, not `@main`:
 - Recommended: `@workflows/v1` (mutable major version, picks up non-breaking changes within v1)
 - Strict: `@<sha>` or `@workflows/v1.0.0` (if immutable patch tags are introduced in the future)
 
-### auto-version Contract
+### Input Contracts
 
-| input | type | required | description |
-|---|---|---|---|
-| `plugins` | string | yes | Space-separated list of plugin directory names |
-| `marketplace_tag_prefix` | string | yes | Marketplace metadata tag prefix (e.g., `ops-toolkit-`) |
-| `marketplace_path` | string | no | Path to marketplace.json, default `.claude-plugin/marketplace.json` |
-
-### release-plugin Contract
-
-| input | type | required | description |
-|---|---|---|---|
-| `target` | string | yes | Plugin name or `all` |
-| `bump` | string | yes | `patch` / `minor` / `major` |
-| `plugins_when_all` | string | no | Space-separated list when target=all |
-| `update_marketplace` | boolean | no | Default true |
-| `create_tag` | boolean | no | Default true |
-| `marketplace_tag_prefix` | string | yes | Same as above |
-| `marketplace_path` | string | no | Same as above |
+Read `on.workflow_call.inputs` in `.github/workflows/auto-version.yml` and `release-plugin.yml` — that is the authoritative contract (names, types, required flags, defaults).
 
 ### Upgrade Impact
 

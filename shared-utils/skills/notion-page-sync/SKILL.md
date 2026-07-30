@@ -4,6 +4,10 @@ description: Use this skill to sync local markdown files or a directory to Notio
 disable-model-invocation: false
 model: haiku
 context: fork
+# background: false — apple-dev:update-asc-docs Step 4 calls this and reports the
+# sync outcome in the same turn.
+# `background` defaults to true, which returns only the agent name.
+background: false
 allowed-tools: Bash(NOTION_TOKEN=*), Bash(python3*), Read, Write, Edit
 ---
 

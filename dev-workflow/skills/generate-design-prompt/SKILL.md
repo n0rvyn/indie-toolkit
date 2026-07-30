@@ -4,6 +4,10 @@ description: "Manual /generate-design-prompt invocation only (auto-routing disab
 disable-model-invocation: true
 model: sonnet
 context: fork
+# background: false — project-kickoff and brainstorm Step 6 feed the generated
+# prompt into the next step of the same flow.
+# `background` defaults to true, which returns only the agent name.
+background: false
 ---
 
 > **Why `disable-model-invocation`:** This skill is gated to manual `/generate-design-prompt` invocation only — the routing model will not auto-fire it on keyword matches. Reason: the output is text the user pastes into an external design tool, so the user always has a specific design tool / refinement intent that's clearer when they invoke the slash command explicitly. (Note: this flag controls Claude Code's auto-routing, not whether the skill invokes AI internally.)

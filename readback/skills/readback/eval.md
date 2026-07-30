@@ -9,10 +9,11 @@
 - "echo my intent"
 
 ## Negative Trigger Tests
-- "fix the bug" (→ handled by user-prompt-submit hook injecting a mandate string — model dispatches intent-echoer directly; not the /readback skill)
+- "fix the bug" (→ nothing fires: no ambiguous referent. Schema v3 dropped action-verb triggering; the automatic hook path needs a demonstrative-without-owner, an unlocated screenshot, or an unbounded scope verb)
+- "把这个字号改小" (→ user-prompt-submit hook injects a one-line `[readback-hint]`; the model states its reading and keeps working — it does NOT dispatch intent-echoer and does NOT enter this skill)
 - "review my code" (→ /review-execution)
 - "/run-phase" (→ orchestration, skip readback)
-- "rename this variable" (→ trivial, skip)
+- "rename this variable" (→ nothing fires: concrete target, no ambiguity)
 
 ## Output Assertions
 - [ ] Output dispatches intent-echoer agent (not direct LLM generation)

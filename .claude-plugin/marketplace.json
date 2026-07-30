@@ -121,7 +121,7 @@
     {
       "name": "readback",
       "source": "./readback",
-      "description": "Before-action read-back protocol — model must restate intent in plain language before code/plan changes. Inspired by aviation/medical closed-loop communication.",
+      "description": "Before-action read-back protocol. On an ambiguous request the model states which reading it picked in one line and keeps working (non-blocking); /readback and /fix-bug run the full plain-language echo and wait. Inspired by aviation/medical closed-loop communication.",
       "version": "0.3.1",
       "category": "development",
       "tags": [

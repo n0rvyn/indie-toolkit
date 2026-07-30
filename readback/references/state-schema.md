@@ -6,7 +6,7 @@ Schema version 2 (introduced 2026-05-17). v1 schema with `session_id: "unknown"`
 
 - Location: `<project_root>/.claude/readback-state.json`
 - Created by: `/readback` skill, `/fix-bug` Step pre-0, `/write-plan` Step 2.5
-- Read by: `pre-tool-use.sh` hook, `stop.sh` hook, `user-prompt-submit.sh` hook (state-aware short-circuit), `/readback status` path
+- Read by: `pre-tool-use.sh` hook, `stop.sh` hook, `/readback status` path, and `user-prompt-submit.sh` — but note that as of schema v3 the latter reads **only** `user_confirmed`, with no TTL and no session-id comparison. v2's two-phase identity logic existed to decide whether a *block* still applied; v3's automatic path does not block, so all it needs to know is whether an explicit readback already owns the turn. The two-phase model below still governs `pre-tool-use.sh` and `stop.sh`.
 - Stamped by: `pre-tool-use.sh` hook (writes `session_id` from stdin into the file on first read of a `user_confirmed=true` state)
 - Cleanup: not auto-deleted; stale state is handled by TTL (pending) or session-id mismatch (confirmed)
 

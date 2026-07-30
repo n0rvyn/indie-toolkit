@@ -138,7 +138,13 @@ SHOULD_HINT=$(echo "$STATE" | cut -d: -f2)
 
 # ── Emit hint if warranted ────────────────────────────────────────────────────
 if [ "$SHOULD_HINT" = "1" ]; then
-  echo "[cost-hint] ${COUNT} mechanical探查 detected; consider Agent(subagent_type=Explore) for batching — use general-purpose only if you will act on the results (see CLAUDE.md Bash 路由)" >&2
+  # Report the count only. The routing decision (batch into an Agent dispatch or keep
+  # going inline) is the model's to make: current models delegate readily on their own,
+  # and a standing "you should dispatch" line restates judgment rather than supplying
+  # information. What the model genuinely cannot see is the accumulated count, so that
+  # is all this emits. The shape list scopes the number — this counter is blind to every
+  # other read-only probe, so an unqualified "Nth probe" would overstate its coverage.
+  echo "[cost-hint] ${COUNT} read-only Bash probes (sqlite3-SELECT / curl-GET / grep -r / find) in the last 30 min." >&2
 
   # Append to log
   ISO=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")

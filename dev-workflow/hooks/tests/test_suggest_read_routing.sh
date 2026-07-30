@@ -89,7 +89,9 @@ setup_tc
 LARGE=$(make_large)
 invoke_hook "$LARGE"
 invoke_hook "$LARGE"
-if [ "$EXIT_CODE" -eq 0 ] && echo "$STDERR_CAPTURE" | grep -qE "(Read pollution|2× in this session)"; then
+# Assertion tracks the fact-only hint wording (the routing advice was removed:
+# the count is information the model lacks, the tool choice is its own judgment).
+if [ "$EXIT_CODE" -eq 0 ] && echo "$STDERR_CAPTURE" | grep -qE "has been Read 2×"; then
   pass "TC4 (same file Read 2× → repeat-style hint)"
 else
   fail "TC4 (repeat file): exit=$EXIT_CODE, stderr=[$STDERR_CAPTURE]"

@@ -141,12 +141,15 @@ BASENAME=$(basename "$FILE_PATH" 2>/dev/null || echo "$FILE_PATH")
 
 case "$HINT_TYPE" in
   repeat)
-    echo "[cost-hint] Read on ${BASENAME} is the ${SAME_COUNT}× in this session — Read pollution risk. If intent is Verify, use Grep; if Extract, dispatch Agent. (See CLAUDE.md 'Read 路由')" >&2
+    # Fact only — see the rationale comment in suggest-agent-dispatch.sh. The
+    # accumulated repeat count is what the model cannot see; which tool to reach for
+    # next is its call.
+    echo "[cost-hint] ${BASENAME} has been Read ${SAME_COUNT}× in the last 30 min." >&2
     ISO=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")
     echo "${ISO} same-file-read-${SAME_COUNT}x file=${FILE_PATH}" >> "$LOG_FILE" 2>/dev/null || true
     ;;
   large)
-    echo "[cost-hint] Large Read on ${BASENAME} (${LINE_COUNT} lines); ${LARGE_COUNT} large Reads in window. Triage intent before reading: Verify→Grep / Extract→Agent / Skim→ls / Understand-context→Read (the only legitimate main-line Read). See CLAUDE.md 'Read 路由'." >&2
+    echo "[cost-hint] ${BASENAME} is ${LINE_COUNT} lines; ${LARGE_COUNT} Reads over 300 lines in the last 30 min." >&2
     ISO=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")
     echo "${ISO} large-read-cluster count=${LARGE_COUNT} latest_file=${FILE_PATH} lines=${LINE_COUNT}" >> "$LOG_FILE" 2>/dev/null || true
     ;;

@@ -4,6 +4,10 @@ description: "Internal tool-wrapper that renders a SwiftUI #Preview to a downsam
 user-invocable: false
 model: haiku
 context: fork
+# background: false — run-phase Step 5.5 loops per view and must read
+# <outputDir>/<name>.result.json before advancing to the next view.
+# `background` defaults to true, which would return before the file exists.
+background: false
 ---
 
 <!-- cost-posture rationale:

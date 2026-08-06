@@ -1,6 +1,6 @@
 # self-pacing — design invariants (maintainer note)
 
-Not loaded at runtime. Read this before changing the stop / handoff / resume behavior. Each invariant looks removable until you trace why it exists; the three are interlocked — removing or "enhancing" one breaks the resume model.
+Not loaded at runtime. Read this before changing the stop / handoff / resume behavior. Each invariant looks removable until you trace why it exists; the first three are interlocked — removing or "enhancing" one breaks the resume model. Invariant 4 is the opposite hazard: it exists because the stop policy drifts toward stopping if nobody defends the continue side.
 
 ## 1. A STOP is a complete handoff the instant it fires
 
@@ -34,6 +34,48 @@ The warm "did you reply in time?" window a timer would buy is already provided *
 
 This is why "No timer, no background scheduling" is a Hard Rule in SKILL.md — it is a consequence of the architecture, not a tunable.
 
+## 4. Revising a plan is not auto-fixing — and stopping is enumerated, not judged
+
+Two halves of one invariant. Both defend the *continue* side of the policy, which has no natural constituency: an unnecessary stop always looks defensible after the fact, so the table drifts toward stopping unless this is written down.
+
+**(a) `must-revise` is not a severe failure.** The `no-auto-fix` rule (invariant-adjacent, Hard Rules) is grounded in two facts: AFK repo mutation is an unauthorized change, and AFK auto-diagnosis is confidently wrong. Trace them against plan revision and neither holds:
+
+| no-auto-fix's premise | holds for source code | holds for a plan file |
+|---|---|---|
+| changing it alters product behavior | yes | no — it is text in `docs/06-plans/` |
+| the loop is unbounded / no defined exit | yes (a failing test can be "fixed" forever) | no — verify-plan Step 3 caps it at 2 cycles with a defined exit |
+| resolving it needs the user's judgment | often | the items that do surface as `blocking` DPs, which stop on their own row |
+
+Classifying `must-revise` as severe produced the observed failure: a guide-mode run that writes its own phase plan at Step 3.1 halts on its first verification round, handing off before one line of code exists. The plan-authoring inner loop was mistaken for a run failure. If you are about to "restore" `must-revise` to the severe row, you are re-introducing that.
+
+**(b) There is no default stop.** The terminal conditions are a closed enumeration (the Stop Policy rows, or green). Do **not** add a judged terminal like "the best state reachable in this session", "good enough to hand off", or a quality bar the model scores itself against. Such a criterion is unfalsifiable and always satisfiable — every premature stop can be narrated as the best attainable state — so it degrades into "stop whenever it feels hard". `Conservative default` (ambiguous → blocking) is deliberately scoped to *severity classification of something that already happened*; it is not a bias toward stopping, and widening it to cover "should I keep working" reproduces (b).
+
+**(c) This invariant is inherited, not invented.** Do not read (a)/(b) as filling a gap in the user-wide CLAUDE.md. That file already governs stopping directly, in two rules that both outrank a skill file:
+
+- 行为约束 →「资源不授权跳步」:「…不是跳过流程步骤、**中断执行**、或建议"先保存进度"的理由…禁止以上下文消耗为由主动暂停或拆分正在进行的任务」
+- 禁止行为 →「把还在跑的验证写成「未完成 / 待办 / 下轮再看」交回用户」:「先把它**跑到出结论（通过 / 失败 / 一个具体的阻塞点）**…真阻塞才允许写，并写清阻塞在哪一步、解除条件是什么」
+
+The second is already the exact shape of this invariant: terminate on an enumerated outcome — pass / fail / **one concrete blocking point** — and when you do hand back, state where it blocked and what unblocks it, which is precisely the handoff card's `Why` + `Next action`. By CLAUDE.md's own conflict order (禁止行为 > 行为约束 > … > 计划细节), it already outranks this skill's Stop Policy; a premature stop was a rule violation before this file existed.
+
+What was missing was never a rule. It was this skill's **explicit inheritance** of one: the Stop Policy table restated severity in local terms and, in restating it, silently dropped the continue side — so a run reading only SKILL.md saw `When in doubt, stop` with nothing opposing it. The three-gate check in SKILL.md is the local instrument for the same constraint (its interactive twin, CLAUDE.md 行为约束 →「重大决策提问前的三关自检」, governs *asking*; AFK the same threshold has to be applied to *stopping*, because the user is not there to answer either way). Keep both anchored to the CLAUDE.md rules above; if they are ever reworded upstream, reword here too rather than letting this file drift into a competing local doctrine.
+
+## 5. Two bounded loops, drawn on authorization — not on confidence
+
+Reversal of the earlier "no bounded retry" position, plus the in-scope repair added alongside it. Both were approved deliberately; do not silently re-tighten them.
+
+| Loop | Cap | What it mutates | Escalates to |
+|---|---|---|---|
+| Re-run a red check, byte-identical | 1 | nothing | severe → STOP on the second red |
+| Repair a `must-fix` inside the plan's declared `**Files:**` | 1 | only files the user authorized at Step 2 | severe → STOP if still `must-fix`, or if the repair needs a file outside the declared set |
+
+**Why the original rejection was wrong.** It read "masks real failures" — but a flake written into the run log and the final review is the opposite of masked. The rejection conflated *suppressing* a signal with *recording* one. The real constraint was never "never re-run"; it was "never let a failure disappear," and logging satisfies that.
+
+**Why the line sits at authorization, not at confidence.** The tempting formulation is "auto-fix when confident." That is unfalsifiable and expands under pressure — the same defect as a judged terminal in invariant 4(b). Authorization is checkable: a re-run changes zero bytes, and an in-scope repair changes only files the user named when approving the plan at Step 2. Everything past the declared `**Files:**` has no authorization behind it, which is exactly what `no-auto-fix` protects. That rule is unchanged; these two loops sit inside it, not around it.
+
+**What motivated the change.** Both are the common mid-run death causes for an AFK run: one flaky test, or one `must-fix` on code the run itself just wrote, ends a multi-hour run and the user returns to nothing delivered. A driver that reliably dies before finishing a phase is not a conservative driver, it is a broken one. Read this together with invariant 4: 4 keeps the *policy* from drifting toward stopping; 5 keeps the *machinery* from doing the same.
+
+**If you are about to remove these:** the failure you are worried about is already covered — a second red still stops, an out-of-scope repair still stops, diagnosis is still out of scope, and every loop iteration is in the run log. Removing them buys no safety and restores the death causes.
+
 ## Rejected enhancement ideas (and why)
 
 Evaluated and rejected as over-design relative to the AFK user's intent (`/self-pacing` already implies: verified plan exists, long run expected, don't interrupt unless truly blocked):
@@ -41,5 +83,5 @@ Evaluated and rejected as over-design relative to the AFK user's intent (`/self-
 - **Token budget / runaway cap** — contradicts "I expect a long run." AFK = long by intent.
 - **Scope-drift check at phase seams** — relies on the user editing the dev-guide mid-run, which they don't after authorizing and walking away.
 - **Read-only diagnosis on failure cards** — the skill deliberately makes diagnosis the user's; auto-diagnosis AFK risks confident-wrong.
-- **Bounded transient-failure retry** — "no blind retry" is deliberate; masks real failures.
 - **Wait-then-auto-handoff timer** — see invariant 3.
+- ~~**Bounded transient-failure retry**~~ — **reversed 2026-08-06 with the owner's explicit approval; see invariant 5.** Kept listed rather than deleted: the original rejection ("masks real failures") is a reasonable-sounding argument that will be re-derived by the next reader, so the counter-argument needs to stay attached to it.

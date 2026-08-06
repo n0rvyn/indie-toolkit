@@ -1,6 +1,6 @@
 ---
 name: asc-listing
-description: "Use when preparing ASC store listing materials, or the user says 'ASC listing', 'asc 上架材料', 'ASC 填写', 'app store listing', 'privacy labels'. Performs item-by-item App Store Connect submission material check and guidance. Keywords: ASC, App Store Connect, submission, privacy labels, screenshots, review. Not for 代码合规检查 — use /asc-submit-preview."
+description: "Use when preparing ASC store listing materials, or the user says 'ASC listing', 'asc 上架材料', 'ASC 填写', 'app store listing', 'privacy labels'. Performs item-by-item App Store Connect submission material check and guidance. Keywords: ASC, App Store Connect, submission, privacy labels, screenshots, review. Not for 代码合规检查 — use /asc-submit-preview. Not for 关键词研究 / 商店搜索排名 / 商标能否进名称 — use /aso-research (this skill guides what to type in each ASC box; that one decides what the text should be, from pulled data)."
 ---
 
 # App Store Connect 上架审查
@@ -22,6 +22,8 @@ description: "Use when preparing ASC store listing materials, or the user says '
 **模式 C — 特定部分**：用户问某个具体字段或部分。加载对应 reference 段落回答。
 
 > 历史说明：早期版本含"代码合规审计"模式，已迁移到 `/asc-submit-preview`。本 skill 不再处理代码合规，专注 ASC 后台材料（隐私标签 / 截图 / 描述 / 价格 / 关键词）。
+
+> **与 `/aso-research` 的分工**：本 skill 管「每个框该怎么填、别漏填」；名称 / 副标题 / 关键词该填**什么文字**，需要实拉商店数据才能定 —— 那是 `/aso-research`。用户问到关键词该写什么、为什么搜不到、第三方商标能不能用时，转过去。
 
 ### Step 2: 加载参考资料
 

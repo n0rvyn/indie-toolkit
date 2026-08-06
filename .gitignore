@@ -31,3 +31,6 @@ minimax-output/
 # User secrets: never commit .env files (only .env.example)
 **/.env
 !**/.env.example
+
+# aso-research collector cache
+apple-dev/skills/aso-research/scripts/cache/

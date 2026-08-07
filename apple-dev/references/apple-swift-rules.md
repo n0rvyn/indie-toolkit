@@ -105,7 +105,7 @@ Write Code -> Apple MCP BuildProject（主）/ swift build·xcodebuild build（f
 <!-- section: 容器宽度意图（条件触发） keywords: container width, maxWidth, infinity, frame, adaptive layout -->
 ## 容器宽度意图（条件触发）
 
-触发条件：创建或修改的 View 渲染为视觉容器（有 `.background()` 或 `.clipShape()` 或 `.shadow()`）。
+触发条件：创建或修改的 View 渲染为视觉容器 —— 有 `.background()` / `.clipShape()` / `.shadow()` / `.border()` / `.overlay(strokeBorder)` 中任一。（后两个来自 2026-08-07 前全局 CLAUDE.md 的同名规则：两份长期并存、触发条件已分叉，合并时以本节为准并补上它独有的这两个 token —— 一个只有描边、没有背景色的卡片同样是视觉容器。）
 不触发：List/Form 内的 View（系统管理宽度）。有意 content-hugging 的小组件（Badge、Chip、Tag、inline label）。
 
 规则：写 frame modifier 前先判断宽度意图。

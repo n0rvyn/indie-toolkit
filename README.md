@@ -15,6 +15,7 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 | `x-api` | integration | X (Twitter) API v2 MCP server: 131+ tools with Bearer Token and OAuth2 PKCE support |
 | `shared-utils` | development | Reusable utility scripts and skills shared across plugins: Notion API, MongoDB queries, cross-plugin primitives |
 | [readback](readback/README.md) | development | Before-action read-back protocol: non-blocking one-line "here's the reading I picked" on ambiguous requests, full plain-language echo on `/readback` and `/fix-bug` (4 hooks + 1 agent + 1 skill) |
+| [miniprogram](miniprogram/README.md) | development | WeChat mini program QA: headless UI verification against running devtools (screenshot + `page.data()` + geometry), and pre-submission config/compliance checks |
 
 ## Repository Layout
 
@@ -71,6 +72,7 @@ Current marketplace entries from `.claude-plugin/marketplace.json`:
 | `minimax-quota` | `0.2.1` | MiniMax coding plan quota checker |
 | `netease-cloud-music` | `0.1.0` | NetEase Cloud Music helper |
 | `shared-utils` | `0.1.0` | Reusable cross-plugin utility scripts and skills |
+| `miniprogram` | `0.1.0` | WeChat mini program headless UI verification + pre-submission checks |
 
 ## Codex / OpenCode
 

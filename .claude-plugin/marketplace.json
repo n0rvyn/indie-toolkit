@@ -147,6 +147,22 @@
         "cross-plugin"
       ],
       "strict": true
+    },
+    {
+      "name": "miniprogram",
+      "source": "./miniprogram",
+      "description": "WeChat mini program development QA: headless UI verification against running devtools, and pre-submission config/compliance checks",
+      "version": "0.1.0",
+      "category": "development",
+      "tags": [
+        "wechat",
+        "miniprogram",
+        "小程序",
+        "screenshot",
+        "ui-verification",
+        "submission"
+      ],
+      "strict": true
     }
   ]
 }

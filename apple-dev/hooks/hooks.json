@@ -39,6 +39,16 @@
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/protect-preview.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/xcodebuild-guard.py",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUse": [

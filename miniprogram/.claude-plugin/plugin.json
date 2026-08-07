@@ -1,0 +1,8 @@
+{
+  "name": "miniprogram",
+  "version": "0.1.0",
+  "description": "WeChat mini program (微信小程序) development QA: headless UI verification against a running devtools instance, and pre-submission config/compliance checks",
+  "author": {
+    "name": "Norvyn"
+  }
+}

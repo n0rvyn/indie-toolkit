@@ -145,10 +145,14 @@ struct {TypeName}CharacterizationTests {
 
 Execute:（test 留 CLI；如先做 build 验证，优先 `BuildProject`）
 
+**Destination 不在这里写死** — 按 `test-changes` Step A2.5/A3 解析：连着的真机硬件 UDID 优先 → 否则已 booted 的 sim 的 UDID → 两者都没有就只跑 `build-for-testing` 并报告「⚠️ 测试未运行」（绝不主动 boot）。
+
+⛔ 不要写 `-destination '…,name=iPhone 16'`：`name=` 指向未 booted 的 sim 时 xcodebuild 会 **clone 一台新 sim**（不是 boot 同名那台），并发下 clone 风暴整批崩。这条是全局 CLAUDE.md 的 xcodebuild SOP 规则 2，并由 `~/.claude/hooks/xcodebuild-guard.py` 在 PreToolUse 层直接 `deny`——照旧写法在这台机器上根本跑不起来。
+
 ```bash
 xcodebuild test \
   -scheme {scheme} \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -destination "$DESTINATION" \
   -only-testing:{testTarget}/{TypeName}CharacterizationTests \
   -quiet 2>&1
 ```

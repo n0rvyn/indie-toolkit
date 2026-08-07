@@ -12,6 +12,11 @@
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/cache-booted-sim.sh",
             "timeout": 8
+          },
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/cache-device-udid.sh",
+            "timeout": 10
           }
         ]
       }

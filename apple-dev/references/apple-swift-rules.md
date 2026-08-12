@@ -102,6 +102,55 @@ Write Code -> Apple MCP BuildProject（主）/ swift build·xcodebuild build（f
    - 阴影：`.shadow()` 参数
 3. 新组件必须匹配已有同类组件的上述属性值。差异项标注 `⚠️ 不一致` 并在计划中说明理由或改为一致。
 
+<!-- section: 同一动作的控件形制一致（条件触发） keywords: back button, close button, navigation bar, system control, consistency, chevron, xmark, dismiss -->
+## 同一动作的控件形制一致（条件触发）
+
+触发条件：新增或修改**在多个页面重复出现的同一动作**的控件 —— 返回、关闭、取消、完成、主行动 CTA。
+不触发：只在一处出现、且全 App 无同一动作的一次性控件。
+
+Layer 3「同类组件一致性」按**组件类型后缀**（Card/Row/Badge…）触发，管的是同类组件之间；
+「按钮组同宽」管的是**同屏并列**。本节管的是第三件事：**同一个动作跨页面的长相**。三者不互相覆盖。
+
+触发后执行（三步，缺一步等于没做）：
+
+1. **数清楚这个动作全 App 有几处呈现，把系统控件也数进去。**
+   ```
+   grep -rn "navigationBarLeading\|navigationBarBackButtonHidden\|chevron.left\|xmark\|dismiss()" --include="*.swift"
+   grep -rn "NavigationLink\|\.sheet\|fullScreenCover" --include="*.swift"   # push/present = 系统控件出现的地方
+   ```
+   ⛔ **系统控件不在代码里出现**（`NavigationLink` push 自带的返回键、`List` 自带的 disclosure chevron），
+   只 grep 自绘代码必然漏掉它们 —— 而它们往往是多数派。
+
+2. **定基准形制**：只要有 ≥1 处用的是系统控件，基准就是系统那一套，自绘的向它看齐。
+   ⛔ **不得反过来** `navigationBarBackButtonHidden(true)` 掉系统控件去迁就自绘的 ——
+   那会**连带掐掉系统的边缘返回手势**，为了统一长相把滑动返回弄坏（2026-08-09 CleanLabel 实证）。
+   全 App 都没有系统控件时，才由设计源定基准。
+
+3. **形制定义写进 DesignSystem 的一个 struct/enum**，调用点只引用不复制。
+
+⛔ 反面（2026-08-09 CleanLabel 实证）：结果页自绘 `‹ 返回`（chevron + 文字），历史页与回看页用系统返回键 ——
+iOS 26+ 把它渲染成玻璃圆底 + 光秃秃的 `‹`。同一个动作两种长相，用户一眼看出来，
+而 **build 绿 / 单测绿 / 纯代码审计三者都不报警**：自绘那处单看完全正确，系统那处代码里根本不存在。
+
+自检：即将写下 `chevron.left` / `xmark` / 任何「离开本页」按钮时问一句 ——
+**这个动作在别的页面长什么样？我看过那一页的渲染吗？**
+
+<!-- section: UI 改动交付前必须先看渲染（强制） keywords: self check, render, screenshot, preview, before handoff, verification -->
+## UI 改动交付前必须先看渲染（强制）
+
+规则：任何用户可见的 UI 改动，在对用户说「做完了 / 你试一下 / 需你验证」之前，**我必须先看过它的渲染**。
+`BUILD SUCCEEDED`、单测全绿、代码读着对，三者**都不构成「看过」** —— 形制不一致、控件被系统换了样式、
+布局塌陷这三类缺陷，恰恰是这三者结构性看不见的。
+
+渲染通道按可用性降级，用到第一条能通的为止：
+1. `apple-dev:render-preview`（#Preview → PNG，最轻，不需要设备）
+2. XCUITest 截图（`app.screenshot()` + XCTAttachment）
+3. 真机截图
+
+三条**全部**不可用时，必须在交付消息里显式写出「⚠️ 我没能看到渲染」+ 卡在哪个通道 + 具体让用户看哪几处。
+⛔ 不得把「没看过」包装成「已完成，请验收」——那是把自检成本转嫁给用户
+（2026-08-09 CleanLabel：改完返回按钮直接交付，用户截图一看，漏掉的两个 push 页面还是系统旧样式）。
+
 <!-- section: 容器宽度意图（条件触发） keywords: container width, maxWidth, infinity, frame, adaptive layout -->
 ## 容器宽度意图（条件触发）
 
@@ -371,6 +420,29 @@ macOS 特有交互：
 
 - 测试一律用 Swift Testing（`@Test`、`#expect`、`#require`），不使用 XCTest。例外：项目已有 XCTest 且不在本次重构范围；XCUITest（UI 自动化）没有 Swift Testing 等价物，仍用 `XCTestCase`
 - Xcode 16+ 项目默认自动同步文件夹内的 Swift 文件：新文件放到对应目录即可生效。禁止写「需要手动编辑 pbxproj」或「需要拖进 Xcode」
+
+### 两个会把整轮测试挂死、而且长得完全不像测试问题的坑
+
+**① Swift Testing 默认并行，多个 Vision 请求同时压进去会把整个进程卡住。**
+实证 2026-08-12（iPhone 16 Pro / iOS 27 / Xcode 26.3）：加了 2 条跑
+`VNRecognizeTextRequest(.accurate)` 的测试之后，整套 65 条**十分钟不返回**；
+而这两条单独跑 0.565 秒、其余 58 条单独跑 0.802 秒。日志里 62 条 started、
+只有 9 条完成，**完成的全是不碰图像的纯几何测试**——凡是走 Vision 的全堵住。
+- 判据：`started` 远多于 `passed/failed`，且完成的那几条有共同点（都不碰某个共享子系统）
+  → 是并行争用，不是某条测试写错。别去逐条改测试。
+- 定位：`-only-testing:` 单跑各套件（都秒过）→ `-skip-testing:<嫌疑套件>`（秒过）
+  → `-parallel-testing-enabled NO`（秒过）。三步坐实，不用猜。
+- 修法：给那个套件加 `.serialized`（`@Suite("…", .serialized)`）。实测加完并行照开、
+  三轮连过 1.27/1.00/0.94 秒。比让所有人记住命令行参数可靠。
+
+**② 单元测试的宿主 App 会真的申请系统权限，而没有任何人去点那个弹窗。**
+单测跑在宿主 App 进程里；只要根视图 `.task` 里起了相机/定位/麦克风，
+真机上就会弹系统授权框，测试挂在那里。
+- 特别阴的地方：如果同项目的 XCUITest 里有 `dismissSystemAlerts()` 之类的助手，
+  它早就替你点过「允许」，于是单测**看起来**一直是好的——**直到 App 被卸载重装一次**。
+- 修法：权限/硬件会话的入口加一道「在测试进程里一律不启动」，判据用
+  `ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil`
+  （比只判自家的 `-uiScreenshots` 之类启动参数覆盖得全）。
 
 ## SwiftUI Correctness Checklist (vendored from vabole/apple-skills:ios-dev)
 

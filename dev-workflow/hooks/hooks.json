@@ -61,6 +61,16 @@
             "timeout": 3
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/kb-tripwire.py",
+            "timeout": 3
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [

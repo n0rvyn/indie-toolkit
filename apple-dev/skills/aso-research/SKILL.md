@@ -19,7 +19,15 @@ description: "Use when optimizing an App Store listing for search — the user s
 
 ### Step 1: 确定目标 App 与商店
 
-从用户消息或项目取 bundle id（`grep PRODUCT_BUNDLE_IDENTIFIER` 项目的 pbxproj，或直接问）。确定要分析哪些 storefront（常见：cn + us）。
+从用户消息或项目取 bundle id，确定要分析哪些 storefront（常见：cn + us）。
+
+```bash
+xcodebuild -showBuildSettings -scheme <Scheme> \
+  -destination 'generic/platform=iOS Simulator' \
+  2>/dev/null | grep PRODUCT_BUNDLE_IDENTIFIER
+```
+
+⛔ **不要用 `grep` 读工程文件取。** `apple-dev` 的工程文件守卫按路径拦截，**不区分读写** —— 一条纯只读的 `grep` 同样被拒，报的还是「Direct editing … is prohibited」，读起来像权限问题而不是工具选择问题。（它匹配的是命令全文：命令里出现该扩展名就会被拦，哪怕你只是在写一段提到它的文档。）上面这条 `xcodebuild` 是等价且不会被拦的取法。
 
 ```bash
 python3 scripts/aso.py live <bundleId|trackId> <store>
@@ -108,6 +116,19 @@ python3 scripts/aso.py check subtitle "候选A" "候选B" "候选C"    # 可一�
 
 同时检查候选名与在架竞品是否同构（同前缀 + 同字数 + 同品类）—— 4.1(a)「minor changes to another app's name」管这个。
 
+### 工具限制（直接用库、不走 CLI 时必读）
+
+| 事实 | 影响 | 对策 |
+|---|---|---|
+| `search()` 只有**前 8 条**带 name / subtitle / artist，第 9 条起 `hydrated: False` | 直接读库返回会得到一串空名字，看起来像「没有更多 App」 | `aso.hydrate(r, store, limit=25)` 补齐。**CLI 的 `search` 已自动做，库调用不做** |
+| 结果数在 **~250 处封顶**（实测 246–250） | 249 / 250 是「触顶」，不是「总数」 | 报告里照实写触顶，别当精确值用 |
+| 响应落磁盘缓存，**TTL 6 小时** | 同一轮调研内不重复打 Apple；但改完元数据当天复检会读到旧名次 | 复检时 `ASO_FRESH=1`（或 `ASO_CACHE_TTL=0`） |
+| `check` 的字段名是 `promo`，不是 `promotionalText` | 传错直接 exit 2 | 合法值：`name` `subtitle` `keywords` `promo` `description` |
+
+`search` / `hints` / `matrix` **三条命令都会先跑正控自检**（对该 storefront 取一组必命中词，且强制绕过缓存 —— 从磁盘读出来的正控只证明缓存里有文件，不证明采集链路还活着），不过就 exit 2。
+
+这是本 skill「零结果先怀疑自己的采集器」那条硬约束的执行体。**未上架的 App 用的正是 `search` / `hints`**（没有 trackId，建不了排名矩阵），所以自检不能只挂在 `matrix` 上 —— 那会让最需要它的场景恰好没有防护。
+
 ### Step 7: 落盘与复检
 
 写两个文件：
@@ -116,6 +137,8 @@ python3 scripts/aso.py check subtitle "候选A" "候选B" "候选C"    # 可一�
 - 文案文档 —— 线上现状（已核实）与建议提交分两块，每项带字符数与依据
 
 **必须写进文案文档的复检方法**：改动上线后重跑脚本，对同一批词取名次，与分析文档的排名矩阵逐行对比。没有复检方法的 ASO 报告无法证伪。
+
+复检命令要带 `ASO_FRESH=1` —— 否则 6 小时内的缓存会原样回放改动前的名次，而且长得和真拉一模一样，看不出来。
 
 ## 边界
 

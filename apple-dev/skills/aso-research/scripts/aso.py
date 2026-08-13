@@ -11,6 +11,7 @@ Library use:
     import aso
     aso.live(bundle_id="com.example.App", store="cn")
     aso.search("garmin", "cn")             # ranked results
+    aso.hydrate(r, "cn", limit=25)         # <-- names past rank 8; see below
     aso.details("6760798981", "cn")        # authoritative name + subtitle
     aso.hints("garmin", "us")              # Apple autocomplete
     aso.rank_of("6760798981", aso.search("garmin", "cn"))
@@ -22,6 +23,19 @@ CLI use:
     python3 aso.py hints garmin us
     python3 aso.py matrix 6760798981 cn 佳明 佳明同步 活动同步
     python3 aso.py check name "佳同步 - 国区国际版活动记录互传"
+
+Two things that bite anyone using the library directly rather than the CLI:
+
+  1. `search()` returns the full ranked list, but Apple only hydrates the
+     FIRST 8 entries — ranks 9+ come back with name/subtitle/artist empty
+     and `hydrated: False`. That is the endpoint, not a bug. Call
+     `hydrate(results, store, limit=N)` to fill the rest via viewSoftware.
+     The CLI's `search` does this for you (ASO_TOP, default 25); the library
+     does not.
+  2. Responses are cached to ./cache with a TTL (CACHE_TTL, default 6h).
+     Re-running the same terms after a metadata change inside that window
+     replays the OLD ranks and looks exactly like a fresh pull. Use
+     ASO_FRESH=1 for a recheck, or ASO_CACHE_TTL=0 to disable caching.
 """
 import json
 import os
@@ -47,6 +61,10 @@ UA = ("AppStore/2.0 iOS/17.0 model/iPhone14,2 hwp/t8110 "
 
 CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
 
+# Seconds. Long enough that one research session doesn't re-hit Apple for
+# every term; short enough that tomorrow's recheck is a real pull.
+CACHE_TTL = 6 * 3600
+
 
 def _sf(store):
     try:
@@ -59,10 +77,20 @@ def _sf(store):
 
 def _get(url, store, tag, ext="json"):
     """Fetch with storefront header, disk cache, and retry. -L is mandatory:
-    several of these endpoints 301 first and return an empty body without it."""
+    several of these endpoints 301 first and return an empty body without it.
+
+    The cache EXPIRES, deliberately. An unbounded cache silently breaks the
+    one workflow this tool exists for: re-run the same terms after changing
+    metadata and compare ranks. A stale hit is indistinguishable from a fresh
+    one, so the recheck would report "nothing moved" without reaching Apple.
+    ASO_FRESH=1 bypasses; ASO_CACHE_TTL overrides (0 = never cache).
+    """
     os.makedirs(CACHE, exist_ok=True)
     path = os.path.join(CACHE, f"{tag}.{ext}")
-    if os.path.exists(path) and os.path.getsize(path) > 100:
+    ttl = float(os.environ.get("ASO_CACHE_TTL", CACHE_TTL))
+    if (os.environ.get("ASO_FRESH") != "1" and ttl > 0
+            and os.path.exists(path) and os.path.getsize(path) > 100
+            and time.time() - os.path.getmtime(path) < ttl):
         return open(path, encoding="utf-8").read()
     for attempt in range(3):
         p = subprocess.run(
@@ -251,11 +279,44 @@ def check(field, text):
 # CLI
 # --------------------------------------------------------------------------
 
+# Terms known to return results in each storefront. A single hardcoded probe
+# is one delisting away from reporting "collector broken" forever, so try
+# several and pass on the first hit.
+PROBES = {
+    "cn": ["微信", "支付宝", "garmin"],
+    "us": ["facebook", "spotify", "garmin"],
+    "jp": ["line", "spotify", "garmin"],
+    "gb": ["spotify", "facebook", "garmin"],
+    "de": ["spotify", "facebook", "garmin"],
+}
+
+
 def _selftest(store):
     """Positive control. A zero result is only meaningful once the collector
-    has been shown to return non-zero on a term known to match."""
-    probe = "garmin" if store != "jp" else "garmin"
-    r = search(probe, store)
+    has been shown to return non-zero on a term known to match.
+
+    Every command that can report an empty result set runs this first —
+    search and hints included, not just matrix. Pre-launch research uses
+    exactly those two (there is no track id to build a rank matrix from),
+    so wiring the control only into matrix would leave the case that needs
+    it most unguarded.
+    """
+    # The control must exercise the network path. A probe served from disk
+    # proves the cache has a file in it, not that the collector still works —
+    # which is the exact thing an empty result set is being checked against.
+    prior = os.environ.get("ASO_FRESH")
+    os.environ["ASO_FRESH"] = "1"
+    try:
+        probe, r = None, None
+        for candidate in PROBES.get(store, ["garmin"]):
+            probe, r = candidate, search(candidate, store)
+            if r:
+                break
+    finally:
+        if prior is None:
+            os.environ.pop("ASO_FRESH", None)
+        else:
+            os.environ["ASO_FRESH"] = prior
     if not r:
         print(f"SELFTEST FAILED: search({probe!r}, {store!r}) returned "
               f"{r!r}. The collector is broken — do not read anything into "
@@ -280,14 +341,19 @@ def main(argv):
         print(json.dumps(details(argv[2], argv[3]), ensure_ascii=False,
                          indent=2))
     elif cmd == "hints":
+        if not _selftest(argv[3]):
+            return 2
         h = hints(argv[2], argv[3])
         print(json.dumps(h, ensure_ascii=False, indent=2))
         if h == []:
-            print("(empty: Apple surfaces no suggestion for this term)",
+            print("(empty: Apple surfaces no suggestion for this term — it "
+                  "cannot carry a main position, only long-tail keywords)",
                   file=sys.stderr)
     elif cmd == "search":
         term, store = argv[2], argv[3]
         own = argv[argv.index("--id") + 1] if "--id" in argv else None
+        if not _selftest(store):
+            return 2
         r = search(term, store)
         if r is None:
             print("FETCH FAILED — not an empty result set", file=sys.stderr)

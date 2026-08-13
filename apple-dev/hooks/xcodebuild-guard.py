@@ -20,9 +20,14 @@ cannot wedge every Bash call.
      what 禁止行为「未经批准启动模拟器」 asks for (approval, not a self-declared marker).
   4. stderr nudge, never blocks — more than one booted simulator (SOP rule 5).
 
-False-positive control: only the FIRST token of each shell segment is inspected,
-so `grep -rn 'destination.*name=' …` and `echo "xcodebuild test"` never trip it.
-That control is exercised by the test cases in the docstring of _is_invocation.
+False-positive control, two layers:
+  a. heredoc BODIES are removed before segmentation (`_strip_heredocs`), so a doc
+     or plan file written via `python3 - <<'EOF'` can quote the command freely;
+  b. within a real segment only the FIRST token is inspected, so
+     `grep -rn 'destination.*name=' …` and `echo "xcodebuild test"` never trip it.
+Layer (b) alone was not enough: inside a heredoc body the first token really is
+`xcodebuild` (2026-08-10, two denials on prose). Both layers are exercised by
+`tests/test_xcodebuild_guard.sh`.
 """
 import json
 import os
@@ -32,10 +37,52 @@ import sys
 
 SEGMENT_SPLIT = re.compile(r"(?:\|\||&&|[;|&\n])")
 
+# `<<EOF` / `<<'EOF'` / `<<"EOF"` / `<<-EOF`, capturing the delimiter word.
+HEREDOC_START = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
+
+
+def _strip_heredocs(command):
+    """Drop heredoc BODIES before segmentation.
+
+    Why this exists: `SEGMENT_SPLIT` splits on `\\n`, so every line of a heredoc
+    body became its own "shell segment". A body line that happens to start with
+    `xcodebuild test …` — e.g. writing documentation, a knowledge-base entry, or
+    a plan file that quotes the command — then looked exactly like a real
+    invocation and got denied.
+
+    Observed twice on 2026-08-10 (CleanLabel): both denials were `python3 - <<'PY'`
+    heredocs whose payload was *prose about* the command, not a call. The existing
+    first-token control could not help — inside the body, the first token really
+    is `xcodebuild`.
+
+    The `_is_invocation` control answers "is this token in command position?";
+    this one answers the prior question "is this line shell at all?".
+
+    Limitation: only heredocs are stripped. A multi-line double-quoted argument
+    (`python3 -c "…\\nxcodebuild test …"`) still splits on the newline. Heredoc is
+    the form that actually bit us; widening this to full shell lexing is not worth
+    the risk of the guard failing open on syntax it mis-parses.
+    """
+    lines = command.split("\n")
+    out, i = [], 0
+    while i < len(lines):
+        line = lines[i]
+        out.append(line)
+        m = HEREDOC_START.search(line)
+        i += 1
+        if not m:
+            continue
+        delim = m.group(2)
+        # Skip body lines up to and including the terminator (`<<-` allows indent).
+        while i < len(lines) and lines[i].strip() != delim:
+            i += 1
+        i += 1  # consume the terminator itself (no-op when unterminated)
+    return "\n".join(out)
+
 
 def _segments(command):
     """Shell segments, each stripped of leading env assignments and `cd x &&`."""
-    for raw in SEGMENT_SPLIT.split(command):
+    for raw in SEGMENT_SPLIT.split(_strip_heredocs(command)):
         seg = raw.strip()
         while seg.startswith("(") or seg.startswith("$("):
             seg = seg.lstrip("($").strip()

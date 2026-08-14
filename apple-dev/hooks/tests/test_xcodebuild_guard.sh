@@ -119,3 +119,51 @@ run_case "build-for-testing is not a test run" \
 echo
 echo "Passed: $PASS   Failed: $FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
+
+# ---------------------------------------------------------------------------
+# 并发规则的判据（2026-08-14）：从「看见任何 test 就拦」改成「只拦真抢同一样东西的」
+#
+# 这几条测的是纯函数 `_conflict_reason` / `_contention_key`，不读 live `ps`，
+# 所以是确定性的 —— 上面那条「并发规则不在这里断言」的说明只对读 ps 的那部分成立。
+echo
+echo "── 并发冲突判据"
+python3 - "$HOOK_SCRIPT" <<'PY'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("guard", sys.argv[1])
+g = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(g)
+
+IPHONE = "00008140-0001546401FB001C"
+IPAD   = "00008027-000165A00A39002E"
+
+def cmd(proj, dev, sim=False):
+    plat = "iOS Simulator" if sim else "iOS"
+    return f'xcodebuild test -project {proj}.xcodeproj -scheme {proj} -destination "platform={plat},id={dev}"'
+
+cases = [
+    # (说明, 新的, 在跑的, 期望拦不拦)
+    ("同一个项目 → 拦（build.db 锁共享）",
+     cmd("ArtLens", IPHONE), cmd("ArtLens", IPAD), True),
+    ("同一台设备 → 拦（一台设备装不下两个 session）",
+     cmd("ArtLens", IPHONE), cmd("Lucent", IPHONE), True),
+    ("两边都在模拟器 → 拦（CoreSimulator daemon 是全局的）",
+     cmd("ArtLens", "AAA", sim=True), cmd("Lucent", "BBB", sim=True), True),
+    ("不同项目 + 不同真机 → 放行（三条理由一条都不成立）",
+     cmd("ArtLens", IPHONE), cmd("Lucent", IPAD), False),
+    ("认不出项目（没写 -project） → 保守拦",
+     'xcodebuild test -scheme ArtLens -destination "platform=iOS,id=%s"' % IPHONE,
+     cmd("Lucent", IPAD), True),
+    ("一边真机一边模拟器、不同项目 → 放行",
+     cmd("ArtLens", IPHONE), cmd("Lucent", "BBB", sim=True), False),
+]
+
+bad = 0
+for name, new, old, want_block in cases:
+    why = g._conflict_reason(g._contention_key(new), g._contention_key(old))
+    got = why is not None
+    ok = got == want_block
+    bad += 0 if ok else 1
+    print(f"  {'✅' if ok else '❌'} {name}" + (f"　→ {why}" if why else "　→ 放行"))
+sys.exit(1 if bad else 0)
+PY
+if [ $? -eq 0 ]; then PASS=$((PASS + 1)); else FAIL=$((FAIL + 1)); fi

@@ -155,7 +155,52 @@ def _other_test_running():
             continue
         if "build-for-testing" in cmd:
             continue
-        return cmd[:120]
+        # ⚠️ 返回**完整**命令行，不截断：下面要从里面读 -project / -destination
+        # 来判断到底抢不抢同一样东西。原来这里 `cmd[:120]` 会把 destination 切掉，
+        # 于是「同一台设备」永远判不出来。
+        return cmd
+    return None
+
+
+def _contention_key(cmd):
+    """这次调用会跟别人抢什么：(项目标识, destination 的 id, 是不是模拟器)。"""
+    proj = None
+    m = re.search(r"-(?:project|workspace)\s+(\S+)", cmd)
+    if m:
+        proj = os.path.basename(m.group(1).strip("'\""))
+    # ⚠️ 带引号和不带引号两种都要吃：`ps` 打出来的命令行**没有引号**
+    #    （`-destination platform=iOS,id=...`），只按引号匹配会一路吃到行尾，
+    #    把后面的 `-only-testing:` 也吞进去 —— 路径里碰巧有 "Simulator" 就误判。
+    m = re.search(r"-destination\s+(?:'([^']*)'|\"([^\"]*)\"|(\S+))", cmd)
+    dstr = next((g for g in (m.groups() if m else ()) if g), "") if m else ""
+    m2 = re.search(r"\bid=([0-9A-Fa-f-]+)", dstr)
+    return proj, (m2.group(1) if m2 else None), ("Simulator" in dstr)
+
+
+def _conflict_reason(new, old):
+    """两次 `xcodebuild test` 到底抢不抢同一样东西。不抢就返回 None。
+
+    SOP 规则 1 原文是「永远只跑一个」，但它的三条理由都是**有范围的**：
+      · DerivedData / build.db 锁  → 按项目
+      · 同一台设备装不下两个 test session → 按 destination
+      · CoreSimulator daemon + FRONTBOARD watchdog → 只要两边都在模拟器上就成立
+    两个不同项目、两台不同真机，三条一条都不成立 —— 那种情况下拦是白拦
+    （2026-08-14 实测撞上：另一个会话在 iPad 上跑 Lucent，把本机 iPhone 上的
+    ArtLens 测试也挡住了）。
+
+    ⚠️ 认不出项目时**判冲突**：宁可多拦一次，也不放过真的会互相踩的那种。
+    """
+    pn, dn, sn = new
+    po, do, so = old
+    if pn is None or po is None:
+        return "认不出其中一方的项目（没写 -project/-workspace），保守判为冲突"
+    if pn == po:
+        return f"同一个项目（{pn}）—— DerivedData 的 build.db 锁是共享的"
+    if dn and do and dn == do:
+        return f"同一台设备（{dn}）—— 一台设备装不下两个 test session"
+    if sn and so:
+        return ("两边都在模拟器上 —— CoreSimulator daemon 和 FRONTBOARD "
+                "watchdog 是全局的，并发是崩批的常见诱因")
     return None
 
 
@@ -207,8 +252,14 @@ def main():
         # --- 2. concurrent test run ----------------------------------------
         running = _other_test_running()
         if running:
-            block("⛔ 已有一个 `xcodebuild test` 在跑（xcodebuild SOP 规则 1，永远只跑一个）。"
-                  f"在跑的是：{running}。等它结束，或先确认那个是不是僵进程。")
+            why = _conflict_reason(_contention_key(seg), _contention_key(running))
+            if why:
+                block("⛔ 已有一个 `xcodebuild test` 在跑，而且**和你这次抢同一样东西**"
+                      f"（xcodebuild SOP 规则 1）：{why}。"
+                      f"在跑的是：{running[:120]}。等它结束，或先确认那个是不是僵进程。")
+            print("[xcodebuild-guard] 另有一个 `xcodebuild test` 在跑，但两边不抢同一样东西"
+                  "（不同项目、不同设备、不都在模拟器上），放行。"
+                  f"在跑的是：{running[:100]}", file=sys.stderr)
 
         # --- 4. >1 booted sim (nudge only) ---------------------------------
         n = _booted_count()

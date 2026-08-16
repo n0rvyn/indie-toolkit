@@ -34,6 +34,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 
 SEGMENT_SPLIT = re.compile(r"(?:\|\||&&|[;|&\n])")
 
@@ -267,6 +268,44 @@ def main():
             print(f"[xcodebuild-guard] {n} 台 sim 已 booted（SOP 规则 5 建议 ≤1）。"
                   "并发 sim 是 FRONTBOARD watchdog 崩批的常见诱因："
                   "`xcrun simctl shutdown all` 后只留要用的那台。", file=sys.stderr)
+
+        # --- 5. SOP location, once per session (nudge only) -----------------
+        _sop_pointer(data.get("session_id"))
+
+
+def _sop_pointer(session_id):
+    """Point at the SOP once per session, for the one path `paths:` cannot reach.
+
+    2026-08-16 the SOP moved from ~/.claude/CLAUDE.md into
+    ~/.claude/rules/xcodebuild-ios.md with a `paths:` scope. Measured: a
+    paths-scoped rule loads only when Claude READS a matching file, so a session
+    that greps logs and runs `xcodebuild test` without ever opening a .swift file
+    never gets it — and that is exactly the "真机 test 起不来" diagnostic path
+    where the error-signature table matters most. This hook is PreToolUse(Bash)
+    and does not depend on file reads, so it can close that gap.
+
+    Once per session: repeated `-only-testing:` runs are normal, and a nudge that
+    repeats every run is a nudge that gets ignored (see check-repeated-edit.py's
+    2026-07-11 noise fix).
+    """
+    rules = os.path.expanduser("~/.claude/rules/xcodebuild-ios.md")
+    if not os.path.isfile(rules):
+        return
+    if session_id:
+        sentinel = os.path.join(
+            tempfile.gettempdir(), f".xcodebuild-sop-{session_id}"
+        )
+        if os.path.exists(sentinel):
+            return
+        try:
+            open(sentinel, "w").close()
+        except OSError:
+            pass
+    print("[xcodebuild-guard] xcodebuild SOP 全文在 `~/.claude/rules/xcodebuild-ios.md`"
+          "（destination 决策 / 9 条并发与假绿硬约束 / 真机 test 起不来的错误签名分诊表）。"
+          "它按 `paths:` 触发，只在 Read 过 Swift·Xcode 文件时才在上下文里；"
+          "本轮若没读过、而你要判断 destination 或分诊测试失败，直接 Read 它。",
+          file=sys.stderr)
 
 
 if __name__ == "__main__":

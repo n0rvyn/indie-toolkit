@@ -101,12 +101,41 @@ mk "${TMPROOT}/p7/CLAUDE.md" <<'EOF'
 EOF
 run_case "acknowledged missing path stays silent" p7 CLAUDE.md EMPTY
 
+# an author's own hedge counts as acknowledgement too
+mk "${TMPROOT}/p7b/CLAUDE.md" <<'EOF'
+# p7b
+1. 更新 `docs/04-implementation/file-structure.md`（如有）
+2. 阶段开发指南 `docs/04-dev-guide/dev-guide.md`（待生成）
+EOF
+run_case "author hedges (如有 / 待生成) stay silent" p7b CLAUDE.md EMPTY
+
+# ... but an unhedged missing path on a similar line still reports
+mk "${TMPROOT}/p7c/CLAUDE.md" <<'EOF'
+# p7c
+1. 更新 `docs/04-implementation/file-structure.md`
+EOF
+run_case "same path without a hedge still reports" p7c CLAUDE.md "file-structure"
+
 # --- check 3: model-uninvocable skill written as an instruction ---------------
 mk "${TMPROOT}/p8/CLAUDE.md" <<'EOF'
 # p8
 完成后用 `/handoff` 或主动询问用户。
 EOF
 run_case "disable-model-invocation skill is flagged" p8 CLAUDE.md "disable-model-invocation"
+
+# a sentence recording where the file came from is not an instruction
+mk "${TMPROOT}/p8b/CLAUDE.md" <<'EOF'
+# p8b
+> 由 `/apple-dev:project-kickoff` skill 在 2026-05-07 立项时生成；从未运行 /init。
+EOF
+run_case "provenance mention is not an instruction" p8b CLAUDE.md EMPTY
+
+# the corrected wording must also stay silent
+mk "${TMPROOT}/p8c/CLAUDE.md" <<'EOF'
+# p8c
+**触发方式**：完成后主动询问用户；需要整会话交接时，提示用户运行 `/handoff`（该 skill 标了 `disable-model-invocation`，模型不能自行调用）
+EOF
+run_case "wording that routes the skill to the user stays silent" p8c CLAUDE.md EMPTY
 
 # --- scope: non-CLAUDE.md files are ignored ----------------------------------
 mk "${TMPROOT}/p9/README.md" <<'EOF'

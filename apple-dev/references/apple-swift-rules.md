@@ -151,6 +151,22 @@ iOS 26+ 把它渲染成玻璃圆底 + 光秃秃的 `‹`。同一个动作两种
 ⛔ 不得把「没看过」包装成「已完成，请验收」——那是把自检成本转嫁给用户
 （2026-08-09 CleanLabel：改完返回按钮直接交付，用户截图一看，漏掉的两个 push 页面还是系统旧样式）。
 
+<!-- section: 设计稿没有横屏 ≠ 锁方向（强制） keywords: orientation, portrait, landscape, supportedInterfaceOrientations, UIRequiresFullScreen, window size -->
+## 设计稿没有横屏 ≠ 锁方向（强制）
+
+触发条件：即将写或改 `supportedInterfaceOrientationsFor`、`UISupportedInterfaceOrientations*`、
+`UIRequiresFullScreen`，或以任何方式限制方向 / 窗口尺寸。
+
+⛔ **设计稿只有竖屏版面不构成锁方向的理由** —— 那描述的是画布，不是产品要求；版面在横屏下不好看是
+**版面要适配**。这一整类错误的形状是「原型画布参数被一级级硬化进运行时」（`393 × 852` /
+`portrait only` / 假状态栏同源同类）。
+
+自检一句：**是产品要求它只能竖着用，还是我只是没有横版设计图？**
+
+<!-- 2026-08-16 回写：本判据此前只存在于 ~/.claude/CLAUDE.md 的探测器行里，而那一行指向本文件的
+     「设计稿没有横屏 ≠ 锁方向（强制）」节——该节当时并不存在。CLAUDE.md 自己写着「plugin 侧为
+     iOS 规则权威源，本节新增判据须同步回写」，这次补上。 -->
+
 <!-- section: 容器宽度意图（条件触发） keywords: container width, maxWidth, infinity, frame, adaptive layout -->
 ## 容器宽度意图（条件触发）
 

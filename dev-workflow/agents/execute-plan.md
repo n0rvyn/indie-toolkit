@@ -66,8 +66,25 @@ changes and the structured result object.
 ### Step 2: Execute Task
 
 1. Read the task description fully before starting.
-2. If the task has design anchor fields (Design ref, Expected values, etc.), read the
-   referenced design section first.
+2. **Design anchor fields: each one has its own required action.** These are emitted by
+   `write-plan` (see its SKILL.md "Design ref / Expected values / …" block). Do not collapse
+   them into "read the design doc": only `Design ref:` is a before-the-edit action. One
+   (`Quality markers:`) constrains how you write the code, and the remaining four are checks
+   you owe *after* the edit.
+
+   | Field | Required action |
+   |---|---|
+   | `Design ref:` | Read referenced design doc section **before** implementation |
+   | `Expected values:` | Verify each value matches **after** implementation |
+   | `Replaces:` | Grep old code references **after** implementation, confirm all handled |
+   | `Data flow:` | Trace path end-to-end **after** implementation, confirm connected |
+   | `Quality markers:` | Use the specified algorithm/data structure; do not simplify |
+   | `Verify after:` | Execute each listed check after implementation |
+
+   `Verify after:` is design-faithfulness verification and is **distinct** from the task's
+   `**Verify:**` section (step 5); run both when both are present.
+
+   Hitting a gray area the plan does not cover: **ask the user, do not improvise.**
 3. **Cross-file operations** — if this task involves cross-file rename, term replacement,
    or reference cleanup:
    - Build target list using Grep (not memory)

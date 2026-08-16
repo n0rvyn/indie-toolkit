@@ -41,15 +41,55 @@ except:
     print('')
 " 2>/dev/null)
 
-    # Check if command targets .pbxproj/.xcworkspace with modification intent
-    # Allow git commands (add, commit, diff, log, status, etc.) to pass through
-    if echo "$command" | grep -qE '\.(pbxproj|xcworkspace)'; then
-        if ! echo "$command" | grep -qE '^\s*git\s'; then
-            if echo "$command" | grep -qE '(sed|awk|perl|ruby|python|echo|printf|cat\s*<<|tee|>\s*[^&]|>>)'; then
-                echo "$deny_msg"
-                exit 0
-            fi
-        fi
+    # Deny only when a modification verb and the protected extension appear in
+    # the SAME statement segment, after heredoc bodies are stripped.
+    #
+    # 2026-08-16: two reproduced false positives, each with a different cause.
+    #   (a) find ... \( -name "*.xcodeproj" -o -name "*.xcworkspace" \) 2>/dev/null
+    #       -> read-only. The old redirect pattern `>\s*[^&]` matched the `2>` in
+    #          `2>/dev/null`, reading an fd redirect as "writes a file". Fixed by
+    #          the (?<![0-9]) lookbehind plus an explicit /dev/null exclusion.
+    #   (b) python3 - <<EOF ... paths: - "**/*.xcworkspace/**" ... EOF
+    #       -> authoring a rules file. The extension sat in the heredoc body while
+    #          `python` sat on the opening line, and the two were tested over the
+    #          whole command independently. Fixed by stripping heredoc bodies and
+    #          by requiring extension + verb in the same statement segment.
+    # True positives (sed -i on a pbxproj, `> project.pbxproj`, `cat <<EOF >
+    # project.pbxproj`, tee, a pbxproj passed to python) keep the extension and a
+    # real write verb together in one segment, so they still deny.
+    # 12 cases pinned in tests/test_protect_pbxproj.sh.
+    decision=$(printf '%s' "$command" | python3 -c "
+import re, sys
+
+cmd = sys.stdin.read()
+
+# 1. Strip heredoc bodies: content quoted into a program is data, not a target.
+#    The opening line (which may carry '> file.pbxproj') is preserved.
+cmd = re.sub(r'<<-?\s*[\"\']?(\w+)[\"\']?\n.*?\n\s*\1\b', ' <<HEREDOC ', cmd, flags=re.S)
+
+EXT = re.compile(r'\.(pbxproj|xcworkspace)')
+# A redirect counts as a write only when it is not an fd redirect (2>, 1>) and
+# not aimed at /dev/null. Without this, every '2>/dev/null' on a read-only
+# command looked like 'writes a file'.
+REDIR = r'(?<![0-9])>{1,2}\s*(?!/dev/null)[^\s&|>]'
+VERB = re.compile(r'(sed|awk|perl|ruby|python|echo|printf|cat\s*<<|tee|' + REDIR + ')')
+GIT = re.compile(r'^\s*git\s')
+
+# 2. Split into statement segments; a verb in one segment says nothing about a
+#    path mentioned in another.
+for seg in re.split(r'[;\n]|&&|\|\|', cmd):
+    if not EXT.search(seg) or GIT.search(seg):
+        continue
+    if VERB.search(seg):
+        print('deny')
+        break
+else:
+    print('allow')
+" 2>/dev/null)
+
+    if [ "$decision" = "deny" ]; then
+        echo "$deny_msg"
+        exit 0
     fi
 fi
 

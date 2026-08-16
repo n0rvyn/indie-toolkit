@@ -12,6 +12,12 @@ PASS=0
 FAIL=0
 SID=0
 
+# The hook writes a once-per-session sentinel per detector into TMPDIR. Each run
+# of this suite uses fresh random session ids, so without cleanup every CI run
+# leaves a fresh handful behind.
+cleanup() { rm -f "${TMPDIR:-/tmp}"/.swift-detector-test-* "${TMPDIR:-/tmp}"/.swift-detector-dedup-* 2>/dev/null || true; }
+trap cleanup EXIT INT TERM
+
 # run <name> <tool> <file_path> <content> <expect substring|NONE>
 run() {
     local name="$1" tool="$2" fpath="$3" content="$4" expect="$5"

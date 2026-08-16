@@ -1,6 +1,6 @@
 ---
 name: xc-ui-test
-description: "Internal reference loader auto-injected on advanced XCUITest work (paths trigger). Provides E2E patterns, multi-screen journey tests, network stubbing, snapshot/visual regression, performAccessibilityAudit, CI integration from the XCUITest reference. Not user-invocable (called by dev-workflow:fix-bug, run-phase, etc. when XCUITest context is needed)."
+description: "Internal reference loader for advanced XCUITest work, loaded when another skill calls it (dev-workflow:write-plan routes E2E/Snapshot/A11y tasks here). Provides E2E patterns, multi-screen journey tests, network stubbing, snapshot/visual regression, performAccessibilityAudit, CI integration from the XCUITest reference. Not user-invocable. `paths:` narrows when auto-loading is permitted; it is NOT a trigger (official frontmatter reference) — relevance routing still decides. Measured 2026-08-16: these loaders do not self-trigger on file edits."
 compatibility: Requires macOS and Xcode
 user-invocable: false
 model: sonnet

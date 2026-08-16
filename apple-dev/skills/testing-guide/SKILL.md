@@ -1,6 +1,6 @@
 ---
 name: testing-guide
-description: "Internal reference loader auto-injected on iOS testing work (paths trigger). Provides UT/UI test patterns, Page Object, wait strategies, mocking, TDD, coverage from the testing reference. For performance instrumentation context use sibling profiling loader; for advanced XCUITest context use sibling xc-ui-test loader. Not user-invocable (called by dev-workflow:fix-bug, run-phase, etc. when testing context is needed)."
+description: "Internal reference loader for iOS testing, loaded when another skill calls it (dev-workflow:write-plan routes UT/Mock/TDD tasks here). Provides UT/UI test patterns, Page Object, wait strategies, mocking, TDD, coverage from the testing reference. For performance instrumentation context use sibling profiling loader; for advanced XCUITest context use sibling xc-ui-test loader. Not user-invocable. `paths:` narrows when auto-loading is permitted; it is NOT a trigger (official frontmatter reference) — relevance routing still decides. Measured 2026-08-16: these loaders do not self-trigger on file edits."
 compatibility: Requires macOS and Xcode
 user-invocable: false
 model: sonnet

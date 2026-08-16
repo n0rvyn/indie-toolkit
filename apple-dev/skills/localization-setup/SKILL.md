@@ -1,6 +1,6 @@
 ---
 name: localization-setup
-description: "Internal reference loader auto-injected on iOS localization work (paths trigger). Provides String Catalogs / pluralization / variable handling guidance from the localization reference. Not user-invocable (called by dev-workflow:fix-bug, run-phase, etc. when localization context is needed)."
+description: "Internal reference loader for iOS localization. NOTE: no skill currently calls it — reach it by reading references/localization-guide.md directly until a caller is wired up. Provides String Catalogs / pluralization / variable handling guidance from the localization reference. Not user-invocable. `paths:` narrows when auto-loading is permitted; it is NOT a trigger (official frontmatter reference) — relevance routing still decides. Measured 2026-08-16: these loaders do not self-trigger on file edits."
 compatibility: Requires macOS and Xcode
 user-invocable: false
 model: sonnet

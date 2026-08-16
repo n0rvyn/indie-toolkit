@@ -33,7 +33,7 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 
 | Skill | Preferred caller | Description |
 |-------|------------------|-------------|
-| apple-swift-context | Swift/iOS/macOS work | Loads platform-specific rules from reference docs |
+| apple-swift-context | Swift/iOS/macOS work (invoked by another skill) | Loads platform-specific rules from reference docs |
 | code-audit | run-phase / implementation-reviewer | Code quality + security assessment (5 categories) |
 | validate-design-tokens | dev-workflow review step | Design token compliance check |
 | testing-guide | write-plan / fix-bug / test-changes | Interactive testing guidance |
@@ -47,7 +47,7 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 
 | Skill | Route | Description |
 |-------|---------|-------------|
-| apple-swift-context | Auto (Swift files) | Loads platform-specific rules from reference docs |
+| apple-swift-context | Called by fix-bug (NOT auto — see note) | Loads platform-specific rules from reference docs |
 | audit-finishing-touches | internal route | Mechanical §17–§20 polish-gap scan (border / default-style / undecorated card / hero) |
 | code-audit | run-phase / implementation-reviewer | Code quality and security assessment (5 categories) — internal only, not user-invocable |
 | validate-design-tokens | dev-workflow review step | Design token compliance check |

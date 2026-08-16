@@ -1,6 +1,6 @@
 ---
 name: profiling
-description: "Internal reference loader auto-injected on iOS/macOS performance-instrumentation work (paths trigger). Provides os_signpost / OSSignposter / MetricKit / Instruments / XCTMetric guidance from the profiling reference. Not user-invocable (called by dev-workflow:fix-bug, run-phase, etc. when profiling context is needed)."
+description: "Internal reference loader for iOS/macOS performance instrumentation, loaded when another skill calls it (dev-workflow:write-plan routes Performance tasks here). Provides os_signpost / OSSignposter / MetricKit / Instruments / XCTMetric guidance from the profiling reference. Not user-invocable. `paths:` narrows when auto-loading is permitted; it is NOT a trigger (official frontmatter reference) — relevance routing still decides. Measured 2026-08-16: these loaders do not self-trigger on file edits."
 compatibility: Requires macOS and Xcode
 user-invocable: false
 model: sonnet

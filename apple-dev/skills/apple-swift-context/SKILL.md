@@ -1,6 +1,6 @@
 ---
 name: apple-swift-context
-description: "Internal context loader auto-injected when editing Swift / iOS / macOS / iPadOS / SwiftUI / SwiftData files (paths trigger). Provides Apple development rules — build cycle, concurrency, UI patterns, plan-execution principles — loaded section-targeted by current task. Not user-invocable (called by dev-workflow:fix-bug, run-phase, etc.)."
+description: "Internal context loader for Apple development rules — build cycle, concurrency, UI patterns, plan-execution principles — read section-targeted from references/apple-swift-rules.md. Not user-invocable; loaded when another skill calls it explicitly (dev-workflow:fix-bug does, for Swift/iOS bugs). NOTE: `paths:` below is a LIMITER, not a trigger — per the official frontmatter reference it only narrows when auto-loading is permitted; relevance routing still decides whether it loads. Measured 2026-08-16: it did not self-trigger on Read, Edit, or Write of a .swift file in 6 headless runs. Write-time rule delivery is handled by the hooks/swift-rule-detectors.py PreToolUse hook instead."
 compatibility: Requires macOS and Xcode
 user-invocable: false
 model: sonnet

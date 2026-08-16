@@ -286,7 +286,9 @@ Code audit complete. For issues found in specific categories, use the following 
 - grep `apple-dev/references/external/swiftui-view-refactor.md` for view extraction and long body refactoring
 
 **API reference** (uncertain about an API signature):
-- See `apple-swift-context` skill's Topic Router (auto-loaded when editing Swift files)
+- See `apple-swift-context` skill's Topic Router (NOT auto-loaded — its `paths:` only limits when
+  auto-loading is permitted; read `references/apple-swift-rules.md` directly, or rely on the
+  `swift-rule-detectors.py` PreToolUse hook which fires on write)
 
 ## Completion Criteria
 

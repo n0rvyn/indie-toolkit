@@ -1,6 +1,6 @@
 ---
 name: swiftdata-patterns
-description: "Internal reference loader auto-injected when working on SwiftData files (paths trigger). Provides guidance on data models, relationships, queries, migrations, and concurrency from the local SwiftData reference guide. Not user-invocable (called by dev-workflow:fix-bug, run-phase, etc. when SwiftData context is needed)."
+description: "Internal reference loader for SwiftData. NOTE: no skill currently calls it by name — dev-workflow:fix-bug reaches SwiftData rules through apple-swift-context instead. Provides guidance on data models, relationships, queries, migrations, and concurrency from the local SwiftData reference guide. Not user-invocable. `paths:` narrows when auto-loading is permitted; it is NOT a trigger (official frontmatter reference) — relevance routing still decides. Measured 2026-08-16: these loaders do not self-trigger on file edits."
 compatibility: Requires macOS and Xcode
 user-invocable: false
 model: sonnet

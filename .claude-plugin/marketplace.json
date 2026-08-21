@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Indie toolkit with iOS development, macOS tooling, and more",
-    "version": "2.5.0"
+    "version": "2.5.1"
   },
   "plugins": [
     {
       "name": "dev-workflow",
       "source": "./dev-workflow",
       "description": "Cross-stack development workflow: brainstorm, planning, phase orchestration, execution, review, debugging, design analysis, commits, and session management",
-      "version": "2.40.0",
+      "version": "2.40.1",
       "category": "development",
       "tags": [
         "workflow",
@@ -29,7 +29,7 @@
       "name": "apple-dev",
       "source": "./apple-dev",
       "description": "Complete iOS/macOS/iPadOS development workflow plugin for Claude Code — design parity, visual audit (per-View screenshots, light/dark, macOS + iOS), runtime feature verification (real e2e, not mock), and window-shot driving",
-      "version": "1.20.0",
+      "version": "1.20.1",
       "category": "development",
       "tags": [
         "ios",
@@ -76,7 +76,7 @@
       "name": "skill-master",
       "source": "./skill-master",
       "description": "Unified plugin lifecycle: brainstorm, create, eval, review, iterate, and package Claude Code plugins and components. Single entry /plugin-master with intent routing.",
-      "version": "1.1.4",
+      "version": "1.1.5",
       "category": "development",
       "tags": [
         "plugin-lifecycle",
@@ -122,7 +122,7 @@
       "name": "readback",
       "source": "./readback",
       "description": "Before-action read-back protocol. On an ambiguous request the model states which reading it picked in one line and keeps working (non-blocking); /readback and /fix-bug run the full plain-language echo and wait. Inspired by aviation/medical closed-loop communication.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "development",
       "tags": [
         "dialog",

@@ -111,6 +111,13 @@ When uncertain, default to `full` — over-translating is less harmful than unde
 
 Use the conversation's language. If the ongoing conversation has been in Chinese, write the question in Chinese; if English, English. **Do not mix CN and EN within a single presentation.**
 
+**No architecture jargon in the question text.** Write what the user will see and
+feel, not the mechanism behind it. This is a deliberate anti-`accept-all` measure:
+a question phrased in implementation terms is one the user cannot evaluate, so
+they rubber-stamp it — which converts a decision point into a formality and
+defeats the entire flow. Keep the architecture-layer trade-off in the source
+file's `[DP-NNN]` block; it stays recorded, it just does not go into the prompt.
+
 ## Presentation Flow
 
 ### Blocking decisions

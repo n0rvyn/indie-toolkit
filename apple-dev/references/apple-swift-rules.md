@@ -8,7 +8,7 @@
 <!-- section: Build-Check-Fix Cycle keywords: build, xcodebuild, check, fix, compile cycle, timing -->
 ## Build-Check-Fix Cycle
 
-**编译验证**：优先 Apple Xcode MCP `BuildProject`（需 Xcode 开着项目，返回结构化错误数组，不用啃日志）；MCP 不可用（Xcode 未开）时 fallback 到 CLI 编译验证（SPM 项目 `swift build`、Xcode 工程 `xcodebuild build`）。
+**编译验证**：优先 Apple Xcode MCP `BuildProject`（需 Xcode 开着项目，返回结构化错误数组，不用啃日志）；MCP 不可用时 fallback 到 CLI 编译验证 —— ⚠️ **不可用的原因有两个，先分清**：① 工具压根不在盘（2026-08-20 实测本机就是这样，工具列表里查不到任何 Xcode MCP；`claude mcp list` 看不见插件侧 MCP，不能用它判定）② Xcode 未开。①**开 Xcode 也没用**，直接走 CLI；（SPM 项目 `swift build`、Xcode 工程 `xcodebuild build`）。
 
 ```
 Write Code -> Apple MCP BuildProject（主）/ swift build·xcodebuild build（fallback）-> Check（MCP 结构化错误 / CLI 日志）-> Fix -> Repeat

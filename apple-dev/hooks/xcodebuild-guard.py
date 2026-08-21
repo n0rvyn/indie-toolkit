@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """PreToolUse(Bash) guard for the xcodebuild / simctl hard rules.
 
-Why a hook and not prose: the rules already exist in CLAUDE.md's xcodebuild SOP,
+Why a hook and not prose: the rules already exist in ~/.claude/rules/xcodebuild-ios.md,
 and prose lost twice — the July audit hand-fixed test-changes and finalize, then
 characterization-test shipped `-destination '...,name=iPhone 16'` anyway (a
 concrete bash template in context beats an abstract global rule). The same

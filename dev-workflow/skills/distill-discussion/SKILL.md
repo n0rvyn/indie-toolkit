@@ -43,7 +43,7 @@ Check file size with `Bash(wc -c < {path})`. Do NOT read the file to check size.
 
 #### Step 2a: Large File -- Agent Dispatch
 
-Use the Task tool to dispatch the `dev-workflow:distill-discussion-reader` agent:
+Use the Agent tool to dispatch the `dev-workflow:distill-discussion-reader` agent:
 
 ```
 Read and classify this discussion file:

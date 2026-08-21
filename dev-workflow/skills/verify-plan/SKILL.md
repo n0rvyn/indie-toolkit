@@ -47,9 +47,9 @@ After collecting plan and design doc paths, extract technical keywords from the 
 
 ### Step 2: Dispatch Agent
 
-Use the Task tool to launch the `dev-workflow:plan-verifier` agent:
-- Default (no --fast): add `model: "opus"` to the Task tool call
-- With --fast flag: add `model: "sonnet"` to the Task tool call
+Use the Agent tool to launch the `dev-workflow:plan-verifier` agent:
+- Default (no --fast): add `model: "opus"` to the Agent tool call
+- With --fast flag: add `model: "sonnet"` to the Agent tool call
 
 Note: must explicitly set model to ensure the agent uses the intended model regardless of parent session configuration.
 

@@ -116,7 +116,7 @@ DEVICE_UDID=$(xcrun xctrace list devices 2>/dev/null | sed -n '/^== Devices ==/,
   | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16}' | head -1)
 ```
 
-- `DEVICE_UDID` non-empty → `DESTINATION="platform=iOS,id=$DEVICE_UDID"`, `DEVICE_NAME` from the matching `xctrace` line; **skip A3 entirely** (no simulator involved). If the test run fails with `code 74` / `XCTestManager_IDEInterface` / `Exiting due to IDE disconnection`, Xcode.app is holding the device's test-driver session — quit Xcode and retry (global CLAUDE.md xcodebuild SOP rule 9). Do NOT fall back to the simulator for that error.
+- `DEVICE_UDID` non-empty → `DESTINATION="platform=iOS,id=$DEVICE_UDID"`, `DEVICE_NAME` from the matching `xctrace` line; **skip A3 entirely** (no simulator involved). If the test run fails with `code 74` / `XCTestManager_IDEInterface` / `Exiting due to IDE disconnection`: ⛔ **`code 74` is `EX_IOERR`, a coarse sysexits(3) class, NOT a diagnosis — do not infer a cause from it.** First look at the device screen for an unattended automation/trust authorization prompt; XCUITest hangs forever until someone taps it. Then read the runner log inside the `.xcresult` (the error message prints its path). Measured 2026-08-19: quitting Xcode, uninstalling the stale `xctrunner`, and clearing DerivedData were all ineffective, while 253 unit tests passed on the same machine; tapping the on-device prompt fixed it immediately. Full triage table: `~/.claude/rules/xcodebuild-ios.md` rule 9. Do NOT fall back to the simulator for that error.
 - Empty → A3 simulator fallback.
 
 #### A3. Simulator fallback (never auto-boot — global CLAUDE.md forbids unapproved `simctl boot`)
@@ -181,7 +181,7 @@ fi
 
 if [[ "$NEEDS_RECOVERY" -eq 1 && "$DESTINATION" == *"iOS Simulator"* ]]; then
   # The re-boot below restores the sim already in use this run (state restoration,
-  # not a new auto-boot — global CLAUDE.md xcodebuild SOP rule 6).
+  # not a new auto-boot — `~/.claude/rules/xcodebuild-ios.md` rule 6).
   xcrun simctl shutdown all
   killall -9 com.apple.CoreSimulator.CoreSimulatorService 2>/dev/null
   sleep 5
@@ -212,7 +212,7 @@ Keep only these line patterns in the report. Build phase reads `/tmp/test-change
 
 - Compile errors/warnings: `error:`, `warning:`
 - XCTest: `Test Case '-[…]' passed|failed`
-- Swift Testing: lines starting with `✔ ` (U+2714) or `✘ ` (U+2718), plus `◇` lines and the trailing `Test run with N tests` summary. NOT `✓`(U+2713)/`✗`(U+2717) — Swift Testing never emits those (verified against Testing.framework binary; see global CLAUDE.md xcodebuild SOP rule 8)
+- Swift Testing: lines starting with `✔ ` (U+2714) or `✘ ` (U+2718), plus `◇` lines and the trailing `Test run with N tests` summary. NOT `✓`(U+2713)/`✗`(U+2717) — Swift Testing never emits those (verified against Testing.framework binary; see `~/.claude/rules/xcodebuild-ios.md` rule 8)
 - Suite summary: `Test Suite '…' passed|failed`, `Executed N tests, with M failures`
 - Crash tokens: `0x8BADF00D`, `FRONTBOARD`, `RequestDenied`
 

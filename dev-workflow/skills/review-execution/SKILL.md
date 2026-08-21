@@ -2,7 +2,7 @@
 name: review-execution
 description: "Use when the user says 'review execution', 'parallel review', 'deep review', 'review my code', 'review after coding', 'execution review', '审查执行', '并行 review', '写完 review 一下', '代码 review 一下', '深度审查', '执行后审查', or wants a fresh-context multi-lens review of uncommitted changes BEFORE commit. Dispatches 4 parallel reviewer agents (correctness, test-coverage, breaking-changes, root-cause-depth) and consolidates findings into must-fix / nice-to-have. Standalone — does NOT require a plan or dev-guide. Not when: a plan exists and you want plan-vs-code audit — use implementation-reviewer. Not when: pre-commit semantic classification only — use review-before-commit. Not when project is Apple-only and you want only ASC pre-submit review — use /asc-submit-preview."
 user-invocable: true
-allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*, find:*, grep:*), Task
+allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*, find:*, grep:*), Agent, Task
 ---
 
 ## Overview
@@ -42,7 +42,7 @@ This skill formalizes the "parallel reviewer dispatch" pattern that consistently
 
 ### Step 2: Dispatch Reviewers (Single Parallel Batch)
 
-Use the Task tool to dispatch ALL applicable reviewers in a SINGLE message (parallel execution).
+Use the Agent tool to dispatch ALL applicable reviewers in a SINGLE message (parallel execution).
 
 **Always dispatched (4-lens):**
 

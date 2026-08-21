@@ -36,7 +36,7 @@ Collect the following:
 
 ### Step 2: Dispatch Agent
 
-Use the Task tool to launch the `dev-workflow:feature-spec-writer` agent with all gathered context. Structure the task prompt as:
+Use the Agent tool to launch the `dev-workflow:feature-spec-writer` agent with all gathered context. Structure the task prompt as:
 
 ```
 Generate a feature spec with the following inputs:
@@ -79,6 +79,6 @@ When the agent completes:
    - "Document the feature for changelog or release notes"
    - "Feed to an external reviewer for independent review:
       First check apple-dev plugin availability: `ls ~/.claude/plugins/cache/*/apple-dev/ 2>/dev/null`. If no output (plugin not installed), skip this offer and note 'External reviewer requires apple-dev plugin — install via /plugin marketplace'.
-      If installed, dispatch via Task tool with:
+      If installed, dispatch via Agent tool with:
         subagent_type: 'apple-dev:feature-reviewer'
         prompt: 'Review feature: {name}. Spec: {path}. Key files: {files list}. Project root: {root}'"

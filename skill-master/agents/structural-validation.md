@@ -38,7 +38,7 @@ Check the YAML frontmatter and file organization.
 Check that all cross-references between artifacts resolve correctly.
 
 **Skill → Agent references:**
-1. Grep the skill file for patterns: `` `{name}` agent ``, `launch the`, `dispatch`, `Task tool`
+1. Grep the skill file for patterns: `` `{name}` agent ``, `launch the`, `dispatch`, `Agent tool`, `Task tool` (historical name — match both)
 2. Extract every agent name referenced
 3. For each: verify a matching `.md` file exists in the plugin's `agents/` directory
 4. If the reference uses cross-plugin syntax (`plugin:agent`), verify both the plugin directory and the agent file exist

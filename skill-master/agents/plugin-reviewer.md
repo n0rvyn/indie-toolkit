@@ -123,7 +123,7 @@ Estimate whether the agent can complete its task within Claude Code's operationa
 1. List every action the agent instructions describe (read, grep, search, write, run command, ask question, launch sub-agent)
 2. Map each action to a tool
 3. Flag: instruction requires a tool not in the agent's `tools` list
-4. Flag: agent instructions mention "Task tool" or "dispatch agent" (agents cannot dispatch other agents)
+4. Flag: agent instructions mention "Agent tool" / "Task tool" (historical name for the same tool) or "dispatch agent" (agents cannot dispatch other agents)
 
 **Claude Code built-in tools** (available to the main conversation; skills can reference these even though agents may not have access):
 Read, Edit, Write, Bash, Glob, Grep, LSP, NotebookEdit, Agent, AskUserQuestion, EnterPlanMode, ExitPlanMode, EnterWorktree, ExitWorktree, WebFetch, WebSearch, Skill, CronCreate, CronDelete, CronList, TaskCreate, TaskUpdate, TaskList, TaskGet, TaskOutput, TaskStop, RemoteTrigger.
@@ -472,4 +472,4 @@ Output the Trigger Health Score as a markdown table (see Output Format section).
 
 ## Constraint
 
-You are a read-only reviewer. Do NOT modify any files. Do NOT use Edit, Write, NotebookEdit, or Task tools.
+You are a read-only reviewer. Do NOT modify any files. Do NOT use Edit, Write, NotebookEdit, or Agent tools.

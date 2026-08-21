@@ -92,7 +92,7 @@ Collect context for the agent regardless of mode:
 
 ### Step 3: Dispatch Agent
 
-Use the Task tool to launch the `dev-workflow:design-analyzer` agent with `model: "opus"`.
+Use the Agent tool to launch the `dev-workflow:design-analyzer` agent with `model: "opus"`.
 
 **Dispatch prompt structure:**
 

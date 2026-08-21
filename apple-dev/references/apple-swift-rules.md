@@ -8,7 +8,7 @@
 <!-- section: Build-Check-Fix Cycle keywords: build, xcodebuild, check, fix, compile cycle, timing -->
 ## Build-Check-Fix Cycle
 
-**编译验证**：优先 Apple Xcode MCP `BuildProject`（需 Xcode 开着项目，返回结构化错误数组，不用啃日志）；MCP 不可用时 fallback 到 CLI 编译验证 —— ⚠️ **不可用的原因有两个，先分清**：① 工具压根不在盘（2026-08-20 实测本机就是这样，工具列表里查不到任何 Xcode MCP；`claude mcp list` 看不见插件侧 MCP，不能用它判定）② Xcode 未开。①**开 Xcode 也没用**，直接走 CLI；（SPM 项目 `swift build`、Xcode 工程 `xcodebuild build`）。
+**编译验证**：优先 Apple Xcode MCP `BuildProject`（需 Xcode 开着项目，返回结构化错误数组，不用啃日志）；MCP 不可用时 fallback 到 CLI 编译验证 —— ⚠️ **不可用的原因有两个，先分清**：① 工具压根不在盘 ② Xcode 未开。①**开 Xcode 也没用**，直接走 CLI，别卡在开 Xcode 这一级；判据是工具列表里有没有，`claude mcp list` 看不见插件侧 MCP，不能用它判定。**本机当前实测状态见 `~/.claude/references/xcodebuild-simulator-testing.md` 开头的工具姿态块**——带日期的机器状态只在那一处维护，本文件不留第二份。（CLI：SPM 项目 `swift build`、Xcode 工程 `xcodebuild build`。）
 
 ```
 Write Code -> Apple MCP BuildProject（主）/ swift build·xcodebuild build（fallback）-> Check（MCP 结构化错误 / CLI 日志）-> Fix -> Repeat
@@ -150,6 +150,34 @@ iOS 26+ 把它渲染成玻璃圆底 + 光秃秃的 `‹`。同一个动作两种
 三条**全部**不可用时，必须在交付消息里显式写出「⚠️ 我没能看到渲染」+ 卡在哪个通道 + 具体让用户看哪几处。
 ⛔ 不得把「没看过」包装成「已完成，请验收」——那是把自检成本转嫁给用户
 （2026-08-09 CleanLabel：改完返回按钮直接交付，用户截图一看，漏掉的两个 push 页面还是系统旧样式）。
+
+<!-- section: 代码层一致 ≠ 渲染层一致 keywords: visual difference, same token, minimumScaleFactor, lineLimit, truncation, dynamic type, renders differently -->
+## 代码层一致 ≠ 渲染层一致
+
+<!-- 2026-08-21 回写：这份运行时修饰符清单此前只存在于 ~/.claude/CLAUDE.md「行为约束」节，
+     而那条规则不在 iOS 节内，第 355 行的回写义务文义够不到它，所以这是缺口不是违规。
+     补进权威源，让写 SwiftUI 的会话拿得到。全局侧那条按行为约束保留，不加状态声明
+     （状态写进每轮全量加载的文件里会腐烂）。 -->
+
+触发条件：用户报告两处「看起来不一样」（大小 / 颜色 / 位置 / 截断），而源码里两处用的是同一个 token、同一个组件、同一个函数。
+
+⛔ **「源码用了同一 token，应该一致」不构成对用户视觉报告的反驳。** 渲染是真相，源码层一致只是写法层面。用户的眼睛说不一致就是不一致。
+
+必查这些会让**运行时**尺寸 / 颜色 / 位置变化的因素：
+
+| 因素 | 它怎么制造差异 |
+|---|---|
+| `.minimumScaleFactor` | 容器窄时自动缩字号——两处同 token，一处触发一处没触发 |
+| `.lineLimit` / `.truncationMode` | 行数上限不同 → 截断位置与实际占位不同 |
+| `.frame(min…/max…)` | 约束不同 → 同一内容量到不同尺寸 |
+| `.fixedSize()` | 拒绝压缩，把差异推给兄弟视图 |
+| 父容器约束 | `HStack` 里的分配、`GeometryReader` 给的宽度 |
+| 状态着色函数 | 同一 token 经条件着色后取到不同值 |
+| Dynamic Type | 用户字号档位放大后，只有触发了缩放的那一处变形 |
+
+自检：脱口而出「用了同一 token，应该一致」时立刻停，去查上表。
+
+反面例（真实）：用户说「A 比 B 小」，我看源码两处都是 `AuroraTypography.meta` 就回「已统一」，没查 `.minimumScaleFactor` 在窄容器里触发了 —— 用代码层一致替代了渲染层一致。
 
 <!-- section: 设计稿没有横屏 ≠ 锁方向（强制） keywords: orientation, portrait, landscape, supportedInterfaceOrientations, UIRequiresFullScreen, window size -->
 ## 设计稿没有横屏 ≠ 锁方向（强制）

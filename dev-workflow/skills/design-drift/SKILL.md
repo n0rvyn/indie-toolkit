@@ -48,7 +48,7 @@ This skill dispatches the `dev-workflow:design-drift-auditor` agent to extract a
 
 ### Step 2: Dispatch design-drift-auditor Agent
 
-Use the Task tool to launch the `dev-workflow:design-drift-auditor` agent with `model: "opus"`. Structure the task prompt based on the mode:
+Use the Agent tool to launch the `dev-workflow:design-drift-auditor` agent with `model: "opus"`. Structure the task prompt based on the mode:
 
 **Full scan:**
 ```
@@ -99,7 +99,7 @@ Check the agent's return for a `Report:` path. If present, read the report file.
 
 **如果 0 个**：跳到 Step 4。
 
-**如果 1-3 个**：在**单条消息**中并行发起 `dev-workflow:flow-tracer` agent（每个标记一个 Task tool call）：
+**如果 1-3 个**：在**单条消息**中并行发起 `dev-workflow:flow-tracer` agent（每个标记一个 Agent tool call）：
 
 ```
 Trace this flow through the codebase:

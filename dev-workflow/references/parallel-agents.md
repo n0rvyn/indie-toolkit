@@ -28,7 +28,7 @@ Each agent gets:
 
 ### 3. Dispatch in Parallel
 
-Use the Task tool to launch all agents concurrently in a single message.
+Use the Agent tool to launch all agents concurrently in a single message.
 
 ### 4. Review and Integrate
 

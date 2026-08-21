@@ -440,7 +440,7 @@ This step closes the visual gap between implemented UI and design reference befo
 
    > Note: run-phase dispatches Apple reviewers via Phase-completion signals (UI files modified / new components / journey completed). `/review-execution` dispatches the SAME agents via git-diff signals (HAS_SWIFT / HAS_NEW_VIEW / user keywords). Both routes are intentional — run-phase serves orchestrated phases; review-execution is standalone. Running both back-to-back will dispatch agents twice with slightly different scopes.
 
-3. **Dispatch ALL agents in parallel** using the Task tool in a single message:
+3. **Dispatch ALL agents in parallel** using the Agent tool in a single message:
 
    For feature-spec-writer (if applicable):
    ```

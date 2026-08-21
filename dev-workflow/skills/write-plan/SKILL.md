@@ -105,7 +105,7 @@ Procedure:
 
 Execution:
 
-1. Dispatch `readback:intent-echoer` agent via Task tool with:
+1. Dispatch `readback:intent-echoer` agent via Agent tool with:
    - `user_request`: the user's original prompt (full text from this session)
    - `draft_plan`: the just-written plan's Goal + Architecture (first 30 lines of the plan file)
    - `context_terms`: 3-5 project terms from session

@@ -2,7 +2,7 @@
 name: readback
 description: "Use when the user says '/readback', 'readback', 'echo my intent', 'restate my ask', 'play it back', '复述', '复述一下', '回读'. Triggers a manual 3-paragraph plain-language echo of the user's current intent via the intent-echoer agent — before substantial code/plan work, or to recover alignment after drift. '/readback status' shows current readback state. Not when: inside /brainstorm Step 2 (its Expectation Recap handles alignment via '对齐了'). Not when: a plan file already exists and user wants it validated (use /verify-plan). Not when: post-code review (use /review-execution). Not when: user wants a code or doc summary (use Read/Grep directly). Not when: user wants progress summary for next session (use /handoff). Not when: user wants to extract decisions from past discussion (use /crystallize or /distill-discussion)."
 user-invocable: true
-allowed-tools: Bash(jq:*, mkdir:*, date:*, mv:*, rm:*), Task
+allowed-tools: Bash(jq:*, mkdir:*, date:*, mv:*, rm:*), Agent, Task
 ---
 
 # Readback
@@ -26,7 +26,7 @@ If args is `status` or empty + user explicitly asks for state:
    - `draft_plan`: if a plan file is referenced in recent conversation or visible at `docs/06-plans/`, include its Goal + Architecture sections (read first 30 lines)
    - `context_terms`: extract 3-5 project-specific terms used by the user in this session (from last 10 user messages)
 
-2. Dispatch `readback:intent-echoer` agent with the inputs above. Use Task tool with `subagent_type: "readback:intent-echoer"`, model is set by agent frontmatter.
+2. Dispatch `readback:intent-echoer` agent with the inputs above. Use Agent tool with `subagent_type: "readback:intent-echoer"`, model is set by agent frontmatter.
 
 3. When agent returns:
    - Present the agent's output VERBATIM to the user. Do not paraphrase. Do not add framing like "Here's what I think you want:". The agent's output IS the message.

@@ -94,7 +94,7 @@ Before any reproduction / diagnosis / planning work:
    - `user_request`: the user's original prompt (full text)
    - `context_terms`: 3-5 project-specific terms the user used in this session
 
-2. Dispatch `readback:intent-echoer` agent via Task tool (subagent_type = `readback:intent-echoer`).
+2. Dispatch `readback:intent-echoer` agent via Agent tool (subagent_type = `readback:intent-echoer`).
 
 3. Write `.claude/readback-state.json`:
 

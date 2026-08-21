@@ -8,7 +8,7 @@
 <!-- section: Build-Check-Fix Cycle keywords: build, xcodebuild, check, fix, compile cycle, timing -->
 ## Build-Check-Fix Cycle
 
-**编译验证**：优先 Apple Xcode MCP `BuildProject`（需 Xcode 开着项目，返回结构化错误数组，不用啃日志）；MCP 不可用时 fallback 到 CLI 编译验证 —— ⚠️ **不可用的原因有两个，先分清**：① 工具压根不在盘 ② Xcode 未开。①**开 Xcode 也没用**，直接走 CLI，别卡在开 Xcode 这一级；判据是工具列表里有没有，`claude mcp list` 看不见插件侧 MCP，不能用它判定。**本机当前实测状态见 `~/.claude/references/xcodebuild-simulator-testing.md` 开头的工具姿态块**——带日期的机器状态只在那一处维护，本文件不留第二份。（CLI：SPM 项目 `swift build`、Xcode 工程 `xcodebuild build`。）
+**编译验证**：优先 Apple Xcode MCP `BuildProject`（需 Xcode 开着项目，返回结构化错误数组，不用啃日志）；MCP 不可用时 fallback 到 CLI 编译验证 —— ⚠️ **不可用的原因有三个，按序查**：① 二进制不在盘（`xcrun --find mcpbridge`）② **在盘但起不来** —— 跑一次 `<路径> --help` 看有没有 dyld 错误（2026-08-21 实测到的就是这种：Xcode 装着、二进制在盘、一启动就崩；⛔ **Xcode.app 的 `LSMinimumSystemVersion` 满足也说明不了它 bundle 里的 CLI 能跑**）③ Xcode 未开。**只有 ③ 开 Xcode 有用**，①② 直接走 CLI，别卡在这一级；最终判据是会话工具列表里有没有，`claude mcp list` 看不见插件侧 MCP，不能用它判定。**本机当前实测状态见 `~/.claude/references/xcodebuild-simulator-testing.md` 开头的工具姿态块**——带日期的机器状态只在那一处维护，本文件不留第二份。（CLI：SPM 项目 `swift build`、Xcode 工程 `xcodebuild build`。）
 
 ```
 Write Code -> Apple MCP BuildProject（主）/ swift build·xcodebuild build（fallback）-> Check（MCP 结构化错误 / CLI 日志）-> Fix -> Repeat

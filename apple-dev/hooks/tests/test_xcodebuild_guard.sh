@@ -167,3 +167,67 @@ for name, new, old, want_block in cases:
 sys.exit(1 if bad else 0)
 PY
 if [ $? -eq 0 ]; then PASS=$((PASS + 1)); else FAIL=$((FAIL + 1)); fi
+
+echo "── 认不出项目时用 cwd 补认（2026-08-26）"
+python3 - "$HOOK_SCRIPT" <<'PY'
+import importlib.util, os, subprocess, sys, tempfile, time
+spec = importlib.util.spec_from_file_location("guard", sys.argv[1])
+g = importlib.util.module_from_spec(spec); spec.loader.exec_module(g)
+
+IPHONE = "00008140-0001546401FB001C"
+IPAD   = "00008027-000165A00A39002E"
+mine = f'xcodebuild test -project ArtLens.xcodeproj -scheme ArtLens -destination "platform=iOS,id={IPAD}"'
+# 对方那条**没写 -project**，与 2026-08-26 实际撞上的那条同形
+theirs = f'xcodebuild test -scheme Cashie -destination platform=iOS,id={IPHONE} -only-testing:CashieTests/X'
+
+bad = 0
+def check(name, ok, extra=""):
+    global bad
+    bad += 0 if ok else 1
+    print(f"  {'✅' if ok else '❌'} {name}{extra}")
+
+with tempfile.TemporaryDirectory() as d:
+    os.mkdir(os.path.join(d, "Cashie.xcodeproj"))
+    p = subprocess.Popen(["sleep", "30"], cwd=d)
+    try:
+        time.sleep(0.4)
+        # ⭐ 正控：先证明 cwd 那条路真的认得出来，否则下面的「放行」一文不值
+        proj = g._project_from_cwd(p.pid)
+        check("正控：从 cwd 认出 Cashie.xcodeproj", proj == "Cashie.xcodeproj", f"　→ {proj}")
+
+        why = g._conflict_reason(g._contention_key(mine),
+                                 g._contention_key(theirs, p.pid))
+        check("不同项目（靠 cwd 认出）+ 不同真机 → 放行", why is None, f"　→ {why or '放行'}")
+    finally:
+        p.kill(); p.wait()
+
+# 负控①：cwd 里没有工程 → 仍然保守拦（这条塌了说明兜底被拆掉了）
+with tempfile.TemporaryDirectory() as d:
+    p = subprocess.Popen(["sleep", "30"], cwd=d)
+    try:
+        time.sleep(0.4)
+        why = g._conflict_reason(g._contention_key(mine),
+                                 g._contention_key(theirs, p.pid))
+        check("负控：cwd 里没有工程 → 仍保守拦", why is not None, f"　→ {why or '放行'}")
+    finally:
+        p.kill(); p.wait()
+
+# 负控②：拿不到 pid（None）时不许崩，且仍保守拦
+why = g._conflict_reason(g._contention_key(mine), g._contention_key(theirs, None))
+check("负控：pid 为 None → 不崩且仍保守拦", why is not None, f"　→ {why or '放行'}")
+
+# 负控③：cwd 认出来的是**同一个**项目 → 照样拦（build.db 锁）
+with tempfile.TemporaryDirectory() as d:
+    os.mkdir(os.path.join(d, "ArtLens.xcodeproj"))
+    p = subprocess.Popen(["sleep", "30"], cwd=d)
+    try:
+        time.sleep(0.4)
+        why = g._conflict_reason(g._contention_key(mine),
+                                 g._contention_key(theirs, p.pid))
+        check("负控：cwd 认出同一个项目 → 拦", why is not None, f"　→ {why or '放行'}")
+    finally:
+        p.kill(); p.wait()
+
+sys.exit(1 if bad else 0)
+PY
+if [ $? -eq 0 ]; then PASS=$((PASS + 1)); else FAIL=$((FAIL + 1)); fi

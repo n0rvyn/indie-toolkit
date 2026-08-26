@@ -159,16 +159,52 @@ def _other_test_running():
         # ⚠️ 返回**完整**命令行，不截断：下面要从里面读 -project / -destination
         # 来判断到底抢不抢同一样东西。原来这里 `cmd[:120]` 会把 destination 切掉，
         # 于是「同一台设备」永远判不出来。
-        return cmd
+        # ⭐ 连 PID 一起回：对方没写 `-project` 时，还能从它的 cwd 把项目认出来。
+        return parts[0], cmd
+    return None, None
+
+
+def _project_from_cwd(pid):
+    """从进程的工作目录里认项目。对方没写 `-project` 时唯一还剩的线索。
+
+    ⚠️ 2026-08-26 实测撞上：另一个会话在 **iPhone** 上跑 `-scheme Cashie`
+    （没写 `-project`），本会话在 **iPad** 上跑 ArtLens —— 三条冲突理由一条都不成立，
+    却被「认不出项目」那个兜底**连拦 5 次**。而那个进程的 cwd 里就躺着 `Cashie.xcodeproj`。
+
+    `lsof -a -d cwd -p <pid> -Fn` 打出 `n<路径>`（macOS 自带，2026-08-26 实测可用）。
+    """
+    if not pid:
+        return None
+    try:
+        out = subprocess.run(["lsof", "-a", "-d", "cwd", "-p", str(pid), "-Fn"],
+                             capture_output=True, text=True, timeout=4).stdout
+    except Exception:
+        return None
+    cwd = next((ln[1:] for ln in out.splitlines() if ln.startswith("n")), None)
+    if not cwd or not os.path.isdir(cwd):
+        return None
+    try:
+        names = sorted(os.listdir(cwd))
+    except OSError:
+        return None
+    # `.xcworkspace` 优先：同目录两者并存时，`xcodebuild` 用的是 workspace。
+    for suffix in (".xcworkspace", ".xcodeproj"):
+        for name in names:
+            if name.endswith(suffix):
+                return name
     return None
 
 
-def _contention_key(cmd):
+def _contention_key(cmd, pid=None):
     """这次调用会跟别人抢什么：(项目标识, destination 的 id, 是不是模拟器)。"""
     proj = None
     m = re.search(r"-(?:project|workspace)\s+(\S+)", cmd)
     if m:
         proj = os.path.basename(m.group(1).strip("'\""))
+    else:
+        # ⭐ 命令行里没写就去 cwd 找。找到了才有资格走那三条真判据；
+        #    仍然找不到时保守判冲突（见 `_conflict_reason`）。
+        proj = _project_from_cwd(pid)
     # ⚠️ 带引号和不带引号两种都要吃：`ps` 打出来的命令行**没有引号**
     #    （`-destination platform=iOS,id=...`），只按引号匹配会一路吃到行尾，
     #    把后面的 `-only-testing:` 也吞进去 —— 路径里碰巧有 "Simulator" 就误判。
@@ -190,6 +226,11 @@ def _conflict_reason(new, old):
     ArtLens 测试也挡住了）。
 
     ⚠️ 认不出项目时**判冲突**：宁可多拦一次，也不放过真的会互相踩的那种。
+    ⭐ 但「认不出」的门槛 2026-08-26 抬高了：命令行里没写 `-project` 时，
+       先去对方进程的 **cwd** 里找 `*.xcworkspace` / `*.xcodeproj`
+       （见 `_project_from_cwd`）。两条路都认不出，才落到这个兜底。
+       起因：那天这个兜底把「Cashie 在 iPhone / ArtLens 在 iPad」连拦 5 次，
+       而三条真判据一条都不成立。
     """
     pn, dn, sn = new
     po, do, so = old
@@ -251,9 +292,10 @@ def main():
                   "都没有 → 降级 `build-for-testing` 并报告「⚠️ 测试未运行」。")
 
         # --- 2. concurrent test run ----------------------------------------
-        running = _other_test_running()
+        running_pid, running = _other_test_running()
         if running:
-            why = _conflict_reason(_contention_key(seg), _contention_key(running))
+            why = _conflict_reason(_contention_key(seg),
+                                   _contention_key(running, running_pid))
             if why:
                 block("⛔ 已有一个 `xcodebuild test` 在跑，而且**和你这次抢同一样东西**"
                       f"（xcodebuild SOP 规则 1）：{why}。"

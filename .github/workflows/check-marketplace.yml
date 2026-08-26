@@ -35,6 +35,15 @@ jobs:
             plugin_dir="$(dirname "$(dirname "$plugin_file")")"
             plugin_name="$(jq -r '.name' "$plugin_file")"
 
+            # design-handoff runs inside Claude Design, not Claude Code. It is
+            # vendored here for raw-URL distribution only and is deliberately
+            # absent from marketplace.json — see CLAUDE.md "Plugin Lifecycle"
+            # and design-handoff/README.md. Do NOT "fix" it by registering it.
+            if [[ "$plugin_dir" == "design-handoff" ]]; then
+              echo "  SKIP: design-handoff (Claude Design host plugin, intentionally unregistered)"
+              continue
+            fi
+
             market_entry="$(jq -r --arg name "$plugin_name" '.plugins[] | select(.name == $name) | .name' "$MARKET_FILE")"
             if [[ -z "$market_entry" ]]; then
               echo "FAIL: $plugin_dir ($plugin_name) has plugin.json but is not in marketplace.json"

@@ -35,4 +35,4 @@ test, not from the plugin. Paths are `${CLAUDE_PLUGIN_ROOT}/skills/mp-app-shot/s
 
 - macOS / iOS apps → `apple-dev` (`mac-app-shot`, `swiftui-visual-audit`).
 - Web pages → a browser tool.
-- WeChat *messaging* / login bridge → `wechat-bridge` (an MCP server, unrelated to mini program dev).
+- WeChat *messaging* / login bridge → not covered here; the `wechat-bridge` MCP server was retired (superseded by the Claude app on iOS/Android).

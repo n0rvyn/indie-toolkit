@@ -80,6 +80,26 @@ Reversal of the earlier "no bounded retry" position, plus the in-scope repair ad
 
 **If you are about to remove these:** the failure you are worried about is already covered — a second red still stops, an out-of-scope repair still stops, diagnosis is still out of scope, and every loop iteration is in the run log. Removing them buys no safety and restores the death causes.
 
+## 6. A STOP produces two artifacts, not one — the card locates, the doc transfers
+
+Reversal of the original "self-pacing writes its own thin card; it does not call `dev-workflow:handoff`" (SKILL.md, until 2026-08-26). Approved deliberately by the owner. Kept in the invariant-5 format — the original argument stays attached below, because it is still correct about the *card* and will be re-derived by the next reader.
+
+**The original argument, verbatim in substance:** `handoff` is the human-to-human full-context transfer; self-pacing's resume audience is itself, with the artifacts already on disk; calling the heavy skill duplicates the run log + crystal + checkpoint. **All of that is still true.** It just does not answer the question it was being used to answer.
+
+**What it got wrong.** It treated "the card should be thin" and "a STOP should produce only the card" as the same claim. They are not. A stop needs a locator *and* a context transfer, and one artifact cannot be both without ceasing to be a locator. With only the card available at stop-time, the context had to go somewhere, so it went into the card.
+
+**The evidence (2026-08-26, the owner's own projects, 15 repos with `.claude/self-pacing/`):**
+
+- **13 of 43 real stop cards are ≥3KB**; the schema is five fields, so a conforming card is ~1KB. Five of the thirteen were read line by line and all five had grown handoff sections under the schema header — `「上轮 handoff 说…那句不准」` (= handoff §3 已推翻), `「必须知道的两件事（下一个 session 会踩）」` (§8), `「需用户验证（工具不可及）」` (§5). The largest, `GaitAnalysis/2026-07-27-ios-safari-frame1-handoff.md` at **39,488 bytes**, dropped the five-field schema entirely and is titled `# 交接：…` — a handoff doc living at the card's path.
+- **Where the pairing did happen, it happened by improvisation.** `ArtLens/.claude/self-pacing/concurrent-pipeline-guide-handoff.md` (1,127 bytes, conforming) and `ArtLens/docs/06-plans/HANDOFF-2026-08-18.md` (8,435 bytes, `type: handoff`, §0 present) have the **same mtime, 2026-08-18 16:38** — both written at one STOP, the card's `Next action` reading `读 docs/06-plans/HANDOFF-2026-08-18.md §0`. Nothing in either skill specified this. That same day produced three docs (16:38, 19:37 `-EVENING`, 21:07 `-NIGHT`) because `HANDOFF-YYYY-MM-DD.md` has no room for a second stop.
+- **The link was one-way.** `grep "self-pacing\|run-log\|checkpoint"` on that doc: **zero hits**. A cold session that read only the doc lost the authoritative artifacts.
+
+**Why the discriminator is mode, not judgment.** The tempting rule is "write the doc when resuming would need context re-established." That is the shape invariant 4(b) bans: unfalsifiable, always satisfiable, and it drifts to "always write the doc". `guide` mode is session-terminal *by construction* — the user authorized an unattended multi-phase run, so they are not at the keyboard when it stops. That is checkable from the invocation, not from a self-assessment. `phase` mode keeps the card-only path for the two stops that expect a hot resume (blocking DP, author checkpoint), which is invariant 1 doing its job.
+
+**What did not change.** The card is still thin, still written at *every* stop, still ends the turn immediately (invariants 1–2 intact). The doc is additive and only at terminal stops. `run-log ≠ crystal` is untouched; the doc is a third thing, authoritative on neither — it reads both.
+
+**If you are about to restore the old rule:** the thing you are defending (a thin card) is not under attack, and removing the doc does not restore it — it restores the 13/43.
+
 ## Rejected enhancement ideas (and why)
 
 Evaluated and rejected as over-design relative to the AFK user's intent (`/self-pacing` already implies: verified plan exists, long run expected, don't interrupt unless truly blocked):

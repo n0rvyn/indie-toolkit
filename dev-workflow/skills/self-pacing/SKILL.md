@@ -34,11 +34,14 @@ It invents nothing — the whole skill is this prompt plus a **stop-policy** lay
 | **Run log** | `self-pacing` (auto) | `.claude/self-pacing/<target-slug>.md` | every auto-resolved decision, every deferral, every seam crossing, every stop, every auto-action | incrementally during the run |
 | **Checkpoint** | `execute-plan` (shared writer — single-writer rule) | `.claude/execute-plan-checkpoint.json` | `completed: {task_id: status}` map for the current unit | per task |
 | **Dev-workflow state** | `run-phase` (shared writer) | `.claude/dev-workflow-state.json` | current phase pointer in guide mode | per phase |
-| **Handoff card** | `self-pacing` (auto) | `.claude/self-pacing/<target-slug>-handoff.md` | thin stop-delta + pointers — **not** a context dump | written / refreshed on every STOP, then the turn ends |
+| **Stop card** | `self-pacing` (auto) | `.claude/self-pacing/<target-slug>-handoff.md` | thin stop-delta + pointers — **not** a context dump | written / refreshed on every STOP, then the turn ends |
+| **Handoff doc** | `dev-workflow:handoff` (invoked by `self-pacing`) | `docs/06-plans/HANDOFF-YYYY-MM-DD-HHMM.md` | full context transfer: decisions, reversals, traps, what only the user can verify | at terminal STOPs only — see the mode table below |
 
 ### Thin handoff doctrine
 
 The card is **thin by design**. Its job is to let a cold-start session locate the stop in <30 seconds, not to re-explain the project. Thin ≠ lossy — the *full* context already lives in the artifacts above; the card just indexes them.
+
+⚠️ "Thin card" is a rule about the **card**, not about the **stop**. A terminal stop produces a card *and* a handoff doc — see `Two-tier handoff` below. Reading this section alone is how 13 of 43 real cards ended up carrying a full handoff inside them (`DESIGN.md` invariant 6).
 
 **`run-log ≠ crystal` (load-bearing).** They are not interchangeable:
 - `crystal` = a user decision, locked, requires the user to be at the keyboard to authorize. Authoritative on *what to do*.
@@ -65,9 +68,25 @@ Every terminal in `## The Stop Policy` — every severity-gate STOP **and** ever
 - **Resume with:** {literal command or short prose, e.g. "yes" / "/self-pacing" / "/self-pacing phase"}
 ```
 
-### Why self-pacing writes its own thin card
+### Two-tier handoff: the card locates, the doc transfers
 
-`dev-workflow:handoff` is the human-to-human full-context handoff (it assumes the writer is summarizing the whole project for a person who has never seen it). `self-pacing`'s resume audience is itself — a cold-start session of the same skill, with the artifacts already on disk. Calling the heavy `handoff` skill would duplicate what's already in the run log + crystal + checkpoint, and would re-create context the next session doesn't need. **self-pacing writes its own thin card; it does not call `dev-workflow:handoff`.**
+A STOP needs two different things at once, and one artifact cannot be both. The card is a **locator** — cheap, written at every stop, read in <30 seconds. `dev-workflow:handoff` produces a **context transfer** — the 8-section doc that teaches a cold session the decisions, the reversals, the traps. Giving the run only the card is what made 13 of 43 real cards grow into full handoffs in the card's own file (see `DESIGN.md` invariant 6).
+
+**Which stops get the doc — enumerated by mode, never judged:**
+
+| Stop | guide mode | phase mode |
+|---|---|---|
+| any STOP | card **+ doc** | card |
+| severe failure / exhausted revision loop / cannot-proceed terminal / seam-done | card **+ doc** | card **+ doc** |
+| blocking DP / author-declared `<!-- checkpoint -->` | card **+ doc** | card only |
+
+`guide` mode is session-terminal **by construction** — the user authorized an unattended run across all phases, so they are not at the keyboard when it stops. `phase` mode's blocking-DP and checkpoint stops expect a hot resume (invariant 1) and the card alone is enough.
+
+⛔ Do **not** replace this table with a judged criterion like "does resuming need context re-established" — that is the unfalsifiable shape invariant 4(b) bans; every stop can be narrated as needing context, and the rule drifts to "always write the doc".
+
+**When the doc is written:** invoke `dev-workflow:handoff` (it reads this run's disk artifacts, not chat — see that skill's `## self-pacing 模式`), then put the doc's absolute path in the card's `Next action`. The doc's §6 carries the back-pointers to run-log / checkpoint / crystal, so either artifact reaches the other.
+
+**Card cap — a field list, not an adjective.** The card is exactly the five schema fields, plus at most one `## ⛔ 别再跑一遍的` block. Anything else — what was delivered, what got reversed, what only the user can verify, what the next session will trip on — belongs in the doc. "Keep it thin" does not catch a card that dropped the schema entirely; a field list does.
 
 ## Modes
 
@@ -205,6 +224,8 @@ Start the run log at `.claude/self-pacing/<target-slug>.md` once authorization +
 
 **STOP discipline (load-bearing — applies to every STOP below):** Any time any terminal in `## The Stop Policy` fires — severity gate or cannot-proceed terminal, per that table's `Card variant` column — `self-pacing` MUST write or refresh `.claude/self-pacing/<target-slug>-handoff.md` per the schema in `## Artifacts & the resume model` **before** ending the turn. The card carries the failing command + relevant output excerpt (severe), the blocking DP verbatim (blocking decision), the still-open revision items after cycle 2 (exhausted revision loop), or the checkpoint context (author-declared seam). Then the turn ends so CC idle notifies the user. Do NOT skip the card. Do NOT batch multiple stops into one card at session end — each stop gets its own fresh card so a cold-start reader sees the most recent state.
 
+**Terminal STOPs also write the handoff doc**, per the mode table in `Two-tier handoff` (under `## Artifacts & the resume model`): invoke `dev-workflow:handoff` (main session, not forked — the doc must exist on disk before this turn ends), then write the doc's absolute path into the card's `Next action`. Order matters: doc first, then the card, so the card can name it. Everything that does not fit the card's five fields goes in the doc — that is what the doc is for, and stuffing it into the card instead is the failure this rule exists to stop.
+
 **Run-log discipline:** Every auto-action lands in `.claude/self-pacing/<target-slug>.md` **incrementally**, in the same turn it happens. A final-batch write at session end risks losing the log to a context reset mid-run. The log entries — auto-resolved decisions, deferrals, seam crossings, screenshot paths, stops — are also the source of truth for the final HTML report (Step 4).
 
 Per unit (one plan / one phase):
@@ -269,7 +290,7 @@ Then ask how to proceed: fix open `must-fix` now, accept deferrals as known issu
 - **Bounded retry, never blind retry.** Exactly two bounded loops exist, each capped at one cycle and each fully logged: one byte-identical **re-run** of a red check (mutates nothing) and one **in-scope repair** of a `must-fix` confined to the plan's declared `**Files:**`. Neither is silent: the flake, the finding, the fix, and the re-review verdict all land in the run log and the final review. Everything beyond them stops — a second red, a repair reaching outside the declared files, or any unfamiliar failure. `self-pacing` still never invokes `fix-bug` and never diagnoses; diagnosis requires the user at the keyboard.
   - **Why these two and nothing more — the line is authorization, not confidence.** A re-run changes no bytes. An in-scope repair changes only files the user authorized when they approved this plan at Step 2. Reaching past the declared `**Files:**`, or into diagnosis, mutates the repo outside anything the user agreed to — that is what the no-auto-fix rule protects, and it is untouched.
   - **Scope:** "fix" here means source files. Revising a *plan* under the bounded verify-plan loop is not a fix — see the `Plan fails verification` row and `DESIGN.md` invariant 4(a).
-- **Every STOP writes the thin handoff card first.** Pointers + stop-delta only — never re-copy crystal / run-log / plan contents into the card. The card is an index, not a context dump (see `## Artifacts & the resume model`).
+- **Every STOP writes the stop card; terminal STOPs also write the handoff doc.** The card is pointers + stop-delta only — five schema fields plus at most one `## ⛔ 别再跑一遍的` block, never a re-copy of crystal / run-log / plan contents. Which stops get a doc is enumerated by mode in `Two-tier handoff` and is **not** a judgment call. A card that has grown a "what I delivered / what got reversed / what only you can verify" section is a doc that was written into the wrong file — invoke `dev-workflow:handoff` instead.
 - **`run-log ≠ crystal`, never mix.** User decisions resolved at the Step 2 up-front sweep → `docs/11-crystals/*-crystal.md` via `crystallize`. Blocking decisions hit *in-loop* (Step 3.2, after the run started) are recorded as `**Chosen:**` in the plan file only — recoverable via the plan Pointer on the handoff card, not re-crystallized. Auto-actions → `.claude/self-pacing/<target-slug>.md` incrementally. Treating a crystal/Chosen decision as an auto-log, or vice versa, breaks resume.
 - **No timer, no background scheduling.** `self-pacing` ends the turn after every STOP (CC idle notifies the user); it does not use ScheduleWakeup, cron, or any auto-resume mechanism. The user comes back hot (same session) or cold (new session reading the handoff card) — that's the entire resume surface. (Maintainers: rationale for why this is architectural, not a tunable, is in `DESIGN.md` — read it before adding any timer/wait/budget.)
 - **No other skill is modified.** Execution, testing, and review reuse existing assets as-is.
@@ -284,14 +305,15 @@ Then ask how to proceed: fix open `must-fix` now, accept deferrals as known issu
 
 **Cold-start resume procedure** (this is the read side of the thin card doctrine — without it, the card has no consumer):
 
-1. **Read the handoff card first.** `.claude/self-pacing/<target-slug>-handoff.md` gives `Stopped at` + `Next action` + `Resume with` in one read. The card tells you where you are.
-2. **Follow the card's `Pointers`** to load the full context, in this order:
+1. **Read the stop card first.** `.claude/self-pacing/<target-slug>-handoff.md` gives `Stopped at` + `Next action` + `Resume with` in one read. The card tells you where you are.
+2. **If the card's `Next action` names a `docs/06-plans/HANDOFF-*.md`, read that next** — it is the context transfer for this stop (its §0 tells you what to do before touching anything). The card locates; the doc explains.
+3. **Follow the card's `Pointers`** to load the full context, in this order:
    - `docs/11-crystals/*-crystal.md` — locked user decisions (what to do).
    - `.claude/self-pacing/<target-slug>.md` — auto-actions, deferrals, seam crossings, screenshot paths (what happened).
    - `.claude/execute-plan-checkpoint.json` — task-level completion map.
    - `.claude/dev-workflow-state.json` (guide mode) — phase pointer.
    - `docs/06-plans/<plan-file>.md` — the plan being executed.
-3. **Resume with the literal command** from `Resume with` (e.g. `/self-pacing`, `/self-pacing phase`, or `yes` for an in-progress STOP).
+4. **Resume with the literal command** from `Resume with` (e.g. `/self-pacing`, `/self-pacing phase`, or `yes` for an in-progress STOP).
 
 Do not skip the card and read the artifacts directly — they answer "what" without telling you "where the run stopped" or "what the next action is". The card is the locator; the artifacts are the context.
 
@@ -303,5 +325,6 @@ Do not skip the card and read the artifacts directly — they answer "what" with
 - test-changes + applicable reviews ran per unit; results are in the final review.
 - Every auto-decision and deferral appears in the final review.
 - **If ≥1 blocking DP was resolved at the Step 2 sweep**, the corresponding crystal exists at `docs/11-crystals/<date>-<topic>-crystal.md` (one file, written by Step 2's `crystallize` invocation after the user answered the DPs). If zero blocking DPs were collected, this criterion does not apply — the run is complete without a crystal by design.
-- Every STOP that fired during the run has a handoff card on disk (`.claude/self-pacing/<target-slug>-handoff.md`); the final card reflects the most recent stop, not a stale one.
+- Every STOP that fired during the run has a stop card on disk (`.claude/self-pacing/<target-slug>-handoff.md`); the final card reflects the most recent stop, not a stale one.
+- Every **terminal** STOP (per the `Two-tier handoff` mode table) also has a `docs/06-plans/HANDOFF-YYYY-MM-DD-HHMM.md` on disk, hooked into the project `CLAUDE.md`, and the card's `Next action` names it by absolute path.
 - The final consolidated review was emitted as HTML via `shared-utils:html-report` (Step 4), with run-log + crystal as source of truth.

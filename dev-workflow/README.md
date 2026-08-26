@@ -171,7 +171,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | brainstorm | interactive | Design exploration before implementation |
 | choose-personality | interactive | Lock 6-dimension visual + linguistic personality before design-system generation |
 | design-decision | interactive | Trade-off analysis with essential/accidental complexity |
-| handoff | fork (sonnet) | Cold-start prompt generation for cross-day/cross-person session transfer |
+| handoff | main session (inherit) | Full context transfer for cross-day/cross-person session hand-off; also the callee `self-pacing` invokes at a terminal STOP (its stop card locates, this doc transfers). **Not forked** — `context: fork` was dropped in `2ea667f`, and a fork would break both consumers: a forked agent cannot see the live session, and it runs in the background so the doc would not exist on disk before the calling turn ends |
 | generate-design-prompt | interactive | Cross-platform design tool prompt generation (iOS/macOS → Stitch DSL; Web → Figma placeholder); supports initial and refinement modes |
 | understand-design | dispatcher | Dual-channel design prototype analysis, token extraction, platform translation |
 | verify-plan | dispatcher | Gathers context, dispatches plan-verifier agent |

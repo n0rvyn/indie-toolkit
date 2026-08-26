@@ -11,8 +11,6 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 | `mactools` | productivity | macOS automation for Notes, Calendar, Mail, Safari, Spotlight, Reminders, OCR, Photos, Contacts, OmniFocus |
 | `product-lens` | product | Product evaluation: demand validation, market analysis, moat assessment, feature assessment, comparison matrix |
 | `skill-master` | development | Unified plugin lifecycle: brainstorm, create, eval, review, iterate, package Claude Code plugins. Entry: `/plugin-master` |
-| `wechat-bridge` | integration | WeChat message bridge via MCP `--channels` protocol: permission relay, push messages, reply |
-| `x-api` | integration | X (Twitter) API v2 MCP server: 131+ tools with Bearer Token and OAuth2 PKCE support |
 | `shared-utils` | development | Reusable utility scripts and skills shared across plugins: Notion API, MongoDB queries, cross-plugin primitives |
 | [readback](readback/README.md) | development | Before-action read-back protocol: non-blocking one-line "here's the reading I picked" on ambiguous requests, full plain-language echo on `/readback` and `/fix-bug` (4 hooks + 1 agent + 1 skill) |
 | [miniprogram](miniprogram/README.md) | development | WeChat mini program QA: headless UI verification against running devtools (screenshot + `page.data()` + geometry), and pre-submission config/compliance checks |
@@ -26,8 +24,6 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 ├── mactools/
 ├── product-lens/
 ├── skill-master/
-├── wechat-bridge/
-├── x-api/
 ├── shared-utils/
 ├── docs/
 ├── .claude-plugin/   # marketplace manifest
@@ -51,28 +47,12 @@ Install plugins:
 /plugin install mactools@indie-toolkit
 /plugin install product-lens@indie-toolkit
 /plugin install skill-master@indie-toolkit
-/plugin install wechat-bridge@indie-toolkit
-/plugin install x-api@indie-toolkit
 /plugin install shared-utils@indie-toolkit
 ```
 
 For personal OS plugins — `/health`, `/reflect`, `/intel`, `/scout`, `/pkos`, `/portfolio-scan` and related — see the [personal-os marketplace](https://github.com/n0rvyn/personal-os).
 
-Current marketplace entries from `.claude-plugin/marketplace.json`:
-
-| Plugin | Version | Description |
-|---|---|---|
-| `dev-workflow` | `2.24.2` | Cross-stack workflow with plan-execute-review |
-| `apple-dev` | `1.10.2` | iOS/macOS/iPadOS development workflows |
-| `mactools` | `1.0.1` | macOS automation for Apple apps |
-| `product-lens` | `1.0.0` | Product evaluation and market analysis |
-| `skill-master` | `1.0.0` | Unified plugin lifecycle management |
-| `wechat-bridge` | `1.0.3` | WeChat message bridge |
-| `x-api` | `1.0.0` | X (Twitter) API v2 MCP server |
-| `minimax-quota` | `0.2.1` | MiniMax coding plan quota checker |
-| `netease-cloud-music` | `0.1.0` | NetEase Cloud Music helper |
-| `shared-utils` | `0.1.0` | Reusable cross-plugin utility scripts and skills |
-| `miniprogram` | `0.1.0` | WeChat mini program headless UI verification + pre-submission checks |
+Versions are not duplicated here — `.claude-plugin/marketplace.json` is the authority, and `auto-version` bumps it on every release.
 
 ## Codex / OpenCode
 
@@ -92,6 +72,4 @@ Each plugin has its own `README.md`:
 - `mactools/README.md` — macOS automation
 - `product-lens/README.md` — Product evaluation
 - `skill-master/README.md` — Plugin lifecycle management
-- `wechat-bridge/README.md` — WeChat bridge
-- `x-api/README.md` — X API v2 MCP server
 - `shared-utils/README.md` — Reusable cross-plugin utility scripts and skills

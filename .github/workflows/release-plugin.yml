@@ -14,8 +14,6 @@ on:
           - mactools
           - product-lens
           - skill-master
-          - wechat-bridge
-          - x-api
           - shared-utils
           - readback
           - miniprogram
@@ -117,7 +115,7 @@ jobs:
             UPDATE_MARKETPLACE="${{ inputs.update_marketplace }}"
             MARKET_FILE=".claude-plugin/marketplace.json"
             MARKET_TAG_PREFIX="indie-toolkit-"
-            PLUGINS_WHEN_ALL_STR="dev-workflow apple-dev mactools product-lens skill-master wechat-bridge x-api shared-utils readback miniprogram"
+            PLUGINS_WHEN_ALL_STR="dev-workflow apple-dev mactools product-lens skill-master shared-utils readback miniprogram"
           fi
 
           bump_semver() {

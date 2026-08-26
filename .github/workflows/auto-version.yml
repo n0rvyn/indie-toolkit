@@ -9,8 +9,6 @@ on:
       - "mactools/**"
       - "product-lens/**"
       - "skill-master/**"
-      - "wechat-bridge/**"
-      - "x-api/**"
       - "shared-utils/**"
       - "readback/**"
       - "miniprogram/**"
@@ -74,7 +72,7 @@ jobs:
           else
             # push path (indie-toolkit's own native trigger)
             MARKET_FILE=".claude-plugin/marketplace.json"
-            ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-master" "wechat-bridge" "x-api" "shared-utils" "readback" "miniprogram")
+            ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "product-lens" "skill-master" "shared-utils" "readback" "miniprogram")
             MARKET_TAG_PREFIX="indie-toolkit-"
           fi
 

@@ -89,36 +89,6 @@
       "strict": true
     },
     {
-      "name": "wechat-bridge",
-      "source": "./wechat-bridge",
-      "description": "Bridge WeChat messages to Claude Code sessions via MCP --channels protocol. Enables permission relay and bidirectional messaging.",
-      "version": "1.0.3",
-      "category": "integration",
-      "tags": [
-        "wechat",
-        "mcp",
-        "messaging",
-        "bridge",
-        "channels"
-      ],
-      "strict": true
-    },
-    {
-      "name": "x-api",
-      "source": "./x-api",
-      "description": "X (Twitter) API v2 MCP server — exposes 120+ API operations as MCP tools with Bearer Token and OAuth2 PKCE support.",
-      "version": "1.0.0",
-      "category": "integration",
-      "tags": [
-        "x",
-        "twitter",
-        "api",
-        "mcp",
-        "social"
-      ],
-      "strict": true
-    },
-    {
       "name": "readback",
       "source": "./readback",
       "description": "Before-action read-back protocol. On an ambiguous request the model states which reading it picked in one line and keeps working (non-blocking); /readback and /fix-bug run the full plain-language echo and wait. Inspired by aviation/medical closed-loop communication.",

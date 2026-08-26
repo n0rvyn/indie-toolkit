@@ -1,7 +1,7 @@
 ---
 name: handoff
 description: "Use when ending the current session and transferring ALL current work to a new session (next day, different person), the user says 'handoff', '交接'. End-of-session full transfer — not for mid-session orthogonal splits (use /fork-this for that). Produces a handoff that (a) carries decisions, reversals, open items and traps forward, and (b) instructs the receiving session how to resume, so the user does not have to craft an opening prompt."
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 <!-- attribution-gate: exempt — 本文件是交接 skill 的规则原文，第 11 条逐字复述

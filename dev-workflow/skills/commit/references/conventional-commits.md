@@ -67,7 +67,7 @@ The bump-detection regex in workflow:
 ```
 feat(domain-intel): add GitHub API rate limit handling
 fix(apple-dev): correct SwiftData migration guide for iOS 26
-docs: update wechat-bridge README with new auth flow
+docs: update shared-utils README with new auth flow
 feat(pkos)!: change inbox routing to require explicit destination
 chore: bump dependencies across all plugins
 refactor(dev-workflow): extract bump detection into reusable function

@@ -102,7 +102,11 @@ def _token() -> str:
 _TOK: str | None = None
 
 
-def get(path: str) -> dict:
+def get(path: str, allow_missing: bool = False) -> dict | None:
+    """allow_missing tolerates a 404 (optional sub-resource) and ONLY a 404.
+    Auth and rate-limit failures must stay fatal — swallowing them would turn a
+    dead read into a confident-looking empty result, which is what this whole
+    tool exists to prevent."""
     global _TOK
     if _TOK is None:
         _TOK = _token()
@@ -112,6 +116,8 @@ def get(path: str) -> dict:
             return json.load(r)
     except urllib.error.HTTPError as e:
         detail = e.read().decode(errors="replace")[:600]
+        if e.code == 404 and allow_missing:
+            return None
         if e.code == 401:
             sys.exit(f"401 from ASC — key/issuer rejected.\n{detail}")
         raise SystemExit(f"HTTP {e.code} on {path}\n{detail}")
@@ -143,8 +149,22 @@ def resolve_app(token: str) -> dict:
     sys.exit(1)
 
 
+def ver_state(at: dict) -> str:
+    """Apple's docs on AppStoreVersion.appStoreState: "This attribute is
+    deprecated. Use appVersionState instead." Read the successor first — once
+    Apple drops the old key, `.get()` would return None and we would print
+    "None" as if it were a status."""
+    return at.get("appVersionState") or at.get("appStoreState") or "?"
+
+
 def versions(app_id: str, limit: int = 5) -> list[dict]:
-    return get(f"/v1/apps/{app_id}/appStoreVersions?limit={limit}")["data"]
+    """ASC documents no `sort` parameter and no default ordering for
+    appStoreVersions, so `?limit=3` is NOT "the newest 3" — it is whatever the
+    API felt like returning first. Pull a wide page and order it here, or a
+    read-back could quietly describe an ancient version."""
+    data = get(f"/v1/apps/{app_id}/appStoreVersions?limit=50")["data"]
+    data.sort(key=lambda v: v["attributes"].get("createdDate") or "", reverse=True)
+    return data[:limit]
 
 
 def version_locs(vid: str) -> list[dict]:
@@ -191,7 +211,8 @@ def cmd_show(args):
 
     for v in versions(app["id"], args.limit):
         at = v["attributes"]
-        print(f"\n=== Version {at.get('versionString')}  [{at.get('appStoreState')}]  {v['id']}")
+        print(f"\n=== Version {at.get('versionString')}  [{ver_state(at)}]  {v['id']}"
+              f"  created={at.get('createdDate')}")
         for l in version_locs(v["id"]):
             a = l["attributes"]
             kw = a.get("keywords") or ""
@@ -206,58 +227,69 @@ def cmd_show(args):
             if args.screenshots:
                 for dt, fn, ck in shots(l["id"]):
                     print(f"      shot[{dt}] {fn:<24} {ck}")
-        try:
-            notes = get(f"/v1/appStoreVersions/{v['id']}/appStoreReviewDetail"
-                        )["data"]["attributes"].get("notes") or ""
+        detail = get(f"/v1/appStoreVersions/{v['id']}/appStoreReviewDetail",
+                     allow_missing=True)
+        if detail is None:
+            print("  --- Review Notes: none set for this version (404)")
+        else:
+            notes = (detail.get("data") or {}).get("attributes", {}).get("notes") or ""
             print(f"  --- Review Notes ({len(notes)} chars)")
-            if notes:
-                for line in notes.splitlines():
-                    print("      " + line)
-        except SystemExit:
-            print("  --- Review Notes: unavailable")
+            for line in notes.splitlines():
+                print("      " + line)
 
 
 def cmd_state(args):
     app = resolve_app(args.app)
     print(f"APP {app['id']}  {app['attributes']['name']}")
-    print("\n=== Versions ===")
+    print("\n=== Versions (sorted here by createdDate, newest first) ===")
     for v in versions(app["id"], 5):
         at = v["attributes"]
-        print(f"  {at.get('versionString'):<8} {at.get('appStoreState')}")
+        print(f"  {at.get('versionString'):<8} {ver_state(at):<24} created={at.get('createdDate')}")
 
-    print("\n=== Review submissions (newest first) ===")
+    # No `sort` parameter exists on this endpoint and Apple documents no default
+    # ordering, so order it here rather than printing an unearned "newest first".
+    print("\n=== Review submissions (sorted here by submittedDate, newest first) ===")
     subs = get(f"/v1/apps/{app['id']}/reviewSubmissions?limit=10")["data"]
+    subs.sort(key=lambda s: s["attributes"].get("submittedDate") or "", reverse=True)
     if not subs:
-        print("  (none)")
-    live = None
+        print("  (none — this app has never had a review submission)")
+    states = []
     for s in subs:
         a = s["attributes"]
         items = get(f"/v1/reviewSubmissions/{s['id']}/items")["data"]
         istates = ", ".join(i["attributes"].get("state", "?") for i in items) or "-"
         print(f"  {s['id']}")
         print(f"    state={a.get('state')}  submitted={a.get('submittedDate')}  items=[{istates}]")
-        if live is None and a.get("state") in ("WAITING_FOR_REVIEW", "IN_REVIEW",
-                                               "UNRESOLVED_ISSUES", "READY_FOR_REVIEW"):
-            live = a.get("state")
+        states.append(a.get("state"))
 
     print("\n=== Verdict ===")
     # The criterion is the SUBMISSION state. The item state is a verdict field
     # (READY_FOR_REVIEW -> APPROVED/REJECTED); it never passes through
     # WAITING_FOR_REVIEW, so it cannot tell you whether you submitted.
-    if live in ("WAITING_FOR_REVIEW", "IN_REVIEW"):
-        print(f"  ✅ QUEUED WITH APPLE (submission state = {live})")
-    elif live == "UNRESOLVED_ISSUES":
+    #
+    # Decided by membership, not by list position: ASC guarantees no ordering
+    # here, so "the first one that looks in-flight" would be a coin flip.
+    queued = next((s for s in states if s in ("WAITING_FOR_REVIEW", "IN_REVIEW")), None)
+    if queued:
+        print(f"  ✅ QUEUED WITH APPLE (submission state = {queued})")
+    elif "UNRESOLVED_ISSUES" in states:
         print("  ⛔ NOT SUBMITTED — a submission is sitting in UNRESOLVED_ISSUES.")
         print("     Rejected items must be edited and then RESUBMITTED. Editing the fields")
         print("     and saving does NOT queue it. Open the submission in ASC and click")
         print("     'Resubmit to App Review'.")
         sys.exit(1)
-    elif live == "READY_FOR_REVIEW":
+    elif "READY_FOR_REVIEW" in states:
         print("  ⛔ NOT SUBMITTED — submission state is READY_FOR_REVIEW, which Apple")
         print("     defines as 'added to a submission, but hasn't been submitted yet'.")
         sys.exit(1)
+    elif not states:
+        print("  ⛔ NOTHING AWAITING REVIEW — this app has no review submission at all.")
+        sys.exit(1)
     else:
-        print("  ℹ️  No in-flight submission (all complete). Nothing is awaiting review.")
+        print(f"  ⛔ NOTHING AWAITING REVIEW — every submission is finished ({', '.join(sorted(set(states)))}).")
+        print("     Correct if the current version is already live. If you were expecting a")
+        print("     version to be in review, it was never submitted.")
+        sys.exit(1)
 
 
 def _walk_fields(app_id: str, limit: int):
@@ -280,8 +312,11 @@ def cmd_scan(args):
     tokens = [t.strip().lower() for t in args.forbid.split(",") if t.strip()]
     print(f"APP {app['id']}  {app['attributes']['name']}")
     print(f"Scanning for: {tokens}\n")
+    # One pass. Walking twice doubled every ASC round trip and let the scan and
+    # its own control read two different snapshots.
+    fields = list(_walk_fields(app["id"], args.limit))
     hits = 0
-    for where, field, text in _walk_fields(app["id"], args.limit):
+    for where, field, text in fields:
         low = text.lower()
         for t in tokens:
             if t in low:
@@ -289,14 +324,17 @@ def cmd_scan(args):
                 i = low.index(t)
                 ctx = text[max(0, i - 45): i + len(t) + 45].replace("\n", " ")
                 print(f"  ⛔ {where:<24} {field:<18} {t!r}  …{ctx}…")
-    # A scan that finds nothing is only meaningful if the scanner works. Prove it.
-    control = "a"
-    reachable = sum(1 for _, _, txt in _walk_fields(app["id"], args.limit)
-                    if control in txt.lower())
-    print(f"\n  [positive control] {reachable} field(s) contain {control!r} "
-          f"— the scanner is reading real text.")
-    if reachable == 0:
-        sys.exit("  !! Control found nothing. The scan read no fields; its zero means nothing.")
+
+    # A scan that finds nothing is only meaningful if the scanner read anything.
+    # The control counts what the walk actually produced — NOT whether some
+    # sentinel letter appears in it. A Chinese-only listing contains no "a", and
+    # the previous control failed such a listing as "read no fields".
+    chars = sum(len(t) for _, _, t in fields)
+    print(f"\n  [positive control] read {len(fields)} non-empty field(s), {chars} chars "
+          f"across {len({w for w, _, _ in fields})} locale/version slot(s).")
+    if not fields:
+        sys.exit("  !! The walk produced no fields at all. This scan read nothing; "
+                 "its 'no hits' means nothing.")
     if hits:
         print(f"\n{hits} forbidden-token hit(s).")
         sys.exit(1)
@@ -379,20 +417,28 @@ def cmd_assert(args):
         sys.exit(f"FAIL: no value for {args.locale}/{args.field}")
 
     label = f"{args.locale}/{args.field}"
+    size = f"{len(found)} chars"
+
+    # An emptied field satisfies every --absent test. Without this line, a save
+    # that silently dropped the field prints a PASS byte-identical to the one an
+    # intact field prints — which is failure mode #1 this tool exists to catch.
+    if not found:
+        print(f"⚠️  {label} is EMPTY (0 chars). Any --absent check on an empty field "
+              f"passes vacuously. If you just saved a value here, it did not commit.")
+
     if args.equals is not None:
         ok = found == args.equals
-        print(f"{'PASS' if ok else 'FAIL'} {label} equals expected "
-              f"({len(found)} chars)")
+        print(f"{'PASS' if ok else 'FAIL'} {label} equals expected ({size})")
         if not ok:
             print(f"  expected: {args.equals!r}\n  actual:   {found!r}")
     elif args.absent is not None:
         ok = args.absent.lower() not in found.lower()
-        print(f"{'PASS' if ok else 'FAIL'} {label} does not contain {args.absent!r}")
+        print(f"{'PASS' if ok else 'FAIL'} {label} does not contain {args.absent!r} ({size})")
         if not ok:
             print(f"  actual: {found!r}")
     else:
         ok = args.present.lower() in found.lower()
-        print(f"{'PASS' if ok else 'FAIL'} {label} contains {args.present!r}")
+        print(f"{'PASS' if ok else 'FAIL'} {label} contains {args.present!r} ({size})")
         if not ok:
             print(f"  actual: {found!r}")
     sys.exit(0 if ok else 1)

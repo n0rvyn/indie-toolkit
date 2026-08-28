@@ -26,6 +26,8 @@ For Codex/OpenCode: see `.codex/INSTALL.md` or `.opencode/INSTALL.md`.
 | design-parity-build | `/design-parity-build` | Audit Claude Design ↔ iOS parity, produce classified Gap List, hand off to /write-dev-guide |
 | asc-submit-preview | `/asc-submit-preview` | App Review Guidelines pre-check |
 | asc-listing | `/asc-listing` | ASC submission material check |
+| asc-readback | `/asc-readback` | Read what ASC actually holds (authenticated API): live keywords/name/subtitle, did my edit save, is it really submitted |
+| aso-research | `/aso-research` | Data-driven App Store search optimization from Apple's own endpoints |
 
 ## Called by dev-workflow
 
@@ -54,6 +56,8 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | characterization-test | internal route | Behavior-locking tests before refactoring |
 | asc-submit-preview | `/asc-submit-preview` | App Review Guidelines pre-check |
 | asc-listing | `/asc-listing` | ASC submission material check |
+| asc-readback | `/asc-readback` | Read what ASC actually holds (authenticated API): live keywords/name/subtitle, did my edit save, is it really submitted |
+| aso-research | `/aso-research` | Data-driven App Store search optimization from Apple's own endpoints |
 | testing-guide | write-plan / fix-bug / test-changes | Interactive testing guidance |
 | profiling | write-plan / fix-bug / test-changes | Performance profiling guidance |
 | xc-ui-test | write-plan / test-changes | Advanced XCUITest guidance |

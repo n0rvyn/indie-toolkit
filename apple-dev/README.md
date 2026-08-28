@@ -25,8 +25,7 @@ For Codex/OpenCode: see `.codex/INSTALL.md` or `.opencode/INSTALL.md`.
 | project-kickoff | `/project-kickoff` | New project feasibility + requirements (any platform; iOS/macOS also gets full Apple-native init) |
 | design-parity-build | `/design-parity-build` | Audit Claude Design ↔ iOS parity, produce classified Gap List, hand off to /write-dev-guide |
 | asc-submit-preview | `/asc-submit-preview` | App Review Guidelines pre-check |
-| asc-listing | `/asc-listing` | ASC submission material check |
-| asc-readback | `/asc-readback` | Read what ASC actually holds (authenticated API): live keywords/name/subtitle, did my edit save, is it really submitted |
+| asc-listing | `/asc-listing` | ASC backend: submission material guidance + authenticated read-back (live keywords, did my edit save, is it really submitted) |
 | aso-research | `/aso-research` | Data-driven App Store search optimization from Apple's own endpoints |
 
 ## Called by dev-workflow
@@ -43,7 +42,7 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | xc-ui-test | write-plan / test-changes | Advanced XCUITest guidance |
 | render-preview | run-phase visual step | 渲染 SwiftUI #Preview 成 PNG（RenderPreview 主 + axe/swiftui-render 无头 fallback） |
 
-## Full Capability Inventory (25)
+## Full Capability Inventory (24)
 
 > **Cross-plugin handoff (2026-05-26)**: design prompt generation (formerly `generate-stitch-prompts`) was merged into `dev-workflow:generate-design-prompt` with platform routing (iOS/macOS → Stitch DSL, Web → Figma, generic → Figma). `project-kickoff` cross-calls it for the Stitch step.
 
@@ -55,8 +54,7 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | validate-design-tokens | dev-workflow review step | Design token compliance check |
 | characterization-test | internal route | Behavior-locking tests before refactoring |
 | asc-submit-preview | `/asc-submit-preview` | App Review Guidelines pre-check |
-| asc-listing | `/asc-listing` | ASC submission material check |
-| asc-readback | `/asc-readback` | Read what ASC actually holds (authenticated API): live keywords/name/subtitle, did my edit save, is it really submitted |
+| asc-listing | `/asc-listing` | ASC backend: submission material guidance + authenticated read-back (live keywords, did my edit save, is it really submitted) |
 | aso-research | `/aso-research` | Data-driven App Store search optimization from Apple's own endpoints |
 | testing-guide | write-plan / fix-bug / test-changes | Interactive testing guidance |
 | profiling | write-plan / fix-bug / test-changes | Performance profiling guidance |

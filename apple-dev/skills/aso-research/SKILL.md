@@ -1,6 +1,6 @@
 ---
 name: aso-research
-description: "Use when optimizing an App Store listing for search — the user says 'ASO', 'ASO 优化', '关键词优化', 'app store 关键词', '搜不到我的 app', 'why doesn't my app rank', '商店排名', 'keyword research', or asks whether a trademark can go in the app name/subtitle/keywords. Pulls REAL data from Apple's own endpoints (live metadata, ranked search results, autocomplete, competitor name+subtitle) and produces evidence-backed metadata copy. Not for filling ASC form fields (use /asc-listing) or code-level review compliance (use /asc-submit-preview). Not for reading the live keyword field verbatim or confirming an edit saved — use /asc-readback (authenticated ASC API; this skill infers keywords from rankings because the public endpoints do not expose them)."
+description: "Use when optimizing an App Store listing for search — the user says 'ASO', 'ASO 优化', '关键词优化', 'app store 关键词', '搜不到我的 app', 'why doesn't my app rank', '商店排名', 'keyword research', or asks whether a trademark can go in the app name/subtitle/keywords. Pulls REAL data from Apple's own endpoints (live metadata, ranked search results, autocomplete, competitor name+subtitle) and produces evidence-backed metadata copy. Not for filling ASC form fields (use /asc-listing) or code-level review compliance (use /asc-submit-preview). Not for reading the live keyword field verbatim or confirming an edit saved — use /asc-listing (its authenticated read-back mode; this skill infers keywords from rankings because the public endpoints do not expose them)."
 ---
 
 # ASO Research — 数据驱动的商店搜索优化

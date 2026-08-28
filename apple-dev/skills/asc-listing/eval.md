@@ -7,6 +7,11 @@
 - "检查隐私标签应该怎么填"
 - "app store listing"
 - "What data types do I need to declare in App Privacy?"
+- "ASC 现在填的关键词是什么"
+- "我改的 ASC 字段存进去了吗"
+- "提交出去了吗"
+- "is it actually submitted"
+- "read back what ASC holds"
 
 ## Negative Trigger Tests
 <!-- Prompts that should NOT trigger this skill -->

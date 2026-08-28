@@ -18,7 +18,6 @@ Commands:
   show   <app> [--limit N]      every version x locale: name/subtitle/keywords/description/
                                 promo/whatsNew + URLs + screenshot checksums + review notes
   state  <app>                  submission state — is it actually queued with Apple?
-  scan   <app> --forbid a,b,c   search every locale/field for tokens (compliance check)
   diff   <app> <verA> <verB>    field-by-field: what changed between two versions
   assert <app> --locale L --field F --equals STR | --absent STR | --present STR
                                 read-back assertion; exit 1 on mismatch. For CI / post-edit.
@@ -292,57 +291,6 @@ def cmd_state(args):
         sys.exit(1)
 
 
-def _walk_fields(app_id: str, limit: int):
-    """Yield (where, field, text) over every localized metadata string."""
-    for st, at in info_locs(app_id):
-        for f in INFO_FIELDS:
-            if at.get(f):
-                yield f"appInfo[{st}]/{at['locale']}", f, at[f]
-    for v in versions(app_id, limit):
-        vs = v["attributes"].get("versionString")
-        for l in version_locs(v["id"]):
-            a = l["attributes"]
-            for f in TEXT_FIELDS:
-                if a.get(f):
-                    yield f"v{vs}/{a['locale']}", f, a[f]
-
-
-def cmd_scan(args):
-    app = resolve_app(args.app)
-    tokens = [t.strip().lower() for t in args.forbid.split(",") if t.strip()]
-    print(f"APP {app['id']}  {app['attributes']['name']}")
-    print(f"Scanning for: {tokens}\n")
-    # One pass. Walking twice doubled every ASC round trip and let the scan and
-    # its own control read two different snapshots.
-    fields = list(_walk_fields(app["id"], args.limit))
-    hits = 0
-    for where, field, text in fields:
-        low = text.lower()
-        for t in tokens:
-            if t in low:
-                hits += 1
-                i = low.index(t)
-                ctx = text[max(0, i - 45): i + len(t) + 45].replace("\n", " ")
-                print(f"  ⛔ {where:<24} {field:<18} {t!r}  …{ctx}…")
-
-    # A scan that finds nothing is only meaningful if the scanner read anything.
-    # The control counts what the walk actually produced — NOT whether some
-    # sentinel letter appears in it. A Chinese-only listing contains no "a", and
-    # the previous control failed such a listing as "read no fields".
-    chars = sum(len(t) for _, _, t in fields)
-    print(f"\n  [positive control] read {len(fields)} non-empty field(s), {chars} chars "
-          f"across {len({w for w, _, _ in fields})} locale/version slot(s).")
-    if not fields:
-        sys.exit("  !! The walk produced no fields at all. This scan read nothing; "
-                 "its 'no hits' means nothing.")
-    if hits:
-        print(f"\n{hits} forbidden-token hit(s).")
-        sys.exit(1)
-    print("\n✅ No forbidden tokens found.")
-    print("  NOTE: screenshots are images. This scans text fields only — a brand name")
-    print("  burned into screenshot artwork will NOT be caught here. Check those by eye.")
-
-
 def _first_diff(a: str, b: str) -> int:
     """Index of the first differing character. Long fields often differ only at the
     end, so a head-truncated diff would print two identical-looking lines."""
@@ -478,11 +426,6 @@ def main():
     s.set_defaults(fn=cmd_show)
 
     s = sub.add_parser("state"); s.add_argument("app"); s.set_defaults(fn=cmd_state)
-
-    s = sub.add_parser("scan"); s.add_argument("app")
-    s.add_argument("--forbid", required=True, help="comma-separated tokens")
-    s.add_argument("--limit", type=int, default=1, help="how many versions back")
-    s.set_defaults(fn=cmd_scan)
 
     s = sub.add_parser("diff"); s.add_argument("app")
     s.add_argument("ver_a"); s.add_argument("ver_b"); s.set_defaults(fn=cmd_diff)

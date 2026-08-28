@@ -396,27 +396,47 @@ def cmd_diff(args):
 
 
 def cmd_assert(args):
+    known = set(TEXT_FIELDS) | set(INFO_FIELDS)
+    if args.field not in known:
+        sys.exit(f"FAIL: unknown field {args.field!r}. Known: {', '.join(sorted(known))}")
+
     app = resolve_app(args.app)
-    found = None
-    for v in versions(app["id"], args.limit):
-        if args.version and v["attributes"].get("versionString") != args.version:
-            continue
+    found = source = None
+
+    if args.field in INFO_FIELDS:
+        # name / subtitle / privacyPolicyUrl live on appInfo, not on a version.
+        for st, at in info_locs(app["id"]):
+            if at["locale"] == args.locale:
+                found, source = at.get(args.field) or "", f"appInfo[{st}]/{args.locale}"
+                break
+    else:
+        # Resolve inside ONE version and stop there. Falling through to an older
+        # version when the field is null answers "did my edit save?" with the
+        # PREVIOUS version's value — a confident PASS about the wrong data.
+        # Measured 2026-08-28: v1.1 had a null promotionalText and the old code
+        # reported PASS on v1.0's 78 characters.
+        vs = versions(app["id"], args.limit)
+        if args.version:
+            vs = [v for v in vs if v["attributes"].get("versionString") == args.version]
+            if not vs:
+                sys.exit(f"FAIL: version {args.version} not found "
+                         f"(searched the newest {args.limit}; raise --limit)")
+        if not vs:
+            sys.exit("FAIL: this app has no App Store version")
+        v = vs[0]
+        vstr = v["attributes"].get("versionString")
         for l in version_locs(v["id"]):
             a = l["attributes"]
             if a["locale"] == args.locale:
-                found = a.get(args.field)
+                found, source = a.get(args.field) or "", f"v{vstr}/{args.locale}"
                 break
-        if found is not None or args.version:
-            break
-    if found is None:
-        for st, at in info_locs(app["id"]):
-            if at["locale"] == args.locale and args.field in at:
-                found = at.get(args.field)
-                break
+        if source is None:
+            sys.exit(f"FAIL: v{vstr} has no {args.locale} localization")
+
     if found is None:
         sys.exit(f"FAIL: no value for {args.locale}/{args.field}")
 
-    label = f"{args.locale}/{args.field}"
+    label = f"{source}/{args.field}"
     size = f"{len(found)} chars"
 
     # An emptied field satisfies every --absent test. Without this line, a save

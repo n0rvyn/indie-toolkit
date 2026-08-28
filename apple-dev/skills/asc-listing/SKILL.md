@@ -1,6 +1,6 @@
 ---
 name: asc-listing
-description: "Use when preparing ASC store listing materials, or the user says 'ASC listing', 'asc 上架材料', 'ASC 填写', 'app store listing', 'privacy labels'. Performs item-by-item App Store Connect submission material check and guidance. Keywords: ASC, App Store Connect, submission, privacy labels, screenshots, review. Not for 代码合规检查 — use /asc-submit-preview. Not for 关键词研究 / 商店搜索排名 / 商标能否进名称 — use /aso-research (this skill guides what to type in each ASC box; that one decides what the text should be, from pulled data)."
+description: "Use when preparing ASC store listing materials, or the user says 'ASC listing', 'asc 上架材料', 'ASC 填写', 'app store listing', 'privacy labels'. Performs item-by-item App Store Connect submission material check and guidance. Keywords: ASC, App Store Connect, submission, privacy labels, screenshots, review. Not for 代码合规检查 — use /asc-submit-preview. Not for 关键词研究 / 商店搜索排名 / 商标能否进名称 — use /aso-research (this skill guides what to type in each ASC box; that one decides what the text should be, from pulled data). Not for reading back what ASC currently holds, or checking whether a version is actually submitted — use /asc-readback."
 ---
 
 # App Store Connect 上架审查

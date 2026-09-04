@@ -218,10 +218,14 @@ Wait for all agents to return. Parse their outputs into a single table:
 
 ### Step 3b: Hand back according to `mode`
 
+**Both modes return the ENTIRE Step 3 block** — must-fix, nice-to-have, `### Coverage notes`, and `### Per-reviewer passthrough`. `mode` decides who acts on it and whether the user is prompted; it does not decide how much of it comes back.
+
 | `mode` | What happens next |
 |---|---|
-| `gated` | Return the must-fix list to the caller and stop. The caller owns the fix loop; this skill still modifies no source files. |
+| `gated` | Return the whole block to the caller and stop. The caller owns the fix loop; this skill still modifies no source files. |
 | `advisory` (default) | Present the findings and **stop without blocking**. Say plainly that nothing is being fixed and the decision is the user's. Do not re-dispatch to "confirm" a finding. |
+
+⛔ **Do not hand back must-fix alone under `gated`.** That is the mode `run-phase` uses, and `run-phase` reads `### Coverage notes` as its success signal (its dispatch gate) plus `### Per-reviewer passthrough` in three separate steps — human-verification items, the `Tests:` line, and design-reviewer's 🔴 grouping. Trimming the return to must-fix restores, one layer up, exactly the device-verification blindness this consolidation was fixing at the agent layer.
 
 **`advisory` from an `/afk` terminal stop carries one extra obligation: write the handoff.** The user was away; findings presented only in a live turn reach nobody. And the session they would return to is the expensive one — Claude Code's own prompt cache has expired by then, so continuing the old session hours later costs more than a cold start from a handoff doc. Invoke `dev-workflow:handoff` with the findings before ending the turn. ⛔ Do not drop this step as redundant with the on-screen summary; the on-screen summary is what expires.
 

@@ -51,7 +51,8 @@
 - [ ] Modifies no source files in any mode
 
 **Mode behavior:**
-- [ ] `gated` → returns must-fix to the caller for its fix loop; still fixes nothing itself
+- [ ] `gated` → returns the WHOLE Step 3 block (must-fix + nice-to-have + `### Coverage notes` + `### Per-reviewer passthrough`) to the caller for its fix loop; still fixes nothing itself
+- [ ] ⛔ `gated` does NOT trim the return to must-fix. `run-phase` runs in this mode and reads Coverage notes as its dispatch-gate signal and the passthrough in three separate steps — a trimmed return re-creates the device-verification blindness one layer above the agents
 - [ ] `gated` → Step 4 is SKIPPED entirely; the user is asked which fixes to apply by the caller, once, not by both
 - [ ] `advisory` → presents and stops; states plainly that nothing is being fixed; does not re-dispatch to "confirm" a finding
 - [ ] `advisory` from an `/afk` terminal stop → findings also go into `dev-workflow:handoff` before the turn ends. ⛔ On-screen only is a failure: the user was away, and the prompt cache has expired by the time they return, so the old session costs more to resume than a cold start from the doc

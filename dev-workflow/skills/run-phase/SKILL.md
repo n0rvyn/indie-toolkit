@@ -505,6 +505,12 @@ This step closes the visual gap between implemented UI and design reference befo
 
    This is informational — do not block with AskUserQuestion. The user can raise issues during Step 7 (Fix Gaps).
 
+   - ⛔ **Before moving on, cross-check dispatched-vs-arrived.** The review return's `### Coverage notes` lists which Apple reviewers were dispatched. For every reviewer named there whose section is **absent** from `### Per-reviewer passthrough`, print:
+
+     > ⚠️ {reviewer} 跑过了，但它的 {section} 没有出现在透传块里 —— 设备验证项这一轮是缺的，不是没有。报告文件：`.claude/reviews/{reviewer}-*.md`
+
+     **Why this line has to exist:** the failure mode of this chain is silence. If a reviewer returns only counts, or the dispatcher trims the handback, this step prints nothing and the phase looks clean — which is exactly how the device-verification items went missing before 2026-09-04. A dispatched reviewer with no arriving section is a broken contract, not an empty result; the two must be distinguishable on screen. Same distinction `review-execution` already makes for its routing flags: "assessed, nothing applied" is not "never looked".
+
 8. **Surface test coverage summary:** If the review return's `### Per-reviewer passthrough` carries an implementation-reviewer `Tests:` line:
    - Extract: required, exist, pass, shell counts
    - If shell > 0 or pass < required: present warning below the human verification items:

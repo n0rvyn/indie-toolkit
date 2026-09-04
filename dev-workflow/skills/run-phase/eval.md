@@ -18,6 +18,7 @@
 - [ ] Step 6 makes ONE `dev-workflow:review-execution` call with `plan_path` + `scope_files` (the Phase's files, not the whole tree) + `mode: gated` — and keeps NO reviewer list of its own
 - [ ] Human-verification items, the `Tests:` line, and design-reviewer 🔴 items are read from the review return's `### Per-reviewer passthrough`, not from per-agent report files
 - [ ] That assertion is only satisfiable if the apple-dev reviewers return those sections inline — check their Output Contract step 4, not just this skill
+- [ ] Step 6.7 cross-checks dispatched-vs-arrived: a reviewer named in `### Coverage notes` whose section is missing from the passthrough produces a visible ⚠️ line, not silence. ⛔ Silence here is indistinguishable from "no items found", which is how this payload went missing once already
 - [ ] Output continues through verify-plan, execute-plan, test-changes, and the review call after reading Project Health
 - [ ] Apple review/testing skills are selected through internal route terms when Swift/iOS/macOS surfaces changed
 - [ ] Phase completion report generated with next phase info

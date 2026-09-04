@@ -45,6 +45,22 @@ Every skill and agent SKILL.md / agent.md in this marketplace must declare a del
 
 **Operating principles**: see `dev-workflow/skills/audit-tokens/SKILL.md §Principles` for the two governance rules (enhance-not-break; recover-unwarranted-cost-only).
 
+## Refactor Closure (跨 skill 改动收尾)
+
+改一个 skill 的对外契约（谁调它、传什么、返回什么）时，两条硬规则：
+
+**1. 断言旧行为的 eval，会给新 bug 放行。**
+
+改 SKILL.md 之前，先 grep 一遍 `*/eval.md` 里有没有断言旧行为的条目。实证 2026-09-04：`execute-plan/SKILL.md:128` 从 `Suggest implementation-reviewer` 改成真调用，而 `execute-plan/eval.md:17` 断言的正是 `Output suggests implementation-reviewer` —— **那条 eval 会绿着放行刚被修掉的缺陷**。测试写的是旧行为时，它从守卫变成帮凶。
+
+**自检**：我改的这个行为，有没有哪个 eval.md 正在断言它的反面？
+
+**2. 「改完了」是 grep 出来的，不是想出来的。**
+
+同一次改动里，我先凭印象说「全套关联的都弄完了」，用户追问后 grep 出 **6 处漏网**（另一个 skill 保留着自己的 agent 清单、两个 eval.md、README、两处 checklist）。
+
+**动作**：声明收尾前跑一遍 `python3 .claude/skills/call-graph/scripts/call_graph.py --plugin <name>`（本地工具，`.claude/` 未纳入版本控制），核对新边出现、旧边消失；再 grep 一次被改行为的关键词。**⚠️ 静态图只能证明「边接对了」，证明不了运行时行为对** —— 契约类改动仍需一次真实运行。
+
 ## Plugin Lifecycle
 
 ### When Creating a New Plugin

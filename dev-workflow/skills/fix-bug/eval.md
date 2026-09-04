@@ -32,7 +32,12 @@
 - [ ] No code edits occur before expected behavior, current behavior, verification method, and regression shield are written
 - [ ] Step 7 gate: both Simple and Complex branches invoke `dev-workflow:write-plan` (skill identifier form, not `/write-plan` slash); Simple expects a 1–2 task plan. `EnterPlanMode` must NOT appear as a required action (global CLAUDE.md forbids native plan mode for planning)
 - [ ] Step 7 Complex branch invocation prompt's first non-empty line is the literal `Caller: dev-workflow:fix-bug` marker (single source of truth for write-plan's caller detection — gates both Step 1 item 12 Bug-diagnosis population AND Step 2.5 echo-only mode)
-- [ ] Step 7 Complex branch emits a 4-item structured diagnosis bundle (confirmed assertions / `[值域检查]` table / `[路径检查]` table / `[Consumer Impact]` list), with explicit Readback continuity declaration covering caller marker + 30-min freshness + no-new-requirements + conservative-default-on-doubt, AND a session-freshness caveat for cross-session resume
+- [ ] Step 7 Complex branch emits a 5-item structured diagnosis bundle (confirmed assertions / `[值域检查]` table / `[路径检查]` table / `[Consumer Impact]` list / `[Replacement Tradeoff]` table when Step 2.5 ruled replace), with explicit Readback continuity declaration covering caller marker + 30-min freshness + no-new-requirements + conservative-default-on-doubt, AND a session-freshness caveat for cross-session resume
+- [ ] Step 2.5 contains `[Layer Check]` (does the original intent still hold / is there a better way to achieve it today) as the gate between intent analysis and Step 3 — patching is authorized only by a "no better way" answer
+- [ ] Step 2.5 contains the N-candidate alarm signal (N candidates circling one obstacle or resting on one unverified premise ⇒ wrong layer, return to `[Intent Analysis]`)
+- [ ] Step 2.5 `[Replacement Tradeoff]` table is required whenever the layer check rules replace, carries all six rows (exists to / present cost / achieves same intent / new problems / verdict / regression condition), and defines the (1)-vs-(3) discriminator ("same scenario, same trigger condition")
+- [ ] Verdict (2) or (3) forbids the replacement (return to layer check or patch honestly); verdict (1) forces Complex classification at Step 7
+- [ ] Step 2.5 never deletes or replaces a design on its own — an intent that no longer holds routes to the same present-to-user stop branch as `intentional workaround`, with evidence and a recommendation, not a bare N-way choice
 - [ ] No assertion confirmation gate blocks diagnosis (Step 3 flows directly to Step 4)
 - [ ] Output includes Step 10 tradeoff report for the proposed fix
 - [ ] Root cause includes code evidence (file:line references)

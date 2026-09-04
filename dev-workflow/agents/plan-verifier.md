@@ -304,7 +304,7 @@ Read `{Plugin agents dir}/crystal-fidelity.md` and execute all verification step
 
 #### BD. Bug Diagnosis Fidelity（有 Bug diagnosis 字段的计划）
 
-**前置条件**：计划头部 `**Bug diagnosis:**` 字段非 `not applicable`。fix-bug Step 7（Simple/Complex 两分支均经 write-plan）产生此字段；其他来源不应触发此策略。Simple 产的 bundle 较小（至少含 confirmed assertions + Consumer Impact），覆盖检查按 bundle 实际含有的项做，不强求四项俱全。如果字段为 `not applicable`，跳过本策略。
+**前置条件**：计划头部 `**Bug diagnosis:**` 字段非 `not applicable`。fix-bug Step 7（Simple/Complex 两分支均经 write-plan）产生此字段；其他来源不应触发此策略。Simple 产的 bundle 较小（至少含 confirmed assertions + Consumer Impact），覆盖检查按 bundle 实际含有的项做，不强求各项俱全。如果字段为 `not applicable`，跳过本策略。
 
 **目的**：验证 fix-bug Complex 修复诊断证据已被 plan tasks 充分覆盖。本策略是 fix-bug → write-plan handoff 的下游消费者，存在的意义就是确保诊断证据不会被写进 header 后失能。
 
@@ -313,11 +313,12 @@ Read `{Plugin agents dir}/crystal-fidelity.md` and execute all verification step
 1. 读取 `**Bug diagnosis:**` 字段值
 2. 如果字段值匹配 `see .claude/bug-diagnosis-*.md`：Read 该文件作为 bundle 内容；文件不存在 → must-revise（`❌ BD Pre: bug-diagnosis 引用文件缺失`）
 3. 如果字段值为内联 bundle：直接解析
-4. 从 bundle 中提取四类条目：
+4. 从 bundle 中提取五类条目：
    - `confirmed assertions`（来自 fix-bug Step 4）— 每条含 file:line 证据
    - `[值域检查]` 表行（来自 fix-bug Step 5）— 含 ❌ 标记的 consumer
    - `[路径检查]` 表行（来自 fix-bug Step 6）— 含未协调的并行路径
    - `[Consumer Impact]` 列表项（来自 fix-bug Step 7）— 含当前/修复后读值
+   - `[Replacement Tradeoff]` 表（来自 fix-bug Step 2.5，仅当层次检查判定为替换）— 含"新引入的问题"逐条、判定值、回归条件
 
 **检查步骤**：
 
@@ -327,6 +328,7 @@ Read `{Plugin agents dir}/crystal-fidelity.md` and execute all verification step
 2. **每个 ❌ consumer**（值域检查表）— 至少一个 plan task 修改该 consumer 的 file:line。漏改 → 用户原始 bug 现场可能修了，但被诊断暴露的其他 ❌ 现场仍坏 → must-revise（fix-bug Step 5 规则："All ❌ must be fixed in the same pass"）。
 3. **每个未协调的并行路径**（路径检查表）— 至少一个 plan task 引入协调机制（mutex / shared state / idempotency check）或显式说明为何不需要。无任何处理 → must-revise（架构问题不能搁置）。
 4. **每个 Consumer Impact 行** — 该 consumer 的"修复后读值"与至少一个 task 的 `**Expected outcome:**` 或 `Task Contract.Expected behavior` 一致。不一致 → 诊断预期与计划交付不一致 → must-revise。
+5. **`[Replacement Tradeoff]` 的每条"新引入的问题"** — 至少一个 plan task 处理它，或计划中有一行显式把它记为已接受的缺陷。两者皆无 → 这次替换只写了收益 → must-revise。另查两项：判定值必须是 (1)（(2)/(3) 本不该走到 write-plan，出现即 must-revise），以及"回归条件"必须出现在计划头部或某个 DP 里 —— 缺了它，被否掉的那条路以后没人会重新考虑。
 
 例外通道：plan 的 `## Decisions` 章节中存在 `[DP-xxx]` 显式说明为何某项不处理（用户已确认偏离）→ 视为已覆盖，记录该 DP 引用。
 
@@ -340,6 +342,7 @@ Read `{Plugin agents dir}/crystal-fidelity.md` and execute all verification step
 | ❌ consumer bar.swift:88 | 值域检查 | — | ❌ 未覆盖 |
 | 并行路径 A↔B | 路径检查 | Task 3 引入 mutex | ✅ |
 | Consumer Impact: baz.read = X→Y | Consumer Impact | Task 2 Expected outcome 含 Y | ✅ |
+| 替换新引入：冷启动多 200ms | Replacement Tradeoff | 计划头部记为已接受缺陷 | ✅ |
 
 覆盖率：{N}/{total} 诊断条目被 plan 处理
 Gap：{M} 条

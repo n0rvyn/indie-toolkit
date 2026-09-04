@@ -208,7 +208,7 @@ If no level is constructable, output `[Feedback Loop] level=0 — not constructa
    - Note any relevant context (user action, data state)
    - **Native crash without stack trace** (iOS/Android, simulator, or device): apply user-level CLAUDE.md "Native crash → stack trace gate" before generating any hypothesis at Step 3. If user-level CLAUDE.md is not present, the inline fallback is: get stack trace before any hypothesis — iOS device `idevicecrashreport -e -k <path>` then read the .ips file; Android `adb logcat -b crash`; simulator stderr stream. Hypothesis must reference a specific frame (image symbol + osVersion) from the stack trace before being voiced. Hypothesis switches without a stack trace (e.g., guessing "double sheet" → "detents" → "FocusState") are instances of the same "guess known SDK bug" framework, not a framework switch under the 3-Strike Rule.
 
-2.5. **Understand intent** (trigger: bug location involves non-trivial logic — conditional branches, state machines, multi-step transformations)
+2.5. **Understand intent — and the layer it lives in** (trigger: bug location involves non-trivial logic — conditional branches, state machines, multi-step transformations)
 
    Before generating assertions, answer these questions by reading code + git history:
 
@@ -225,10 +225,50 @@ If no level is constructable, output `[Feedback Loop] level=0 — not constructa
    - If different: upstream/downstream impact assessment required before proceeding
    ```
 
-   If gap type = "intentional workaround":
-     Stop. Do not treat as bug. Present finding to user:
-     "This appears to be an intentional workaround from {date/commit}.
-      Confirm: fix it or preserve the workaround?"
+   **Then answer the layer question.** A bug is almost always a by-product of an existing design. Tracing only *how the symptom is produced* keeps you inside that design; the question that decides whether the fix is a fix is one level up — should that design still be there at all?
+
+   The layer question inherits this step's trigger and nothing more: a genuinely local defect (a wrong constant, an off-by-one) does not pay this tax. **Two things escalate a bug into it even when the trigger would not fire:** this is the second or later fix at the same site, or the first attempt already produced more than one candidate (see the alarm signal below). Repeat visits are the signal that the design, not the line, is what keeps failing.
+
+   ```
+   [Layer Check]
+   - Does the original intent still hold today? yes / no
+     → no: STOP. Do not remove the design on your own (see the stop branch below).
+     → yes: continue.
+   - Is there a better way to achieve that intent today than the current design?
+     → no: patching the current design is authorized. Proceed to Step 3.
+     → yes: this is a REPLACEMENT, not a patch. Fill [Replacement Tradeoff] first.
+   ```
+
+   ⚠️ **Alarm signal — N candidates means you are at the wrong layer.** If you have accumulated N candidate fixes and they are all circling the same obstacle, or all resting on one premise you never verified ("these two can't happen in the same pass", "A must precede B"), that is not a "which one" question. It is a report that you are patching one level too low. Go back to the top of `[Intent Analysis]`; falsifying the shared premise usually makes the whole choice disappear.
+
+   **[Replacement Tradeoff] — mandatory whenever the layer check says replace.** A replacement written up with only its benefits is how a problem comes back two weeks later wearing different clothes.
+
+   ```
+   [Replacement Tradeoff]
+   - Existing design exists to: {one line}
+   - Existing design's present cost: {the bug being fixed}
+   - Replacement achieves that same intent? yes / no / partial → {what is lost}
+   - Replacement's newly introduced problems: {list}
+   - Verdict: (1) acceptable known defect
+              (2) robbing Peter to pay Paul
+              (3) the same problem in a new costume
+   - Regression condition: {under what condition the rejected path comes back}
+   ```
+
+   - Verdict **(2) or (3) → do not replace.** Return to the layer check and look again, or patch the existing design honestly. Record which it was.
+   - Telling **(1) apart from (3)**: ask "when will the new problem bite me?" If the answer is the same scenario and the same trigger condition as the old problem, it is (3).
+   - Verdict **(1) → this fix is Complex** at Step 7 (architectural change). Carry this table into the diagnosis bundle. Then continue to Step 3 as normal — a replacement still needs the symptom's mechanism verified, because a design swapped out on a mistaken read of why it failed is verdict (3) that nobody caught.
+
+   **Stop branch — `intentional workaround`, or an intent that no longer holds:**
+
+   Stop. Do not treat it as a bug, and do not delete or replace the design on your own — removing existing behavior is a user-visible change that requires explicit authorization (global CLAUDE.md 行为约束 →「参考文档未提及 ≠ 应该删除」). Present the finding with its evidence:
+
+   - gap type = intentional workaround → "This appears to be an intentional workaround from {date/commit}: {evidence}."
+   - intent no longer holds → "The purpose this design served no longer applies: {evidence — git blame date, superseded API, removed feature}."
+
+   Then: "Confirm: patch it, replace it, or preserve it?" — accompanied by your recommendation and the reasoning behind it. Do not present a bare N-way choice; if `[Layer Check]` and `[Replacement Tradeoff]` already point at one option, say which and why, and let the user overturn it.
+
+   **This stop authorizes a direction, not a plan.** Step 7 remains the mandatory approval gate for the fix itself — a "replace it" here does not pre-approve what the replacement does, and answering it does not let Step 7 be skipped. Conversely, do not re-litigate the direction at Step 7: carry the answer forward as settled and put the plan, not the choice, in front of the user.
 
 3. **BV: Generate falsifiable assertions**
 
@@ -352,11 +392,13 @@ If no level is constructable, output `[Feedback Loop] level=0 — not constructa
    - All changes are directly evident from verified assertions
    - Step 5 not triggered, or all consumers showed ✅
    - Step 6 not triggered, or no parallel path issues flagged
+   - Step 2.5's `[Layer Check]` authorized a patch (no replacement)
 
    **Complex** — ANY is true:
    - Fix spans 3+ file locations
    - Step 5 found any ❌ consumer beyond the original bug site
    - Step 6 flagged parallel paths without coordination
+   - Step 2.5's `[Replacement Tradeoff]` reached verdict (1) — a replacement is going ahead
    - Fix requires architectural changes
 
    **Required actions:**
@@ -381,6 +423,7 @@ If no level is constructable, output `[Feedback Loop] level=0 — not constructa
      2. `[值域检查]` table from Step 5 — paste verbatim if Step 5 was triggered; include every ❌ consumer (write-plan tasks must address all of them)
      3. `[路径检查]` table from Step 6 — paste verbatim if Step 6 was triggered; include the coordination-mechanism finding
      4. `[Consumer Impact]` list from this Step 7 — every consumer of the modified field with current vs post-fix read values
+     5. `[Replacement Tradeoff]` table from Step 2.5 — paste verbatim whenever the layer check ruled "replace". Its `Replacement's newly introduced problems` and `Regression condition` rows are plan inputs, not commentary: the former must appear as tasks or as an explicit accepted-defect note, the latter belongs in the plan header so the rejected path is recoverable later. Omitting the table means the plan describes a replacement with only its benefits stated.
 
      Readback continuity: this skill's Step pre-0 already obtained `user_confirmed: true` for the bug report. write-plan's Step 2.5 echo-only mode will skip re-prompting iff all of: (a) the `Caller:` marker above is present, (b) `.claude/readback-state.json` is fresh (created within last 30 min), (c) no new requirements were introduced after pre-0. **Conservative default: when in doubt about (c), state it explicitly when invoking write-plan so it falls through to the full readback flow.** Re-prompting costs one echo; silently skipping alignment costs a misaligned plan.
 
@@ -495,6 +538,7 @@ When the root cause isn't obvious from assertions alone:
 - Root cause identified with code evidence (file:line)
 - Fix applied and build passes
 - Original bug scenario verified fixed (Step 9 completed)
+- `[Layer Check]` answered (if Step 2.5 triggered) — a patch was applied only because no better way to serve the original intent exists today, or the replacement carries a `[Replacement Tradeoff]` verdict of (1) with its regression condition recorded
 - All ❌ consumers from value domain trace fixed (if Step 5 triggered)
 - No parallel path coordination issues left unresolved (if Step 6 triggered)
 - Tradeoff Report produced with verification status for every fix item (Step 10 completed)

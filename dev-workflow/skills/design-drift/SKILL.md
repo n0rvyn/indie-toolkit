@@ -1,6 +1,6 @@
 ---
 name: design-drift
-description: "Use when auditing alignment across multiple project docs (project-brief, AI-CONTEXT, architecture, ADRs, feature specs, dev-guide) vs the codebase, or the user says 'check drift', 'design drift', 'audit docs vs code'. Extracts assertions from doc structures and verifies each against code. Not for: per-View token compliance scan or hardcoded-value scan (run /review-execution, which dispatches apple-dev:ui-reviewer on View changes)."
+description: "Use when auditing alignment across multiple project docs (project-brief, AI-CONTEXT, architecture, ADRs, feature specs, dev-guide) vs the codebase, or the user says 'check drift', 'design drift', 'audit docs vs code'. Extracts assertions from doc structures and verifies each against code. Not for: per-View token compliance scan or hardcoded-value scan (run /review-execution, which dispatches apple-dev:ui-reviewer on View changes); auditing against an EXTERNAL design handoff rather than in-repo docs (use apple-dev:design-parity-build)."
 user-invocable: false
 model: sonnet
 ---

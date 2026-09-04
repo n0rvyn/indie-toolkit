@@ -1,3 +1,9 @@
+> **归档于 2026-09-04。这是一份 2025-02-14 的时点快照，不是现状。**
+> 它把 `validate-design-tokens` / `swiftdata-patterns` / `testing-guide` / `localization-setup` 等
+> 列为「✅ 已验证」，而这些 skill 已于 2026-09-04 退役（见本目录其余记录）；`:72` 提到的
+> `/ui-review` `/design-review` 是 agent 改名前的旧拼法。留档不改写 —— 记录不该被追溯编辑，
+> 但它留在 `apple-dev/` 里会被当成现状读，所以挪到这里。
+
 # iOS Development Plugin - Validation Report
 
 **Date**: 2025-02-14

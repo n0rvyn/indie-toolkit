@@ -17,7 +17,7 @@
 - [ ] Standalone mode **invokes** `dev-workflow:review-execution` (not "suggests") with `plan_path`, `scope_files`, and `mode: advisory` — a prose suggestion here is why review never ran on this chain
 - [ ] `test-changes` and `finish-branch` remain suggestions, not invocations
 - [ ] Each task's Verify command is run before marking task complete
-- [ ] Step 2 contains "Plan-time test-impl split (documentation note)" subsection referencing dev-workflow/references/tdd-research-2026.md and write-plan/SKILL.md Writing Guideline item 12; explicitly states NO dispatch-time splitting
+- [ ] `### Behavior Note: Plan-time test-impl split pattern` is present between Step 1 and Step 2, and explicitly states NO dispatch-time splitting (the split is the plan author's job, per write-plan Writing Guideline 12)
 
 ## Redundancy Risk
 Baseline comparison: Base model can execute tasks but lacks batch execution with review checkpoint methodology

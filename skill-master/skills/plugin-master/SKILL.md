@@ -6,6 +6,7 @@ description: |
   or wants to orchestrate the full lifecycle (create / review / iterate / package / insights) of Claude Code plugins.
   (also: insights based on real usage to propose plugin improvements)
   Not when: user wants to create a single atomic component — use `/plugin-dev:skill-development` / `agent-development` / `hook-development` / `command-development` / `plugin-structure` directly. plugin-master is the orchestrator; plugin-dev provides the atomic builders.
+  Not when: user wants an uncommitted DIFF reviewed for correctness / test coverage / breaking changes — use `/review-execution`. This skill audits plugin artifacts (trigger quality, dispatch wiring, eval coverage); that one reviews code changes. In a plugin monorepo both fire on the same words, so route on the question being asked, not on the file type.
 
   Single entry /plugin-master with 5 routes:
   - create: brainstorm → design → scaffold (plugin-dev) → eval baseline (skill-creator) → review → iterate

@@ -711,5 +711,5 @@ func didReceive(_ payloads: [MXMetricPayload]) {
 
 ### 相关 Skill
 
-- `/testing-guide` — Unit Test、Mock/DI、TDD 基础
-- `/xc-ui-test` — XCUITest 高级用法（多屏幕旅程、网络 stub、snapshot、CI 集成）
+- `apple-dev/references/testing-guide.md` — Unit Test、Mock/DI、TDD 基础
+- `apple-dev/references/xc-ui-test-guide.md` — XCUITest 高级用法（多屏幕旅程、网络 stub、snapshot、CI 集成）

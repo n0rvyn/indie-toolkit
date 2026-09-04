@@ -549,5 +549,5 @@ xcodebuild test \
 
 ### 相关 Skill
 
-- `/profiling` — 性能分析与插桩（OSSignposter、MetricKit、XCTMetric 性能测试、反模式扫描、Instruments 工作流）
-- `/xc-ui-test` — XCUITest 高级用法（多屏幕用户旅程、网络层 Stub、Snapshot 测试、无障碍测试、CI 集成）
+- `apple-dev/references/profiling-guide.md` — 性能分析与插桩（OSSignposter、MetricKit、XCTMetric 性能测试、反模式扫描、Instruments 工作流）
+- `apple-dev/references/xc-ui-test-guide.md` — XCUITest 高级用法（多屏幕用户旅程、网络层 Stub、Snapshot 测试、无障碍测试、CI 集成）

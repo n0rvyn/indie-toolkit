@@ -17,7 +17,7 @@
 - "What screenshots do I need for ASC?" (→ asc-listing)
 - "Generate App Store description" (→ asc-listing)
 - "Run code audit on my Swift project" (→ /review-execution)
-- "Performance profiling" (→ profiling)
+- "Performance profiling" (→ `apple-swift-context` Topic Router → `apple-dev/references/profiling-guide.md`)
 
 ## Output Assertions
 - [ ] Output checks app code against App Review Guidelines sections 1-5

@@ -155,10 +155,11 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | Skill | Type | Description |
 |-------|------|-------------|
 | run-phase | orchestrator | Phase lifecycle: plan → verify → execute (segmented, checkpoint-gated) → test → review → fix → done |
+| review-execution | dispatcher | **The single review dispatcher for this marketplace.** 5 always-on lenses (correctness / test-coverage / breaking-changes / root-cause-depth / secrets-and-transport) + `implementation-reviewer` when given a plan + Apple reviewers routed by what the diff touches. Inputs: `plan_path`, `scope_files`, `mode` (`gated` \| `advisory`). Callers pass inputs, not agent lists — `run-phase` Step 6, `execute-plan`'s standalone finish, `self-pacing`'s per-unit gate and `/afk`'s terminal stop all route through it |
 | fix-bug | interactive | Systematic diagnosis with value domain tracing |
 | write-plan | interactive | Writes implementation plan with Impact Map and Task Contract |
 | write-dev-guide | interactive | Writes phased dev-guide for multi-unit work |
-| commit | fork (haiku) | Conventional commit analysis and execution |
+| commit | fork (sonnet) | Conventional commit analysis and execution |
 | review-before-commit | interactive | Pre-commit semantic review: classify changes, detect breaking changes, interactive risk confirmation |
 | issue | interactive | GitHub Issue unified entry point |
 | finish-branch | interactive | Test, document, merge/PR/discard |
@@ -174,7 +175,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | brainstorm | interactive | Design exploration before implementation |
 | choose-personality | interactive | Lock 6-dimension visual + linguistic personality before design-system generation |
 | design-decision | interactive | Trade-off analysis with essential/accidental complexity |
-| handoff | main session (inherit) | Full context transfer for cross-day/cross-person session hand-off; also the callee `self-pacing` invokes at a terminal STOP (its stop card locates, this doc transfers). **Not forked** — `context: fork` was dropped in `2ea667f`, and a fork would break both consumers: a forked agent cannot see the live session, and it runs in the background so the doc would not exist on disk before the calling turn ends |
+| handoff | main session (inherit) | Full context transfer for cross-day/cross-person session hand-off; the callee `/afk` invokes at **every** stop (its only handoff outlet) and `self-pacing` at a terminal STOP (its stop card locates, this doc transfers). **Not forked** — `context: fork` was dropped in `2ea667f`, and a fork would break both consumers: a forked agent cannot see the live session, and it runs in the background so the doc would not exist on disk before the calling turn ends |
 | generate-design-prompt | interactive | Cross-platform design tool prompt generation (iOS/macOS → Stitch DSL; Web → Figma placeholder); supports initial and refinement modes |
 | understand-design | dispatcher | Dual-channel design prototype analysis, token extraction, platform translation |
 | verify-plan | dispatcher | Gathers context, dispatches plan-verifier agent |
@@ -196,6 +197,12 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | Event | Script | Purpose |
 |-------|--------|---------|
 | SessionStart | check-workflow-state.sh | Detects in-progress phase, prompts resume |
+| PreToolUse (Bash, `git checkout`/`restore`) | backup-before-checkout.py | Copies files with uncommitted changes into `.git/undo-checkout/<timestamp>/` before letting the command through. Backs up and allows — it does not block |
+| PreToolUse (Edit\|Write\|MultiEdit) | nudge-named-source.py | Nudges toward reading the source the user named before editing around it |
+| PreToolUse | bug-fix-gate.py | Enforces the fix-bug flow's **现状: / 预期:** statement before a fix edit lands |
+| PreToolUse + UserPromptSubmit | design-sync-guard.py | Denies `WebFetch` on `claude.ai/design` URLs and delivers the DesignSync MCP conventions instead (registered on both events) |
+| UserPromptSubmit | kb-tripwire.py | Fires the knowledge-base lookup when a prompt carries a platform name plus an error code |
+| PostToolUse (Edit\|Write) | lint-claude-md.py | Lints CLAUDE.md edits |
 | PreToolUse (Bash, `git commit *`) | scan-secrets.sh | Intercepts git commit, blocks if secrets detected in staged content |
 | PreToolUse (Bash) | suggest-agent-dispatch.sh | Cost-routing nudge: emits stderr hint when ≥2 mechanical探查 Bash (sqlite3/curl/grep -r/find) accumulate in 30-min window. Always exit 0; never blocks |
 | PreToolUse (Read) | suggest-read-routing.sh | Cost-routing nudge: emits stderr hint when same file Read ≥2× (Read pollution) OR ≥2 large Reads (>300 lines) in window. Always exit 0; never blocks |

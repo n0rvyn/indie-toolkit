@@ -43,7 +43,7 @@ project root path.
 2. Ensure directory exists: `mkdir -p .claude/reviews`
 3. **Write** the full Feature Review Report (format at end of document) to:
    `.claude/reviews/feature-reviewer-{YYYY-MM-DD-HHmmss}.md`
-4. **Return** only this compact summary to the dispatcher:
+4. **Return** this summary to the dispatcher, with the device-verification list reproduced INLINE:
 
 ```
 Report: .claude/reviews/feature-reviewer-{timestamp}.md
@@ -53,7 +53,12 @@ Story 覆盖: {N}/{M}
 产品问题: 🔴 {X} / 🟡 {Y}
 UX 问题: 🔴 {X} / 🟡 {Y}
 设备验证项: {N}
+
+### Part C: 设备验证清单
+{reproduce every item from the report's Part C verbatim, one per line}
 ```
+
+⛔ **The list goes in the RETURN, not only in the report file.** `dev-workflow:review-execution` passes it through and does not read `.claude/reviews/*.md`; returning only `设备验证项: {N}` makes the passthrough emit an empty list.
 
 Verdict rule: any 🔴 issue = `fail`; otherwise `pass`.
 

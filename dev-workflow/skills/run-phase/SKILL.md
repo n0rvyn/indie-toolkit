@@ -58,7 +58,8 @@ This skill dispatches sub-agents at multiple steps (Step 4 execute-plan, Step 5 
 **Treat agent stdout as a claim, not a fact**:
 - After every Agent return in Step 4/5/6, before recording the report path into state, verify the claimed report file actually exists on disk (`ls` or `Read`). If missing: do NOT advance `phase_step`; either re-dispatch the agent with explicit Write tool requirement, or surface the failure to the user.
 - For execute-plan (Step 4): the Workflow returns per-task structured results; spot-check by verifying every path in each result's `files_written` array exists on disk (defense-in-depth — the dev-workflow `verify-agent-output.py` hook also intercepts at agent return time). The execute-plan skill itself owns the segment loop and the checkpoint file, but the run-phase orchestrator should not blindly trust the final summary.
-- For test-changes / review agents: their report files (`docs/06-plans/execution-report.md`, `.claude/test-reports/*.md`, `.claude/reviews/*.md`) must exist before the next step.
+- For test-changes (Step 5): its report file (`docs/06-plans/execution-report.md`, `.claude/test-reports/*.md`) must exist before the next step.
+- For review (Step 6): **do NOT check for `.claude/reviews/*.md`.** `review-execution` returns one consolidated block and this skill no longer hunts for per-agent report files (Step 6.4). The success signal is that the return contains a `### Coverage notes` section; a return without it is the failure to act on. Checking for files here would block on artifacts the contract does not promise the dispatcher ever sees.
 
 This gate is non-negotiable: we have a confirmed past case of a sub-agent reporting file writes that never persisted, caught only because the verify-agent-output hook fired.
 
@@ -505,7 +506,9 @@ This step closes the visual gap between implemented UI and design reference befo
    - If shell > 0 or pass < required: present warning below the human verification items:
      > ⚠️ 测试覆盖不完整：{N} 个计划要求的测试中，{M} 个为空壳或未覆盖核心路径
 
-9. Update state: `review_reports: [<report file paths from agent summaries>]`, `last_updated: <now>`
+9. Update state: `review_reports: ["review-execution:consolidated"]` plus `review_findings: {must_fix: <N>, nice_to_have: <M>}`, `last_updated: <now>`.
+
+   ⛔ **Do not write report file paths here.** `review-execution` returns findings, not paths — recording `[]` and then hitting the Step 8.0 gate below produces a false "no test or review reports found" block on a phase that was actually reviewed. The sentinel records *that review ran*; the counts record *what it found*.
 10. **PushNotification checkpoint 2**: emit `PushNotification` with message like `Phase {N} reviews complete — {N} gaps, {M} verifications need device` (see "## User-Visible Notifications" above). Skip if all agents passed with zero issues AND the user has been responding within the last minute.
 
 ### Step 7: Fix Issues
@@ -517,7 +520,7 @@ If any of the following have issues: execution report (blocked/failed tasks), te
    a. **Execution failures** (from Step 4): blocked/failed tasks from the execute-plan agent report
    b. **Test failures** (from Step 5): build errors, test failures, lint errors from the test-changes report
    c. **Review gaps** (from Step 6): plan-vs-code gaps, pre-existing issues
-   Read the relevant report files for full details. Skip entries that are not file paths (e.g., `"user-override"` sentinel values).
+   Read the relevant report files for full details. Skip entries that are not file paths (e.g. the `"user-override"` and `"review-execution:consolidated"` sentinels — the latter means the findings are in the consolidated return, not on disk).
 3. List all issues sorted by severity (critical first, then warnings)
    Separate by origin:
    - **执行阻塞（{N} 个）：**
@@ -560,8 +563,9 @@ If any of the following have issues: execution report (blocked/failed tasks), te
 
 0. **Pre-completion gate** (structural enforcement):
    - Read `review_reports` and `test_report` from state file
-   - If `review_reports` is empty AND `test_report` is null (no reports):
+   - If `review_reports` is empty AND `test_report` is null (neither step ran):
      **BLOCK**: "Cannot complete phase: no test or review reports found. Run Step 5 and Step 6 before marking phase as done."
+     (`review_reports` is non-empty whenever Step 6.9 wrote its `review-execution:consolidated` sentinel — the gate asks whether review RAN, never whether a file landed.)
      Do NOT proceed. Use AskUserQuestion:
      - Option A: "Run Step 5 now" → return to Step 5
      - Option B: "Skip test and review, complete phase" → add `review_reports: ["user-override"]`, `test_report: "user-override"`, log override, proceed

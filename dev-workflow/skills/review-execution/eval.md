@@ -24,6 +24,7 @@
 - [ ] `plan_path` present → dispatches `dev-workflow:implementation-reviewer` as Lens E; absent → skipped silently
 - [ ] Lens E is NOT merged into Lens A — "did the code do what the plan said" and "is the code correct" are separate questions and separate agents
 - [ ] `scope_files` present → every lens is restricted to the intersection with the diff
+- [ ] ⛔ The restriction reaches the lens **prompts** as an explicit scope line, not just Step 1's prose. Grep Step 2: a `Restrict every check to these files ONLY` block must precede the lens templates. Computing an intersection that never enters the prompt leaves the subagents running `git diff` on the whole tree while the Coverage note reports a narrower scope
 - [ ] Intersection empty → **STOP and say so**; does NOT fall back to the whole working tree (a silent widening defeats the input's purpose)
 - [ ] `mode` defaults to `advisory` when absent
 
@@ -33,6 +34,7 @@
 - [ ] `apple-reviewer` fires on `HAS_APPLE_NONSWIFT` (.plist / entitlements / xcassets / xcconfig / Package.swift / .pbxproj), **not** on "project is Apple" — "always" is not a route
 - [ ] `feature-reviewer` fires on `HAS_FEATURE_SPEC` or `SPANS_LAYERS`, **not** on phrases in the user's message
 - [ ] `design-reviewer` fires on `HAS_NEW_VIEW`
+- [ ] `HAS_FEATURE_SPEC` and the apple-dev availability probe use `find`, never `ls` — `ls` is absent from `allowed-tools`, and its permission denial is indistinguishable from "not found"
 - [ ] Five base lenses (correctness / test-coverage / breaking-changes / root-cause-depth / secrets-and-transport) always dispatch
 - [ ] Lens F (secrets & transport) is always-on and NOT path-routed — a leaked key has no predictable path, so a path-shaped route would miss its own use case
 - [ ] All applicable reviewers go out in ONE Agent batch, never a sequential follow-up
@@ -42,13 +44,15 @@
 **Output contract:**
 - [ ] Returns must-fix / nice-to-have / coverage notes
 - [ ] Coverage notes name Lens E's status and the scope actually used
-- [ ] Emits `### Per-reviewer passthrough` reproducing each reviewer's structured sections **verbatim** — `ui-reviewer` `### Part C: 人工验证清单`, `design-reviewer` `### Part B: 设备验证清单` + 🔴 items, `feature-reviewer` `### Part C: 设备验证清单`, `implementation-reviewer` `Tests:` line
+- [ ] Emits `### Per-reviewer passthrough` reproducing each reviewer's structured sections **verbatim** — `ui-reviewer` `### Part C: 人工验证清单`, `design-reviewer` `### Part A 🔴 项` + `### Part B: 设备验证清单`, `feature-reviewer` `### Part C: 设备验证清单`, `implementation-reviewer` `Tests:` line
+- [ ] ⛔ Those sections must be present in each agent's **return value**, not only in its `.claude/reviews/*.md` report. Verify at the source: each of the three apple-dev reviewers' Output Contract step 4 reproduces the list INLINE. A contract that returns only `设备验证项: {N}` makes this passthrough structurally unsatisfiable — which is what it did until 2026-09-04
 - [ ] ⛔ Passthrough sections are reproduced, not summarized — callers parse them, and flattening sends the caller back to hunting per-agent report files, which is the coupling this consolidation removed
 - [ ] Writes NO `.claude/reviews/*.md` file (measured at ~6 writes per read-back; findings reached humans through returned text, not files)
 - [ ] Modifies no source files in any mode
 
 **Mode behavior:**
 - [ ] `gated` → returns must-fix to the caller for its fix loop; still fixes nothing itself
+- [ ] `gated` → Step 4 is SKIPPED entirely; the user is asked which fixes to apply by the caller, once, not by both
 - [ ] `advisory` → presents and stops; states plainly that nothing is being fixed; does not re-dispatch to "confirm" a finding
 - [ ] `advisory` from an `/afk` terminal stop → findings also go into `dev-workflow:handoff` before the turn ends. ⛔ On-screen only is a failure: the user was away, and the prompt cache has expired by the time they return, so the old session costs more to resume than a cold start from the doc
 

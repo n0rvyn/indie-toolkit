@@ -816,8 +816,8 @@ xcrun simctl install "CI iPhone" ./Build/Products/Debug-iphonesimulator/MyApp.ap
 
 ### 相关 Skill
 
-- `/testing-guide` — Unit Test、Mock/DI、TDD 基础、Page Object 入门
-- `/profiling` — 性能测试（XCTMetric、XCTOSSignpostMetric、XCTHitchMetric）
+- `apple-dev/references/testing-guide.md` — Unit Test、Mock/DI、TDD 基础、Page Object 入门
+- `apple-dev/references/profiling-guide.md` — 性能测试（XCTMetric、XCTOSSignpostMetric、XCTHitchMetric）
 
 ## XCUITest API Reference (vendored from vabole/apple-skills)
 

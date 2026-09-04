@@ -43,17 +43,25 @@ You will receive a list of View files (new pages/components) and the project roo
 2. Ensure directory exists: `mkdir -p .claude/reviews`
 3. **Write** the full Design Review Report (format at end of document) to:
    `.claude/reviews/design-reviewer-{YYYY-MM-DD-HHmmss}.md`
-4. **Return** only this compact summary to the dispatcher:
+4. **Return** this summary to the dispatcher, with the device-verification list and every 🔴 line reproduced INLINE:
 
 ```
 Report: .claude/reviews/design-reviewer-{timestamp}.md
-Verdict: {pass | fail}
+Verdict: {pass | needs-attention}
 设计规则: 🔴 {X} / 🟡 {Y}
 设备验证项: {N}
 检查文件数: {N}
+
+### Part A 🔴 项
+{one line per 🔴 finding: [A{n}] {file}:{line} — {what}}
+
+### Part B: 设备验证清单
+{reproduce every item from the report's Part B verbatim, one per line}
 ```
 
-Verdict rule: **advisory** — report `needs-attention` when 🔴 issues exist, never `fail`.
+⛔ **Both blocks go in the RETURN, not only in the report file.** `dev-workflow:review-execution` passes them through and does not read `.claude/reviews/*.md`; `run-phase` groups the 🔴 lines by check id. Returning only counts makes both arrive empty.
+
+Verdict rule: **advisory** — report `needs-attention` when 🔴 issues exist, never `fail`. The enum above is `{pass | needs-attention}` for exactly this reason; `fail` is not a value this agent may emit.
 
 > **Why this is not a blocking gate.** Every check in this file is a *judgment*: is the hierarchy clear, is the palette coherent, does this feel generic. Those are real and worth reporting, but they are the reviewer's opinion, and an opinion that blocks a merge will be argued with, overridden, and eventually ignored — taking the genuinely load-bearing findings down with it.
 >
@@ -200,14 +208,18 @@ For each file provided, check the following dimensions:
 
 > 原则：1pt 边框是最弱的容器暗示，堆叠使用 = 视觉拥挤（`apple-dev/references/ui-design-principles.md` §19.5）。替代手段的完整对照表与反例见该文件 §19.5：阴影 / 背景色阶 / 留白 / Section 分组 / 单条强调色边框（§19.2 模式：`.overlay(alignment: .leading) { Rectangle().fill(.accent).frame(width: 3) }`）。
 
-**代码检查**：对每个文件跑两个 grep，命中数**相加**得该文件的 border 总数：
+**代码检查**（用 `Grep` **工具**，不要写 Bash —— 本 agent 的 `allowed-tools` 只放行 `mkdir` / `date`）：
 
-```bash
-grep -cE '\.border\(|\.overlay.*RoundedRectangle.*stroke' <file>
-grep -cE 'RoundedRectangle\(.*\)\s*\.strokeBorder|^\s*\.strokeBorder' <file>
-```
+对每个文件跑两次，都取**行号**：
 
-**分级**：≥ 5 次 → 🔴（极端过度，几乎不会是无意；剥掉 1–2 个换成阴影或背景色阶通常就能消除拥挤）；4 次 → 🟡；3 次 → 灵感级，只提不判。
+1. `Grep(pattern="\\.border\\(|\\.overlay.*RoundedRectangle.*stroke", path=<file>, output_mode="content", -n=true)`
+2. `Grep(pattern="RoundedRectangle\\(.*\\)\\s*\\.strokeBorder|^\\s*\\.strokeBorder", path=<file>, output_mode="content", -n=true)`
+
+⛔ **取两组行号的并集，不是命中数相加。** 单行写法 `.overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(...))` **同时命中两个 pattern**（实测：各返回 1）。相加会让一个边框算成两个 —— 三个边框凑到 6，直接误判为 🔴「极端过度」。这个方向与下面声明的盲点**相反**（那条只承认漏报），所以必须在这里挡住。
+
+**分级**：并集行数 ≥ 5 → 🔴（极端过度，几乎不会是无意；剥掉 1–2 个换成阴影或背景色阶通常就能消除拥挤）；4 → 🟡；3 → 🟡 并在描述前加 `(灵感级)` 前缀。
+
+> **为什么 3 次也进 🟡 而不是第四档**：本文件的 Output Format 只有 🔴/🟡/⚪ 三个桶，返回摘要也只统计 `🔴 {X} / 🟡 {Y}`。判成「灵感级」等于**检查跑了、发现了、然后被静默丢弃**。A13–A16 的灵感级一律降进 🟡 并加前缀，读者按前缀自行取舍。
 
 **已知盲点**（照实说，不要当成"检查过了没问题"）：多行写法 `\.overlay(\n RoundedRectangle(...)\n .strokeBorder(...)\n)` 这两个 grep 都匹配不到（需 `pcre2grep -M`）。计数偏低是可接受的漏报。反向地，§19.2 里 intentional 的单条强调色边框也会被计入，所以命中后要看上下文再判。
 
@@ -217,23 +229,18 @@ grep -cE 'RoundedRectangle\(.*\)\s*\.strokeBorder|^\s*\.strokeBorder' <file>
 
 > 原则：设置页 / 引导页 / 支付页这类主屏上的 `Toggle` / `Picker` / `DatePicker`，值得定制以体现品牌（`apple-dev/references/ui-design-principles.md` §19.1，含 `BrandToggleStyle` / `BrandSegmentedPickerStyle` / `BrandDatePickerTrigger` 三段可直接抄的实现）。
 
-**代码检查**：
+**代码检查**（用 `Grep` **工具**，两次，都取行号）：
 
-```bash
-grep -nE '\bToggle\(|\bPicker\(|\bDatePicker\(' <file>
-```
+1. 控件：`Grep(pattern="\\bToggle\\(|\\bPicker\\(|\\bDatePicker\\(", path=<file>, output_mode="content", -n=true)`
+2. 定制：`Grep(pattern="\\.toggleStyle\\b|\\.pickerStyle\\b|\\.datePickerStyle\\b", path=<file>, output_mode="content", -n=true)`
 
-对每个命中行 M：先看 M 后 3 行内有没有 `.toggleStyle` / `.pickerStyle` / `.datePickerStyle`，有则跳过。没有则做**父容器扫描**（确定性规则，不要凭感觉判断"外层应该有"）：
+**判定按控件类型逐类做，范围是整个文件**：`Toggle` 命中非空而 `.toggleStyle` 全文件为零 → 标记该文件的全部 `Toggle` 行；`Picker` / `.pickerStyle`、`DatePicker` / `.datePickerStyle` 同理。三类各判各的。
 
-1. 从 M 向**上**扫，记录每行未配对的 `{` 与 `}`；
-2. 第一行满足 `{` 数 > `}` 数的记为 P（进入了外层 scope）；
-3. 从 P 向**下**扫并跟踪计数，回到 P 行初始余量的那行记为 Q；
-4. 在 [P, Q] 区间内 grep 三个 style modifier —— 命中则父容器已统一定制，**不标记**；无命中则标记 M；
-5. P 找不到（M 已在最外层）或 Q 触达文件尾 → 按无父容器定制处理，标记 M。
+⛔ **不要手搓花括号配对去找"父容器有没有定制"。** 原始版本这么写过，而它**结构性地找不到目标**：SwiftUI 的容器级样式挂在闭合花括号**之后** —— `Form { Toggle(…) }` 换行 `.toggleStyle(BrandToggleStyle())` —— 用 `[P, 闭合括号]` 区间去 grep 永远扫不到它；而且它只上溯一层，根节点 `VStack` 或调用点上的定制同样在射程外。净效果是**一个正确地在根节点定制了一次的项目，每个控件都吃一个 🟡**。整文件判定牺牲了「同文件里一个定制了一个没定制」的精度，换来的是这个检查真的能跑，并且偏向不误报。
 
-**分级**：主屏控件 → 🟡；罕见工具页 → 灵感级。
+**分级**：主屏控件（文件名含 `Setting` / `Onboarding` / `Paywall` / `Purchase`）→ 🟡；其余 → 🟡 并加 `(灵感级)` 前缀。
 
-**已知误报**：间接声明（`private var toggle: some View { Toggle(...) }`，在别处 `.toggleStyle(...)`）仍会被标记。留给读者确认，不要为消除它而放宽规则。
+**两个已知误报，都不要为消除它们而收紧规则**：① 间接声明（`private var toggle: some View { Toggle(...) }`，在别处 `.toggleStyle(...)`）仍会被标记；② 同一文件里 A 控件定制了、B 控件没定制时，整文件判定会放过 B（这是上面那笔交易的代价，属漏报）。
 
 ---
 
@@ -241,18 +248,22 @@ grep -nE '\bToggle\(|\bPicker\(|\bDatePicker\(' <file>
 
 > 原则：顶部 Section 或大标题区裸 `Text(...).font(.largeTitle)` 而无背景装饰 = 错失品牌时刻（`apple-dev/references/ui-design-principles.md` §19.3，装饰手段：radial gradient / Canvas pattern / illustration）。
 
-**代码检查**：
+**代码检查**（用 `Grep` **工具**，三次）：
 
-```bash
-grep -nE '\.font\(\.largeTitle\)|\.font\(\.title\)|\.font\(\.system\(size:\s*[0-9]+(\.[0-9]+)?' <file>
-```
+1. 大字号：`Grep(pattern="\\.font\\(\\.largeTitle\\)|\\.font\\(\\.title\\)|\\.font\\(\\.system\\(size:\\s*[0-9]+(\\.[0-9]+)?", path=<file>, output_mode="content", -n=true)`
+2. **全文件**装饰元素（🔴 升级判定要用它，不能只看窗口）：`Grep(pattern="RadialGradient|LinearGradient|Canvas\\(|\\.strokeBorder|\\.fill\\(.*accent", path=<file>, output_mode="count")`
+3. 逐命中窗口：对第 1 步保留下来的行，读其上下 10 行，看有没有第 2 步那些 pattern，或配非系统颜色的 `.background(`。
 
-`.system(size:)` 的命中要 post-filter 出 size ≥ 28（解析捕获的数字，`28.0` 这类小数也算）；`.largeTitle` / `.title` 不过滤。对保留下来的每个命中行，看其上下 10 行内有没有 `RadialGradient` / `LinearGradient` / `Canvas` / `Image(` / 配非系统颜色的 `.background(`。都没有 → 标记。
+`.system(size:)` 的命中要 post-filter 出 size ≥ 28（`28.0` 这类小数也算）；`.largeTitle` / `.title` 不过滤。窗口内都没有 → 标记。
 
 **分级（文件名参与升级判定）**：
-- 文件名含 `Dashboard` / `Home` / `Hero` / `Landing` / `Welcome` **且**整个文件没有任何装饰元素 → 🔴。hero 区"全裸"出货是最贵的一类，文件名升级就是为了拦它；
-- 命名匹配但文件其他位置有装饰 → 🟡；
-- 深层导航内部页 → 灵感级。工具型 / 设置页有正当理由保持简洁标题，默认不升级。
+- 文件名含 `Dashboard` / `Home` / `Hero` / `Landing` / `Welcome` **且第 2 步的全文件计数为 0** → 🔴。hero 区"全裸"出货是最贵的一类，文件名升级就是为了拦它。⚠️ 这条升级**必须**用第 2 步那个全文件计数，不能用逐命中的 ±10 行窗口 —— 窗口回答不了"整个文件有没有装饰"这个问题；
+- 命名匹配但第 2 步计数 > 0 → 🟡；
+- 其余 → 🟡 并加 `(灵感级)` 前缀。工具型 / 设置页有正当理由保持简洁标题，默认不升级。
+
+**已知漏报**：窗口判据里的 `Image(` 会被无关的近邻图标（导航栏、列表配图）满足，从而压掉一个真实的裸标题。第 2 步的全文件计数**不含** `Image(`，正是为了让 🔴 升级不吃这个漏报。
+
+**与 A11 的关系**（两者 grep 同一批 `.font(.title…)`，但问的不是一件事）：A11 问**同屏有没有多个标题在互相竞争**，A15 问**这一个标题周围有没有装饰**。同一行同时吃 A11 🔴 和 A15 🟡 是正确结果，不是重复计数。
 
 ---
 
@@ -260,15 +271,15 @@ grep -nE '\.font\(\.largeTitle\)|\.font\(\.title\)|\.font\(\.system\(size:\s*[0-
 
 > 原则：纯 `.background(.regularMaterial)` 而无强调边框 / 渐变 / 图案 → 工程师感强（`apple-dev/references/ui-design-principles.md` §19.2 单侧 accent border / §19.3 装饰背景）。**注意这问的不是 A5 那个问题** —— A5 问"同类卡片彼此一致吗"，本项问"这张卡有没有性格"。两张一样朴素的卡片能一起通过 A5。
 
-**代码检查**：
+**代码检查**（用 `Grep` **工具**）：
 
-```bash
-grep -nE '\.background\(\.(regular|thick|thin|ultraThin|ultraThick)Material\)|\.background\(Material\.(regular|thick|thin|ultraThin|ultraThick)\)' <file>
-```
+`Grep(pattern="\\.background\\(\\.(regular|thick|thin|ultraThin|ultraThick)Material\\)|\\.background\\(Material\\.(regular|thick|thin|ultraThin|ultraThick)\\)", path=<file>, output_mode="content", -n=true)`
 
-对每个命中行，看其上下 5 行内有没有：`.overlay(alignment:` 配 `.fill(.*accent`、`Rectangle().fill(Color.accent`、`RadialGradient`、`LinearGradient`、`Canvas`、`Image(`。都没有 → 标记。
+对每个命中行，读其上下 5 行，看有没有：`.overlay(alignment:` 配 `.fill(.*accent`、`Rectangle().fill(Color.accent`、`RadialGradient`、`LinearGradient`、`Canvas`、`Image(`。都没有 → 标记。
 
-**分级**：hero / dashboard / 登录容器 → 🟡；普通列表 cell → 灵感级。工具型卡片（设置 row）刻意朴素是正当的，默认不升级。
+**分级**：hero / dashboard / 登录容器 → 🟡；普通列表 cell → 🟡 并加 `(灵感级)` 前缀。工具型卡片（设置 row）刻意朴素是正当的，默认不升级。
+
+**已知漏报**：与 A15 同源 —— 窗口里的 `Image(` 会被无关近邻图标满足。这里没有全文件对照来兜底，所以本项的漏报比 A15 更宽，命中数偏低时不要读成"卡片都有装饰"。
 
 ---
 

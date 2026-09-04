@@ -32,7 +32,7 @@ For Codex/OpenCode: see `.codex/INSTALL.md` or `.opencode/INSTALL.md`.
 
 These capabilities are usually called by dev-workflow after a plan, phase, or changed surface makes them relevant.
 
-> **2026-09-04**: seven reference-loader / duplicate-check skills were retired and one was moved to this repo's local `.claude/skills/`. Their reference content is unchanged and reachable through `apple-swift-context`'s Topic Router. Reasons, and what to do differently if you rebuild one, are in `docs/12-retired/`.
+> **2026-09-04**: nine skills were retired (five reference-loader shells, `sync-design-md`, `validate-design-tokens`, plus `code-audit` and `audit-finishing-touches` whose unique checks moved into `/review-execution` and `design-reviewer`), and `fetch-swift-api-updates` moved to this repo's local `.claude/skills/`. Their reference content is unchanged and reachable through `apple-swift-context`'s Topic Router. Reasons, and what to do differently if you rebuild one, are in `docs/12-retired/`.
 
 | Skill | Preferred caller | Description |
 |-------|------------------|-------------|
@@ -74,12 +74,19 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | Hook | Event | Purpose |
 |------|-------|---------|
 | protect-pbxproj | PreToolUse | Prevents direct editing of `.xcodeproj/project.pbxproj` files |
+| xcodebuild-guard | PreToolUse (Bash) | Gates `xcodebuild` invocations against the destination / concurrency SOP; denies via `exit 0` + `permissionDecision: deny` JSON, not a non-zero exit |
+| swift-rule-detectors | PreToolUse (Edit\|Write\|MultiEdit) | Delivers the matching section of `references/apple-swift-rules.md` at write time, keyed on what is being written (container-width intent, test framework & placement, control-shape consistency, orientation locking). Once per session per rule |
+| cache-device-udid | SessionStart | Caches the connected device UDID so device-targeted commands skip the slow lookup |
 | protect-preview | PreToolUse | Asks for confirmation when an Edit/Write/MultiEdit would reduce a Swift file's `#Preview`/`PreviewProvider` count (fail-open; never hard-blocks) |
 | check-xcode-docs | SessionStart | Detects Xcode AI documentation changes and notifies in session header (silent if Xcode not installed) |
 | cache-booted-sim | SessionStart | Caches the booted iOS Simulator's runtime version to `~/.claude/.booted-sim-cache`, keeping the slow `simctl` call off the per-WebSearch hot path (silent if no sim booted) |
 | nudge-apple-version | PostToolUse (WebSearch/WebFetch) | When researching Apple-platform topics on the web in an Apple project, injects the project's iOS deployment target + booted-sim version (as `additionalContext`, right as results land) and nudges toward on-device reproduction over citing version-stale web sources. Soft non-blocking nudge; gated on Apple project + Apple-keyword query, with a 10-min cooldown. PostToolUse because non-blocking context injection is unavailable on PreToolUse |
 
-## References (14)
+## References (18)
+
+> Three were previously absent from this index and are load-bearing: `design-contract-schema.md`
+> (the authority for spacing scale / token drift thresholds / same-suffix layout, cited by both reviewers),
+> `design-parity-templates.md`, and `xcode-mcp-setup.md`.
 
 Platform-specific sections are tagged with `platform: iOS` or `platform: macOS`. Sections without a tag apply to both platforms.
 

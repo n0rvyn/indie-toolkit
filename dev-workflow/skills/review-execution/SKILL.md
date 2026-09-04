@@ -1,8 +1,8 @@
 ---
 name: review-execution
-description: "The single review dispatcher for this marketplace. Use when the user says 'review execution', 'parallel review', 'deep review', 'review my code', 'review after coding', 'execution review', '审查执行', '并行 review', '写完 review 一下', '代码 review 一下', '深度审查', '执行后审查', or wants a fresh-context multi-lens review of uncommitted changes BEFORE commit. Also the callee for run-phase Step 6, execute-plan's standalone finish, and an /afk terminal stop — it routes lenses from the diff's shape, so callers do not each keep their own reviewer list. Dispatches 5 always-on lenses (correctness, test-coverage, breaking-changes, root-cause-depth, secrets-and-transport), adds implementation-reviewer when a plan path is supplied, and adds Apple reviewers by what the diff actually touches. Not when: pre-commit semantic classification only — use review-before-commit (deliberately outside every pipeline, a manual double-check). Not when project is Apple-only and you want only ASC pre-submit review — use /asc-submit-preview."
+description: "The single review dispatcher for this marketplace. Use when the user says 'review execution', 'parallel review', 'deep review', 'review my code', 'review after coding', 'execution review', '审查执行', '并行 review', '写完 review 一下', '代码 review 一下', '深度代码审查', '执行后审查', or wants a fresh-context multi-lens review of uncommitted changes BEFORE commit. Also the callee for run-phase Step 6, execute-plan's standalone finish, and an /afk terminal stop — it routes lenses from the diff's shape, so callers do not each keep their own reviewer list. Dispatches 5 always-on lenses (correctness, test-coverage, breaking-changes, root-cause-depth, secrets-and-transport), adds implementation-reviewer when a plan path is supplied, and adds Apple reviewers by what the diff actually touches. Not when: pre-commit semantic classification only — use review-before-commit (deliberately outside every pipeline, a manual double-check). Not when project is Apple-only and you want only ASC pre-submit review — use /asc-submit-preview. Not when auditing a plugin/skill/agent as an ARTIFACT (trigger quality, dispatch wiring, eval coverage) rather than reviewing a diff — use skill-master:plugin-master; in a plugin monorepo the diff IS plugin content, so say which question you are asking."
 user-invocable: true
-allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*, find:*, grep:*), Agent, Task
+allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*, find:*, grep:*), Agent
 ---
 
 ## Overview
@@ -17,7 +17,7 @@ This skill formalizes the "parallel reviewer dispatch" pattern that consistently
 - Before a PR / merge to main
 - After `execute-plan` completes outside of `run-phase` orchestration
 - When the user wants a "second opinion" on uncommitted work
-- Apple 项目（自动并行 dispatch ui/design/feature/apple reviewers 与 4-lens 同批次执行）
+- Apple 项目（自动并行 dispatch ui/design/feature/apple reviewers 与 5 个常驻 lens 同批次执行）
 
 ## When NOT To Use
 
@@ -31,6 +31,7 @@ Plan-vs-code audit is **no longer** a reason to go elsewhere: pass `plan_path` a
 | Input | Effect when supplied |
 |---|---|
 | `plan_path` | Dispatches `dev-workflow:implementation-reviewer` as an additional lens (plan-vs-code audit). **Not** merged into Lens A — "does the code do what the plan said" is a different question from "is the code correct", and collapsing them loses the first. Also pass `design_doc_path` if the caller has one. |
+| `design_doc_path` | Passed through to Lens E alongside `plan_path`, for the design-vs-code fidelity half of that audit. Ignored without `plan_path`. |
 | `scope_files` | Restricts every lens to these paths instead of the whole working tree. **Callers with a narrower unit than the diff MUST pass this.** `run-phase` reviews one Phase; the working tree can hold unrelated changes, and reviewing them silently widens the caller's contract. |
 | `mode` | `gated` (default for `run-phase`): must-fix findings block and go into the caller's fix loop. `advisory` (default when absent, and for `execute-plan` / `/afk`): findings are presented, nothing blocks, the user decides. |
 
@@ -52,13 +53,25 @@ Plan-vs-code audit is **no longer** a reason to go elsewhere: pass `plan_path` a
    - `HAS_NEW_VIEW`: `git diff --name-only --diff-filter=A HEAD | grep -q 'View\.swift$'`
    - `HAS_APPLE_NONSWIFT`: `git diff --name-only HEAD | grep -qE '\.(plist|entitlements|xcassets|xcconfig)|Package\.swift|\.pbxproj'`
    - `SPANS_LAYERS`: the diff touches ≥3 of {View, ViewModel/Store/Presenter, Model/Service/Repository} — judge from paths and type names
-   - `HAS_FEATURE_SPEC`: `ls docs/05-features/*.md 2>/dev/null` is non-empty
+   - `HAS_FEATURE_SPEC`: `find docs/05-features -name '*.md' -print -quit 2>/dev/null` is non-empty
 
    ⛔ **Do not reintroduce a bare `HAS_SWIFT`.** It fires on pure logic changes, which is how `ui-reviewer` ended up reviewing a state-machine bug — and why, on one measured run, three of seven reviewers returned the same finding. The redundancy was a routing defect, not a sign there were too many lenses.
 
 ### Step 2: Dispatch Reviewers (Single Parallel Batch)
 
 Use the Agent tool to dispatch ALL applicable reviewers in a SINGLE message (parallel execution).
+
+**Scope line — prepend to EVERY prompt below, lens and Apple reviewer alike:**
+
+```
+{if scope_files was supplied}
+Restrict every check to these files ONLY: {intersection computed in Step 1.2}.
+Ignore diff hunks in any other path, even if they look defective — they are outside this review's scope.
+{else}
+Scope: the whole uncommitted diff.
+```
+
+⛔ **Without this line the input does nothing.** Every prompt below is a fixed string that tells the subagent to run `git diff`, which returns the whole working tree. Step 1.2 computing an intersection that never reaches the prompt is how a caller ends up reviewing changes it did not make while the Coverage note truthfully reports "restricted to N files".
 
 **Always dispatched (5-lens):**
 
@@ -154,7 +167,7 @@ Dispatch `dev-workflow:implementation-reviewer`, passing `plan_path`, the projec
 
 **Additionally dispatched in the SAME batch when project is Apple AND apple-dev plugin is installed:**
 
-First verify apple-dev availability: `ls ~/.claude/plugins/cache/*/apple-dev/ 2>/dev/null`. If no output, skip ALL four reviewers below and add to the Step 3 summary table: "apple-dev not installed — Apple-platform review coverage skipped for this run". If installed:
+First verify apple-dev availability: `find ~/.claude/plugins/cache -maxdepth 3 -type d -name apple-dev -print -quit 2>/dev/null`. (⛔ Not `ls` — it matches no pattern in this skill's `allowed-tools`, and a permission denial returns no output, which reads identically to "not installed". That silently skipped every Apple reviewer on every run.) If no output, skip ALL four reviewers below and add to the Step 3 summary table: "apple-dev not installed — Apple-platform review coverage skipped for this run". If installed:
 
 - `apple-dev:ui-reviewer` — if `HAS_VIEW_MODIFIED` — pass the modified `*View.swift` files
 - `apple-dev:design-reviewer` — if `HAS_NEW_VIEW` — pass the new View files
@@ -210,13 +223,17 @@ Wait for all agents to return. Parse their outputs into a single table:
 
 **`advisory` from an `/afk` terminal stop carries one extra obligation: write the handoff.** The user was away; findings presented only in a live turn reach nobody. And the session they would return to is the expensive one — Claude Code's own prompt cache has expired by then, so continuing the old session hours later costs more than a cold start from a handoff doc. Invoke `dev-workflow:handoff` with the findings before ending the turn. ⛔ Do not drop this step as redundant with the on-screen summary; the on-screen summary is what expires.
 
-**No review-report file.** Findings go in the return value and the handoff doc. Writing `.claude/reviews/*.md` was measured at ~6 writes per read-back; the copies that reached a human reached them through the agent's returned text, not the file.
+**This dispatcher writes no review-report file.** (The reviewer agents still write their own — see their Output Contracts. What changed is that this skill neither writes one nor reads theirs; their findings reach the caller through the return value.)
+
+**Why:** Findings go in the return value and the handoff doc. Writing `.claude/reviews/*.md` was measured at ~6 writes per read-back; the copies that reached a human reached them through the agent's returned text, not the file.
 
 Sort must-fix by file path; group by lens within each section.
 
-**Only when at least one Apple reviewer actually ran in Step 2**, prepend their findings under '## Apple-Specific Findings' section before the 4-lens consolidated table. If no Apple reviewer ran (non-Apple project or none of the conditions matched), do NOT add this section header.
+**Only when at least one Apple reviewer actually ran in Step 2**, prepend their findings under '## Apple-Specific Findings' section before the consolidated findings table. If no Apple reviewer ran (non-Apple project or none of the conditions matched), do NOT add this section header.
 
-### Step 4: Present and STOP
+### Step 4: Present and STOP — `advisory` only
+
+⛔ **Skip this entire step when `mode` is `gated`.** Step 3b already returned the must-fix table to the caller, and the caller owns the fix loop (`run-phase` asks at its own Step 6; `self-pacing` at its per-unit gate). Running Step 4 as well asks the user to pick fixes twice for one review.
 
 Present the consolidated table to the user. Add the tail:
 
@@ -231,7 +248,7 @@ STOP. Do not apply any fix. Do not invoke commit. The user must explicitly direc
 
 ## Completion Criteria
 
-- All four agents dispatched and returned (or marked errored)
+- All applicable agents dispatched and returned, or marked errored (5 always-on lenses A–D + F; Lens E when `plan_path` was supplied; each Apple reviewer whose flag fired)
 - Consolidated findings presented to user
 - No source file modified
 - No commit made

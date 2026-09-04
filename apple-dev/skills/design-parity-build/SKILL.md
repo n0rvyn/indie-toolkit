@@ -1,6 +1,6 @@
 ---
 name: design-parity-build
-description: "Use when auditing a Claude Design (or similar handoff) against an iOS codebase, or the user says 'design parity', 'design 1:1', 'verify Claude Design', 'Claude Design audit', 'audit design implementation', '设计落地审计', 'Claude Design 对齐', '1:1 还原 Claude Design', or '/design-parity-build'. Writes audit doc to docs/06-plans/ for /write-dev-guide. Not for: per-View hardcoded-value scan (run /review-execution, which dispatches apple-dev:ui-reviewer), subjective review without an external design source (run /review-execution which dispatches apple-dev:design-reviewer agent), multi-doc drift (design-drift), DS codegen (generate-design-system)."
+description: "Use when auditing a Claude Design (or similar handoff) against an iOS codebase, or the user says 'design parity', 'design 1:1', 'verify Claude Design', 'Claude Design audit', 'audit design implementation', '设计落地审计', 'Claude Design 对齐', '1:1 还原 Claude Design', or '/design-parity-build'. Writes audit doc to docs/06-plans/ for /write-dev-guide. Not for: per-View hardcoded-value scan (run /review-execution, which dispatches apple-dev:ui-reviewer), subjective review without an external design source (run /review-execution — it dispatches apple-dev:design-reviewer only when the diff ADDS a *View.swift, and apple-dev:ui-reviewer when one is merely modified), multi-doc drift (design-drift), DS codegen (generate-design-system)."
 compatibility: Requires macOS and Xcode
 ---
 
@@ -15,7 +15,7 @@ The skill is **audit + bridge only**. It does not modify Swift code, sync tokens
 ## Not This Skill
 
 - Per-View SwiftUI hardcoded value scan → `/review-execution` (dispatches `apple-dev:ui-reviewer` when the diff touches `*View.swift`)
-- Subjective visual hierarchy / color / spacing review → `/review-execution` (dispatches `apple-dev:design-reviewer` agent)
+- Subjective visual hierarchy / color / spacing review → `/review-execution` (dispatches `apple-dev:design-reviewer` on `HAS_NEW_VIEW` — an ADDED `*View.swift`; a modified-only diff routes to `apple-dev:ui-reviewer` instead)
 - Cross-document drift across project-brief / architecture / ADRs → `dev-workflow:design-drift`
 - Initial DesignSystem.swift code generation → `apple-dev:generate-design-system`
 - Phase plan execution → `dev-workflow:run-phase`

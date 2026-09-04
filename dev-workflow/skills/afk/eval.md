@@ -65,7 +65,10 @@
 - [ ] `public-entry-policy.md` lists `afk` as manual-only
 - [ ] `self-pacing` SKILL.md body-top carries the superseded marker
 - [ ] `disable-model-invocation: true` present
-- [ ] The terminal-review question is still marked OPEN in the file and NOT wired up
+- [ ] Goal-met terminal **invokes** `dev-workflow:review-execution` with `scope_files` (what the run touched) and `mode: advisory`
+- [ ] It passes **no** `plan_path` — an `/afk` run has no plan, so Lens E is skipped and the remaining lenses still apply
+- [ ] ⛔ The findings are handed to `dev-workflow:handoff` and land in the handoff doc. On-screen only is a FAIL: the user was away, and the prompt cache has expired by the time they return, so resuming the old session costs more than a cold start from the doc
+- [ ] This file previously asserted the opposite — "the terminal-review question is still marked OPEN and NOT wired up" — which would have green-lit deleting the wiring the moment it was added. Kept as a note because it is this repo's canonical example of an eval turning from guard into accomplice (project CLAUDE.md § Refactor Closure rule 1)
 
 ## Redundancy Risk
 

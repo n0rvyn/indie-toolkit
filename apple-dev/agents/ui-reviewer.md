@@ -60,7 +60,7 @@ Reference implementation of both rules: `n1_paradigm.py` in this plugin's `scrip
 2. Ensure directory exists: `mkdir -p .claude/reviews`
 3. **Write** the full UI + UX Review Report (format at end of document) to:
    `.claude/reviews/ui-reviewer-{YYYY-MM-DD-HHmmss}.md`
-4. **Return** only this compact summary to the dispatcher:
+4. **Return** this summary to the dispatcher, with the human-verification list reproduced INLINE:
 
 ```
 Report: .claude/reviews/ui-reviewer-{timestamp}.md
@@ -69,7 +69,12 @@ Verdict: {pass | fail}
 交互完整性: 🔴 {X} / 🟡 {Y}
 人工验证项: {N}
 检查文件数: {N}
+
+### Part C: 人工验证清单
+{reproduce every item from the report's Part C verbatim, one per line}
 ```
+
+⛔ **The list goes in the RETURN, not only in the report file.** `dev-workflow:review-execution` passes it through to its caller and does not read `.claude/reviews/*.md` — returning only `人工验证项: {N}` makes the dispatcher's passthrough emit an empty list, and the device-verification items reach nobody. Counts are a summary of the list, not a substitute for it.
 
 Verdict rule: any 🔴 issue = `fail`; otherwise `pass`.
 

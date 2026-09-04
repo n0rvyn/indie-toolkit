@@ -1,8 +1,9 @@
 ---
 name: characterization-test
-description: "Use before refactoring legacy code, or when the user says 'characterization test', 'lock behavior', '特征测试', 'write characterization tests', 'snapshot behavior'. Generates Swift Testing test cases that capture current behavior as a safety net before refactoring."
+description: "Swift/iOS/macOS only. Use before refactoring legacy Swift code, or when the user says 'characterization test', 'lock behavior', '特征测试', 'write characterization tests', 'snapshot behavior'. Generates Swift Testing (`@Test` / `#expect`) cases that capture current behavior as a safety net before refactoring. Takes the target module / file / type as an argument. Not when: the project is not an Xcode / SwiftPM project (this emits Swift Testing code and nothing else); you want to RUN an existing suite (use test-changes); you want tests for new behavior rather than a lock on current behavior (that is ordinary TDD — see apple-dev/references/testing-guide.md)."
 compatibility: Requires macOS and Xcode
 user-invocable: true
+argument-hint: "<module / file / type to lock behavior for>"
 model: sonnet
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---

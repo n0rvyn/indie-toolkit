@@ -112,11 +112,13 @@ elif echo "$lower" | grep -qE 'kickoff|新项目|init.*project|project.*init'; t
   fi
 elif echo "$lower" | grep -qE 'dev.?guide|开发指南|development guide'; then
   echo "[skill-hint] Related: /write-dev-guide — creates phased development guide"
-elif echo "$lower" | grep -qE 'review.*(code|impl)|代码审查|审查.*实现'; then
+elif echo "$lower" | grep -qE 'review.*(code|impl)|代码审查|审查.*实现|深度审查|并行 ?review'; then
   if echo "$lower" | grep -qE 'phase|plan|计划|阶段|执行'; then
     echo "[skill-hint] Related: /run-phase — orchestrates plan-execute-review cycle"
+  elif echo "$lower" | grep -qE 'semantic|分类|归类|改动性质'; then
+    echo "[skill-hint] Related: /review-before-commit — single semantic classification pass, outside every pipeline"
   else
-    echo "[skill-hint] Related: /review-before-commit — semantic diff review before commit"
+    echo "[skill-hint] Related: /review-execution — the review dispatcher (5 lenses + routed Apple reviewers)"
   fi
 elif echo "$lower" | grep -qE 'fork.*this|park.*this|分叉|现场分叉|另一个.*问题|顺便.*问|另起一.?个'; then
   echo "[skill-hint] Related: /fork-this — mid-session orthogonal topic split (parks B in a seed prompt, current session keeps going on A)"

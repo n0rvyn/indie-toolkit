@@ -88,9 +88,10 @@ When the agent completes:
 1. Check the agent's return for a `Report:` path. If present, read the report file.
    - If the agent was truncated (no `Report:` in return): search `.claude/reviews/plan-verifier-*.md` for the most recent file. If found with `**Status:** in-progress`, the agent was truncated — use the partial results and note: "⚠️ Verifier was truncated. Partial results below — some strategies may not have run."
 2. Present the summary to the user
-3. Report the verdict:
-   - **Approved** — proceed to Step 4
-   - **Must revise** — the summary includes revision items; apply revisions to the plan, then re-dispatch the verifier (max 2 revision cycles)
+3. Report the verdict. The verdict is mechanical — zero **blocking** findings means approved; advisory findings never block (see plan-verifier's `Verdict rule`):
+   - **Approved** — proceed to Step 4. If the return carries `Advisory items: N > 0`, present them, state plainly that they do not block, and let the user take or leave them. **`Approved` with open advisories is the normal outcome, not a compromise** — do not re-dispatch the verifier to try to clear them.
+   - **Must revise** — at least one blocking finding exists; the summary lists them. Apply revisions to the plan, then re-dispatch (max 2 revision cycles).
+   - ⛔ Do not treat an advisory item as a reason to revise, and do not ask the user to adjudicate one before proceeding. Prior to this rule the verifier returned `must-revise` on 54 of 63 runs with **zero** approvals in 30 days, and every run ended by the orchestrator overriding it — which is what made the verdict meaningless.
 4. For detailed analysis: read the full report at the path returned by the agent
 5. **Decision Points:** Check the agent's return for `Decisions:` count.
    - If Decisions > 0:
@@ -113,11 +114,12 @@ When the plan is approved:
 ## Verification
 - **Verdict:** Approved
 - **Date:** {YYYY-MM-DD}
+- **Advisories:** {N, carried not fixed — one line each; or `none`}
 ```
 
 2. Suggest next step: `dev-workflow:execute-plan`
 
 ## Completion Criteria
 
-- Plan file has `## Verification` section with `Verdict: Approved` appended
-- Or: user explicitly chose to proceed after 2 revision cycles (verdict noted as "partial")
+- Plan file has `## Verification` section with `Verdict: Approved` appended, plus the `Advisories:` line (`none` is a valid value)
+- Or: user explicitly chose to proceed after 2 revision cycles with blocking items still open (verdict noted as "partial")

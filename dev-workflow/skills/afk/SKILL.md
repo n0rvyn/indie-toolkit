@@ -1,95 +1,117 @@
 ---
 name: afk
-description: "Use when the user is stepping away and wants a GOAL driven to completion autonomously — '/afk', 'afk', '我出去一趟', '你自己跑', '一直推到 block', '推到头', 'run this while I'm out', 'push it to the end', \"don't ask me, just decide\". Goal-oriented rather than plan-oriented: it needs a goal, a runnable convergence signal, and a surface — NOT a written plan or dev-guide. Stops only for what a human must supply: an irreversible action, a difference only the user can judge, an instruction with two readings, a signal red twice, or work that turns out to need a plan. Not when: the user is at the keyboard (just work normally); the work is divergent design exploration (use brainstorm); a verified plan already exists and should be executed task-by-task (use execute-plan)."
+description: "Use when the user is stepping away and wants work driven to a stated end state on its own — '/afk', 'afk', '我出去一趟', '你自己跑', '一直推到 block', '推到头', 'run this while I'm out', 'push it to the end', \"don't ask me, just decide\". Sets up a native `/goal` run: distills the goal, proves the completion check can currently fail, clears the human-required unblocks that kill unattended Apple runs (device lock, wireless transport, on-device trust dialog, sudo), and hands back a ready-to-paste `/goal` line. For work whose END STATE is writable but whose ROUTE is not yet known — route-known work belongs in write-plan → execute-plan, and work whose end state cannot be written needs the user present. Not when: the user is at the keyboard iterating turn by turn; the work is divergent design exploration (use brainstorm); a verified plan exists and should be executed task-by-task (use execute-plan)."
 disable-model-invocation: true
 ---
 
-<!-- cost-posture: inherit (judgment + orchestration — goal extraction, severity classification, loop control; do NOT downgrade to sonnet/haiku per dev-workflow Skill Cost Posture rule) -->
+<!-- cost-posture: inherit (judgment — goal distillation, judge construction, and unblock triage are judgment calls; do NOT downgrade to sonnet/haiku per dev-workflow Skill Cost Posture rule) -->
 
 ## What this is
 
-There are two ways to drive coding work. **Plan-oriented** — `write-plan` → `verify-plan` → `execute-plan` — settles everything up front and executes a written contract. **Goal-oriented** — this skill — fixes a goal and a way to know it is met, then leaves the route to the model.
+`/afk` is **setup, not a loop.** Claude Code already ships the loop: [`/goal`](https://code.claude.com/docs/en/goal) sets a completion condition and, after every turn, **a separate fast model** — not the one doing the work — judges whether it holds, and starts another turn if it does not. That independent grader is better than anything a prompt can do by self-report, so this skill does not reimplement it.
 
-`/afk` is the goal-oriented one. It exists because a plan is not what makes unattended work safe; the **convergence signal** is. A plan is one way of writing that signal down. It is not the only way, and demanding one turns a two-minute goal into a twenty-minute document.
+What `/goal` does not do is everything that has to happen **before** the user walks away. That is this skill:
 
-Latitude is the point: *how* to reach the goal is the model's call, and second-guessing that is how a human's own blind spots get installed as constraints. The two gates in `## Hard Rules` are not latitude — they are there because those exact failures are on record.
+1. turn a vague goal into a condition an evaluator can actually judge,
+2. prove the completion check can currently **fail**,
+3. clear the human-required unblocks that kill unattended runs,
+4. hand back the `/goal` line to paste.
 
-## Step 1 — Fix three lines. That is the entire setup.
+⚠️ **The model cannot type a slash command.** Step 4 ends with a line for the user to paste. That is a harness constraint, not a design choice.
 
-Before anything runs, write these and show them:
+## Which of the three paths is this work on
+
+Two questions, each answered by **trying to write something**, not by judging:
+
+| | Route already known | Route not yet known |
+|---|---|---|
+| **End state can be written** | `write-plan` → `verify-plan` → `execute-plan` | **`/afk`** |
+| **End state cannot be written** | — | **The user must stay.** `brainstorm`, or plain conversation |
+
+- "Can the end state be written?" = can you write `[判据]` below. Write it; if you cannot, that is the answer.
+- "Is the route known?" = can you list the task sequence. Same test.
+
+Measured basis (30 days to 2026-09-04, this account's transcripts): pipeline density tracks **work shape**, not project age — scoped feature/phase work runs through the pipeline even on a 10-month-old project, while open-ended R&D and deep debugging run outside it even on a 3-week-old one. Project maturity is the wrong variable; whether the end state is writable is the right one.
+
+## Step 1 — Three lines, and one refusal
 
 ```
 [目标] {one sentence — what is true when this is done}
-[判据] {the command or observation that shows it — runnable right now}
+[判据] {the command or observation that proves it — runnable right now}
 [范围] {the surface this may touch — a directory, a module, a target}
 ```
 
-- **`[判据]` is the strict part, and the only refusal this skill makes.** If you cannot name something runnable that would show the goal met, say so **now** and stop — while the user is still here, never after they have gone.
-- **Run the judge once before anything else.** It must be able to come back **red**. Already green means either the goal is already met or the judge tests nothing; say which and stop. (A judge nobody has seen fail is not a judge — same rule as any other checker.)
-- **`[范围]` replaces the plan's `**Files:**`.** It is the blast radius the user authorizes by saying go. Reaching outside it is a stop, not a judgment call.
-- **Do not write a plan file.** If mid-run you conclude the work genuinely needs one, stop and say so — that is a clean terminal, not a failure.
+- **Run `[判据]` once, before anything else. It must come back red.** Already green means either the goal is already met or the judge tests nothing — say which and stop. A judge nobody has seen fail is not a judge.
+- **If no runnable judge exists, say so now and stop.** This is the only refusal `/afk` makes, and it has to happen while the user is still here.
+- **`[范围]` is the blast radius**, and it goes into the goal condition as a constraint. Reaching outside it is a stop.
+- **Do not write a plan file, and do not invoke `write-plan`.** Nesting it would just relocate the precondition this skill exists to drop. If mid-run the work turns out to need a plan, stop and say so — a clean terminal.
 
-## Step 2 — Clear what only a human can clear (while they are still here)
+## Step 2 — Clear what only a human can clear
 
-Every unattended run dies on the first thing that needs a hand. Pull those forward.
-
-**Ask first: does this run need a physical device at all?** If no — non-Apple repo, simulator-free, pure logic — skip the rest of this step entirely.
+**First: does this run need a physical device at all?** No — non-Apple repo, no device work — skip this step entirely.
 
 If it does, in this order:
 
-1. **Auto-lock off.** An idle device locks itself and `xcodebuild test` dies on `Unlock iPhone to Continue` → `code 74`. AFK *causes* this — the user walking away is the trigger. A probe cannot cover it: passing now says nothing about two hours from now. This is the only item that survives the whole run, so it goes first.
-2. **Wired, not `localNetwork`.** The wireless debug tunnel resets every ~18s and kills the long-lived UI-test driver while short unit tests survive. Check the transport; if wireless, ask for the cable.
-3. **One minimal real-device UI test as a probe** — to force out whatever on-device trust/automation dialog exists right now. Probe, do not consult a checklist: a checklist goes stale, a probe surfaces today's dialog.
-4. ⛔ **Never reinstall the xctrunner as a remedy.** That reinstall re-triggers the very authorization dialog it is supposed to fix, and the loop is invisible from inside the run.
+1. **Auto-lock off.** An idle device locks itself and `xcodebuild test` dies on `Unlock iPhone to Continue` → `code 74`. AFK *causes* this: the user walking away is the trigger. A probe cannot cover it — passing now says nothing about two hours from now, which is why this is first and why it is a request to the user rather than a check.
+2. **Wired, not `localNetwork`.** The wireless tunnel resets every ~18s and kills the long-lived UI-test driver while short unit tests survive.
+3. **One minimal real-device UI test as a probe**, to force out whatever on-device trust/automation dialog exists right now. Probe, do not consult a list of known dialogs — a list goes stale, a probe surfaces today's.
+4. ⛔ **Never reinstall the xctrunner as a remedy.** That reinstall re-triggers the very dialog it is meant to fix, and the loop is invisible from inside the run.
 
-**If the probe cannot be built at all** (no UI test target, no paired device): say so at authorization time and **continue without device coverage** — do not refuse to start, and do not create a UI test target to satisfy the probe. That scope is not yours to take.
+**Probe not constructable** (no UI test target, no paired device): say so now and **continue without device coverage**. Do not refuse to start, and do not create a UI test target to satisfy the probe — that scope is not yours to take.
 
-Also surface any other human-required unblock this run will touch: a `sudo` password, a simulator boot (which needs explicit approval), an expiring credential.
+Also name any other human-required unblock this run will touch: a `sudo` password, a simulator boot (which needs explicit approval), a credential near expiry.
 
-## Step 3 — Authorize, asking everything at once
+## Step 3 — Hand over the `/goal` line
 
-Show the three lines from Step 1, the pre-flight result from Step 2, and **every open question in one batch**. This is the only moment the user is reliably present; a question saved for later is a question that ends the run.
+Present the three lines, the judge's red result, the pre-flight outcome, and **every open question in one batch** — this is the last moment the user is reliably present.
 
-Only an explicit go proceeds.
+Then give the line to paste. Build the condition from the three things `/goal` asks for:
 
-## Step 4 — Run
+- **one measurable end state** — from `[目标]`
+- **a stated check** — from `[判据]`, naming the command whose output the evaluator will read
+- **constraints that matter** — from `[范围]`, plus anything that must not change
 
-Work the goal. Log every self-made decision to `.claude/afk/<slug>.md` as it happens, in the same turn — a batched write at the end loses the log to a context reset.
+```
+粘这行然后走：
+/goal {end state}；证据是 {command} 的原始输出；不改 {范围} 之外的文件
+```
 
-Route is yours. Tools, order, whether to use agents, when to refactor — all yours. The rules below are the whole constraint.
+⚠️ **The evaluator reads the transcript; it does not run commands or read files.** So the condition must be something Claude's own output can demonstrate, and the run must actually put that output in the transcript — which is what the done-gate below is for. Also worth adding to the condition when the work could run long: `or stop after N turns`.
 
-## Stop Policy
+Tell the user two things they may not know: `/goal` only runs unattended in **auto mode** (otherwise it still asks before unapproved tool calls), and it survives `--continue` / `--resume`.
 
-The run ends at green, or at one of these. Nothing else is a terminal.
+## During the run
 
-| Situation | Why it is a stop |
+Route is yours — tools, order, whether to use agents, when to refactor. These are the whole constraint.
+
+**Two gates. Both are here because the failure is on record, not because of any belief about what models can or cannot do.**
+
+- **A done-claim carries freshly-run output, or it is not a done-claim.** Before reporting the goal met, re-run `[判据]` and paste its raw output. Not the remembered result, not a summary — the output, from a run that just happened. This is also what feeds the evaluator: it can only judge what is in the transcript, so a summary of a passing test is exactly the input a false success needs. *(On record: a run reported completion in the same message that admitted 35 of 50 test suites were failing, using "not introduced this session" as the reason not to fix them.)*
+
+- **No prose hand-back once you have a view.** About to end a turn with 「两件事要你拍板」/「你决定」/「从哪个开始？」 while you already have an opinion? That is not a decision point, it is outsourcing a judgment you have made. Take it, say what you took and on what evidence, mark what the user can overturn. This applies to plain text, not just `AskUserQuestion` — the structured tool has never been the leak; 16 deep-read invocations were all legitimate must-ask cases. *(On record: `我倾向做，但这个风险归你判断`.)*
+
+  ⚠️ **Before any stop, check the candidates.** If the options you are about to hand over all circle one obstacle, or all rest on a premise nobody verified ("these two can't be done in the same pass", "A must precede B"), that is not a choice — it is a report that the work is a layer too low. Falsify the premise; the choice usually disappears. This qualifies a *question*. It is never a licence to work around a *failure*.
+
+**Stop and end the turn for these** — `/goal` will re-evaluate on the user's return, so a stop is not the end of the goal:
+
+| Situation | Why |
 |---|---|
-| `[判据]` red twice — same command, no file change between the two runs | One re-run distinguishes a flake; a second red is a real failure and diagnosis needs the user |
 | The work would touch something outside `[范围]` | Past that line there is no authorization |
 | An irreversible or outward-facing action | Deleting data, migrating, publishing, changing a shipped interface |
-| A difference only the user can judge | A default, wording, an interaction shape, a layout — where technical fact does not pick a winner. ⛔ "This option is faster so the experience is better" is **not** this; that is a technical fact, rank it yourself |
+| A difference only the user can judge | A default, wording, an interaction shape, a layout, where technical fact picks no winner. ⛔ "Option A is faster so the experience is better" is **not** this — that is a technical fact; rank it yourself |
 | The instruction admits ≥2 readings | Guessing costs a rebuild; asking costs a sentence |
-| The work turns out to need a written plan | Say so and stop — a clean terminal |
+| The work turns out to need a plan | Say so and stop; route to `write-plan` |
+| `[判据]` red twice — same command, no file change between | One re-run separates a flake; a second red needs diagnosis, which needs the user |
 
-**If no row fires, continue.** There is no default stop, and "this is a good place to hand off" is not a terminal — it is a self-assessment, unfalsifiable and always available.
+**If none of these fires, keep going.** "This is a good place to hand off" is not a terminal — it is a self-assessment, unfalsifiable and always available.
 
-**Every stop writes the handoff before the turn ends**: invoke `dev-workflow:handoff`, then end the turn so the idle notification fires. Handoff docs are the one artifact class that reliably gets read again; that is why the transfer goes there rather than into a card that grows into a document.
+**Every stop writes the handoff first**: invoke `dev-workflow:handoff`, then end the turn. Handoff docs are the one artifact class that reliably gets read again, which is why the transfer goes there.
 
-## Hard Rules
+**Log every self-made decision** to `.claude/afk/<slug>.md` in the turn it happens — a batched write at the end loses the log to a context reset. Anything decided, deferred, or worked around goes in it and in the final report. A silent auto-decision is what makes a finished run untrustworthy.
 
-Two gates. Both exist because the failure is on record, not because of any belief about what models can do.
+**No review-report files.** Findings go in the final report, where they are read. *(Measured: review report files are written ~6× more often than they are read back; the findings that reached a human did so through the returning agent's text, not the file.)*
 
-- **The done-gate — a done-claim carries fresh output or it is not a done-claim.** Before writing "done" / "推到头了" / "全绿", re-run `[判据]` and paste its raw output into the report. Not the remembered result, not a summary: the output, from a run that just happened. *(On record: a run reported completion while the same message admitted 35 of 50 test suites were failing, using "not introduced this session" as the reason not to fix them.)*
-
-- **No prose hand-back once you have an opinion.** If you are about to end a turn with 「两件事要你拍板」/「你决定」/「从哪个开始？」 and you **already have a view**, that is not a decision point — it is outsourcing a judgment you have already made. Take it, say what you took and on what evidence, and mark what the user can overturn. Applies to plain text, not just `AskUserQuestion` — the structured tool has never been the leak. *(On record: `我倾向做，但这个风险归你判断`.)*
-
-  ⚠️ **Before any stop, check the candidates.** If the options you are about to hand over are all circling one obstacle, or all resting on a premise nobody verified ("these two can't be done in the same pass", "A must precede B"), that is not a choice — it is a report that the work is a layer too low. Falsify the premise; the choice usually disappears. This qualifies a *question*; it is never a licence to work around a *failure*.
-
-Three smaller ones:
-
-- **Ask once, ask everything.** A second stop costs another handoff doc and another return trip.
-- **Every self-made decision is visible.** Anything decided, deferred, or worked around appears in the run log and the final report. A silent auto-decision is the failure mode that makes a finished run untrustworthy.
-- **No review-report files.** Findings go in the final report where they are read. *(Measured: review report files are written ~6× more often than they are read back; the findings that reached a human did so through the returning agent's text, not the file.)*
+<!-- OPEN, deliberately unresolved: whether a terminal /afk stop should dispatch fresh-context review agents (correctness / test-coverage / breaking-change). The measured case for it: review findings were real, and the user's own note reads 「两次都是派出去的审查 agent 抓到的，我自己跑测试全绿、一点感觉都没有」. The measured case against: review-execution is a link in the run-phase chain and may carry upstream preconditions that make it unsound standing alone. Do NOT wire this up before that dependency question is answered. -->
 
 ## Artifacts
 
@@ -98,11 +120,12 @@ Three smaller ones:
 | Run log | `.claude/afk/<slug>.md` | incrementally, every self-made decision |
 | Handoff doc | `docs/06-plans/HANDOFF-YYYY-MM-DD-HHMM.md` (via `dev-workflow:handoff`) | at every stop |
 
-Source of truth is the code plus these two. Chat is not authoritative — on a cold resume there is no chat.
+The code plus these two are the source of truth. Chat is not — on a cold resume there is no chat.
 
 ## Relationship to the rest of the flow
 
-- **`execute-plan`** owns the plan-oriented path. A verified plan that should be executed task-by-task goes there, not here.
-- **`self-pacing`** is superseded by this skill; it required a verified plan or dev-guide up front, which is the requirement this skill exists to drop.
-- **`fix-bug`** stays the diagnostic protocol for a reported defect. `/afk` does not invoke it and does not run its own formal diagnosis — but the layer question it enforces (what did the existing design solve, and is this patch treating a symptom) is the same question the ⚠️ above asks before a stop.
+- **`/goal`** (native) owns the loop and the completion judgment. This skill owns the setup and hands off to it.
+- **`write-plan` → `verify-plan` → `execute-plan`** owns route-known work. `/afk` does not invoke it and does not replace it; the table above routes between them.
+- **`self-pacing`** is superseded by this skill, and kept only for driving an already-verified multi-phase dev-guide across seams.
+- **`fix-bug`** remains the diagnostic protocol for a reported defect. `/afk` does not invoke it and runs no formal diagnosis — though the layer question it enforces (what did the existing design solve; is this patch treating a symptom) is the same question the ⚠️ above asks before a stop.
 - Nothing else is modified by this skill.

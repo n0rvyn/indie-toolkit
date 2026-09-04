@@ -71,7 +71,7 @@ If `docs/00-AI-CONTEXT.md` exists under the project root, read it as the Project
 
 ```
 Report: .claude/reviews/plan-verifier-{timestamp}.md
-Verdict: {approved | must-revise}
+Verdict: {approved | must-revise}   ← see "Verdict rule" below; `approved` with open advisories is the normal outcome
 [S1] assertions: {N} tested, {M} failed (reported: {X} C>=80, filtered: {Y} C<80)
 [S2] failures: {N} compile, {M} runtime
 [T1] test coverage: {N} logic tasks, {M} tested, {K} type-matched (or "skipped")
@@ -82,10 +82,27 @@ Verdict: {approved | must-revise}
 [AR] architecture: {N} issues (or "skipped")
 [S3] runtime semantics: {N} checked, {M} gaps (or "skipped")
 Must-revise items: {N}
+Advisory items: {N}
 Decisions: {N blocking}, {M recommended}
 ```
 
-If verdict is `must-revise`, also list the revision items (1 line each, prefixed with the strategy tag that identified them) in the return summary — the dispatcher needs these without reading the file.
+If verdict is `must-revise`, also list the revision items (1 line each, prefixed with the strategy tag that identified them) in the return summary — the dispatcher needs these without reading the file. List advisory items the same way, under a separate `Advisory:` heading, regardless of verdict.
+
+### Verdict rule (load-bearing — read before assigning a verdict)
+
+**Every finding is either `blocking` or `advisory`. The verdict is mechanical: zero blocking findings ⇒ `approved`. One or more ⇒ `must-revise`.** Advisory findings never change the verdict; they are recorded, carried into the report, and left for the author to take or leave.
+
+| | Blocking (`❌ … [must-revise]`) | Advisory (`⚠️ … [advisory]`) |
+|---|---|---|
+| Test | Executing the plan **as written** produces a wrong outcome, **or** a `Verify:` line that cannot detect one | The plan would work; it could be better |
+| Examples | a task's steps contradict its `Expected outcome`; a `Verify:` command that passes on a build that never ran; a ❌ consumer left unmodified; an uncoordinated parallel path; a dependency order that cannot go green; a missing `Automated verify` on a non-trivial task | naming, ordering preference, an extra test worth having, a wrong line-number citation that breaks no command, a term missing from the glossary |
+| Author's move | must fix before execution | may ignore; it is logged either way |
+
+**Why this rule exists — do not soften it back.** Measured over the 30 days to 2026-09-04: **63 plan-verifier runs, 54 parsed `must-revise`, 0 `approved`.** The loop's designed success state was never once reached; runs terminated instead by the orchestrator deciding to proceed anyway (visible in the dispatch prompts: `若这轮没有 must-revise，请明确给 Verdict: Approved，我就开始执行`). A verdict that fires 100% of the time carries no information — `must-revise` had stopped meaning "there is a blocker" and started meaning "the verifier ran". Splitting the findings restores the signal: `must-revise` now means a real blocker exists, and the author proceeding with open advisories is a legitimate outcome rather than an override.
+
+⛔ **Do not inflate blocking to be safe.** "It could be better" is advisory even when you are confident. The cost of a false blocker is not one extra round; it is the verdict losing its meaning again, which is the failure this rule repairs.
+
+⛔ **Do not deflate blocking to be agreeable either.** The examples column is a floor, not a ceiling — a zero-discriminating-power `Verify:` line is blocking however small the fix looks, because it is exactly the defect that reaches production green.
 
 Do NOT modify the plan file. Return revision instructions only.
 

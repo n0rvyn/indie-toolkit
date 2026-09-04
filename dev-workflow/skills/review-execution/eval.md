@@ -33,7 +33,8 @@
 - [ ] `apple-reviewer` fires on `HAS_APPLE_NONSWIFT` (.plist / entitlements / xcassets / xcconfig / Package.swift / .pbxproj), **not** on "project is Apple" — "always" is not a route
 - [ ] `feature-reviewer` fires on `HAS_FEATURE_SPEC` or `SPANS_LAYERS`, **not** on phrases in the user's message
 - [ ] `design-reviewer` fires on `HAS_NEW_VIEW`
-- [ ] Four base lenses (correctness / test-coverage / breaking-changes / root-cause-depth) always dispatch
+- [ ] Five base lenses (correctness / test-coverage / breaking-changes / root-cause-depth / secrets-and-transport) always dispatch
+- [ ] Lens F (secrets & transport) is always-on and NOT path-routed — a leaked key has no predictable path, so a path-shaped route would miss its own use case
 - [ ] All applicable reviewers go out in ONE Agent batch, never a sequential follow-up
 - [ ] apple-dev not installed → all Apple reviewers skipped with an explicit coverage note
 - [ ] Apple project + apple-dev installed + no flag fired → still emits the Apple section naming which flags were checked, so "assessed, nothing applied" is distinguishable from "never looked"

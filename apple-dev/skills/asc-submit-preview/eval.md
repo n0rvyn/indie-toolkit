@@ -16,7 +16,7 @@
 - "Fill in App Privacy labels" (→ asc-listing)
 - "What screenshots do I need for ASC?" (→ asc-listing)
 - "Generate App Store description" (→ asc-listing)
-- "Run code audit on my Swift project" (→ /run-phase code-audit / review-execution)
+- "Run code audit on my Swift project" (→ /review-execution)
 - "Performance profiling" (→ profiling)
 
 ## Output Assertions
@@ -26,7 +26,7 @@
 - [ ] Output verifies Info.plist usage description strings for sensitive APIs
 - [ ] Output checks for hardcoded URLs / deprecated APIs / private-API usage patterns
 - [ ] Output does NOT walk through ASC backend form fields (that belongs to /asc-listing)
-- [ ] Output does NOT run heavy code-audit-style scans (those belong to apple-dev:code-audit, called by run-phase)
+- [ ] Output does NOT run heavy code-audit-style scans (those belong to /review-execution's lenses)
 
 ## Redundancy Risk
 Baseline comparison: Base model knows App Store guidelines but lacks systematic checklist approach

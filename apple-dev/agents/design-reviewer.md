@@ -196,6 +196,86 @@ For each file provided, check the following dimensions:
 
 ---
 
+### A13. 边框过度使用（Border Overuse）
+
+> 原则：1pt 边框是最弱的容器暗示，堆叠使用 = 视觉拥挤。替代手段：阴影 / 背景色阶 / 留白 / Section 分组 / 单条强调色边框。
+
+**代码检查**：对每个文件跑两个 grep，命中数**相加**得该文件的 border 总数：
+
+```bash
+grep -cE '\.border\(|\.overlay.*RoundedRectangle.*stroke' <file>
+grep -cE 'RoundedRectangle\(.*\)\s*\.strokeBorder|^\s*\.strokeBorder' <file>
+```
+
+**分级**：≥ 5 次 → 🔴（极端过度，几乎不会是无意）；4 次 → 🟡；3 次 → 灵感级，只提不判。
+
+**已知盲点**（照实说，不要当成"检查过了没问题"）：多行写法 `\.overlay(\n RoundedRectangle(...)\n .strokeBorder(...)\n)` 这两个 grep 都匹配不到（需 `pcre2grep -M`）。计数偏低是可接受的漏报。反向地，§19.2 里 intentional 的单条强调色边框也会被计入，所以命中后要看上下文再判。
+
+---
+
+### A14. 核心交互控件用了系统默认样式
+
+> 原则：设置页 / 引导页 / 支付页这类主屏上的 `Toggle` / `Picker` / `DatePicker`，值得定制以体现品牌。
+
+**代码检查**：
+
+```bash
+grep -nE '\bToggle\(|\bPicker\(|\bDatePicker\(' <file>
+```
+
+对每个命中行 M：先看 M 后 3 行内有没有 `.toggleStyle` / `.pickerStyle` / `.datePickerStyle`，有则跳过。没有则做**父容器扫描**（确定性规则，不要凭感觉判断"外层应该有"）：
+
+1. 从 M 向**上**扫，记录每行未配对的 `{` 与 `}`；
+2. 第一行满足 `{` 数 > `}` 数的记为 P（进入了外层 scope）；
+3. 从 P 向**下**扫并跟踪计数，回到 P 行初始余量的那行记为 Q；
+4. 在 [P, Q] 区间内 grep 三个 style modifier —— 命中则父容器已统一定制，**不标记**；无命中则标记 M；
+5. P 找不到（M 已在最外层）或 Q 触达文件尾 → 按无父容器定制处理，标记 M。
+
+**分级**：主屏控件 → 🟡；罕见工具页 → 灵感级。
+
+**已知误报**：间接声明（`private var toggle: some View { Toggle(...) }`，在别处 `.toggleStyle(...)`）仍会被标记。留给读者确认，不要为消除它而放宽规则。
+
+---
+
+### A15. Hero / 大标题区域无装饰
+
+> 原则：顶部 Section 或大标题区裸 `Text(...).font(.largeTitle)` 而无背景装饰 = 错失品牌时刻。
+
+**代码检查**：
+
+```bash
+grep -nE '\.font\(\.largeTitle\)|\.font\(\.title\)|\.font\(\.system\(size:\s*[0-9]+(\.[0-9]+)?' <file>
+```
+
+`.system(size:)` 的命中要 post-filter 出 size ≥ 28（解析捕获的数字，`28.0` 这类小数也算）；`.largeTitle` / `.title` 不过滤。对保留下来的每个命中行，看其上下 10 行内有没有 `RadialGradient` / `LinearGradient` / `Canvas` / `Image(` / 配非系统颜色的 `.background(`。都没有 → 标记。
+
+**分级（文件名参与升级判定）**：
+- 文件名含 `Dashboard` / `Home` / `Hero` / `Landing` / `Welcome` **且**整个文件没有任何装饰元素 → 🔴。hero 区"全裸"出货是最贵的一类，文件名升级就是为了拦它；
+- 命名匹配但文件其他位置有装饰 → 🟡；
+- 深层导航内部页 → 灵感级。工具型 / 设置页有正当理由保持简洁标题，默认不升级。
+
+---
+
+### A16. 材质卡片背景无装饰
+
+> 原则：纯 `.background(.regularMaterial)` 而无强调边框 / 渐变 / 图案 → 工程师感强。**注意这问的不是 A5 那个问题** —— A5 问"同类卡片彼此一致吗"，本项问"这张卡有没有性格"。两张一样朴素的卡片能一起通过 A5。
+
+**代码检查**：
+
+```bash
+grep -nE '\.background\(\.(regular|thick|thin|ultraThin|ultraThick)Material\)|\.background\(Material\.(regular|thick|thin|ultraThin|ultraThick)\)' <file>
+```
+
+对每个命中行，看其上下 5 行内有没有：`.overlay(alignment:` 配 `.fill(.*accent`、`Rectangle().fill(Color.accent`、`RadialGradient`、`LinearGradient`、`Canvas`、`Image(`。都没有 → 标记。
+
+**分级**：hero / dashboard / 登录容器 → 🟡；普通列表 cell → 灵感级。工具型卡片（设置 row）刻意朴素是正当的，默认不升级。
+
+---
+
+> A13–A16 来自已退役的 `apple-dev:audit-finishing-touches`（§17–§20 机械打磨扫描）。它原有 5 项检查，其中 4 项本 agent 没有覆盖，全部搬来；第 5 项（空状态覆盖）本来就**不执行扫描**，只是一句指向 `feature-reviewer` B3 与 `ui-reviewer` 的指针 —— 而 `/review-execution` 已经按 diff 形状派发那两个 agent，指针失去了对象。退役记录：`docs/12-retired/audit-finishing-touches.md`。
+
+---
+
 ## Part B: 视觉打磨（人工验证）
 
 以下项目 Claude 无法通过代码完全验证，生成针对性检查清单供用户在设备上执行。

@@ -50,7 +50,7 @@ From the current task description, identify which keyword sets are relevant:
 | Deleting code or variables | 删除代码原则, 死代码/未接入代码处置原则 |
 | Working with iOS 18 APIs (@Entry, Tab, MeshGradient, @Previewable) | swift-api-changes-ios18 |
 | Working with iOS 26 APIs (glassEffect, FoundationModels) | swift-api-changes-ios26 |
-| Seeing deprecation warnings in Xcode | swift-api-changes-ios18 (migration), validate-design-tokens |
+| Seeing deprecation warnings in Xcode | swift-api-changes-ios18 (migration) |
 | Using TabView | swift-api-changes-ios18 → TabView Architecture |
 | Adding LLM/AI features | swift-api-changes-ios26 → Foundation Models |
 | macOS window, WindowGroup, MenuBarExtra, Settings scene | macOS Window Management |
@@ -126,7 +126,7 @@ For Apple framework API details NOT covered by `references/apple-swift-rules.md`
 |---|---|---|
 | State management | `external/swiftui-ui-patterns/` | `external/swiftui-api/state.md`, `binding.md`, `observation.md`, `environment.md` |
 | View composition | `external/swiftui-view-refactor.md` | — |
-| Performance | `external/swiftui-performance-audit.md` | — |
+| Performance | `external/swiftui-performance-audit.md`, `profiling-guide.md` (os_signpost / MetricKit / Instruments / XCTMetric) | — |
 | Navigation | `external/swiftui-ui-patterns/` | `external/swiftui-api/navigationstack.md`, `navigationsplitview.md` |
 | Sheets & modals | `external/swiftui-ui-patterns/` | `external/swiftui-api/sheet.md` |
 | Lists & ForEach | `external/swiftui-ui-patterns/` | `external/swiftui-api/list.md` |
@@ -139,7 +139,8 @@ For Apple framework API details NOT covered by `references/apple-swift-rules.md`
 | Accessibility | — | `external/hig/accessibility.md` |
 | macOS apps | `external/macos-spm-packaging.md` | — |
 | Data persistence | `swiftdata-guide.md` (含 Community Patterns 节) | `external/swiftdata-api/` |
-| Testing | `external/swift-testing-patterns.md` | `external/swift-testing-api/`, `xc-ui-test-guide.md` |
+| Testing | `external/swift-testing-patterns.md`, `testing-guide.md` (UT/UI 模式、Page Object、等待策略、mock、覆盖率) | `external/swift-testing-api/`, `xc-ui-test-guide.md` (E2E / 打桩 / 快照回归 / a11y 审计 / CI) |
+| Localization | `localization-guide.md` (String Catalogs / 复数规则 / 变量处理) | — |
 | Concurrency | `external/swift-concurrency-patterns.md` | `external/swift-concurrency-api/` |
 | Widgets | — | `external/widgetkit/` |
 | Tips | — | `external/tipkit/` |

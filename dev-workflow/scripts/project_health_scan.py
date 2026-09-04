@@ -168,7 +168,7 @@ def update_full(report: dict[str, Any], root: pathlib.Path, budget: Budget) -> N
 
     if large_files:
         report["signals"]["module_size"] = signal("yellow", large_files[:5])
-        report["suggested_gates"].append("code-audit")
+        report["suggested_gates"].append("review-execution")
 
     if source_files and not test_files:
         report["signals"]["feedback_loop"] = signal("red", ["source files found but no test files"])

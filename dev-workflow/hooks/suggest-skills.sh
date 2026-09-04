@@ -33,7 +33,7 @@ if echo "$_audit_lower" | grep -qE 'commit|提交|write.*plan|计划|dev.?guide|
     if [ -n "$_stored_sha" ] && git rev-parse HEAD >/dev/null 2>&1; then
       _count=$(git rev-list --count "$_stored_sha"..HEAD 2>/dev/null)
       if [ -n "$_count" ] && [ "$_count" -ge 20 ]; then
-        echo "[audit-hint] 距上次代码审计已有 ${_count} 个 commit，建议运行 /apple-dev:code-audit（comprehensive 代码审计报告）或 /audit-tokens（成本与 token 使用审计）"
+        echo "[audit-hint] 距上次代码审计已有 ${_count} 个 commit，建议运行 /review-execution（多 lens 审查，含 secrets/transport 安全扫描）或 /audit-tokens（成本与 token 使用审计）"
       fi
     fi
   fi

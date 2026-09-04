@@ -1,6 +1,6 @@
 ---
 name: render-preview
-description: "Internal tool-wrapper that renders a SwiftUI #Preview to a downsampled PNG and returns a structured { channel, pngPath, downsampled, error } result. Internal callee for run-phase's visual feedback step (hidden from the / menu); not for ad-hoc user requests. Primary path: Apple Xcode MCP RenderPreview; headless fallback: axe / swiftui-render. Not for: running-app / navigation / animation screenshots or XCUITest visual regression (use apple-dev:xc-ui-test, simctl io, or XcodeBuildMCP), UDID-targeted tests, or design-vs-render diffing (that's the caller's job)."
+description: "Internal tool-wrapper that renders a SwiftUI #Preview to a downsampled PNG and returns a structured { channel, pngPath, downsampled, error } result. Internal callee for run-phase's visual feedback step (hidden from the / menu); not for ad-hoc user requests. Primary path: Apple Xcode MCP RenderPreview; headless fallback: axe / swiftui-render. Not for: running-app / navigation / animation screenshots or XCUITest visual regression (use simctl io or XcodeBuildMCP; patterns in apple-dev/references/xc-ui-test-guide.md), UDID-targeted tests, or design-vs-render diffing (that's the caller's job)."
 user-invocable: false
 model: haiku
 context: fork

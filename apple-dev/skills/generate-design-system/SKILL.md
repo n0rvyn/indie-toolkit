@@ -353,16 +353,13 @@ Return:
 - 想用 screenshot-driven 视觉迭代生成具体 view → `design-parity-build` skill
 
 **实施时**：
-- 应用 token 到具体 view → `sync-design-md` 双向同步（**手动调用** —— 见下）
-- 检测 hardcoded value → `validate-design-tokens` skill（**手动调用** —— 见下）
+- 检测 hardcoded value / token 未落地 → `/review-execution`，diff 碰到 `*View.swift` 时自动派 `apple-dev:ui-reviewer`，判据是 `apple-dev/references/design-contract-schema.md`
 
-> **⚠️ 这两条路由曾经写着 "run-phase auto-routes"。它们不存在。**
-> `grep -c "sync-design-md" dev-workflow/skills/run-phase/SKILL.md` → **0**
-> `grep -c "validate-design-tokens" dev-workflow/skills/run-phase/SKILL.md` → **0**
+> **这里曾经有两条指向 `sync-design-md` / `validate-design-tokens` 的路由，2026-09-04 随两个 skill 一起退役**（记录见 `docs/12-retired/`）。
 >
-> 这是一条**可证伪的虚假声称**，而且它自己解释了一个现象：这两个 skill 在 30 天的使用记录里**零调用**。它们的调用方是幻觉 —— 用户以为 `run-phase` 会自动跑它们，于是从不手动跑；`run-phase` 从来不知道它们存在。
+> 留着这段是因为它记的那个缺陷值得记：那两条路由一度写着「run-phase auto-routes」，而 `grep -c` 在 `run-phase/SKILL.md` 里是 **0 / 0**。用户以为自动跑，于是从不手动跑；`run-phase` 从来不知道它们存在 —— 30 天使用记录里零调用，就是这么来的。
 >
-> 一个 skill 描述一套自己没有接线的能力，和一份契约引用一个不存在的章节，是**同一类缺陷**。前者骗的是用户，后者骗的是 agent。
+> **一个 skill 描述一套自己没有接线的能力，和一份契约引用一个不存在的章节，是同一类缺陷。** 前者骗的是用户，后者骗的是 agent。现在这条路由指向的 `ui-reviewer` 是真接线的：`review-execution` 按 diff 里有没有 `*View.swift` 判定，可以用 `python3 .claude/skills/call-graph/scripts/call_graph.py` 验证这条边存在。
 
 ## Success Criteria
 

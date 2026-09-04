@@ -100,7 +100,7 @@ Explicitly check these known ambiguity hotspots across plugins:
 | "review" / "audit" | apple-dev, dev-workflow |
 | "create" / "build" / "new" | plugin-dev, dev-workflow, skill-creator |
 | "design" | apple-dev (design-review), dev-workflow (understand-design) |
-| "test" / "testing" | apple-dev (testing-guide, xc-ui-test), dev-workflow |
+| "test" / "testing" | dev-workflow (test-changes), apple-dev (characterization-test) |
 | "commit" | dev-workflow:commit |
 | "plan" | dev-workflow:write-plan |
 

@@ -342,10 +342,10 @@ These fields are optional per-task. Use them when the task has design-critical d
       a. Create a separate test task with appropriate test type, OR
       b. Embed test verification steps in the functional task's `**Verify:**` section
     - **Skip conditions:** tasks that are pure config (editing .md/.yml/.json with no logic), style-only (CSS/layout with no conditional logic), or transparent pass-through to a third-party API may skip tests. Skipped tasks MUST annotate `⚠️ No test: {reason}` in the task body. plan-verifier will audit the reason
-    - Platform-specific test implementations can reference apple-dev plugin skills:
-      - UT/Mock/TDD → `apple-dev:testing-guide`
-      - E2E/Snapshot/A11y → `apple-dev:xc-ui-test`
-      - Performance → `apple-dev:profiling`
+    - Platform-specific test implementations: cite the reference **path**, never a skill name. The agent that executes a task has no `Skill` tool (`dev-workflow/agents/execute-plan.md:25` — `tools: Glob, Grep, Read, Write, Edit, Bash, LSP`), so a skill name written into a plan is unreachable text; a path it can Read. This table pointed at three skills for six months and could never have fired once.
+      - UT/Mock/TDD → `apple-dev/references/testing-guide.md`
+      - E2E/Snapshot/A11y → `apple-dev/references/xc-ui-test-guide.md`
+      - Performance → `apple-dev/references/profiling-guide.md`
     - Plans missing UT for business logic tasks or E2E for user journey tasks will be flagged as **must-revise** by plan-verifier
 11. **No final verification task** — Plans do NOT include a final "run everything" task. The `test-changes` skill handles full build/test/lint execution as a separate step after plan execution completes. Plans still include test-writing tasks (per guideline 10) — tests are written as code during execution, then run by test-changes afterward. Per-task `**Verify:**` commands remain lightweight: type-check (`tsc --noEmit`, `swift build`), grep for expected strings, or single-file compilation only. **Backward compatibility:** Old plans with a `### Task N: Full verification` task still execute correctly — execute-plan runs all tasks literally. The suite runs twice (once in plan, once in test-changes); redundant but not harmful.
 

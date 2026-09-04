@@ -964,7 +964,7 @@ Read `references/doc-templates.md` 的「Design System 初始化」段。Token �
 
 询问用户是否生成完整版 Design System（含 Component styles、 Animation tokens 等扩展）。如果用户确认，直接调用 `Skill("apple-dev:generate-design-system")` 执行，不中断流程。
 
-完成后建议用户在迭代过程中通过 `Skill("apple-dev:sync-design-md")` 保持 DESIGN.md ↔ DesignSystem.swift 同步。
+完成后，DESIGN.md 与 DesignSystem.swift 的一致性由 `/review-execution` 在 View 变更时派发的 `apple-dev:ui-reviewer` 兑现（判据：`apple-dev/references/design-contract-schema.md`）。双向同步工具 `sync-design-md` 已于 2026-09-04 退役，理由见 `docs/12-retired/sync-design-md.md`。
 
 #### 9.7 不要预建的目录
 

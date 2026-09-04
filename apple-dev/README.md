@@ -32,38 +32,25 @@ For Codex/OpenCode: see `.codex/INSTALL.md` or `.opencode/INSTALL.md`.
 
 These capabilities are usually called by dev-workflow after a plan, phase, or changed surface makes them relevant.
 
+> **2026-09-04**: seven reference-loader / duplicate-check skills were retired and one was moved to this repo's local `.claude/skills/`. Their reference content is unchanged and reachable through `apple-swift-context`'s Topic Router. Reasons, and what to do differently if you rebuild one, are in `docs/12-retired/`.
+
 | Skill | Preferred caller | Description |
 |-------|------------------|-------------|
 | apple-swift-context | Swift/iOS/macOS work (invoked by another skill) | Loads platform-specific rules from reference docs |
-| code-audit | run-phase / implementation-reviewer | Code quality + security assessment (5 categories) |
-| validate-design-tokens | dev-workflow review step | Design token compliance check |
-| testing-guide | write-plan / fix-bug / test-changes | Interactive testing guidance |
-| profiling | write-plan / fix-bug / test-changes | Performance profiling guidance |
-| xc-ui-test | write-plan / test-changes | Advanced XCUITest guidance |
 | render-preview | run-phase visual step | 渲染 SwiftUI #Preview 成 PNG（RenderPreview 主 + axe/swiftui-render 无头 fallback） |
 
-## Full Capability Inventory (24)
+## Full Capability Inventory (14)
 
 > **Cross-plugin handoff (2026-05-26)**: design prompt generation (formerly `generate-stitch-prompts`) was merged into `dev-workflow:generate-design-prompt` with platform routing (iOS/macOS → Stitch DSL, Web → Figma, generic → Figma). `project-kickoff` cross-calls it for the Stitch step.
 
 | Skill | Route | Description |
 |-------|---------|-------------|
 | apple-swift-context | Called by fix-bug (NOT auto — see note) | Loads platform-specific rules from reference docs |
-| audit-finishing-touches | internal route | Mechanical §17–§20 polish-gap scan (border / default-style / undecorated card / hero) |
-| code-audit | run-phase / implementation-reviewer | Code quality and security assessment (5 categories) — internal only, not user-invocable |
-| validate-design-tokens | dev-workflow review step | Design token compliance check |
 | characterization-test | internal route | Behavior-locking tests before refactoring |
 | asc-submit-preview | `/asc-submit-preview` | App Review Guidelines pre-check |
 | asc-listing | `/asc-listing` | ASC backend: submission material guidance + authenticated read-back (live keywords, did my edit save, is it really submitted) |
 | aso-research | `/aso-research` | Data-driven App Store search optimization from Apple's own endpoints |
-| testing-guide | write-plan / fix-bug / test-changes | Interactive testing guidance |
-| profiling | write-plan / fix-bug / test-changes | Performance profiling guidance |
-| xc-ui-test | write-plan / test-changes | Advanced XCUITest guidance |
-| swiftdata-patterns | internal route | SwiftData best practices guidance |
-| localization-setup | internal route | String Catalogs + localization guidance |
-| fetch-swift-api-updates | internal route | Fetch latest WWDC API changes |
 | generate-design-system | internal route | Generate SwiftUI design system from tokens |
-| sync-design-md | internal route | Bidirectional sync between Stitch DESIGN.md and DesignSystem.swift |
 | design-parity-build | `/design-parity-build` | Audit Claude Design ↔ iOS parity, produce classified Gap List, hand off to /write-dev-guide |
 | project-kickoff | `/project-kickoff` | New project feasibility + requirements (any platform; iOS/macOS also gets full Apple-native init). Mechanism-dependent ideas also get a domain-literature check that can halt the flow |
 | setup-ci-cd | `/setup-ci-cd` | Fastlane + GitHub Actions for TestFlight |

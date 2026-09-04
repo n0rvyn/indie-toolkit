@@ -8,10 +8,13 @@
 >
 > - `apple-dev/agents/ui-reviewer.md` — Part A1 (spacing scale membership), Part A5 (same-suffix layout consistency)
 > - `apple-dev/agents/design-reviewer.md` — Part A12 (spacing scale membership), Part A5 (same-suffix layout consistency)
-> - `apple-dev/skills/sync-design-md/SKILL.md` — Step 4 (per-token color / spacing / shadow drift thresholds)
-> - `apple-dev/skills/validate-design-tokens/SKILL.md` — Section 1 (spacing), Section 6 (same-suffix layout), Section 7 (DESIGN.md cross-check thresholds)
-> - `apple-dev/skills/design-parity-build/SKILL.md` — Gap List classification (Native exception field), 11-field gap taxonomy
+> - `apple-dev/skills/design-parity-build/SKILL.md` — Gap List classification (Native exception field), 11-field gap taxonomy, Step 4 token comparison
 > - `design-handoff/skills/design-spec-contract/SKILL.md` — consumes Block 6 (Native exceptions) for its DESIGN.md `Native exceptions` section (its own `materials`/`motion` blocks are design-spec-contract-owned, not governed here)
+>
+> Two former consumers — `sync-design-md` (Step 4 thresholds) and `validate-design-tokens`
+> (Sections 1 / 6 / 7) — were retired 2026-09-04; their checks now live in the two reviewers
+> above. See `docs/12-retired/`. This file is unaffected: it was always the authority, and it
+> restates every rule it owns rather than pointing at a skill.
 >
 > `a11y` (node) / `via` (edge) join keys are owned by `flow-navigation-contract`, NOT this schema; their enforcement is C1 (deferred) — there is no a11y/via block here.
 >
@@ -63,7 +66,6 @@ phrasing has been removed from both (grep `倍数` = 0 in each).
 - `ui-reviewer` Part A1 — must replace any "Npt 倍数" prose with a set-membership check
   against this scale
 - `design-reviewer` Part A12 — same
-- `validate-design-tokens` Section 1 — same
 
 ---
 
@@ -74,7 +76,7 @@ or a screenshot-rendered value vs a token), the tolerance is per-channel max-del
 
 | Token kind | Per-channel max-delta | Notes |
 |------------|-----------------------|-------|
-| Color (RGB) | **≤ 4 of 256** | Applied to R, G, B independently. The match passes iff `max(|R₁-R₂|, |G₁-G₂|, |B₁-B₂|) ≤ 4`. See `sync-design-md` Step 4 for the exact one-liner. |
+| Color (RGB) | **≤ 4 of 256** | Applied to R, G, B independently. The match passes iff `max(|R₁-R₂|, |G₁-G₂|, |B₁-B₂|) ≤ 4`. |
 | Spacing (dimension) | **exact** | No tolerance. A 16pt token does not "match" a 15.9pt value. |
 | Shadow opacity | **± 0.01** | `0.04` matches `0.05`; `0.04` does not match `0.08`. |
 | Shadow y-offset | exact | — |
@@ -83,7 +85,7 @@ or a screenshot-rendered value vs a token), the tolerance is per-channel max-del
 | Typography weight | exact | Named weights only (regular / medium / semibold / bold). No "500 vs semibold" tolerance. |
 | Corner radius | exact | — |
 
-### Color match rule (from `sync-design-md` Step 4, restated)
+### Color match rule
 
 Normalize both hex strings to 6-digit lowercase (`#FFF` → `#ffffff`). Parse to
 `(R, G, B)` 8-bit triples. Pass iff `max(|R₁-R₂|, |G₁-G₂|, |B₁-B₂|) ≤ 4`.
@@ -98,9 +100,8 @@ LAB conversion. The trade is computability over perceptual accuracy.
 
 ### Consumers
 
-- `sync-design-md` Step 4 — color match rule, opacity tolerance
-- `validate-design-tokens` Section 7 — DESIGN.md cross-check drift table
 - `design-parity-build` Step 4 — token comparison (reuse, do not re-implement)
+- `ui-reviewer` / `design-reviewer` — per-token drift thresholds
 
 ---
 
@@ -153,7 +154,6 @@ unclear, flag as 🟡 (advisory) not 🔴 (must-fix).
 
 - `ui-reviewer` Part A5
 - `design-reviewer` Part A5
-- `validate-design-tokens` Section 6
 
 ---
 

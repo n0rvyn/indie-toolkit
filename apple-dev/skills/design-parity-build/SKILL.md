@@ -1,6 +1,6 @@
 ---
 name: design-parity-build
-description: "Use when auditing a Claude Design (or similar handoff) against an iOS codebase, or the user says 'design parity', 'design 1:1', 'verify Claude Design', 'Claude Design audit', 'audit design implementation', '设计落地审计', 'Claude Design 对齐', '1:1 还原 Claude Design', or '/design-parity-build'. Writes audit doc to docs/06-plans/ for /write-dev-guide. Not for: token sync (sync-design-md), per-View scan (validate-design-tokens), subjective review without an external design source (run /review-execution which dispatches apple-dev:design-reviewer agent), multi-doc drift (design-drift), DS codegen (generate-design-system)."
+description: "Use when auditing a Claude Design (or similar handoff) against an iOS codebase, or the user says 'design parity', 'design 1:1', 'verify Claude Design', 'Claude Design audit', 'audit design implementation', '设计落地审计', 'Claude Design 对齐', '1:1 还原 Claude Design', or '/design-parity-build'. Writes audit doc to docs/06-plans/ for /write-dev-guide. Not for: per-View hardcoded-value scan (run /review-execution, which dispatches apple-dev:ui-reviewer), subjective review without an external design source (run /review-execution which dispatches apple-dev:design-reviewer agent), multi-doc drift (design-drift), DS codegen (generate-design-system)."
 compatibility: Requires macOS and Xcode
 ---
 
@@ -14,8 +14,7 @@ The skill is **audit + bridge only**. It does not modify Swift code, sync tokens
 
 ## Not This Skill
 
-- Apply DESIGN.md ↔ DesignSystem.swift token writes → `apple-dev:sync-design-md`
-- Per-View SwiftUI hardcoded value scan → `apple-dev:validate-design-tokens`
+- Per-View SwiftUI hardcoded value scan → `/review-execution` (dispatches `apple-dev:ui-reviewer` when the diff touches `*View.swift`)
 - Subjective visual hierarchy / color / spacing review → `/review-execution` (dispatches `apple-dev:design-reviewer` agent)
 - Cross-document drift across project-brief / architecture / ADRs → `dev-workflow:design-drift`
 - Initial DesignSystem.swift code generation → `apple-dev:generate-design-system`
@@ -86,7 +85,7 @@ Execute the audit subset per mode (see **Mode Behavior** section below). For eac
 
 **Reuse rules** (do not re-implement):
 
-- Token value comparison (color, spacing, typography): follow the rules in `apple-dev:sync-design-md` Step 4 (per-channel max-delta ≤ 4 for color; exact for spacing; ±0.01 opacity for shadows).
+- Token value comparison (color, spacing, typography): follow `apple-dev/references/design-contract-schema.md` § 2 (per-channel max-delta ≤ 4 for color; exact for spacing; ±0.01 opacity for shadows) — that file is the authority and carries the exact one-liner.
 - Token field naming and `DESIGN.md → Swift` mapping: follow `apple-dev:project-kickoff` `references/doc-templates.md` section "DESIGN.md → Swift Token 映射" rules where applicable.
 
 For each implemented page, search the iOS codebase by:

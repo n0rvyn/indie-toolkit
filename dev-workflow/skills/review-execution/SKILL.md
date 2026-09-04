@@ -1,13 +1,13 @@
 ---
 name: review-execution
-description: "The single review dispatcher for this marketplace. Use when the user says 'review execution', 'parallel review', 'deep review', 'review my code', 'review after coding', 'execution review', '审查执行', '并行 review', '写完 review 一下', '代码 review 一下', '深度审查', '执行后审查', or wants a fresh-context multi-lens review of uncommitted changes BEFORE commit. Also the callee for run-phase Step 6, execute-plan's standalone finish, and an /afk terminal stop — it routes lenses from the diff's shape, so callers do not each keep their own reviewer list. Dispatches 4 always-on lenses (correctness, test-coverage, breaking-changes, root-cause-depth), adds implementation-reviewer when a plan path is supplied, and adds Apple reviewers by what the diff actually touches. Not when: pre-commit semantic classification only — use review-before-commit (deliberately outside every pipeline, a manual double-check). Not when project is Apple-only and you want only ASC pre-submit review — use /asc-submit-preview."
+description: "The single review dispatcher for this marketplace. Use when the user says 'review execution', 'parallel review', 'deep review', 'review my code', 'review after coding', 'execution review', '审查执行', '并行 review', '写完 review 一下', '代码 review 一下', '深度审查', '执行后审查', or wants a fresh-context multi-lens review of uncommitted changes BEFORE commit. Also the callee for run-phase Step 6, execute-plan's standalone finish, and an /afk terminal stop — it routes lenses from the diff's shape, so callers do not each keep their own reviewer list. Dispatches 5 always-on lenses (correctness, test-coverage, breaking-changes, root-cause-depth, secrets-and-transport), adds implementation-reviewer when a plan path is supplied, and adds Apple reviewers by what the diff actually touches. Not when: pre-commit semantic classification only — use review-before-commit (deliberately outside every pipeline, a manual double-check). Not when project is Apple-only and you want only ASC pre-submit review — use /asc-submit-preview."
 user-invocable: true
 allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*, find:*, grep:*), Agent, Task
 ---
 
 ## Overview
 
-This skill formalizes the "parallel reviewer dispatch" pattern that consistently produces high-quality post-execution reviews (per 2026-04 — 2026-05 insights report). Four reviewer agents run concurrently in fresh contexts, each focused on one lens. The dispatcher consolidates findings, presents to the user, and STOPS before applying any fix.
+This skill formalizes the "parallel reviewer dispatch" pattern that consistently produces high-quality post-execution reviews (per 2026-04 — 2026-05 insights report). Five always-on reviewer agents run concurrently in fresh contexts, each focused on one lens, plus whatever the diff's shape routes in. The dispatcher consolidates findings, presents to the user, and STOPS before applying any fix.
 
 **Mode:** REVIEW-ONLY. No source files modified. Output is a structured findings list.
 
@@ -60,7 +60,7 @@ Plan-vs-code audit is **no longer** a reason to go elsewhere: pass `plan_path` a
 
 Use the Agent tool to dispatch ALL applicable reviewers in a SINGLE message (parallel execution).
 
-**Always dispatched (4-lens):**
+**Always dispatched (5-lens):**
 
 **Lens A — Correctness (subagent_type: general-purpose, model: opus):**
 ```
@@ -117,6 +117,37 @@ For each finding emit:
 Skip enhancement / refactor / removal changes — only grade fixes.
 ```
 
+**Lens F — Secrets & Transport (subagent_type: general-purpose, model: sonnet):**
+```
+You are a security scanner. Scan ONLY the added/modified lines of the uncommitted diff for the four classes below. Report file:line and the matched text (redact the secret's tail: show at most the first 6 characters).
+
+1. Hardcoded secrets
+   - `sk-[a-zA-Z0-9]{20,}` (API keys), `AKIA[0-9A-Z]{16}` (AWS)
+   - `password\s*[:=]\s*"[^"]{8,}"`, `api[_-]?key\s*[:=]\s*"[^"]{8,}"`
+   - `-----BEGIN.*PRIVATE KEY-----`
+   Exclude test targets and obvious placeholders ("password123", "changeme", "xxx").
+2. Insecure transport
+   - `http://` in URL strings, excluding localhost / 127.0.0.1 / 0.0.0.0
+   - `NSAllowsArbitraryLoads` true in a plist
+   - custom `URLSession` / ServerTrust handling that skips validation or sets no TLS minimum
+3. Injection-shaped input handling
+   - string interpolation inside SQL (`\(` near SELECT/INSERT/UPDATE/DELETE)
+   - `NSPredicate(format:` with `\(` interpolation instead of `%@` arguments
+   - `WKWebView` loading a user-supplied URL with no scheme check
+4. Sensitive data at rest
+   - `UserDefaults` storing a token / password / key → should be Keychain
+   - (report only; do not judge an existing Keychain wrapper's quality)
+
+For each finding emit:
+`[Sec/{severity}] {file}:{line} — {class}: {what} | fix: {what to do instead}`
+
+Report nothing for classes with no hit. Do not speculate about code outside the diff.
+```
+
+⛔ **This lens is always-on, not routed.** Every other conditional lens keys off a path pattern (`*View.swift`, `.plist`, …), and a secret does not live at a predictable path — a leaked key lands in whatever file the author was editing. A path-shaped route here would be a route that misses exactly the case it exists for. The cost is bounded: it is a sonnet grep pass over the diff only.
+
+Provenance: these four checks were `apple-dev:code-audit` Step 2, a `user-invocable: false` skill that nothing dispatched. The other four `code-audit` categories (concurrency, accessibility, performance, SwiftUI anti-patterns) were NOT moved here — `apple-reviewer` and `ui-reviewer` already cover them. See `docs/12-retired/code-audit.md`.
+
 **Lens E — Plan-vs-code (only when `plan_path` was supplied):**
 
 Dispatch `dev-workflow:implementation-reviewer`, passing `plan_path`, the project root, and `design_doc_path` (or "none"). It answers a question no other lens asks: *did the code do what the plan said it would* — not whether the code is correct, which is Lens A's job. Without `plan_path` there is nothing to audit against, so skip it silently.
@@ -134,7 +165,7 @@ First verify apple-dev availability: `ls ~/.claude/plugins/cache/*/apple-dev/ 2>
 
 ⛔ **`feature-reviewer` no longer routes on the user's wording.** Keying a dispatch off phrases in the request means the same diff reviews differently depending on how it was asked for. Route on the diff's shape.
 
-Critical: every applicable reviewer (4 lenses + Lens E + conditional Apple) must be in ONE Agent batch — do NOT split into a follow-up sequential dispatch.
+Critical: every applicable reviewer (5 always-on lenses A–D + F, plus Lens E and the conditional Apple set) must be in ONE Agent batch — do NOT split into a follow-up sequential dispatch.
 
 If the project is Apple and apple-dev IS installed but no Apple flag fired, still emit the Apple section saying which flags were checked and came back false — a reader needs to tell "assessed, nothing applied" apart from "never looked". If the project is non-Apple OR apple-dev is not installed, do not mention Apple at all.
 
@@ -158,6 +189,7 @@ Wait for all agents to return. Parse their outputs into a single table:
 - Lens B (test-coverage) returned: {count} findings
 - Lens C (breaking) returned: {count} findings
 - Lens D (depth) returned: {count} findings
+- Lens F (secrets & transport) returned: {count} findings
 - Lens E (plan-vs-code): {count} findings, or "skipped — no plan_path supplied"
 - Scope: {"whole working tree" / "restricted to N files from scope_files"}
 - Apple coverage: {"not applicable — non-Apple project" / list of dispatched Apple reviewers / "Apple project, apple-dev installed, no flag fired — checked: HAS_VIEW_MODIFIED, HAS_NEW_VIEW, HAS_FEATURE_SPEC, SPANS_LAYERS, HAS_APPLE_NONSWIFT"}

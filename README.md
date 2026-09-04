@@ -7,7 +7,7 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 | Plugin | Category | Description |
 |--------|----------|-------------|
 | `dev-workflow` | development | Cross-stack workflow system with plan-execute-review lifecycle, phase orchestration, and session state persistence |
-| `apple-dev` | development | iOS/macOS/iPadOS development workflows, reviews, design-token checks, CI/CD, localization, App Store review prep |
+| `apple-dev` | development | iOS/macOS/iPadOS development: review agents, design parity, visual audit, runtime feature verification, CI/CD, App Store review prep |
 | `mactools` | productivity | macOS automation for Notes, Calendar, Mail, Safari, Spotlight, Reminders, OCR, Photos, Contacts, OmniFocus |
 | `product-lens` | product | Product evaluation: demand validation, market analysis, moat assessment, feature assessment, comparison matrix |
 | `skill-master` | development | Unified plugin lifecycle: brainstorm, create, eval, review, iterate, package Claude Code plugins. Entry: `/plugin-master` |

@@ -472,13 +472,17 @@ This step closes the visual gap between implemented UI and design reference befo
 
 5. Present a consolidated summary table:
 
-| Agent | Verdict | Issues | Report/Spec |
-|-------|---------|--------|-------------|
-| Feature Spec: {name} | ✅/❌ | {user story counts} | {path} |
-| Implementation | ✅/❌ | {gap counts} — Tests: {required}/{exist}/{covered} | {path} |
-| UI | ✅/❌ | {counts} | {path} |
-| Design | ✅/❌ | {counts} | {path} |
-| Feature Review | ✅/❌ | {counts} | {path} |
+| Agent | Verdict | Issues |
+|-------|---------|--------|
+| Feature Spec: {name} | ✅/❌ | {user story counts} |
+| Implementation | ✅/❌ | {gap counts} — Tests: {required}/{exist}/{covered} |
+| UI | ✅/❌ | {counts} |
+| Design | ✅/⚠️ | {counts} |
+| Feature Review | ✅/❌ | {counts} |
+
+**Verdict legend:** ✅ = `pass` · ❌ = `fail` · ⚠️ = `needs-attention`. `design-reviewer` emits `needs-attention`, never `fail` — every check it runs is a judgment, and a judgment that blocks a merge gets argued with and eventually ignored, taking the load-bearing findings with it. ⚠️ ranks the report; it does not gate Step 8.
+
+⛔ **No `Report/Spec` path column.** `review-execution` returns findings, not paths (Step 6.4), so the column could only render empty — and an empty path column invites exactly the per-agent file hunt this consolidation removed.
 
 6. **Feature spec decision points:** If feature-spec-writer was dispatched, check its return for `Decisions:` count.
    - If Decisions > 0:
@@ -490,7 +494,7 @@ This step closes the visual gap between implemented UI and design reference befo
 
 7. **Surface human verification items:** read them from the review return's `### Per-reviewer passthrough` block — not from per-agent report files, which this step no longer hunts for. Extract these sections when present:
      - ui-reviewer: `### Part C: 人工验证清单`
-     - design-reviewer: `### Part B: 设备验证清单`
+     - design-reviewer: `### Part B: 设备验证清单` (its 🔴 lines arrive separately, in `### Part A 🔴 项`)
      - feature-reviewer: `### Part C: 设备验证清单`
    - Consolidate, deduplicate, and present in plain language below the summary table:
 
@@ -537,8 +541,8 @@ If any of the following have issues: execution report (blocked/failed tasks), te
 4. Ask the user: "Fix these issues before moving on, or mark as known issues?"
 5. If fixing:
    a. **Separate design issues from code issues.** If the review return's `### Per-reviewer passthrough` carries a design-reviewer section:
-      - Extract all 🔴 items from design-reviewer Part A
-      - Group by category: Hierarchy (A1, A11), Spacing (A3, A12), Consistency (A5, A6), Color (A2)
+      - Extract all 🔴 items from design-reviewer's `### Part A 🔴 项` section in the passthrough
+      - Group by category: Hierarchy (A1, A11, A15), Spacing (A3, A12), Consistency (A5, A6), Color (A2), Polish (A13, A14, A16)
       - Present design issues separately from other review issues:
         > 设计问题（{N} 个必须修复）：
         > - {category}: {count}
@@ -569,7 +573,7 @@ If any of the following have issues: execution report (blocked/failed tasks), te
      Do NOT proceed. Use AskUserQuestion:
      - Option A: "Run Step 5 now" → return to Step 5
      - Option B: "Skip test and review, complete phase" → add `review_reports: ["user-override"]`, `test_report: "user-override"`, log override, proceed
-   - If any review report has verdict ❌ AND `gaps_remaining` > 0:
+   - If any review report has verdict ❌ AND `gaps_remaining` > 0 (⚠️ `needs-attention` does NOT gate — see the verdict legend in Step 6.5):
      **BLOCK**: "Cannot complete phase: {gaps_remaining} unresolved gaps."
      Do NOT proceed. Use AskUserQuestion:
      - Option A: "Fix gaps (Step 7)" → return to Step 7

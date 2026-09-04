@@ -234,7 +234,9 @@ For each file provided, check the following dimensions:
 1. 控件：`Grep(pattern="\\bToggle\\(|\\bPicker\\(|\\bDatePicker\\(", path=<file>, output_mode="content", -n=true)`
 2. 定制：`Grep(pattern="\\.toggleStyle\\b|\\.pickerStyle\\b|\\.datePickerStyle\\b", path=<file>, output_mode="content", -n=true)`
 
-**判定按控件类型逐类做，范围是整个文件**：`Toggle` 命中非空而 `.toggleStyle` 全文件为零 → 标记该文件的全部 `Toggle` 行；`Picker` / `.pickerStyle`、`DatePicker` / `.datePickerStyle` 同理。三类各判各的。
+**判定按控件类型逐类做，而「有没有定制」这一问的范围是整个项目，不是单个文件**：先在**项目根**上跑第 2 步（`Grep(pattern=..., path=<project root>, output_mode="count")`）。某一类的 style modifier 在项目里**任何地方**出现过 → 该类不判 🟡，最多 `(灵感级)`；全项目为零 → 才标记该文件里这一类的全部命中行。三类各判各的。
+
+⛔ **不要用「本文件里没有」当判据。** SwiftUI 的 `.toggleStyle` / `.pickerStyle` / `.datePickerStyle` 经 environment 向下传播，规范写法就是在 `App.swift` / 根 View 上应用一次 —— 那种项目按文件判会让**除根文件外的每个文件**都吃标记。即使像实测的那样贴着控件写（Lifuel：8 处 style，而含 `Toggle(`/`Picker(` 的文件有 62 个），按文件判同样会把大多数文件判成"没定制"。这正是原始版本那个父容器扫描想解决而没解决的问题，换个范围再犯一次不算修好。
 
 ⛔ **不要手搓花括号配对去找"父容器有没有定制"。** 原始版本这么写过，而它**结构性地找不到目标**：SwiftUI 的容器级样式挂在闭合花括号**之后** —— `Form { Toggle(…) }` 换行 `.toggleStyle(BrandToggleStyle())` —— 用 `[P, 闭合括号]` 区间去 grep 永远扫不到它；而且它只上溯一层，根节点 `VStack` 或调用点上的定制同样在射程外。净效果是**一个正确地在根节点定制了一次的项目，每个控件都吃一个 🟡**。整文件判定牺牲了「同文件里一个定制了一个没定制」的精度，换来的是这个检查真的能跑，并且偏向不误报。
 

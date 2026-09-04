@@ -2,7 +2,7 @@
 name: review-execution
 description: "The single review dispatcher for this marketplace. Use when the user says 'review execution', 'parallel review', 'deep review', 'review my code', 'review after coding', 'execution review', '审查执行', '并行 review', '写完 review 一下', '代码 review 一下', '深度代码审查', '执行后审查', or wants a fresh-context multi-lens review of uncommitted changes BEFORE commit. Also the callee for run-phase Step 6, execute-plan's standalone finish, and an /afk terminal stop — it routes lenses from the diff's shape, so callers do not each keep their own reviewer list. Dispatches 5 always-on lenses (correctness, test-coverage, breaking-changes, root-cause-depth, secrets-and-transport), adds implementation-reviewer when a plan path is supplied, and adds Apple reviewers by what the diff actually touches. Not when: pre-commit semantic classification only — use review-before-commit (deliberately outside every pipeline, a manual double-check). Not when project is Apple-only and you want only ASC pre-submit review — use /asc-submit-preview. Not when auditing a plugin/skill/agent as an ARTIFACT (trigger quality, dispatch wiring, eval coverage) rather than reviewing a diff — use skill-master:plugin-master; in a plugin monorepo the diff IS plugin content, so say which question you are asking."
 user-invocable: true
-allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*, find:*, grep:*), Agent
+allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*, find:*, grep:*), Agent, Task
 ---
 
 ## Overview
@@ -36,6 +36,8 @@ Plan-vs-code audit is **no longer** a reason to go elsewhere: pass `plan_path` a
 | `mode` | `gated` (default for `run-phase`): must-fix findings block and go into the caller's fix loop. `advisory` (default when absent, and for `execute-plan` / `/afk`): findings are presented, nothing blocks, the user decides. |
 
 **Why one dispatcher.** Until now `run-phase` kept its own reviewer list and dispatched the same Apple agents by Phase-completion signals while this skill dispatched them by git-diff signals. Running both dispatched the same agents twice with different scopes — documented as intentional in `run-phase`, and it still cost a duplicate. The routing lives here now; callers pass inputs, not agent lists.
+
+> `Agent` and `Task` in `allowed-tools` are **one tool under two names** — `Task` is the historical name, still printed by cached plugin copies. Both are listed on purpose: dropping either risks a runtime that resolves the other losing dispatch silently, with no frontmatter check to catch it.
 
 ## Process
 
@@ -212,7 +214,7 @@ Wait for all agents to return. Parse their outputs into a single table:
 {For each dispatched reviewer that returned a structured section, reproduce it verbatim under the reviewer's name.}
 ```
 
-**The passthrough is load-bearing, not padding.** Callers parse specific sections that only one reviewer produces — `ui-reviewer`'s `### Part C: 人工验证清单`, `design-reviewer`'s `### Part B: 设备验证清单` and its 🔴 items, `feature-reviewer`'s `### Part C: 设备验证清单`, `implementation-reviewer`'s `Tests:` line. Flattening everything into must-fix / nice-to-have destroys them, and the caller then has to go hunting for per-agent report files — which is the coupling this consolidation exists to remove. Reproduce the sections; do not summarize them.
+**The passthrough is load-bearing, not padding.** Callers parse specific sections that only one reviewer produces — `ui-reviewer`'s `### Part C: 人工验证清单`, `design-reviewer`'s `### Part A 🔴 项` and `### Part B: 设备验证清单`, `feature-reviewer`'s `### Part C: 设备验证清单`, `implementation-reviewer`'s `Tests:` line. Flattening everything into must-fix / nice-to-have destroys them, and the caller then has to go hunting for per-agent report files — which is the coupling this consolidation exists to remove. Reproduce the sections; do not summarize them.
 
 ### Step 3b: Hand back according to `mode`
 

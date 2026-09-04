@@ -1,6 +1,6 @@
 ---
 name: self-pacing
-description: "SUPERSEDED by /afk for general unattended work — see this file's body-top marker. The one case it still owns: driving an ALREADY-VERIFIED multi-phase dev-guide across phase seams without pausing at each seam, stopping only for blocking decisions or severe failures, writing a thin handoff card at every stop. Triggers: '/self-pacing', 'self-pace', '跨阶段连跑', '不要每个阶段都停'. Not when: no dev-guide exists, or you have a goal but no route (use /afk); a single plan rather than a multi-phase guide (use execute-plan, which already gates per checkpoint); no verified plan at all (write-plan → verify-plan first); divergent design / exploration (use brainstorm)."
+description: "SUPERSEDED by /afk for general unattended work — see this file's body-top marker. What it still owns: driving an ALREADY-VERIFIED dev-guide autonomously, stopping only for blocking decisions or severe failures, writing a thin handoff card at every stop. TWO MODES, both requiring a written plan: bare '/self-pacing' drives the WHOLE dev-guide across all phase seams (this is the mode with no replacement); '/self-pacing phase' (aliases 'in-phase', 'single', 'one') drives ONE phase or one standalone plan and stops at the seam — prefer execute-plan for that, which already gates per checkpoint. Triggers: '/self-pacing', 'self-pace', '跨阶段连跑', '不要每个阶段都停'. Not when: you have a goal but no route, or no plan at all (use /afk); no verified plan exists (write-plan → verify-plan first); divergent design / exploration (use brainstorm)."
 disable-model-invocation: true
 ---
 

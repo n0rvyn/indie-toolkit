@@ -61,6 +61,14 @@ Every skill and agent SKILL.md / agent.md in this marketplace must declare a del
 
 **动作**：声明收尾前跑一遍 `python3 .claude/skills/call-graph/scripts/call_graph.py --plugin <name>`（本地工具，`.claude/` 未纳入版本控制），核对新边出现、旧边消失；再 grep 一次被改行为的关键词。**⚠️ 静态图只能证明「边接对了」，证明不了运行时行为对** —— 契约类改动仍需一次真实运行。
 
+**3. 靠段落名跨环节传数据的，加一个检查器。**
+
+`reviewer agent → review-execution → run-phase` 这条链靠 markdown 段名逐字搬运，三端都是散文，没有任何东西在运行时校验。2026-09-04 一天之内断了两次：一次是 agent 只返回计数而 dispatcher 承诺逐字透传，一次是 `gated` 把交回内容截断成 must-fix。两次都没有测试发现，因为没有测试。
+
+`python3 .claude/skills/call-graph/scripts/check_section_contract.py`（同为本地工具）核对三端段名一致；`--selftest` 先证明它能红。
+
+⚠️ **这条链在本仓测不了**：`HAS_VIEW_MODIFIED` / `HAS_NEW_VIEW` 匹配 `*View.swift`，本仓 9 个 `.swift` 里 0 个符合、0 个 Xcode 工程 —— 三个 Apple reviewer 在这里从不会被派出。真正的端到端只能在 Apple 项目里改一个 View 时发生。**所以在这儿，段名一致是唯一可得的验证形式，不要把它当成「跑通了」。**
+
 ## 退役记录（`docs/12-retired/`）
 
 **做新 skill 之前，先 `grep` 一遍 `docs/12-retired/`。** 十有八九以前做过 —— 里面记的是「当初为什么做、后来为什么不要了、再做要哪里不一样」，这些从 git log 重建不出来。

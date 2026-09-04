@@ -6,6 +6,16 @@ disable-model-invocation: true
 
 <!-- cost-posture: inherit (judgment + orchestration — severity classification, decision auto-resolution, and loop control are judgment calls; do NOT downgrade to sonnet/haiku per dev-workflow Skill Cost Posture rule) -->
 
+> ## ⚠️ Superseded by `dev-workflow:afk`
+>
+> **Use `/afk` for unattended runs.** This skill requires a verified plan or dev-guide before it will start — that requirement is exactly what `/afk` drops, and it is why this skill went unused.
+>
+> Measured over the 30 days to 2026-09-04, across this account's whole transcript corpus: the user typed `/self-pacing` **0 times**; the model attempted to invoke it twice and was blocked by `disable-model-invocation`; meanwhile the raw pacing paragraph this skill was built from was pasted by hand **63 times across 41 sessions in 9 projects**. Separately, 271 of 283 sessions (96%) shipped real work without invoking `write-plan` / `verify-plan` / `execute-plan` at all. The demand is real; the plan precondition is what nobody wanted.
+>
+> Kept, not deleted, because its `DESIGN.md` invariants 1 / 2 / 6 (a stop is a complete handoff; run log ≠ handoff card; the card locates, the doc transfers) were paid for in real failures and are inherited by `/afk`. Read them before changing stop or handoff behavior anywhere.
+>
+> Still valid for one case: driving an **already-verified** multi-phase dev-guide across phase seams, which `/afk` deliberately does not do.
+
 ## What this is
 
 `self-pacing` is an **AFK autonomous driver** for already-planned work. It runs to green without a timer, without scheduling, and without the user at the keyboard. The lifecycle is:

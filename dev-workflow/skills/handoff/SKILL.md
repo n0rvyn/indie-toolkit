@@ -32,9 +32,9 @@ disable-model-invocation: false
 
 ⛔ 只写「我做了什么」= 只服务了写的人。**续接指令必须在文件里**，不能指望用户输入。
 
-## self-pacing 模式（来源是磁盘，不是聊天）
+## 自主运行模式（来源是磁盘，不是聊天）
 
-**触发条件是产物在不在，不是谁调起的**：手上这摊活对应的 `.claude/self-pacing/<slug>.md` 存在 → **先读产物，不要从会话叙述里重建**。self-pacing 明文禁止 narrative reconstruction from chat（其 Step 4：run log + crystal 才是 source of truth），这一条在这里同样成立。
+**触发条件是产物在不在，不是谁调起的**：手上这摊活对应的 `.claude/afk/<slug>.md`（`/afk` 的 run log）**或** `.claude/self-pacing/<slug>.md` 存在 → **先读产物，不要从会话叙述里重建**。两条路径等价触发本节；`/afk` 是目标导向的那条，`self-pacing` 是需要预写计划的那条（已被前者取代，见其 SKILL.md 顶部）。`/afk` 在**每一次** STOP 都调用本 skill，所以这一节是它唯一的交接产出口。self-pacing 明文禁止 narrative reconstruction from chat（其 Step 4：run log + crystal 才是 source of truth），这一条在这里同样成立。
 
 ⛔ **不要写成「由 self-pacing 调起时才适用」**。用户「自主推进，遇到重大 block 就 handoff」而**没有**敲 `/self-pacing` 时，没有任何 skill 在管，本 skill 是按 description 匹配直接触发的 —— 那正是最需要读产物的场合（它连自己在一次被跟踪的 run 里都不知道）。按调用方设条件会让这一节在唯一真正需要它的路径上失效。
 
@@ -44,6 +44,7 @@ disable-model-invocation: false
 
 | 读什么 | 它是什么的权威 |
 |---|---|
+| `.claude/afk/<slug>.md`（`/afk` run log） | **发生了什么**——它自己做的每个裁决、被绕过的东西、`[判据]` 每次跑的结果。`/afk` 不写 stop card，本 doc 就是它的全部交接 |
 | `.claude/self-pacing/<slug>-handoff.md` | 停在哪、为什么停（本次 STOP 的 delta） |
 | `.claude/self-pacing/<slug>.md`（run log） | **发生了什么**——自动裁决、被延后的 nice-to-have、跨过的 seam、flake、截图路径 |
 | `docs/11-crystals/*-crystal.md` | **该做什么**——用户锁定的决策 |

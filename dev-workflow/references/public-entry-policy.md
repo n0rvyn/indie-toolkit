@@ -30,7 +30,8 @@ Policy for this pass:
 `dev-workflow` manual entries:
 - `audit-rules`
 - `generate-design-prompt`
-- `self-pacing` (autonomous gate-suppressing driver — must be a deliberate user choice, never model-routed)
+- `afk` (goal-oriented unattended driver — walking away and suppressing stops must be a deliberate user choice, never model-routed. Invokes `handoff` as a callee at every stop.)
+- `self-pacing` (superseded by `afk`; kept for verified multi-phase dev-guide runs. Same rule: deliberate user choice, never model-routed)
 
 
 `apple-dev` daily entries for the follow-up task:

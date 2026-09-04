@@ -206,7 +206,7 @@
 
 如果 CP4 选择了「跳过设计」，使用下方默认模板值。
 
-> 完整设计原则参考 `~/.claude/docs/ui-design-principles.md`
+> 完整设计原则参考 `apple-dev/references/ui-design-principles.md`
 
 ### DESIGN.md (Stitch 9-section) 识别
 
@@ -259,7 +259,7 @@
 | 阴影 | 5 级（flat/subtle/small/medium/large） | z 轴语义分层（原则 §10.2） |
 | 动效 | 200-500ms, spring | 原则 §9 |
 
-初始化时读取 `~/.claude/docs/ui-design-principles.md` §2 间距系统和 §3 颜色系统确定具体值。
+初始化时读取 `apple-dev/references/ui-design-principles.md` §2 间距系统和 §3 颜色系统确定具体值。
 
 创建 `[项目名]/DesignSystem/DesignSystem.swift`，最小骨架：
 

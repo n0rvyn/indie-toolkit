@@ -198,7 +198,7 @@ For each file provided, check the following dimensions:
 
 ### A13. 边框过度使用（Border Overuse）
 
-> 原则：1pt 边框是最弱的容器暗示，堆叠使用 = 视觉拥挤。替代手段：阴影 / 背景色阶 / 留白 / Section 分组 / 单条强调色边框。
+> 原则：1pt 边框是最弱的容器暗示，堆叠使用 = 视觉拥挤（`apple-dev/references/ui-design-principles.md` §19.5）。替代手段的完整对照表与反例见该文件 §19.5：阴影 / 背景色阶 / 留白 / Section 分组 / 单条强调色边框（§19.2 模式：`.overlay(alignment: .leading) { Rectangle().fill(.accent).frame(width: 3) }`）。
 
 **代码检查**：对每个文件跑两个 grep，命中数**相加**得该文件的 border 总数：
 
@@ -207,7 +207,7 @@ grep -cE '\.border\(|\.overlay.*RoundedRectangle.*stroke' <file>
 grep -cE 'RoundedRectangle\(.*\)\s*\.strokeBorder|^\s*\.strokeBorder' <file>
 ```
 
-**分级**：≥ 5 次 → 🔴（极端过度，几乎不会是无意）；4 次 → 🟡；3 次 → 灵感级，只提不判。
+**分级**：≥ 5 次 → 🔴（极端过度，几乎不会是无意；剥掉 1–2 个换成阴影或背景色阶通常就能消除拥挤）；4 次 → 🟡；3 次 → 灵感级，只提不判。
 
 **已知盲点**（照实说，不要当成"检查过了没问题"）：多行写法 `\.overlay(\n RoundedRectangle(...)\n .strokeBorder(...)\n)` 这两个 grep 都匹配不到（需 `pcre2grep -M`）。计数偏低是可接受的漏报。反向地，§19.2 里 intentional 的单条强调色边框也会被计入，所以命中后要看上下文再判。
 
@@ -215,7 +215,7 @@ grep -cE 'RoundedRectangle\(.*\)\s*\.strokeBorder|^\s*\.strokeBorder' <file>
 
 ### A14. 核心交互控件用了系统默认样式
 
-> 原则：设置页 / 引导页 / 支付页这类主屏上的 `Toggle` / `Picker` / `DatePicker`，值得定制以体现品牌。
+> 原则：设置页 / 引导页 / 支付页这类主屏上的 `Toggle` / `Picker` / `DatePicker`，值得定制以体现品牌（`apple-dev/references/ui-design-principles.md` §19.1，含 `BrandToggleStyle` / `BrandSegmentedPickerStyle` / `BrandDatePickerTrigger` 三段可直接抄的实现）。
 
 **代码检查**：
 
@@ -239,7 +239,7 @@ grep -nE '\bToggle\(|\bPicker\(|\bDatePicker\(' <file>
 
 ### A15. Hero / 大标题区域无装饰
 
-> 原则：顶部 Section 或大标题区裸 `Text(...).font(.largeTitle)` 而无背景装饰 = 错失品牌时刻。
+> 原则：顶部 Section 或大标题区裸 `Text(...).font(.largeTitle)` 而无背景装饰 = 错失品牌时刻（`apple-dev/references/ui-design-principles.md` §19.3，装饰手段：radial gradient / Canvas pattern / illustration）。
 
 **代码检查**：
 
@@ -258,7 +258,7 @@ grep -nE '\.font\(\.largeTitle\)|\.font\(\.title\)|\.font\(\.system\(size:\s*[0-
 
 ### A16. 材质卡片背景无装饰
 
-> 原则：纯 `.background(.regularMaterial)` 而无强调边框 / 渐变 / 图案 → 工程师感强。**注意这问的不是 A5 那个问题** —— A5 问"同类卡片彼此一致吗"，本项问"这张卡有没有性格"。两张一样朴素的卡片能一起通过 A5。
+> 原则：纯 `.background(.regularMaterial)` 而无强调边框 / 渐变 / 图案 → 工程师感强（`apple-dev/references/ui-design-principles.md` §19.2 单侧 accent border / §19.3 装饰背景）。**注意这问的不是 A5 那个问题** —— A5 问"同类卡片彼此一致吗"，本项问"这张卡有没有性格"。两张一样朴素的卡片能一起通过 A5。
 
 **代码检查**：
 
@@ -272,7 +272,7 @@ grep -nE '\.background\(\.(regular|thick|thin|ultraThin|ultraThick)Material\)|\.
 
 ---
 
-> A13–A16 来自已退役的 `apple-dev:audit-finishing-touches`（§17–§20 机械打磨扫描）。它原有 5 项检查，其中 4 项本 agent 没有覆盖，全部搬来；第 5 项（空状态覆盖）本来就**不执行扫描**，只是一句指向 `feature-reviewer` B3 与 `ui-reviewer` 的指针 —— 而 `/review-execution` 已经按 diff 形状派发那两个 agent，指针失去了对象。退役记录：`docs/12-retired/audit-finishing-touches.md`。
+> A13–A16 来自已退役的 `apple-dev:audit-finishing-touches`（对 `apple-dev/references/ui-design-principles.md` §17–§20 的机械打磨扫描）。**每条的 §-引用都带上了文件路径** —— 原 skill 有一个「加载参考」步骤先把那份文件读进来，所以它可以裸写 §19.1；搬进 agent 后那个步骤没了，裸 §-号会变成无处可查的引用。它原有 5 项检查，其中 4 项本 agent 没有覆盖，全部搬来；第 5 项（空状态覆盖）本来就**不执行扫描**，只是一句指向 `feature-reviewer` B3 与 `ui-reviewer` 的指针 —— 而 `/review-execution` 已经按 diff 形状派发那两个 agent，指针失去了对象。退役记录：`docs/12-retired/audit-finishing-touches.md`。
 
 ---
 

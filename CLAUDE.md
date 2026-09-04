@@ -61,6 +61,14 @@ Every skill and agent SKILL.md / agent.md in this marketplace must declare a del
 
 **动作**：声明收尾前跑一遍 `python3 .claude/skills/call-graph/scripts/call_graph.py --plugin <name>`（本地工具，`.claude/` 未纳入版本控制），核对新边出现、旧边消失；再 grep 一次被改行为的关键词。**⚠️ 静态图只能证明「边接对了」，证明不了运行时行为对** —— 契约类改动仍需一次真实运行。
 
+## 退役记录（`docs/12-retired/`）
+
+**做新 skill 之前，先 `grep` 一遍 `docs/12-retired/`。** 十有八九以前做过 —— 里面记的是「当初为什么做、后来为什么不要了、再做要哪里不一样」，这些从 git log 重建不出来。
+
+**退掉一个 skill 之前，先写记录，再删目录。** 顺序反了就写不出来了：理由只在当轮的上下文里，目录一没，剩下的只有 diff。
+
+形态判据（2026-09-04 从九次退役里归纳，全文在该目录 README）：只读检查 → `review-execution` 下的一个 lens；生成/写入 → 保留 skill；读一份参考再复述 → reference，挂进 `apple-swift-context` 的 Topic Router。**大多数「死掉的 skill」不是内容不好，是形态选错了。**
+
 ## Plugin Lifecycle
 
 ### When Creating a New Plugin

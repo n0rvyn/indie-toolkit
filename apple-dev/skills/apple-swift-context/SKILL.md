@@ -135,7 +135,7 @@ For Apple framework API details NOT covered by `references/apple-swift-rules.md`
 | Charts | `external/swiftui-charts.md` | `external/swiftui-api/chart.md` |
 | Animations | `external/swiftui-animations.md` | — |
 | Liquid Glass | `external/ios-design-consultant.md` | `external/ios-liquid-glass/` |
-| Visual design | `external/ios-design-consultant.md` | `external/hig/` |
+| Visual design | `external/ios-design-consultant.md`, `ui-design-principles.md` (§17 深度层级 / §18 图片 / §19 收尾打磨 / §20 层级战术) | `external/hig/` |
 | Accessibility | — | `external/hig/accessibility.md` |
 | macOS apps | `external/macos-spm-packaging.md` | — |
 | Data persistence | `swiftdata-guide.md` (含 Community Patterns 节) | `external/swiftdata-api/` |

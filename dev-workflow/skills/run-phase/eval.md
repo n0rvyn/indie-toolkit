@@ -15,7 +15,9 @@
 - [ ] Plan context includes Impact Map and Task Contract requirements
 - [ ] Output writes plan in main context (not dispatched to agent)
 - [ ] Output invokes verify-plan before execute-plan
-- [ ] Output continues through verify-plan, execute-plan, test-changes, and implementation-reviewer review after reading Project Health
+- [ ] Step 6 makes ONE `dev-workflow:review-execution` call with `plan_path` + `scope_files` (the Phase's files, not the whole tree) + `mode: gated` — and keeps NO reviewer list of its own
+- [ ] Human-verification items, the `Tests:` line, and design-reviewer 🔴 items are read from the review return's `### Per-reviewer passthrough`, not from per-agent report files
+- [ ] Output continues through verify-plan, execute-plan, test-changes, and the review call after reading Project Health
 - [ ] Apple review/testing skills are selected through internal route terms when Swift/iOS/macOS surfaces changed
 - [ ] Phase completion report generated with next phase info
 - [ ] State file uses JSON format (`.claude/dev-workflow-state.json`) with legacy YAML migration on first encounter

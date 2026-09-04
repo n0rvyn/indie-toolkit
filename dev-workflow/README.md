@@ -69,7 +69,9 @@ commit                                   → conventional commit
 
 **When NOT to use**: trivial single-line edits (just do it); work spanning multiple independent units (use Flow A).
 
-**Optional deeper review**: insert `review-execution` between `test-changes` and `review-before-commit` for a 4-lens parallel review (correctness, test-coverage, breaking-changes, root-cause-depth). Skip on routine changes; use on sensitive code, large refactors, or before high-stakes commits.
+**Review is automatic here, not optional.** `execute-plan` invokes `review-execution` on finish with `mode: advisory` — findings are presented, nothing is auto-fixed, nothing blocks, the decision stays yours. It used to be a suggestion line at the end of the output, which meant it never actually ran on this flow. Lenses are routed from the diff's shape (correctness / test-coverage / breaking-changes / root-cause-depth always; plan-vs-code because a plan is present; Apple reviewers only for the surfaces they own).
+
+`review-before-commit` stays deliberately outside every flow — it is the manual pre-commit double-check you run when you want one, not a pipeline step.
 
 ### Flow C — Bug fix
 

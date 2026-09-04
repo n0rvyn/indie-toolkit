@@ -14,7 +14,8 @@
 - [ ] `contract_version: 1` plans require every selected task to include Task Contract before file edits
 - [ ] Legacy plans without `contract_version` warn once and continue
 - [ ] Output includes batch progress tracking
-- [ ] Output suggests implementation-reviewer for plan-vs-code audit (standalone mode)
+- [ ] Standalone mode **invokes** `dev-workflow:review-execution` (not "suggests") with `plan_path`, `scope_files`, and `mode: advisory` — a prose suggestion here is why review never ran on this chain
+- [ ] `test-changes` and `finish-branch` remain suggestions, not invocations
 - [ ] Each task's Verify command is run before marking task complete
 - [ ] Step 2 contains "Plan-time test-impl split (documentation note)" subsection referencing dev-workflow/references/tdd-research-2026.md and write-plan/SKILL.md Writing Guideline item 12; explicitly states NO dispatch-time splitting
 

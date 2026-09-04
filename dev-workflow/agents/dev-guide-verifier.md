@@ -325,7 +325,7 @@ Steps:
    - Phase has UI scope → checklist includes `apple-dev:ui-reviewer agent (run-phase auto-dispatches when SwiftUI files changed)`
    - Phase has new pages/screens → checklist includes `apple-dev:design-reviewer agent (run-phase auto-dispatches for new pages)`
    - Phase completes a full user journey → checklist includes `apple-dev:feature-reviewer agent (run-phase auto-dispatches for completed user journey)`
-   - All Phases → checklist includes `run-phase review step (auto-invokes implementation-reviewer)`
+   - All Phases → checklist includes `run-phase review step (auto-invokes review-execution; the plan-vs-code lens fires because run-phase supplies plan_path)`
 
 **Gap output:**
 

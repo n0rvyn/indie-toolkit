@@ -121,7 +121,7 @@ Dev-Guide Scope Deliverables:
 
 ### Step 4: Cumulative Test Coverage Audit
 
-This step catches tests that per-phase implementation-reviewer missed.
+This step catches tests that the per-phase review missed (run-phase Step 6 → `review-execution` → its plan-vs-code lens), which sees one Phase at a time and cannot see cumulative coverage across all of them.
 
 1. **Collect all plan files:**
    - Read the dev-guide. For each Phase section, look for a plan file reference (link or `Plan:` field)

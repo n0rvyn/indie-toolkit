@@ -232,7 +232,7 @@ current: true
 - [ ] Tests pass for this Phase's scope (UT for logic, E2E for user journeys)
 
 **Review checklist:**
-- [ ] run-phase review step (auto-invokes implementation-reviewer)
+- [ ] run-phase review step (auto-invokes `review-execution`, which adds the plan-vs-code lens because run-phase supplies `plan_path`)
 - [ ] apple-dev:ui-reviewer agent (run-phase auto-dispatches when Phase has UI)
 - [ ] apple-dev:design-reviewer agent (run-phase auto-dispatches when Phase has new pages)
 - [ ] apple-dev:feature-reviewer agent (run-phase auto-dispatches when Phase completes a full user journey)

@@ -393,7 +393,7 @@ This step closes the visual gap between implemented UI and design reference befo
    - Primary: scan the plan's per-task `**Files:**` sections (always available since Step 4 has completed) for modified `.swift` files. A file counts as a view if EITHER its name matches a view suffix (`*View` / `*Card` / `*Row` / `*Cell` / `*Tab` / `*Screen` / `*Sheet` / `*Banner`) OR it contains a `#Preview` block or a `: View` conformance. Do NOT filter on `*View.swift` alone: SwiftUI views are frequently named `Card`/`Row`/`Tab`/`Screen`, and a name-only filter silently skips them.
    - Optional cross-check: `git diff --name-only` against the phase's starting commit (only if a baseline ref was recorded), filtered by the same view-detection rule
    - If the resulting list is empty → skip this entire step: log `Visual step skipped: non-UI phase`, set `phase_step: review`, proceed to Step 6.
-   - Note: Step 6's ui-reviewer uses the same signal source, but computes it inline at that point. This step derives it independently — Step 6 has not run yet and its inline condition is not a stored artifact. (This step's own fixes may touch additional files, so Step 6's recomputed set can differ slightly — expected.)
+   - Note: Step 6 no longer computes a ui-reviewer condition itself — it hands `scope_files` to `review-execution`, which routes on `HAS_VIEW_MODIFIED` from the diff. This step still derives its own list because it runs first and needs one before any review exists. The two can differ: this step's view-detection deliberately catches `*Card` / `*Row` / `*Screen` names that a `*View.swift` match misses, and its own fixes may touch further files. Expected, not a defect — but do not "unify" them by narrowing this one to `*View.swift`.
 
 3. **Gate ②: Design reference** (only if Gate ① passes) — resolve a design reference **image path** in this order:
    - (a) `/tmp/design-screenshot-*.png` (understand-design output) — already an image path
@@ -430,15 +430,19 @@ This step closes the visual gap between implemented UI and design reference befo
    - If this is NOT an infrastructure-only Phase: confirm feature name and scope with the user, then prepare `dev-workflow:feature-spec-writer` dispatch for each completed feature
    - If infrastructure-only (no user journeys): no feature-spec-writer dispatch
 
-   **Review agents (always at least one):**
-   - **Always:** `dev-workflow:implementation-reviewer` agent
-   - **apple-dev reviewers (conditional)**: before adding any of the three below, verify apple-dev is installed via `ls ~/.claude/plugins/cache/*/apple-dev/ 2>/dev/null`. If no output, skip all three and add to the Step 6 summary table: "apple-dev not installed — UI/design/feature review coverage skipped". If installed:
-     - **If Phase modified UI files:** `apple-dev:ui-reviewer` — pass list of modified `*View.swift` files
-     - **If Phase created new pages/components:** `apple-dev:design-reviewer` — pass list of new View files
-     - **If Phase completed a full user journey:** `apple-dev:feature-reviewer` — pass feature scope + key files
-   - **If this is the submission prep Phase:** invoke `/asc-submit-preview` skill after agents complete (requires apple-dev installed; if not, note in summary and skip)
+   **Review — one call, not a reviewer list:**
 
-   > Note: run-phase dispatches Apple reviewers via Phase-completion signals (UI files modified / new components / journey completed). `/review-execution` dispatches the SAME agents via git-diff signals (HAS_SWIFT / HAS_NEW_VIEW / user keywords). Both routes are intentional — run-phase serves orchestrated phases; review-execution is standalone. Running both back-to-back will dispatch agents twice with slightly different scopes.
+   Invoke `dev-workflow:review-execution`, passing:
+   - `plan_path` — this Phase's plan file (this is what adds the plan-vs-code lens; without it that lens is skipped)
+   - `design_doc_path` — from state or the dev-guide, or "none"
+   - `scope_files` — **the files this Phase touched**, not the whole working tree
+   - `mode: gated` — must-fix findings block and come back for the fix loop below
+
+   `scope_files` is not optional here. The working tree can hold changes from outside this Phase; reviewing them would silently widen what this Phase is accountable for.
+
+   `review-execution` owns which reviewers apply and routes them from the diff's shape — including the apple-dev reviewers and the apple-dev-installed check. **Do not keep a reviewer list here.** Until now this step named its own agents and dispatched the same apple-dev reviewers that `review-execution` dispatched, by different signals; running both sent the same agents out twice with different scopes. One dispatcher removes that by construction.
+
+   - **If this is the submission prep Phase:** invoke `/asc-submit-preview` skill after the review returns (requires apple-dev installed; if not, note in summary and skip)
 
 3. **Dispatch ALL agents in parallel** using the Agent tool in a single message:
 
@@ -456,19 +460,14 @@ This step closes the visual gap between implemented UI and design reference befo
    Project root: {project root}
    ```
 
-   For implementation-reviewer (always): pass plan file path, project root, and design doc path (from state or dev-guide; "none" if no design doc)
-   For apple-dev agents (conditional):
-   - `apple-dev:ui-reviewer` (if UI files modified): pass list of modified `*View.swift` files
-   - `apple-dev:design-reviewer` (if new pages/components): pass list of new View files
-   - `apple-dev:feature-reviewer` (if full user journey completed): pass feature scope + key files
+   For review: the single `dev-workflow:review-execution` call described above. It dispatches every applicable reviewer in one batch itself — do not add per-agent dispatches here.
 
    Each agent receives a fresh context — they have no memory of how the code was written.
    This removes confirmation bias from self-review.
 
-4. **When all return:** For each agent, check its report file:
-   - Agent returned a `Report:` path → Read that file
-   - Agent was truncated (no `Report:` in return) → search `.claude/reviews/` for the agent's report file pattern (e.g., `implementation-reviewer-*.md`). If found and `**Status:** in-progress`, the agent was truncated — use the partial results.
-   - No report file found at all → note as "❌ File not produced" in the summary — do not retry review agents (their output is informational, not blocking).
+4. **When they return:** `review-execution` returns one consolidated findings list (must-fix / nice-to-have / coverage notes) — read that, not per-agent report files. If it reports an agent that errored or returned nothing, carry that line into the summary as a coverage gap; do not retry review agents (their output is informational, and a retry doubles the cost of the most expensive step in this phase).
+
+   `feature-spec-writer` still returns on its own and is handled as before.
 
 5. Present a consolidated summary table:
 
@@ -488,9 +487,7 @@ This step closes the visual gap between implemented UI and design reference befo
        - Mode: `full`
        - Recording: `default`
 
-7. **Surface human verification items:** If any review report's compact summary shows 人工验证项 > 0 or 设备验证项 > 0:
-   - Read each report file that has verification items
-   - Extract items from these sections:
+7. **Surface human verification items:** read them from the review return's `### Per-reviewer passthrough` block — not from per-agent report files, which this step no longer hunts for. Extract these sections when present:
      - ui-reviewer: `### Part C: 人工验证清单`
      - design-reviewer: `### Part B: 设备验证清单`
      - feature-reviewer: `### Part C: 设备验证清单`
@@ -503,7 +500,7 @@ This step closes the visual gap between implemented UI and design reference befo
 
    This is informational — do not block with AskUserQuestion. The user can raise issues during Step 7 (Fix Gaps).
 
-8. **Surface test coverage summary:** If implementation-reviewer's compact return includes a `Tests:` line:
+8. **Surface test coverage summary:** If the review return's `### Per-reviewer passthrough` carries an implementation-reviewer `Tests:` line:
    - Extract: required, exist, pass, shell counts
    - If shell > 0 or pass < required: present warning below the human verification items:
      > ⚠️ 测试覆盖不完整：{N} 个计划要求的测试中，{M} 个为空壳或未覆盖核心路径
@@ -536,7 +533,7 @@ If any of the following have issues: execution report (blocked/failed tasks), te
 
 4. Ask the user: "Fix these issues before moving on, or mark as known issues?"
 5. If fixing:
-   a. **Separate design issues from code issues.** If design-reviewer report exists among review_reports:
+   a. **Separate design issues from code issues.** If the review return's `### Per-reviewer passthrough` carries a design-reviewer section:
       - Extract all 🔴 items from design-reviewer Part A
       - Group by category: Hierarchy (A1, A11), Spacing (A3, A12), Consistency (A5, A6), Color (A2)
       - Present design issues separately from other review issues:
@@ -544,7 +541,7 @@ If any of the following have issues: execution report (blocked/failed tasks), te
         > - {category}: {count}
         > 代码/UI 问题（{M} 个）：
         > - {summary}
-   b. Fix all issues (design + code), then re-run test-changes if it had failures, and re-run only the reviews that had failures
+   b. Fix all issues (design + code), then re-run test-changes if it had failures. To re-review, call `review-execution` again with the same inputs — it re-dispatches only what the current diff routes to, so a narrowed fix naturally narrows the re-review; there is no per-agent re-run to assemble here.
    c. **Design re-verification limit**: If design-reviewer still fails after 1 fix cycle,
       report remaining design issues and proceed — do not loop.
       Other reviewers (implementation, UI, feature) follow existing behavior.

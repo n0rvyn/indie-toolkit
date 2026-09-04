@@ -125,7 +125,7 @@ When execution completes (all tasks have a `completed` entry):
 **Standalone mode** (not within run-phase):
 - If failures: fix in main context (opus)
 - Suggest `dev-workflow:test-changes` to run the full test suite
-- Suggest `dev-workflow:implementation-reviewer` for plan-vs-code audit
+- **Invoke** `dev-workflow:review-execution` with `plan_path` (this plan), `scope_files` (the files the plan touched), and `mode: advisory`. Not a suggestion — a suggestion here is why review never ran on this path: 96% of real work goes through the standalone chain, and a line of prose at the end of the output is not a call. `advisory` keeps the decision with the user: findings are presented, nothing is auto-fixed, nothing blocks. The plan-vs-code lens fires because `plan_path` is present.
 - Suggest `dev-workflow:finish-branch` for branch integration
 
 ## State Integration

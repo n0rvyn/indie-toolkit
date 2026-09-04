@@ -111,7 +111,13 @@ Route is yours — tools, order, whether to use agents, when to refactor. These 
 
 **No review-report files.** Findings go in the final report, where they are read. *(Measured: review report files are written ~6× more often than they are read back; the findings that reached a human did so through the returning agent's text, not the file.)*
 
-<!-- OPEN, deliberately unresolved: whether a terminal /afk stop should dispatch fresh-context review agents (correctness / test-coverage / breaking-change). The measured case for it: review findings were real, and the user's own note reads 「两次都是派出去的审查 agent 抓到的，我自己跑测试全绿、一点感觉都没有」. The measured case against: review-execution is a link in the run-phase chain and may carry upstream preconditions that make it unsound standing alone. Do NOT wire this up before that dependency question is answered. -->
+**When the goal is met, review before you sign off.** Invoke `dev-workflow:review-execution` with `scope_files` (what this run touched) and `mode: advisory`, then hand the findings to `dev-workflow:handoff` along with everything else. No `plan_path` — an `/afk` run has no plan, so the plan-vs-code lens is skipped and the rest still apply.
+
+This is the moment a fresh-context review is worth most: nobody watched any of the work happen. The user's own note on the one measured instance reads 「两次都是派出去的审查 agent 抓到的，我自己跑测试全绿、一点感觉都没有」 — findings that a passing test suite did not show.
+
+⛔ **The findings must land in the handoff doc, not only on screen.** The user was away, so an on-screen summary reaches nobody; and by the time they return, Claude Code's prompt cache has expired, which makes resuming the old session *more* expensive than a cold start from the doc. Presenting and not writing is the failure mode here.
+
+(The dependency question that held this back is answered: `review-execution` declares and is in fact standalone — it needs no plan and no dev-guide. It was never chain-bound; `implementation-reviewer` is the chain-bound one, and it is simply skipped here.)
 
 ## Artifacts
 

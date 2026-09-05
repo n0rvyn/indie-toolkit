@@ -110,15 +110,33 @@ jobs:
           # Mere mention of the words "BREAKING CHANGE" inside a subject or
           # prose body — e.g., a docs commit *describing* the syntax — must
           # NOT trigger a major bump.
+          # A `!` / BREAKING CHANGE marker declares a break in the commit's OWN
+          # scope. `refactor(dev-workflow)!: ...` says dev-workflow broke; it says
+          # nothing about readback, even when the same commit also touched a
+          # readback file. Without this distinction a one-line comment edit rides
+          # someone else's breaking commit into a major bump (2026-09-05:
+          # readback went 1.0.1 -> 2.0.0 on a single changed comment line).
+          #
+          # So: a SCOPED declaration counts only for its own scope; an UNSCOPED
+          # one (`refactor!: ...`, `feat: ...`) is global and counts for every
+          # plugin the commit touched. A commit scoped to someone else still
+          # earns this plugin a patch — its files did change.
           detect_bump_type() {
-            local hashes="$1"
+            local hashes="$1" plugin="$2"
             local max_bump="patch"
 
             while IFS= read -r hash; do
               [[ -z "$hash" ]] && continue
-              local subject body
+              local subject body scope
               subject="$(git log -1 --format='%s' "$hash")"
               body="$(git log -1 --format='%B' "$hash")"
+
+              # Scope this commit declares; empty when it declares none.
+              # Comma-separated scopes are matched member-wise.
+              scope="$(printf '%s' "$subject" | sed -nE 's/^[a-z]+\(([^)]*)\)!?:.*/\1/p' | tr -d '[:space:]')"
+              if [[ -n "$scope" ]] && ! printf ',%s,' "$scope" | grep -q ",${plugin},"; then
+                continue
+              fi
 
               if echo "$subject" | grep -qE '^[a-z]+(\(.+\))?!:' \
                  || echo "$body" | grep -qE '^BREAKING[ -]CHANGE: '; then
@@ -181,17 +199,12 @@ jobs:
               continue
             fi
 
-            # Filter commit hashes whose subject mentions (${plugin}); fall back to all hashes if none match
-            plugin_hashes=""
-            while IFS= read -r h; do
-              [[ -z "$h" ]] && continue
-              if git log -1 --format='%s' "$h" | grep -qE "\(${plugin}\)"; then
-                plugin_hashes+="${h}"$'\n'
-              fi
-            done <<< "$commit_hashes"
-            [[ -z "$plugin_hashes" ]] && plugin_hashes="$commit_hashes"
-
-            bump_type="$(detect_bump_type "$plugin_hashes")"
+            # Scope filtering now lives inside detect_bump_type, which needs to see
+            # every commit that touched this plugin (a commit scoped to another
+            # plugin still earns a patch here). The old pre-filter dropped those
+            # commits and then fell back to the WHOLE range when nothing matched —
+            # which is exactly how an unrelated plugin inherited someone else's `!`.
+            bump_type="$(detect_bump_type "$commit_hashes" "$plugin")"
 
             current_version="$(jq -r '.version' "$plugin_file")"
             new_version="$(bump_semver "$current_version" "$bump_type")"

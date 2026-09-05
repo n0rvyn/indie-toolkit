@@ -1,6 +1,6 @@
 ---
 name: afk
-description: "Use when the user is stepping away and wants work driven to a stated end state on its own — '/afk', 'afk', '我出去一趟', '你自己跑', '一直推到 block', '推到头', 'run this while I'm out', 'push it to the end', \"don't ask me, just decide\". Sets up a native `/goal` run: distills the goal, proves the completion check can currently fail, clears the human-required unblocks that kill unattended Apple runs (device lock, wireless transport, on-device trust dialog, sudo), and hands back a ready-to-paste `/goal` line. For work whose END STATE is writable but whose ROUTE is not yet known — route-known work belongs in write-plan → execute-plan, and work whose end state cannot be written needs the user present. Not when: you already have a verified multi-phase dev-guide and only need it driven across phase seams (use /self-pacing — the route is known, so this skill's setup step has nothing to add); the user is at the keyboard iterating turn by turn; the work is divergent design exploration (use brainstorm); a verified plan exists and should be executed task-by-task (use execute-plan)."
+description: "Use when the user is stepping away and wants work driven to a stated end state on its own — '/afk', 'afk', '我出去一趟', '你自己跑', '一直推到 block', '推到头', 'run this while I'm out', 'push it to the end', \"don't ask me, just decide\". Sets up a native `/goal` run: distills the goal, characterises the completion check (proves it can currently fail, and measures its own noise so the threshold is not drawn inside it), clears the human-required unblocks that kill unattended Apple runs (device lock, wireless transport, on-device trust dialog, sudo), and hands back a ready-to-paste `/goal` line. For work whose END STATE is writable but whose ROUTE is not yet known — route-known work belongs in write-plan → execute-plan, and work whose end state cannot be written needs the user present. Not when: you already have a verified multi-phase dev-guide and only need it driven across phase seams (use /self-pacing — the route is known, so this skill's setup step has nothing to add); the user is at the keyboard iterating turn by turn; the work is divergent design exploration (use brainstorm); a verified plan exists and should be executed task-by-task (use execute-plan)."
 disable-model-invocation: true
 ---
 
@@ -13,7 +13,7 @@ disable-model-invocation: true
 What `/goal` does not do is everything that has to happen **before** the user walks away. That is this skill:
 
 1. turn a vague goal into a condition an evaluator can actually judge,
-2. prove the completion check can currently **fail**,
+2. characterise the completion check — prove it can currently **fail**, and measure its own noise before drawing a line on it,
 3. clear the human-required unblocks that kill unattended runs,
 4. hand back the `/goal` line to paste.
 
@@ -33,17 +33,30 @@ Two questions, each answered by **trying to write something**, not by judging:
 
 Measured basis (30 days to 2026-09-04, this account's transcripts): pipeline density tracks **work shape**, not project age — scoped feature/phase work runs through the pipeline even on a 10-month-old project, while open-ended R&D and deep debugging run outside it even on a 3-week-old one. Project maturity is the wrong variable; whether the end state is writable is the right one.
 
-## Step 1 — Three lines, and one refusal
+## Step 1 — Four lines, and one refusal
 
 ```
-[目标] {one sentence — what is true when this is done}
-[判据] {the command or observation that proves it — runnable right now}
-[范围] {the surface this may touch — a directory, a module, a target}
+[目标] {what is true for the user when this is done — named cases, not a total}
+[判据] {the command that proves it — runnable right now, printing per-case results}
+[分辨力] {prior readings for this judge from .claude/afk/logs/, plus this session's two: A / B}
+[范围] {the surface this may touch, and what happens when the fix turns out to be outside it}
 ```
 
-- **Run `[判据]` once, before anything else. It must come back red.** Already green means either the goal is already met or the judge tests nothing — say which and stop. A judge nobody has seen fail is not a judge.
+**`[判据]` runs twice before anything else — not once.** Same command, no edit in between, both readings written down. One reading cannot tell a judge apart from a coin.
+
+| Two readings | What it means |
+|---|---|
+| Both red | Start. The gap between them is the judge's own noise, and every threshold has to clear it |
+| Both green | Stop — either the goal is already met or the judge tests nothing. Say which |
+| One red, one green | ⛔ The judge is a measurement, not a function of the code. Its noise already spans the line you were about to draw. Do not start until the threshold sits outside that gap — and do not read the green one as "already met" or the red one as "ready to go" |
+
+*(On record: `fix >= 24` was legislated off a "waterline" of 21 that was three samples wide. Nine later rounds read 16–23; the threshold it produced had P=0.109% per round and 0.00012% for the two consecutive rounds it demanded. Structurally red, and half a day spent against it. A second read at setup — which was already sitting there, 16 then 18 — would have shown it.)*
+
+- **Two readings estimate noise badly — read the history before running anything.** If `.claude/afk/logs/` already holds readings for this judge, those are free samples and a better estimate than today can produce on its own; this session's two calibrate against them rather than standing in for them. ⛔ **Name the files the prior was drawn from, right there in `[分辨力]`.** One directory holds every arm of every judge, and a filename does not always say which judge wrote it — pooling two different metrics into one spread produces a number that cannot tell them apart, which is the failure this whole step exists to stop. Cannot tell which readings belong to this judge → they are not a prior, and today's two stand alone. *(On record: a judge's own comment put its spread at ±2, estimated off three samples. Nine later rounds spanned 16–22 — three times that — and the threshold that cost half a day was drawn against the small number. Each fresh reading also costs real device time: 210s to 426s per round on the recorded runs, so re-deriving what is already on disk is paid for twice.)*
+- **A threshold carries a mechanism line, or it is not a threshold.** Beside it, name the specific case or defect each point of headroom comes from. "Current level plus twice the noise" is extrapolation wearing arithmetic. Cannot name them → the number is unspendable, and an unspendable number is indistinguishable from a broken judge; say so and pick a target you can spend.
+- **`[目标]` names cases, not a total.** "These four go from wrong to right and hold on a re-run" is judgeable at n=1. "The total clears N" needs the total's variance to be smaller than the effect, which on a stochastic backend it usually is not — and an aggregate that barely moves can be a real win and a real loss cancelling out. *(On record: two targeted cases went 6/9 → 0/3 and 4/9 → 0/3, a reproducible win, while the aggregate the goal was written against read 19.78 → 19.00 and showed nothing.)*
 - **If no runnable judge exists, say so now and stop.** This is the only refusal `/afk` makes, and it has to happen while the user is still here.
-- **`[范围]` is the blast radius**, and it goes into the goal condition as a constraint. Reaching outside it is a stop.
+- **`[范围]` is the blast radius**, and it goes into the goal condition as a constraint. The route is not known yet — that is the whole reason this skill was chosen over `write-plan` — so the real fix landing outside the scope is an ordinary outcome, not an anomaly. Pick the branch now, while the user is here: **stop at the boundary**, or **extend in place and log it in the same turn**. Unstated defaults to stop.
 - **Do not write a plan file, and do not invoke `write-plan`.** Nesting it would just relocate the precondition this skill exists to drop. If mid-run the work turns out to need a plan, stop and say so — a clean terminal.
 
 ## Step 2 — Clear what only a human can clear
@@ -63,7 +76,7 @@ Also name any other human-required unblock this run will touch: a `sudo` passwor
 
 ## Step 3 — Hand over the `/goal` line
 
-Present the three lines, the judge's red result, the pre-flight outcome, and **every open question in one batch** — this is the last moment the user is reliably present.
+Present the four lines, **both** judge readings, the pre-flight outcome, and **every open question in one batch** — this is the last moment the user is reliably present.
 
 Then give the line to paste. Build the condition from the three things `/goal` asks for:
 
@@ -73,12 +86,15 @@ Then give the line to paste. Build the condition from the three things `/goal` a
 
 ```
 粘这行然后走：
-/goal {end state}；证据是 {command} 的原始输出；不改 {范围} 之外的文件
+/goal {end state — 点名的那几条}；证据是 {command} 的原始输出；不改 {范围} 之外的文件；
+或本轮回复里逐字给出 `## 终止：{原因}` 一节并贴出该轮原始输出（同一份内容同时写进 `.claude/afk/{slug}.md`）
 ```
 
-⚠️ **The evaluator reads the transcript; it does not run commands or read files.** So the condition must be something Claude's own output can demonstrate, and the run must actually put that output in the transcript — which is what the done-gate below is for. Also worth adding to the condition when the work could run long: `or stop after N turns`.
+⚠️ **The evaluator reads the transcript; it does not run commands or read files.** So the condition must be something Claude's own output can demonstrate, and the run must actually put that output in the transcript — which is what the done-gate below is for.
 
-Tell the user two things they may not know: `/goal` only runs unattended in **auto mode** (otherwise it still asks before unapproved tool calls), and it survives `--continue` / `--resume`.
+**That second branch above is an artifact — never an intention.** The work can turn out to be unreachable, and the run cannot release the hook itself, so the way out has to be something the evaluator can read verbatim. ⚠️ It reads the **transcript**, not files — so the branch is met by *emitting* that section in the turn; writing it to the run log is the durability half, and on its own it satisfies nothing. ⛔ **Not `或跑满 N 轮就停`.** A turn count is a state of mind and the evaluator judges text. *(On record: a run proved its goal mathematically unreachable, invoked exactly that clause, and was refused — "stopped after proving primary goal mathematically unreachable, not by deliberate procedural choice to halt at the 12-round boundary". Nine refusals followed in 2m13s; the run emitted `/goal clear` twice as plain text, then wrote 「我打不出斜杠命令——那一行是文本，不是执行」, and the user had to return and clear it by hand.)*
+
+Tell the user three things they may not know: `/goal` only runs unattended in **auto mode** (otherwise it still asks before unapproved tool calls); it survives `--continue` / `--resume`; and **only they can `/goal clear` it** — the model cannot type a slash command, so a goal that cannot be met keeps re-entering the run until a human clears it.
 
 ## During the run
 
@@ -96,12 +112,12 @@ Route is yours — tools, order, whether to use agents, when to refactor. These 
 
 | Situation | Why |
 |---|---|
-| The work would touch something outside `[范围]` | Past that line there is no authorization |
+| The work would touch something outside `[范围]`, and Step 1 picked **stop** | Past that line there is no authorization. If Step 1 picked extend-in-place, log the extension in the turn it happens and keep going — that is not a stop, and it goes in the final report |
 | An irreversible or outward-facing action | Deleting data, migrating, publishing, changing a shipped interface |
 | A difference only the user can judge | A default, wording, an interaction shape, a layout, where technical fact picks no winner. ⛔ "Option A is faster so the experience is better" is **not** this — that is a technical fact; rank it yourself |
 | The instruction admits ≥2 readings | Guessing costs a rebuild; asking costs a sentence |
 | The work turns out to need a plan | Say so and stop; route to `write-plan` |
-| `[判据]` red twice — same command, no file change between | One re-run separates a flake; a second red needs diagnosis, which needs the user |
+| `[判据]` red twice **across a change meant to move it** — red before the edit, red after | One re-run separates a flake; a second red on a changed tree needs diagnosis, which needs the user. ⛔ Re-reading an **unchanged** tree is not this — repeat reads with nothing changed are how `[分辨力]` gets measured, and treating them as a stop is what leaves a noisy judge unmeasured |
 
 **If none of these fires, keep going.** "This is a good place to hand off" is not a terminal — it is a self-assessment, unfalsifiable and always available.
 
@@ -124,9 +140,12 @@ This is the moment a fresh-context review is worth most: nobody watched any of t
 | Artifact | Path | When |
 |---|---|---|
 | Run log | `.claude/afk/<slug>.md` | incrementally, every self-made decision |
+| Raw judge readings | `.claude/afk/logs/<date>-<judge>-<arm>.log` | every judge run, one file per round |
 | Handoff doc | `docs/06-plans/HANDOFF-YYYY-MM-DD-HHMM.md` (via `dev-workflow:handoff`) | at every stop |
 
-The code plus these two are the source of truth. Chat is not — on a cold resume there is no chat.
+⛔ **Readings do not go in the session scratchpad.** A run lost `arm-b1.log` / `arm-b3.log` that way and had to buy the rounds again on device. `.claude/` is gitignored — local only, but it survives the session, and these readings are the next run's `[分辨力]` prior, which is the whole reason they have to outlive the session that produced them.
+
+The code plus these three are the source of truth. Chat is not — on a cold resume there is no chat.
 
 ## Relationship to the rest of the flow
 

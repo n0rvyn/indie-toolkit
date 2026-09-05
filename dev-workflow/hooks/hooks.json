@@ -14,51 +14,11 @@
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/backup-before-checkout.py",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
         "if": "Bash(git commit *)",
         "hooks": [
           {
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scan-secrets.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/suggest-agent-dispatch.sh",
-            "timeout": 3
-          }
-        ]
-      },
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/suggest-read-routing.sh",
-            "timeout": 3
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write|Grep|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/nudge-named-source.py",
-            "timeout": 3
           }
         ]
       },
@@ -71,26 +31,6 @@
             "timeout": 3
           }
         ]
-      },
-      {
-        "matcher": "WebFetch",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/design-sync-guard.py",
-            "timeout": 3
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/kb-tripwire.py",
-            "timeout": 3
-          }
-        ]
       }
     ],
     "UserPromptSubmit": [
@@ -100,38 +40,6 @@
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/suggest-skills.sh",
             "timeout": 3
-          },
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/design-sync-guard.py",
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/verify-agent-output.py",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/check-repeated-edit.py",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/lint-claude-md.py",
-            "timeout": 5
           }
         ]
       }

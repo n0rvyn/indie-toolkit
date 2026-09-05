@@ -346,9 +346,9 @@ def build_html(sessions_sorted, rows_empty):
     parts.append('<h3>Top Actions</h3>')
     parts.append('<ol>')
     action_map = {
-        "Skill gap": "Route (no skill) mechanical work through existing skills or sub-agents. The PreToolUse cost-routing hooks (<code>suggest-agent-dispatch.sh</code> / <code>suggest-read-routing.sh</code>) nudge on ≥2 mechanical探查; for genuinely recurring procedures, promote them by hand via <code>/collect-lesson</code> or <code>/crystallize</code>.",
+        "Skill gap": "Route (no skill) mechanical work through existing skills or sub-agents. The PreToolUse cost-routing hooks (<code>cost-hint.sh</code> / <code>suggest-read-routing.sh</code>) nudge on ≥2 mechanical探查; for genuinely recurring procedures, promote them by hand via <code>/collect-lesson</code> or <code>/crystallize</code>.",
         "Cache bloat": "Add <code>/clear</code> between topic switches to reset context window. Review big-file Reads — replace with Grep/Agent dispatch where intent is Verify or Extract.",
-        "Sub-agent miss": "Batch ≥2 consecutive mechanical探查 Bash into a single <code>Agent(subagent_type=general-purpose)</code> dispatch (see CLAUDE.md 成本路由规则). The PreToolUse hook <code>suggest-agent-dispatch.sh</code> nudges via stderr.",
+        "Sub-agent miss": "Batch ≥2 consecutive mechanical探查 Bash into a single <code>Agent(subagent_type=general-purpose)</code> dispatch (see CLAUDE.md 成本路由规则). The PreToolUse hook <code>cost-hint.sh</code> nudges via stderr.",
         "Read pollution": "Stop re-reading the same file. Use Grep when intent is Verify, sub-agent Extract when intent is single-region. Reserve main-line Read for Understand-context (per Read 路由 rule in CLAUDE.md).",
     }
     shown = 0

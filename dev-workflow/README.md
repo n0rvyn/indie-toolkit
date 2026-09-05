@@ -197,18 +197,24 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | Event | Script | Purpose |
 |-------|--------|---------|
 | SessionStart | check-workflow-state.sh | Detects in-progress phase, prompts resume |
-| PreToolUse (Bash, `git checkout`/`restore`) | backup-before-checkout.py | Copies files with uncommitted changes into `.git/undo-checkout/<timestamp>/` before letting the command through. Backs up and allows — it does not block |
-| PreToolUse (Edit\|Write\|MultiEdit) | nudge-named-source.py | Nudges toward reading the source the user named before editing around it |
 | PreToolUse | bug-fix-gate.py | Enforces the fix-bug flow's **现状: / 预期:** statement before a fix edit lands |
-| PreToolUse + UserPromptSubmit | design-sync-guard.py | Denies `WebFetch` on `claude.ai/design` URLs and delivers the DesignSync MCP conventions instead (registered on both events) |
-| UserPromptSubmit | kb-tripwire.py | Fires the knowledge-base lookup when a prompt carries a platform name plus an error code |
-| PostToolUse (Edit\|Write) | lint-claude-md.py | Lints CLAUDE.md edits |
 | PreToolUse (Bash, `git commit *`) | scan-secrets.sh | Intercepts git commit, blocks if secrets detected in staged content |
-| PreToolUse (Bash) | suggest-agent-dispatch.sh | Cost-routing nudge: emits stderr hint when ≥2 mechanical探查 Bash (sqlite3/curl/grep -r/find) accumulate in 30-min window. Always exit 0; never blocks |
-| PreToolUse (Read) | suggest-read-routing.sh | Cost-routing nudge: emits stderr hint when same file Read ≥2× (Read pollution) OR ≥2 large Reads (>300 lines) in window. Always exit 0; never blocks |
 | UserPromptSubmit | suggest-skills.sh | Pattern-matches user prompt and suggests relevant skills |
-| PostToolUse (Agent) | verify-agent-output.py | Detects "wrote/saved/created PATH" claims in sub-agent responses; warns the main session if those files are missing or empty on disk |
-| PostToolUse (Edit\|Write) | check-repeated-edit.py | Warns when same file gets 3+ edit BURSTS in a 10-min window (edits ≤30s apart collapse into one burst, so planned batches stay silent) or the same old_string is retried — nudges toward hypothesis statement before next edit |
+
+> **2026-09-05 迁出。** 九个 hook 移到了 `~/.claude/hooks/`（注册改在 `settings.json`）：
+> `backup-before-checkout.py` / `nudge-named-source.py` / `design-sync-guard.py` / `kb-tripwire.py` /
+> `cost-hint.sh`（原 `suggest-agent-dispatch.sh`） / `suggest-read-routing.sh` / `verify-agent-output.py` /
+> `lint-claude-md.py` / `check-repeated-edit.py`。
+>
+> 判据是**规则源在哪**：这九个执行的都是全局 `~/.claude/CLAUDE.md` 里定义的规则（成本路由 / Read 路由 /
+> 用户原文指定的信息源 / sub-agent 报告是 claim 不是 fact / 开局先查知识库 / Claude Design 访问 /
+> `git checkout` 前备份 / Edit 前陈述预期），或以全局 CLAUDE.md 本身为作用对象（`lint-claude-md` 扫的是
+> 这台机器上**所有** plugin 的 skill 目录），不是本插件任何 skill 的规则。
+>
+> 留下的四个反过来——各自绑着本插件的 skill、内部脚本或状态文件：`bug-fix-gate` ↔ `/fix-bug` 模板、
+> `check-workflow-state` ↔ `dev-workflow-state.json`、`suggest-skills` ↔ `scripts/project_health_scan.py`
+> 相对路径引用、`scan-secrets` ↔ `/commit` 流程（且失效代价是密钥泄漏，不为归属整洁去动它）。
+> 改规则时该同时改哪个 hook，按这条判据找。
 
 ## Workflow State
 

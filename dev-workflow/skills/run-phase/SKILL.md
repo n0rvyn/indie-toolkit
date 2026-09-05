@@ -53,11 +53,11 @@ The `_comment_*` keys are informational and can be omitted in real state files (
 
 ## Agent Dispatch Verification Gate
 
-This skill dispatches sub-agents at multiple steps (Step 4 execute-plan, Step 5 test-changes, Step 6 feature-spec + 4 review agents). The `dev-workflow/hooks/verify-agent-output.py` hook intercepts every Agent return and surfaces "files NOT on disk" when a sub-agent's stdout claims it wrote files that don't actually exist.
+This skill dispatches sub-agents at multiple steps (Step 4 execute-plan, Step 5 test-changes, Step 6 feature-spec + 4 review agents). The `~/.claude/hooks/verify-agent-output.py` hook intercepts every Agent return and surfaces "files NOT on disk" when a sub-agent's stdout claims it wrote files that don't actually exist.
 
 **Treat agent stdout as a claim, not a fact**:
 - After every Agent return in Step 4/5/6, before recording the report path into state, verify the claimed report file actually exists on disk (`ls` or `Read`). If missing: do NOT advance `phase_step`; either re-dispatch the agent with explicit Write tool requirement, or surface the failure to the user.
-- For execute-plan (Step 4): the Workflow returns per-task structured results; spot-check by verifying every path in each result's `files_written` array exists on disk (defense-in-depth — the dev-workflow `verify-agent-output.py` hook also intercepts at agent return time). The execute-plan skill itself owns the segment loop and the checkpoint file, but the run-phase orchestrator should not blindly trust the final summary.
+- For execute-plan (Step 4): the Workflow returns per-task structured results; spot-check by verifying every path in each result's `files_written` array exists on disk (defense-in-depth — the `~/.claude/hooks/verify-agent-output.py` hook also intercepts at agent return time). The execute-plan skill itself owns the segment loop and the checkpoint file, but the run-phase orchestrator should not blindly trust the final summary.
 - For test-changes (Step 5): its report file (`docs/06-plans/execution-report.md`, `.claude/test-reports/*.md`) must exist before the next step.
 - For review (Step 6): **do NOT check for `.claude/reviews/*.md`.** `review-execution` returns one consolidated block and this skill no longer hunts for per-agent report files (Step 6.4). The success signal is that the return contains a `### Coverage notes` section; a return without it is the failure to act on. Checking for files here would block on artifacts the contract does not promise the dispatcher ever sees.
 

@@ -12,7 +12,7 @@ INPUT=$(cat)
 TOOL=$(echo "$INPUT" | jq -r '.tool_name // empty')
 
 # CC's PostToolUse for Task tool uses matcher "Agent" (verified against
-# dev-workflow/hooks/hooks.json and verify-agent-output.py in this repo).
+# dev-workflow/hooks/hooks.json in this repo, and ~/.claude/hooks/verify-agent-output.py).
 case "$TOOL" in
   Agent|Task) ;;
   *) echo "{}"; exit 0 ;;

@@ -14,10 +14,10 @@
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "if": "Bash(git commit *)",
         "hooks": [
           {
             "type": "command",
+            "if": "Bash(git *)",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scan-secrets.sh"
           }
         ]

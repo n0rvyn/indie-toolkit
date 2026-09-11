@@ -198,7 +198,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 |-------|--------|---------|
 | SessionStart | check-workflow-state.sh | Detects in-progress phase, prompts resume |
 | PreToolUse | bug-fix-gate.py | Enforces the fix-bug flow's **现状: / 预期:** statement before a fix edit lands |
-| PreToolUse (Bash, `git commit *`) | scan-secrets.sh | Intercepts git commit, blocks if secrets detected in staged content |
+| PreToolUse (Bash, `git *`) | scan-secrets.sh | Intercepts git commit (incl. `git -C <path> commit`, `--git-dir`, `cd <dir> && git commit`), blocks if secrets detected in the target repo's staged content |
 | UserPromptSubmit | suggest-skills.sh | Pattern-matches user prompt and suggests relevant skills |
 
 > **2026-09-05 迁出。** 九个 hook 移到了 `~/.claude/hooks/`（注册改在 `settings.json`）：

@@ -4,23 +4,10 @@
 
 input=$(cat)
 
-# Extract command from tool input JSON
-command=$(echo "$input" | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    print(data.get('tool_input', {}).get('command', ''))
-except:
-    print('')
-" 2>/dev/null)
-
-# Only intercept git commit commands
-if ! echo "$command" | grep -q 'git commit'; then
-  exit 0
-fi
-
-# Scan staged content for secrets
-staged=$(git diff --cached 2>/dev/null)
+# Staged diff of every repository the command commits into — resolves
+# `git -C <path> commit`, --git-dir/--work-tree, leading GIT_DIR=..., and
+# `cd <dir> && git commit`. Empty = not a commit, or nothing staged.
+staged=$(printf '%s' "$input" | python3 "$(dirname "$0")/scan-secrets-targets.py")
 if [ -z "$staged" ]; then
   exit 0
 fi

@@ -191,6 +191,17 @@ iOS 26+ 把它渲染成玻璃圆底 + 光秃秃的 `‹`。同一个动作两种
 
 自检一句：**是产品要求它只能竖着用，还是我只是没有横版设计图？**
 
+⚠️ **本节的触发面按「写哪个文件」算，不按「写哪种语言」算（2026-09-08 补）。** 投递本节的
+`swift-rule-detectors.py` 第一道闸是 `if not path.endswith(".swift"): return`，而锁方向几乎从不发生在
+`.swift` 里 —— 它发生在 `project.yml` / `Info.plist` / `project.pbxproj` / `*.entitlements`。写这些文件里的
+`UISupportedInterfaceOrientations*` / `UIRequiresFullScreen` / `TARGETED_DEVICE_FAMILY` 时本节照样成立，
+**且不会有 hook 提醒**，只能靠这一条自己记住。
+
+⚠️ **「工具默认」不免责**：2026-09-08 实测 —— XcodeGen 2.45.3 在不声明时**一个 orientation 键都不写**
+（最小工程产出 9 个键）；Xcode 新建工程模板则对 iPad **默认开四方向**。⇒ 真源里的每一条方向限制都是人写的。
+实证（Poise）：kickoff 生成的 `project.yml` 一边 `TARGETED_DEVICE_FAMILY: "1,2"` 一边锁 portrait-only，
+理由只是「交接包没有 iPad 图纸」，提交前才被用户发现。
+
 <!-- 2026-08-16 回写：本判据此前只存在于 ~/.claude/CLAUDE.md 的探测器行里，而那一行指向本文件的
      「设计稿没有横屏 ≠ 锁方向（强制）」节——该节当时并不存在。CLAUDE.md 自己写着「plugin 侧为
      iOS 规则权威源，本节新增判据须同步回写」，这次补上。 -->

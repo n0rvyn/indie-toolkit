@@ -53,6 +53,20 @@ From the current task description, identify which keyword sets are relevant:
 | Seeing deprecation warnings in Xcode | swift-api-changes-ios18 (migration) |
 | Using TabView | swift-api-changes-ios18 → TabView Architecture |
 | Adding LLM/AI features | swift-api-changes-ios26 → Foundation Models |
+| Working with iOS 27 APIs (PKStrokeRecognizer, MetricManager, StateReporting, ContentBuilder) | swift-api-changes-ios27 |
+| App fails to launch on iOS 27 / scene life cycle migration | swift-api-changes-ios27 → UIKit |
+| Reading any device sensor (光照/气压/磁场/运动/深度/UWB/NFC), or asking "能不能拿到某个物理量" | device-sensor-apis |
+| Which Info.plist usage key or entitlement a capability needs | device-sensor-apis → SensorPermissionKeys / SensorGateLadder |
+| Enumerating what an API surface offers from local SDK headers | device-sensor-apis → SDKVersionBoundsWhatYouSee |
+| Deciding whether an API is available on a platform (any `API_AVAILABLE` / `API_UNAVAILABLE` question) | device-sensor-apis → AvailabilityByCompiler |
+| Anything on Apple Watch / watchOS (sensor, HealthKit, complication, workout) | watchos-sensor-apis |
+| "这个功能能在表上后台跑多久", WKExtendedRuntimeSession, HKWorkoutSession, 连续采样 | watchos-sensor-apis → WatchSessionBudget |
+| High-rate motion on Watch, CMBatchedSensorManager, 800 Hz | watchos-sensor-apis → WatchBatchedSensor |
+| Water depth / dive / CMWaterSubmersionManager / Shallow Depth and Pressure | watchos-sensor-apis → WatchSubmersion |
+| Digital Crown, double tap, WKHapticType, wrist location, always-on | watchos-sensor-apis → WatchInputOutput |
+| "表上有没有 X"（camera, Vision, Speech, NFC, BLE peripheral, BGTaskScheduler） | watchos-sensor-apis → WatchAbsentFrameworks |
+| Which Apple Watch model has which sensor | watchos-sensor-apis → WatchModelMatrix |
+| Working with watchOS 27 APIs (Vision on Watch, FoundationModels on Watch, HKWorkoutZoneGroup) | watchos-sensor-apis → WatchOS27Delta |
 | macOS window, WindowGroup, MenuBarExtra, Settings scene | macOS Window Management |
 | macOS menu, commands, CommandMenu, toolbar customization | macOS Menu & Toolbar |
 | Keyboard shortcut on macOS, keyboardShortcut | macOS Keyboard Shortcuts |
@@ -69,8 +83,15 @@ The target platform is determined by which rows matched in Step 2:
 
 - If Step 2 matched any **macOS keyword row** (rows 50-56: WindowGroup, MenuBarExtra, CommandMenu, keyboardShortcut, NSViewRepresentable, notarization, Sparkle) → the task involves macOS. When grepping `apple-swift-rules.md`, also include sections with `platform: macOS`.
 - If Step 2 matched any **iOS keyword row** (rows 45-48: iOS 18/26 APIs, TabView, glassEffect) → the task involves iOS. When grepping reference files, also include sections with `platform: iOS`.
+- If Step 2 matched any **watchOS keyword row** (any row routing to `watchos-sensor-apis`, or the task mentions Apple Watch / watchOS / complication / workout session / Digital Crown) → the task involves watchOS. When grepping reference files, also include sections with `platform: watchOS`.
 - If Step 2 matched **only shared rows** (rows 33-44: build cycle, concurrency, plan rules, bug fix) → load only sections without a `platform:` tag.
-- Both platforms can be active simultaneously (e.g., a multiplatform project).
+- Platforms can be active simultaneously (e.g., a multiplatform project, or a Watch app with an iPhone companion — that one is iOS + watchOS).
+
+⚠️ **watchOS is not a subset of iOS.** Never answer a watchOS question from `platform: iOS` sections: the same
+framework has different availability, different permission keys, and different background rules on the two
+platforms. `device-sensor-apis.md` is iOS-scoped by its own first line; `watchos-sensor-apis.md` is the
+watchOS counterpart. The one section that applies to **both** is `AvailabilityByCompiler` (untagged) —
+platform availability is decided by `swiftc -typecheck`, never by reading `API_AVAILABLE` annotations.
 
 ### Step 3: Read only the matched sections
 

@@ -10,7 +10,7 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 | `apple-dev` | development | iOS/macOS/iPadOS development: review agents, design parity, visual audit, runtime feature verification, CI/CD, App Store review prep |
 | `mactools` | productivity | macOS automation for Notes, Calendar, Mail, Safari, Spotlight, Reminders, OCR, Photos, Contacts, OmniFocus |
 | `product-lens` | product | Product evaluation: demand validation, market analysis, moat assessment, feature assessment, comparison matrix |
-| `skill-master` | development | Unified plugin lifecycle: brainstorm, create, eval, review, iterate, package Claude Code plugins. Entry: `/plugin-master` |
+| `skill-master` | development | Unified plugin lifecycle: create, eval, review, iterate, package Claude Code plugins. Entry: `/plugin-master` |
 | `shared-utils` | development | Reusable utility scripts and skills shared across plugins: Notion API, MongoDB queries, cross-plugin primitives |
 | [readback](readback/README.md) | development | Before-action read-back protocol: non-blocking one-line "here's the reading I picked" on ambiguous requests, full plain-language echo on `/readback` and `/fix-bug` (4 hooks + 1 agent + 1 skill) |
 | [miniprogram](miniprogram/README.md) | development | WeChat mini program QA: headless UI verification against running devtools (screenshot + `page.data()` + geometry), and pre-submission config/compliance checks |

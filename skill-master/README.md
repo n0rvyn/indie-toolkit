@@ -1,6 +1,6 @@
 # skill-master
 
-Unified plugin lifecycle management: brainstorm, create, eval, review, iterate, and package Claude Code plugins and components.
+Unified plugin lifecycle management: create, eval, review, iterate, and package Claude Code plugins and components.
 
 ## Install
 
@@ -20,9 +20,9 @@ Routes to one of five workflows based on intent:
 
 | Route | When | What happens |
 |-------|------|-------------|
-| **create** | "build a plugin", "create a skill" | brainstorm → design → scaffold (plugin-dev) → eval (skill-creator) → review → iterate |
+| **create** | "build a plugin", "create a skill" | intent (intent-distiller) → scaffold (plugin-dev) → eval cases (claude plugin eval) → review → iterate |
 | **review** | "review plugin", "audit my plugin" | 9-dimension audit + cross-plugin trigger conflict detection |
-| **iterate** | "improve trigger", "fix this skill" | fix → re-eval → compare baseline → verify |
+| **iterate** | "improve trigger", "fix this skill" | fix → re-eval (claude plugin eval, scoped by what changed) → compare → verify |
 | **package** | "package plugin", "inject skill" | marketplace readiness check or inject into target project |
 | **insights** | "run insights", "auto-tune", "propose improvements from usage" | reads session-reflect SQLite → proposer + validator + judge → draft PR with skill description / Examples improvements |
 
@@ -32,7 +32,7 @@ Routes to one of five workflows based on intent:
 /plugin-master (intent detection)
    │
    ├── create ──→ intent-distiller → plugin-dev:create-plugin / skill-development
-   │                                → skill-creator:skill-creator (eval loop)
+   │                                → evals/<skill>/ cases + load check (claude plugin eval)
    │                                → auto-review gate
    │
    ├── review ──→ plugin-dev:plugin-validator + skill-reviewer (Strategy A)
@@ -40,7 +40,7 @@ Routes to one of five workflows based on intent:
    │              skill-master:trigger-arbiter (cross-plugin conflicts)
    │
    ├── iterate ─→ skill-creator scripts (run_loop.py, quick_validate.py)
-   │              re-eval + baseline comparison
+   │              claude plugin eval re-run + aggregate-result.json comparison
    │
    ├── package ─→ plugin-dev:plugin-validator (structural)
    │              skill-creator scripts (quick_validate.py, package_skill.py)
@@ -65,7 +65,7 @@ skill-master orchestrates; it does not rebuild existing capabilities:
 | Hook writing guidance | `plugin-dev:hook-development` | Skill invocation |
 | Structural validation | `plugin-dev:plugin-validator` | Agent dispatch |
 | Description quality | `plugin-dev:skill-reviewer` | Agent dispatch |
-| Eval loop | `skill-creator:skill-creator` | Skill invocation |
+| Eval runs | `claude plugin eval` (Claude Code ≥ 2.1.269) | Bash |
 | Description optimization | `skill-creator` run_loop.py | Bash |
 | Skill packaging | `skill-creator` package_skill.py | Bash |
 
@@ -86,6 +86,11 @@ skill-master orchestrates; it does not rebuild existing capabilities:
 | structural-validation.md | plugin-dev unavailable | D1 Structural Validation + D2 Reference Integrity |
 | trigger-baseline.md | plugin-dev unavailable | D5.1-5.2 description overlap + D7.3 description quality + D9.1 trigger quality |
 | skills/plugin-master/insights.md | "insights" intent matched | 8-step insights route process |
+| skills/plugin-master/eval-rules.md | create / iterate / package eval steps; plugin-reviewer D9.2 | Eval layout (`evals/<skill>/`), closed `Not observable:` reasons, load check, run depth |
+
+## Evals
+
+skill-master's own cases live in `evals/plugin-master/` (trigger, negative-trigger, the create route's intent-distiller dispatch, and the slash-invoked insights route's first read). Load check, from the repo root: `claude plugin eval ./skill-master --tag plugin-master --max-cost-usd 0 --trust-plugin --no-publish` (a bare `skill-master` resolves to the installed copy, not the repo).
 
 ## Skills
 
@@ -113,7 +118,8 @@ The review route covers 9 dimensions, with ownership split based on plugin-dev a
 ## Optional Dependencies
 
 - `plugin-dev` — for component creation guidance and structural validation
-- `skill-creator` — for eval loop, description optimization, and packaging scripts
+- `skill-creator` — for description optimization and packaging scripts
+- `claude plugin eval` — built into Claude Code ≥ 2.1.269; runs eval cases (see `skills/plugin-master/eval-rules.md`)
 
 Without these, skill-master falls back to manual workflows and self-contained review (Strategy B).
 

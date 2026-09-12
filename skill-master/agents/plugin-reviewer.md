@@ -42,7 +42,7 @@ Before starting, confirm you have:
 1. **Files to review** — list of skill and agent file paths
 2. **Cross-reference files** — other skills/agents in the same plugin(s) for conflict detection
 3. **Plugin manifest path** — `.claude-plugin/plugin.json`
-4. **Eval files** (optional) — comma-separated paths to eval.md files for trigger plausibility checking
+4. **Eval sources** (optional) — per skill, the `evals/<skill>/` directory and/or the `skills/<skill>/eval.md` path (layout defined in `eval-rules.md` — resolve it as `{Plugin agents dir}/../skills/plugin-master/eval-rules.md`, else Glob `**/skill-master/skills/plugin-master/eval-rules.md`), for trigger plausibility and eval-layout checking
 5. **Supporting files to load** (optional) — list of supporting file names to Read before starting (e.g., `structural-validation.md, trigger-baseline.md`). If "none" or absent, skip the dimensions covered by those files.
 6. **Plugin agents dir** (optional) — absolute path to this plugin's `agents/` directory, for resolving supporting file paths. If absent, use Glob to locate the files.
 
@@ -338,7 +338,7 @@ Check that plugin metadata files are complete, consistent, and in sync with actu
 
 ### Dimension 9: Trigger Quality Review
 
-Check that skill descriptions have clear trigger scenarios, eval.md triggers (if present) are plausible, and cross-skill trigger conflicts are detected. This dimension produces a **Trigger Health Score** per skill.
+Check that skill descriptions have clear trigger scenarios, eval-source triggers (if present) are plausible, and cross-skill trigger conflicts are detected. This dimension produces a **Trigger Health Score** per skill.
 
 **Skip condition:** This dimension applies to skills only. Skip agents.
 
@@ -347,17 +347,23 @@ Check that skill descriptions have clear trigger scenarios, eval.md triggers (if
 Execute D9.1 checks from `{Plugin agents dir}/trigger-baseline.md`.
 Otherwise: skip (handled by external `plugin-dev:skill-reviewer` agent).
 
-**9.2 Eval.md consumption (if eval files provided):**
+**9.2 Eval source consumption (if eval sources provided):**
 
-For each skill that has a corresponding eval.md file:
+For each skill with eval sources, collect its trigger prompts from both places:
 
-1. Read the eval.md file
-2. Extract trigger tests (lines in the `## Trigger Tests` section starting with `- `)
-3. For each trigger test:
-   - Check: does the trigger test keywords/intent align with the skill's description?
-   - Flag: trigger test that seems unrelated to description → Logic (include specific test and why it mismatches)
-4. Extract negative trigger tests (lines under `## Negative Trigger Tests`)
-5. Check: negative trigger tests don't overlap with other skills' positive trigger tests → Logic (potential routing ambiguity)
+1. **Cases** — for each case directory under `evals/<skill>/` that has a grader with `type: tool_used` and `tool: Skill`: the `prompt.md` body (below the frontmatter) is a trigger prompt. The grader's `max: 0` makes it a negative trigger; otherwise it is positive.
+2. **`eval.md`** — lines starting with `- "` under `## Trigger Tests` (positive) and `## Negative Trigger Tests` (negative). A pointer-form `eval.md` (only a `Cases:` line) holds none; that is not a gap.
+3. For each positive prompt:
+   - Check: do its keywords/intent align with the skill's description?
+   - Flag: a prompt unrelated to the description → Logic (include the prompt and why it mismatches)
+4. Check: negative prompts don't overlap with other skills' positive prompts → Logic (potential routing ambiguity)
+5. Layout (per `eval-rules.md`) — flag each as Minor:
+   - A skill missing either side (`skills/<skill>/eval.md` or `evals/<skill>/`)
+   - A `NOTE.md` or `Not observable:` line whose reason is outside `cross-plugin` / `interactive` / `workflow-tool` / `host-env`
+   - A `Cases:` pointer naming a directory that does not exist
+   - The same assertion present both as a case grader and in `eval.md`
+   - A case whose prompt starts with `/` graded by `tool_used` on `Skill` — a slash prompt expands the skill without a `Skill` call, so the grader always fails
+   - A negative `Skill` grader (`max: 0`) without `arm: both` — excluded from the score in a two-arm run, so it checks nothing
 
 **9.3 Cross-skill trigger conflict detection:**
 
@@ -379,9 +385,9 @@ For each skill, compute an overall verdict:
 
 | Verdict | Criteria |
 |---------|----------|
-| pass | Description has clear trigger AND no conflicts detected AND eval.md (if exists) has plausible triggers |
-| warn | Description trigger is slightly vague OR one minor conflict detected OR eval.md missing for high-risk skill |
-| fail | Description lacks trigger scenario OR multiple conflicts detected OR eval.md triggers clearly mismatch description |
+| pass | Description has clear trigger AND no conflicts detected AND eval-source triggers (if any) are plausible |
+| warn | Description trigger is slightly vague OR one minor conflict detected OR no eval source for a high-risk skill |
+| fail | Description lacks trigger scenario OR multiple conflicts detected OR eval-source triggers clearly mismatch description |
 
 Output the Trigger Health Score as a markdown table (see Output Format section).
 
@@ -425,7 +431,7 @@ Output the Trigger Health Score as a markdown table (see Output Format section).
 
 | Skill | Description Quality | Eval Coverage | Conflict Check | Verdict |
 |-------|--------------------|---------------|----------------|---------|
-| {name} | {pass/warn/fail} | {N/A or pass/fail} | {pass/warn/fail} | {overall} |
+| {name} | {pass/warn/fail} | {cases(<case dirs>) / spec-only(<reason>) / one-side-missing / missing} | {pass/warn/fail} | {overall} |
 
 ---
 

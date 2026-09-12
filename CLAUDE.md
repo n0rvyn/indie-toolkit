@@ -51,9 +51,9 @@ Every skill and agent SKILL.md / agent.md in this marketplace must declare a del
 
 **1. 断言旧行为的 eval，会给新 bug 放行。**
 
-改 SKILL.md 之前，先 grep 一遍 `*/eval.md` 里有没有断言旧行为的条目。实证 2026-09-04：`execute-plan/SKILL.md:128` 从 `Suggest implementation-reviewer` 改成真调用，而 `execute-plan/eval.md:17` 断言的正是 `Output suggests implementation-reviewer` —— **那条 eval 会绿着放行刚被修掉的缺陷**。测试写的是旧行为时，它从守卫变成帮凶。
+改 SKILL.md 之前，先 grep 一遍 `*/eval.md` 和 `*/evals/**`（`claude plugin eval` 用例的 grader）里有没有断言旧行为的条目。实证 2026-09-04：`execute-plan/SKILL.md:128` 从 `Suggest implementation-reviewer` 改成真调用，而 `execute-plan/eval.md:17` 断言的正是 `Output suggests implementation-reviewer` —— **那条 eval 会绿着放行刚被修掉的缺陷**。测试写的是旧行为时，它从守卫变成帮凶。
 
-**自检**：我改的这个行为，有没有哪个 eval.md 正在断言它的反面？
+**自检**：我改的这个行为，有没有哪个 eval.md 或 `evals/` 用例正在断言它的反面？
 
 **2. 「改完了」是 grep 出来的，不是想出来的。**
 
@@ -68,6 +68,12 @@ Every skill and agent SKILL.md / agent.md in this marketplace must declare a del
 `python3 .claude/skills/call-graph/scripts/check_section_contract.py`（同为本地工具）核对三端段名一致；`--selftest` 先证明它能红。
 
 ⚠️ **这条链在本仓测不了**：`HAS_VIEW_MODIFIED` / `HAS_NEW_VIEW` 匹配 `*View.swift`，本仓 9 个 `.swift` 里 0 个符合、0 个 Xcode 工程 —— 三个 Apple reviewer 在这里从不会被派出。真正的端到端只能在 Apple 项目里改一个 View 时发生。**所以在这儿，段名一致是唯一可得的验证形式，不要把它当成「跑通了」。**
+
+## Plugin Evals（`claude plugin eval`）
+
+规则正本：`skill-master/skills/plugin-master/eval-rules.md`（随插件发布，下游仓库同样生效）。调研与实测记录：`docs/99-references/claude-plugin-eval.md`。
+
+要点：每个插件一个 `evals/`，按 `evals/<skill>/<case>/` 分组；每个 skill 两边都存在（`skills/<skill>/eval.md` 与 `evals/<skill>/`），没内容的一边留一句说明，原因只认 `cross-plugin` / `interactive` / `workflow-tool` / `host-env` 四类；同一条断言只放一处；`evals/` 随插件发布，`*/evals/results/` 已 gitignore；只在本地按需跑，不进 CI；写完用例先跑 `--max-cost-usd 0` 加载校验（$0）。新建插件直接按此布局；已有 skill 在下次修改时迁移。
 
 ## 退役记录（`docs/12-retired/`）
 

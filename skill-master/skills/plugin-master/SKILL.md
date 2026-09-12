@@ -5,22 +5,22 @@ description: |
   'review plugin', 'audit plugin', 'iterate skill quality', 'package plugin for marketplace',
   or wants to orchestrate the full lifecycle (create / review / iterate / package / insights) of Claude Code plugins.
   (also: insights based on real usage to propose plugin improvements)
-  Not when: user wants to create a single atomic component — use `/plugin-dev:skill-development` / `agent-development` / `hook-development` / `command-development` / `plugin-structure` directly. plugin-master is the orchestrator; plugin-dev provides the atomic builders.
+  Not when: user wants only atomic builder guidance for a component (skill / agent / hook / command structure) without eval cases or a review gate — use `/plugin-dev:skill-development` / `agent-development` / `hook-development` / `command-development` / `plugin-structure` directly. plugin-master orchestrates creation with eval cases and a review gate; plugin-dev provides the atomic builders.
   Not when: user wants an uncommitted DIFF reviewed for correctness / test coverage / breaking changes — use `/review-execution`. This skill audits plugin artifacts (trigger quality, dispatch wiring, eval coverage); that one reviews code changes. In a plugin monorepo both fire on the same words, so route on the question being asked, not on the file type.
-
-  Single entry /plugin-master with 5 routes:
-  - create: brainstorm → design → scaffold (plugin-dev) → eval baseline (skill-creator) → review → iterate
-  - review: 9-dimension audit from AI executor perspective + cross-plugin trigger conflict detection
-  - iterate: fix → re-eval (skill-creator) → compare baseline → verify
-  - package: full plugin or single component into target project
-  - insights: analyze real usage data → propose evidence-based skill improvements → open draft PR
 ---
 
 # Plugin Lifecycle Management
 
 统一入口，编排 Claude Code 插件和组件的完整生命周期：创建、评估、审查、迭代、打包。
 
-委托 `plugin-dev` 处理组件创建，`skill-creator` 处理 eval 循环，自建 9 维审查框架和跨插件冲突检测。
+委托 `plugin-dev` 处理组件创建；eval 用例由 `claude plugin eval` 运行（布局与规则见 `eval-rules.md`），`skill-creator` 负责 description 优化；自建 9 维审查框架和跨插件冲突检测。
+
+单一入口 `/plugin-master`，5 条路由：
+- create: intent (intent-distiller) → scaffold (plugin-dev) → eval cases (claude plugin eval) → review → iterate
+- review: 9-dimension audit from AI executor perspective + cross-plugin trigger conflict detection
+- iterate: fix → re-eval (claude plugin eval, scoped by what changed; skill-creator for description tuning) → compare → verify
+- package: full plugin or single component into target project
+- insights: analyze real usage data → propose evidence-based skill improvements → open draft PR
 
 ## Process
 
@@ -77,6 +77,7 @@ Before delegating, detect which optional dependencies are installed:
 
 1. **plugin-dev:** Glob `~/.claude/plugins/**/plugin-dev/**/.claude-plugin/plugin.json`. Found → `plugin_dev_available = true`.
 2. **skill-creator:** Glob `~/.claude/plugins/**/skill-creator/**/skills/skill-creator/SKILL.md`. Found → `skill_creator_available = true`. Also store its scripts directory path as `$SC_SCRIPTS`.
+3. **claude plugin eval:** run `claude plugin eval --help`. Exit 0 → `plugin_eval_available = true`. Otherwise record `claude --version` and report "claude plugin eval unavailable (needs Claude Code ≥ 2.1.269)" — cases are still written in 2a.4, just not run. Never skip the report.
 
 #### 2a.4: Delegate Creation
 
@@ -86,11 +87,16 @@ Route by `component_type`:
 - If `plugin_dev_available`: invoke `Skill("plugin-dev:create-plugin")` (8-phase guided workflow)
 - If not: manually scaffold the plugin structure (create `.claude-plugin/plugin.json`, `skills/`, `agents/` directories, README.md) and write components directly
 
-After creation completes → continue to 2a.5.
+After creation completes, apply step 2 of **Single skill** below (eval rules) to every skill the plugin ships, and make sure the repo's `.gitignore` covers `evals/results/`. Then continue to 2a.5.
 
 **Single skill:**
 1. If `plugin_dev_available`: invoke `Skill("plugin-dev:skill-development")` for structure guidance and SKILL.md drafting. If not: write SKILL.md directly following plugin-dev conventions (name/description frontmatter, Process section, Completion Criteria)
-2. If `skill_creator_available`: invoke `Skill("skill-creator:skill-creator")` for eval loop (eval creation, parallel runs, grading, viewer, iteration). If not: write eval.md manually with trigger tests and negative tests
+2. Eval — Read `${CLAUDE_PLUGIN_ROOT}/skills/plugin-master/eval-rules.md` first, then:
+   - Sort each trigger and output behavior into observable (→ a case under `<plugin>/evals/<skill>/`) or not observable (→ `eval.md` spec, with a reason from the closed list). Write `skills/<skill>/eval.md` in pointer, mixed, or spec form, and `evals/<skill>/NOTE.md` if no case was possible.
+   - If `plugin_eval_available`: run the load check (`--max-cost-usd 0`) and fix every load error before continuing. Otherwise report "load check not run (claude plugin eval unavailable)".
+   - Make sure the repo's `.gitignore` covers `evals/results/`.
+   - If `plugin_eval_available`: state the case count and flags of the "New skill" depth tier, then AskUserQuestion "Run the new skill's eval now?" / "Skip the run" — run only on yes.
+   - If `skill_creator_available` and the user wants description tuning: invoke `Skill("skill-creator:skill-creator")`, feeding it the eval set built per eval-rules.md §Trigger prompts for skill-creator.
 3. After complete → continue to 2a.5
 
 **Agent:**
@@ -133,7 +139,7 @@ Before auto-review, classify the new artifact's dominant work and recommend `mod
 
 #### 2a.6: Auto-Review Gate
 
-Collect the file paths of newly created artifacts (from the delegated skill's output, or Glob the target directory for recently created/modified .md files).
+Collect the file paths of newly created artifacts (from the delegated skill's output, or Glob the target directory for recently created/modified .md files, excluding `evals/**` — those are cases, not artifacts).
 
 Execute the review route (Step 2b) on these artifacts, using Scope A (specific files).
 
@@ -173,7 +179,7 @@ From user message, determine what to review:
 **Scope C — Recent changes:** User says "review my changes" or no explicit target.
 - `git diff --name-only HEAD` for uncommitted changes
 - If clean: `git log --name-only -1 --pretty=format:""` for last commit
-- Filter to skill/agent files only
+- Filter to skill/agent files. Map a changed `evals/<skill>/**` or `skills/<skill>/eval.md` to that skill's `SKILL.md`, so an eval-only change still has a review target
 
 **Scope D — All:** User says "review all" or "audit everything".
 - Collect all installed plugin skills and agents
@@ -187,7 +193,7 @@ For each plugin in scope, collect:
 2. All skill files — `skills/*/SKILL.md`
 3. All agent files — `agents/*.md`
 4. Marketplace entry — check `marketplace.json`
-5. Eval files — `skills/{name}/eval.md` for each skill
+5. Eval sources — for each skill, `evals/{name}/` (cases or `NOTE.md`) and `skills/{name}/eval.md`, per `eval-rules.md`
 
 #### 2b.3: Detect plugin-dev Availability
 
@@ -227,13 +233,13 @@ Check whether `plugin-dev` is installed:
    Also read these for cross-reference checking:
    - Other skills in same plugin(s): {paths}
    - Other agents in same plugin(s): {paths}
-   - Eval files: {comma-separated paths or "none"}
+   - Eval sources: {per skill: `evals/<skill>/` directory and `skills/<skill>/eval.md` path, or "none"}
 
    Supporting files to load: none
    Plugin agents dir: {skill-master agents directory path}
    (D1/D2 structural checks and baseline trigger/description checks are handled by plugin-dev agents.)
 
-   Focus on: workflow logic, execution feasibility, edge cases, dispatch loops, spec compliance, metadata & docs, eval.md consumption, deep trigger conflict detection, and Trigger Health Score.
+   Focus on: workflow logic, execution feasibility, edge cases, dispatch loops, spec compliance, metadata & docs, eval source consumption (cases + eval.md, per eval-rules.md), deep trigger conflict detection, and Trigger Health Score.
    ```
 
 **Strategy B — plugin-dev not available (1 dispatch):**
@@ -251,7 +257,7 @@ Files to review:
 Also read these for cross-reference checking:
 - Other skills in same plugin(s): {paths}
 - Other agents in same plugin(s): {paths}
-- Eval files: {comma-separated paths or "none"}
+- Eval sources: {per skill: `evals/<skill>/` directory and `skills/<skill>/eval.md` path, or "none"}
 
 Supporting files to load: structural-validation.md, trigger-baseline.md
   (Resolve via `${CLAUDE_PLUGIN_ROOT}/agents/` if executing inside skill-master plugin context, otherwise Glob `**/skill-master/agents/{structural-validation,trigger-baseline}.md`. These are non-agent reference fragments stored under `agents/` for historical reasons; load with Read, not Task dispatch.)
@@ -311,7 +317,7 @@ Determine the target artifact:
 |------------|-----------|--------|
 | Trigger quality | "trigger too broad/narrow", description quality warnings | Description optimization via skill-creator |
 | Logic bug | Bug-severity review findings in workflow steps | Edit SKILL.md, re-validate |
-| Missing eval | No eval.md, or eval coverage gaps | Draft eval cases, run eval loop |
+| Missing eval | A side missing (`evals/<skill>/` or `eval.md`), a `NOTE.md` / `Not observable:` reason outside the closed list, or coverage gaps | Write cases / spec per `eval-rules.md`, load check, run |
 | Agent issue | Agent frontmatter errors, tool mismatch | Edit agent, re-validate |
 
 #### 2c.3: Check Dependency Availability
@@ -319,6 +325,7 @@ Determine the target artifact:
 If not already detected (e.g., when iterate is called standalone, not from create route):
 
 1. **skill-creator:** Glob `~/.claude/plugins/**/skill-creator/**/skills/skill-creator/SKILL.md`. Found → `skill_creator_available = true`. Also locate its scripts directory: Glob `~/.claude/plugins/**/skill-creator/**/skills/skill-creator/scripts/` → store as `$SC_SCRIPTS`.
+2. **claude plugin eval:** same probe as 2a.3 item 3 → `plugin_eval_available`.
 
 #### 2c.4: Execute Fix
 
@@ -330,24 +337,25 @@ If `skill_creator_available` is false: apply manual description changes based on
 
 Otherwise (skill_creator_available = true), automated optimization:
 
-1. Locate the skill's existing eval.md if any (skip step 2 if absent — write evals.json from review findings instead).
-2. If the skill has `eval.md`, convert trigger/negative trigger tests to `skill-creator` eval-set format:
+1. Build the eval set per `eval-rules.md` §Trigger prompts for skill-creator: from the skill's cases under `evals/<skill>/` first; from the `eval.md` Trigger sections only for a skill whose triggering stays on the spec side. If neither exists, run **Missing eval coverage** below first, then build the set from the cases it wrote.
+2. Write it to `evals.json` in a fresh temp directory (`mktemp -d`) — never inside the skill directory, which 2d.3 copies whole — in the shape `run_eval.py` reads (`item["query"]`):
    ```json
    [
-     {"prompt": "<trigger test>", "should_trigger": true},
-     {"prompt": "<negative test>", "should_trigger": false}
+     {"query": "<trigger prompt>", "should_trigger": true},
+     {"query": "<negative prompt>", "should_trigger": false}
    ]
    ```
-   Write to a temporary `evals.json` beside the skill.
 
 3. Run description optimization:
    ```bash
    python -m scripts.run_loop \
      --eval-set <evals.json path> \
-     --skill-path <SKILL.md path> \
-     --max-iterations 5
+     --skill-path <skill directory> \
+     --model <model id, e.g. the session's model> \
+     --max-iterations 5 \
+     --results-dir <the temp directory from step 2>/runs
    ```
-   (Run from `$SC_SCRIPTS` parent directory)
+   (Run from `$SC_SCRIPTS` parent directory. `--skill-path` takes the directory — `run_loop.py` checks `<skill-path>/SKILL.md`; `--model` is required.)
 
 4. Present results: `best_description`, `best_train_score`, `best_test_score`
 
@@ -364,21 +372,21 @@ Otherwise (skill_creator_available = true), automated optimization:
 
 **Missing eval coverage:**
 
-1. Draft new eval cases based on the skill's description
-2. Invoke `Skill("skill-creator:skill-creator")` for the full eval loop
-3. This creates baseline measurements for future comparison
+1. Write the missing cases / spec per `eval-rules.md` — both sides must exist
+2. If `plugin_eval_available`: run the load check (`--max-cost-usd 0`) and fix every load error; otherwise report it as not run
+3. If `plugin_eval_available`: state case count and flags, confirm the cost with the user, then run the tier from the depth table — this run is the baseline for future comparison
 
 #### 2c.5: Verify Improvement
 
 After fix is applied:
 
-1. If eval baseline exists from a previous iteration:
-   - Re-run eval loop with `--previous-workspace` to compare
-   - Present delta (pass rate change, timing change)
+1. If `plugin_eval_available` and the skill has cases: pick the tier from `eval-rules.md` §Running (depth follows what changed), state case count and flags, confirm the cost with the user, run it, and compare its `aggregate-result.json` with the previous run (overall score, mean Δ, per-case score). Check `NOTES` for rate-limit errors before reading a drop as a regression.
 
-2. Re-run review route (Step 2b) with Scope C (recent changes only)
+2. If a skill-creator description loop ran: re-run `run_loop` with the same `--eval-set` and `--results-dir`, then compare the two timestamped `results.json` files (`best_train_score`, `best_test_score`). `run_loop` has no `--previous-workspace` flag — that belongs to `eval-viewer/generate_review.py`.
 
-3. Present before/after comparison summary
+3. Re-run review route (Step 2b) with Scope C (recent changes only)
+
+4. Present before/after comparison summary
 
 #### Completion (iterate)
 - Fix applied
@@ -412,7 +420,13 @@ Run these checks in sequence:
    - Every skill in `skills/` is listed
    - Hook events from `hooks/hooks.json` (if exists) are listed
 
-3. Every skill directory has `eval.md`
+3. Eval layout per `eval-rules.md` (probe `plugin_eval_available` as in 2a.3 item 3):
+   - Every skill has both `skills/<skill>/eval.md` and `evals/<skill>/` (cases or `NOTE.md`)
+   - Every `NOTE.md` and `Not observable:` line uses only the closed reasons
+   - Every `Cases:` pointer names an `evals/<skill>/` that exists
+   - The repo's `.gitignore` covers `evals/results/`
+   - `test -d <plugin>/evals` succeeds, then `grep -rnE '/Users/|/home/' <plugin>/evals --exclude-dir=results` exits 1 (no match); exit 2 is an error, not a pass
+   - If `plugin_eval_available`: the load check (`--max-cost-usd 0`, whole plugin) passes — or prints `No eval cases found` when every skill is in spec form
 
 4. All agent references in skills resolve to actual files:
    - Grep each skill for agent dispatch patterns
@@ -434,7 +448,7 @@ Present readiness checklist:
 |-------|--------|---------|
 | plugin.json | pass/fail | {missing fields if fail} |
 | README.md | pass/fail | {missing entries if fail} |
-| eval.md coverage | pass/fail | {skills without eval if fail} |
+| Eval layout | pass/fail | {skills missing a side, bad reasons, broken pointers, leaked paths, load errors} |
 | Reference integrity | pass/fail | {broken refs if fail} |
 | Structural validation | pass/fail | {issues if fail} |
 | Skill validation | pass/fail | {issues per skill if fail} |
@@ -474,10 +488,12 @@ See `insights.md` for the full 8-step process (preflight → Reader → Proposer
 
 This skill requires these optional plugins for full functionality:
 - `plugin-dev` — for component creation and structural validation (Strategy A review)
-- `skill-creator` — for eval loop, description optimization, and packaging scripts
+- `skill-creator` — for description optimization and packaging scripts
+- `claude plugin eval` — built into Claude Code ≥ 2.1.269, not a plugin; runs the eval cases (rules in `eval-rules.md`)
 
-Without these plugins:
+Without these:
 - Create route: will guide user through manual creation instead of delegating
 - Review route: falls back to Strategy B (self-contained review)
 - Iterate route: description optimization unavailable; manual fixes only
 - Package route: quick_validate and package_skill unavailable; manual checklist only
+- Without `claude plugin eval`: cases and specs are still written and the layout is still checked; load checks and runs are reported as not run

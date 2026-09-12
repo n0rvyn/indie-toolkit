@@ -32,5 +32,8 @@ minimax-output/
 **/.env
 !**/.env.example
 
+# claude plugin eval run output (evals/ itself ships with the plugin)
+*/evals/results/
+
 # aso-research collector cache
 apple-dev/skills/aso-research/scripts/cache/

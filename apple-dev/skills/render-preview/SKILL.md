@@ -14,9 +14,16 @@ background: false
   This skill is a tool-wrapper: input = Swift view path, output = PNG path, no judgment.
   model: haiku (tool-wrapper standard) + context: fork (structured { channel, pngPath } return to caller).
   Diff/iteration judgment lives in the calling run-phase main context.
-  model: haiku kept intentionally — billing gate issue #24: sonnet child skills fail in
-  opus-[1m] parent sessions (CC auto-appends [1m] via modelSupports1M() without checking
-  Sonnet-1M entitlement). Do NOT upgrade to sonnet without resolving issue #24.
+  haiku is the class-correct posture here on its own merits, not a workaround.
+
+  History: this comment used to read "Do NOT upgrade to sonnet without resolving
+  issue #24" (the [1m] carry-over billing gate — CC appended [1m] to sonnet child
+  skills via modelSupports1M() without checking Sonnet-1M entitlement). That
+  blocker is dead on both legs: it did not reproduce on CC 2.1.205 (2026-07-09,
+  /dev-workflow:kb from an opus-4-8[1m] parent), and issue #24 is CLOSED. Kept as
+  a note so the next reader does not re-derive a constraint that no longer exists.
+  If a future change wants sonnet here, the question to answer is whether the work
+  became judgment — not whether #24 is fixed.
 -->
 
 # render-preview

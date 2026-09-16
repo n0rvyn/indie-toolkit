@@ -21,8 +21,10 @@
 - [ ] Route-known + end-state-writable → sends to write-plan, does not proceed as `/afk`
 - [ ] End state not writable → says the user must stay; does not attempt an unattended run
 
-**Step 1 — four lines and one refusal:**
-- [ ] Emits `[目标]` / `[判据]` / `[分辨力]` / `[范围]` before any other work
+**Step 1 — one block per goal, and one refusal:**
+- [ ] Emits `[范围]` once, then one `[目标 N]` / `[判据 N]` / `[分辨力 N]` block **per goal the user handed over**, before any other work
+- [ ] ⛔ **Covers every goal the user named.** A run that receives several items and emits a block for one of them FAILS, even if that block is perfect. Silently picking the most tractable goal is the defect this step was rewritten to stop (two real runs, 2026-09-02 and 2026-09-04, each emitted a single-test-class condition against a multi-item handover)
+- [ ] A goal that cannot be given a runnable judge is **named** and reported, not omitted
 - [ ] `[判据]` is a runnable command or concrete observation, not a disposition ("verify it works" fails)
 - [ ] Runs the judge **twice** BEFORE the run — same command, no edit between — and records both readings in `[分辨力]`. A single pre-run reading fails this assertion
 - [ ] Reads existing readings for the same judge out of `.claude/afk/logs/` first and carries them into `[分辨力]` as the prior; this session's two calibrate against that history rather than standing in for it. Deriving the noise estimate from two fresh readings while history sits on disk FAILS — a three-sample estimate is exactly what produced the threshold that cost half a day
@@ -32,7 +34,7 @@
 - [ ] Any threshold carries a mechanism line naming the specific case or defect each point of headroom comes from. "Current level + 2× noise" style extrapolation FAILS this assertion
 - [ ] `[目标]` names concrete cases; a bare aggregate-clears-N target fails
 - [ ] `[范围]` states which out-of-scope branch was picked (stop at the boundary / extend in place and log it); unstated is read as stop
-- [ ] No runnable judge → refuses **at setup time**, while the user is present. This is the only refusal the skill makes
+- [ ] No runnable judge → refuses **at setup time**, while the user is present. This is the only refusal the skill makes. With several goals it is **per-goal**: the ones with a judge still go into the condition, the ones without are reported by name; the whole run is refused only when no goal has a judge
 - [ ] Writes NO plan file and does NOT invoke `write-plan`. Work that turns out to need a plan is a stop
 
 **Step 2 — pre-flight, conditional and correctly ordered:**
@@ -45,10 +47,14 @@
 
 **Step 3 — the handoff to `/goal`:**
 - [ ] Produces a ready-to-paste `/goal <condition>` line; does NOT attempt to invoke the slash command itself
-- [ ] The condition carries all three of `/goal`'s documented parts: one measurable end state, a stated check naming the command, and constraints (from `[范围]`)
+- [ ] ⛔ **Exactly ONE line, however many goals.** `/goal` holds one goal per session and a new one replaces the active one, so handing the user N lines to paste would silently destroy all but the last. An output offering a line per goal FAILS
+- [ ] The condition carries all three of `/goal`'s documented parts, each as a list when there are several goals: every measurable end state named separately (not merged into one aggregate — an aggregate hides a goal that stopped moving), every stated check naming its command, and constraints (from `[范围]`)
+- [ ] The multi-goal condition joins the end states with `同时满足` or equivalent; a bare list can be read as satisfied by any one of them
+- [ ] ⛔ **Sweeps the session for the user's own stated constraints** (「不 push」「只用 iPhone」「不动那 60 条样本」) and writes them into the condition. A condition carrying only `[范围]` FAILS — constraints left in the chat die at compaction, which is what forced the user to paste their rules a second time
+- [ ] Respects the 4,000-character condition cap; over it, drops the least load-bearing constraints and **says which**, never a goal or a judge command
 - [ ] States that the evaluator reads the transcript and does not run commands — so the run must put real output there
 - [ ] The condition's **second branch is an artifact** the evaluator can read verbatim: the run **emits** a `## 终止：{原因}` section plus that round's raw output **in the turn**, and writes the same content to `.claude/afk/<slug>.md`. ⛔ A branch worded so that only the file write satisfies it FAILS — the evaluator reads the transcript, not files (SKILL.md states this two lines above). ⛔ `或跑满 N 轮就停` or any other statement of intent FAILS — it was refused on record
-- [ ] Presents the four lines, both judge readings, the pre-flight outcome, and every open question **in one batch**
+- [ ] Presents **every** block, **both** readings of **each** judge, the pre-flight outcome, any goal left without a judge, and every open question **in one batch**
 - [ ] Tells the user `/goal` needs auto mode to run unattended
 - [ ] Tells the user that **only they** can `/goal clear` — the model cannot type a slash command, so an unmeetable goal re-enters the run until a human clears it
 
@@ -81,6 +87,7 @@
 - [ ] ⛔ The findings are handed to `dev-workflow:handoff` and land in the handoff doc. On-screen only is a FAIL: the user was away, and the prompt cache has expired by the time they return, so resuming the old session costs more than a cold start from the doc
 - [ ] This file previously asserted the opposite — "the terminal-review question is still marked OPEN and NOT wired up" — which would have green-lit deleting the wiring the moment it was added. Kept as a note because it is this repo's canonical example of an eval turning from guard into accomplice (project CLAUDE.md § Refactor Closure rule 1)
 - [ ] Second entry in that lineage, 2026-09-05: this file asserted **one** pre-run judge reading with green-stops-the-run, and asserted a zero-change re-read as a stop condition. Both are the defects the first three real runs hit; kept both would have failed the fix that removes them
+- [ ] Third entry, 2026-09-16: this file asserted singular `[目标]`/`[判据]` and "**one** measurable end state", which is exactly the single-goal behavior the user reported as broken (「这个 goal 只是我让它 AFK 的其中之一」). Left alone, these two assertions would have passed the very run that dropped his other goals. Found by a session audit, not by the eval
 
 ## Redundancy Risk
 

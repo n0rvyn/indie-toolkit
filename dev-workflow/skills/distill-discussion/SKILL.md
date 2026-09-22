@@ -160,14 +160,9 @@ Note: Crystal outputs from `distill-discussion` follow the same format as `/crys
 
 For each file classified as `lesson` or `both`:
 
-1. If the `add_entry` tool is available (provided by rag-server MCP; check tool availability before calling):
-   - Call `add_entry` with the extracted lesson fields (title, category, scope: "project", content: the markdown body, keywords, source_type)
-   - Report: `Saved as {id} at {path}`
-
-2. If `add_entry` is unavailable:
-   - Determine the next lesson number: Glob `docs/09-lessons-learned/E*.md`, count files, increment
-   - Write to `docs/09-lessons-learned/E{NNN}-{slug}.md` with the lesson body
-   - Report the path
+1. Determine the next lesson number: Glob `docs/09-lessons-learned/E*.md`, count files, increment
+2. Write to `docs/09-lessons-learned/E{NNN}-{slug}.md` with the lesson body
+3. Report the path
 
 ### Step 6: Mark Source Files as Distilled
 

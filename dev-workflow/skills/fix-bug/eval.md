@@ -39,6 +39,7 @@
 - [ ] Verdict (2) or (3) forbids the replacement (return to layer check or patch honestly); verdict (1) forces Complex classification at Step 7
 - [ ] Step 2.5 never deletes or replaces a design on its own — an intent that no longer holds routes to the same present-to-user stop branch as `intentional workaround`, with evidence and a recommendation, not a bare N-way choice
 - [ ] No assertion confirmation gate blocks diagnosis (Step 3 flows directly to Step 4)
+- [ ] Step pre-0 does NOT stop for a "go" when the user's own words in this session authorised an unattended run (`/loop`, `/afk`, `/goal`, `until fix`, `你自己跑`); the echo is still presented, state is written `user_confirmed: true` + `confirmed_by: "unattended"` + `authorizing_utterance` verbatim, and the flow continues to Step 0
 - [ ] Output includes Step 10 tradeoff report for the proposed fix
 - [ ] Root cause includes code evidence (file:line references)
 - [ ] Step 0.5 invokes `dev-workflow:kb` skill (not a non-existent `search()` tool)

@@ -90,6 +90,24 @@ This is an audit aid, not an enforced gate — no hook intercepts a missing mark
 
 Before any reproduction / diagnosis / planning work:
 
+0. **Unattended-mandate check — decide this BEFORE writing state.**
+
+   This gate exists to align with a human who is present. When the user has already told this session to run on its own, nobody is there to type "go": stopping does not protect them, it strands the whole run at step zero. So the readback still gets produced and presented — it is the record — but it is self-confirmed and the flow continues.
+
+   The mandate holds only if **all** of these are true:
+   - The authorizing words are the **user's own, in this session** — `/loop`, `/afk`, `/goal`, `/self-pacing`, `until fix`, `一直修到好`, `你自己跑`, `别问我`, `don't ask me`. A skill **I** invoked does not authorize anything; neither does my own paraphrase of what they meant.
+   - The mandate is still live (the user has not since taken the keyboard back with a narrowing instruction).
+
+   Corroborating signal, not a substitute: `.claude/scheduled_tasks.lock` carrying the current `sessionId` means a self-paced run is active in this session.
+
+   **Mandate holds** → still do steps 1, 2 and 4 (dispatch the agent, present the echo verbatim), write state per step 3 with `user_confirmed: true`, `confirmed_by: "unattended"` and `authorizing_utterance` set to the user's phrase **verbatim**, then say one line — `无人值守授权（原话「…」）→ 复述已记录，不等确认，继续` — and go straight to Step 0. Do not stop. Do not schedule a wakeup to wait for a confirmation that is not coming.
+
+   **Mandate does not hold** → steps 1–5 below, unchanged.
+
+   Recording the utterance verbatim is what makes a wrong self-exemption auditable afterwards instead of silent; a branch taken without quotable user words is a violation of this step, not a judgment call.
+
+   Note: `user_confirmed: true` is also `write-plan`'s consent token (`write-plan/SKILL.md` Step 2.5). Under an unattended mandate write-plan will therefore enter echo-only mode — intended: same mandate, same delegation, one echo instead of two.
+
 1. Collect inputs for readback:
    - `user_request`: the user's original prompt (full text)
    - `context_terms`: 3-5 project-specific terms the user used in this session
@@ -121,15 +139,19 @@ Before any reproduction / diagnosis / planning work:
        readback_text: $text,
        user_confirmed: false,
        confirmed_at: null,
+       confirmed_by: null,
+       authorizing_utterance: null,
        correction_count: 0
      }' > .claude/readback-state.json
    ```
 
+   Under an unattended mandate (step 0) the same write instead carries `user_confirmed: true`, `confirmed_at: $ts`, `confirmed_by: "unattended"`, and `authorizing_utterance` set to the user's authorizing phrase verbatim.
+
    Note: skill bash writes `session_id: null` (it cannot read hook stdin); the readback plugin's `PreToolUse` hook stamps the real session id into the file on first read after user confirmation. See `readback/references/state-schema.md` for the v2 two-phase identity model.
 
-4. Present agent output VERBATIM to user. Stop. Do not proceed to Step 0.
+4. Present agent output VERBATIM to user. Under an unattended mandate (step 0), continue to Step 0 now — the remaining wait does not apply. Otherwise: stop, do not proceed to Step 0.
 
-5. Wait for user response:
+5. Wait for user response (attended path only):
    - "go" / "OK" / "对" / 等价表达 → update state `user_confirmed: true, confirmed_at: <now>` → continue to Step 0
    - Correction → increment `correction_count`, re-dispatch agent with correction, present again
    - `correction_count` ≥ 2 → STOP, suggest user invoke `/dev-workflow:brainstorm` (alignment broken upstream)

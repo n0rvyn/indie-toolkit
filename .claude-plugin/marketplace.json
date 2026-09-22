@@ -46,14 +46,16 @@
     {
       "name": "mactools",
       "source": "./mactools",
-      "description": "macOS automation toolkit plugin with Notes, Calendar, Mail, Safari, Spotlight, and more",
+      "description": "macOS automation toolkit plugin with Notes, Calendar, Mail, Safari, Spotlight, disk reclaim, and more",
       "version": "1.0.1",
       "category": "productivity",
       "tags": [
         "macos",
         "automation",
         "apple-apps",
-        "local-tools"
+        "local-tools",
+        "disk-cleanup",
+        "storage"
       ],
       "strict": true
     },

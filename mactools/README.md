@@ -22,10 +22,11 @@ macOS automation toolkit for Apple apps and local workflows.
 | `/contacts` | macOS Contacts: search, show, list, groups |
 | `/omnifocus` | OmniFocus 4: tasks, projects, contexts, perspectives, due dates, repetition |
 | `/ocr` | Vision OCR: extract text from images, screenshots, scanned PDFs |
+| `/disk-reclaim` | Diagnose a full macOS disk and reclaim space safely: finds non-directory hogs (leaked-process swap, local snapshots) first, then tiered cleanup with per-item confirmation |
 
 ## Architecture
 
-All skills are haiku fork skills that execute shell scripts or Swift/Python binaries via `Bash` tool. The scripts use native macOS frameworks (AppleScript, EventKit, Vision) and do not require additional dependencies beyond what's on a standard macOS system.
+All skills are haiku fork skills that execute shell scripts or Swift/Python binaries via `Bash` tool — **except `disk-reclaim`**, which runs inline on the session model. Its reasons for deviating are in its SKILL.md and are deliberate: irreversible deletes, and disk numbers that need cross-checking a forked context cannot do. The scripts use native macOS frameworks (AppleScript, EventKit, Vision) and do not require additional dependencies beyond what's on a standard macOS system.
 
 ## File Structure
 
@@ -42,6 +43,7 @@ mactools/
 │   ├── contacts/       # Contacts via AppleScript
 │   ├── omnifocus/      # OmniFocus 4 via JXA/AppleScript
 │   └── ocr/            # Vision OCR via Swift
+│   └── disk-reclaim/   # Disk usage diagnosis + tiered reclaim (inline, not forked)
 ├── agents/
 │   └── spotlight-search.md  # Sub-agent for RAG fallback
 └── README.md

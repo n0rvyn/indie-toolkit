@@ -235,7 +235,7 @@ Check whether `plugin-dev` is installed:
    - Other agents in same plugin(s): {paths}
    - Eval sources: {per skill: `evals/<skill>/` directory and `skills/<skill>/eval.md` path, or "none"}
 
-   Supporting files to load: none
+   Baseline checks: off
    Plugin agents dir: {skill-master agents directory path}
    (D1/D2 structural checks and baseline trigger/description checks are handled by plugin-dev agents.)
 
@@ -259,8 +259,7 @@ Also read these for cross-reference checking:
 - Other agents in same plugin(s): {paths}
 - Eval sources: {per skill: `evals/<skill>/` directory and `skills/<skill>/eval.md` path, or "none"}
 
-Supporting files to load: structural-validation.md, trigger-baseline.md
-  (Resolve via `${CLAUDE_PLUGIN_ROOT}/agents/` if executing inside skill-master plugin context, otherwise Glob `**/skill-master/agents/{structural-validation,trigger-baseline}.md`. These are non-agent reference fragments stored under `agents/` for historical reasons; load with Read, not Task dispatch.)
+Baseline checks: on
 
 Focus on: logic bugs, trigger mechanism issues, execution feasibility, and edge cases.
 ```

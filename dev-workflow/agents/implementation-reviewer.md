@@ -326,8 +326,8 @@ For each algorithm, data structure, or approach the design specifies:
 - Compare: does the code use the design's approach, or a simplified version?
 
 **Severity rules:**
-- If the plan task was marked `⚠️ SIMPLIFIED:` with `Simplification:` + `Design approach:` fields, AND the code matches the simplified plan → ⚠️ known simplification (not a gap; corresponds to design-faithfulness's acknowledged)
-- If the code uses a different approach than the design WITHOUT any `⚠️ SIMPLIFIED:` annotation in the plan → ❌ must-fix (silent degradation; corresponds to design-faithfulness's must-revise)
+- If the plan task was marked `⚠️ SIMPLIFIED:` with `Simplification:` + `Design approach:` fields, AND the code matches the simplified plan → ⚠️ known simplification (not a gap; corresponds to plan-verifier DF's acknowledged)
+- If the code uses a different approach than the design WITHOUT any `⚠️ SIMPLIFIED:` annotation in the plan → ❌ must-fix (silent degradation; corresponds to plan-verifier DF's must-revise)
 - Keyword detection: code or plan uses "simplified", "heuristic", "placeholder", "stub", "basic", "for now" for design-specified functionality without annotation → ❌ must-fix
 
 Output per item:

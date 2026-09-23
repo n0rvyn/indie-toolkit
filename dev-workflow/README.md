@@ -139,14 +139,6 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | rules-auditor | sonnet | Glob, Grep, Read | CLAUDE.md rules audit for conflicts and loopholes (read-only) |
 | distill-discussion-reader | sonnet | Read, Glob, Grep | Discussion file classification and structured extraction (read-only) |
 
-### Supporting Files (not agents)
-
-| File | Loaded by | Content |
-|------|-----------|---------|
-| design-faithfulness.md | plan-verifier | DF strategy: design document faithfulness verification procedure |
-| crystal-fidelity.md | plan-verifier | CF strategy: crystal file decision fidelity verification procedure |
-| architecture-review.md | plan-verifier | AR strategy: architecture change completeness review procedure |
-
 ## Skills
 
 ### Daily entry points

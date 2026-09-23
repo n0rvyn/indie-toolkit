@@ -44,11 +44,7 @@ Before starting, confirm you have:
 5. **Previously resolved decisions** — list of `DP-xxx: Title → Chosen Option X` entries that have already been decided by the user; do not generate new decision points for these
 6. **Project root path** — for resolving file paths and searching code
 7. **Bug diagnosis source** — read the plan header's `**Bug diagnosis:**` field. If value is `not applicable`, BD strategy is inactive. If value is the structured bundle inline, parse it directly. If value matches `see .claude/bug-diagnosis-*.md`, read the referenced file. Failure to parse the field (malformed bundle, missing referenced file) is a verification gap — surface in the report.
-8. **Plugin agents dir** — absolute path to this plugin's `agents/` directory, for resolving supporting file references below. The dispatching skill resolves this and passes a concrete path.
-   - **Fallback resolution**: If the value is missing, contains an unresolved `${...}` token, or the path does not exist, locate the directory yourself by running this Bash command:
-     `d=$(ls -d "$HOME"/.claude/plugins/marketplaces/*/dev-workflow/agents 2>/dev/null | head -1); if [ -z "$d" ]; then d=$(ls -d "$HOME"/.claude/plugins/cache/*/dev-workflow/*/agents 2>/dev/null | sort -V | tail -1); fi; echo "$d"`
-     Use the returned path as the agents dir. If output is empty, report the failure in the verification report and skip the DF/CF/AR sections that depend on these supporting files.
-9. **Out-of-scope archive path** — `{project_root}/dev-workflow/.out-of-scope/` (or equivalent in user-customized projects). Before generating any `DP-xxx`, list the directory and read every `*.md` file. If a candidate DP would re-raise a rejected idea, suppress it and add `Skipped DP candidate: {short title} — rejected per .out-of-scope/{filename}` to the verification report.
+8. **Out-of-scope archive path** — `{project_root}/dev-workflow/.out-of-scope/` (or equivalent in user-customized projects). Before generating any `DP-xxx`, list the directory and read every `*.md` file. If a candidate DP would re-raise a rejected idea, suppress it and add `Skipped DP candidate: {short title} — rejected per .out-of-scope/{filename}` to the verification report.
 
 Read the plan file, design doc, design analysis, and crystal file (if provided) before proceeding.
 
@@ -305,9 +301,26 @@ Before strategy-specific review, inspect plan frontmatter.
 
 #### DF. 设计忠实度验证（有设计文档的计划）
 
-**前置条件**：计划头部引用了设计文档路径。如果无设计文档引用，跳过本策略。
+**前置条件**：计划头部引用了设计文档路径。如果无设计文档引用，跳过本策略。完整读取设计文档。
 
-Read `{Plugin agents dir}/design-faithfulness.md` and execute all verification steps described there.
+**DF-0 先验基准**：拿设计文档判计划之前，先证明设计文档本身自洽。一个把坏基准当好基准的验证器，会给缺陷发合格证。
+
+```sh
+# CWD 是被审项目；lint 是交接时 vendored 进来的拷贝，禁止写 toolkit repo 的相对路径
+if [ -f scripts/design-gates/n4_contract_lint.py ]; then
+  python3 scripts/design-gates/n4_contract_lint.py <设计文档所在目录>
+  # exit 0 → 继续；exit 1 → 基准坏了，停，报告契约缺陷；exit 2 → 没跑成，按「未跑」处理
+else
+  echo "⚠️ 契约 lint 未跑 — 项目没有 scripts/design-gates/"   # 原样写进报告，不许写成「通过」
+fi
+```
+
+然后核对（每条不满足都报 gap，引用 design 行号与 task 编号）：
+- **双向映射**：每条设计要求都有 task 覆盖（缺 = Gap D）；每个 task 都能映射回设计要求（映射不回的 = 计划杜撰，确认是否必要）。
+- **值与接线**：设计给的具体值（参数、schema、枚举）出现在计划里（Gap A）；新组件都有上游→组件→下游的数据流（Gap B）；设计说「替代/删除 X」的，计划列出了 X 的全部位置（Gap C）。缺的锚点补进 task：`Design ref:` / `Expected values:` / `Replaces:` / `Data flow:` / `Quality markers:` / `Verify after:`。
+- **退化（Gap E）**：task 用了与设计不同的算法或方式，就必须带 `⚠️ SIMPLIFIED:` + `Simplification:` + `Design approach:`（= acknowledged）；没标注，或描述里出现 simplified / heuristic / placeholder / for now / basic / stub → must-revise。implementation-reviewer 靠这个标注区分「已知简化」与「静默降级」。
+- **设计里没单列、但会咬人的**：隐含前提与业务规则、边界与错误流程、「如果…则…」分支；以及粒度变化 —— 合并步骤丢了中间检查点，拆分引入了别人看得见的中间状态。
+- **UX 断言**（设计有 `## UX Assertions` 时）：每条 UX-NNN 都有 task 用 `UX ref:` 引用（否则 Gap D），且 task 步骤真的建立了断言描述的行为；标 `⚠️ No UX ref` 的 UI task 反查是否漏了映射。
 
 ---
 
@@ -315,7 +328,10 @@ Read `{Plugin agents dir}/design-faithfulness.md` and execute all verification s
 
 **前置条件**：dispatch prompt 包含 `Crystal file:` 路径且非 "none"。如果无 crystal 文件引用，跳过本策略。
 
-Read `{Plugin agents dir}/crystal-fidelity.md` and execute all verification steps described there.
+完整读取 crystal 文件，核对三件事（任一不满足 → must-revise）：
+- **CF-1 决策覆盖**：每条 `[D-xxx]` 决策都有 task 实现或体现（「用 X 方案」→ 有 task 用 X；「在 Y 新建 Z」→ 有 task 在 Y 建 Z）。
+- **CF-2 否决方案**：没有 task 实现了 crystal 里 Rejected Alternatives 列出的方案。
+- **CF-3 Scope 边界**：计划头部的 `**Scope conflicts:**` 直接报 must-revise；没有 task 触碰 OUT 边界；每个删除现有功能的 task（`**Replaces:**` 锚点、remove/delete/移除/删除/drop、功能净减少）都被某条 IN 或 D-xxx 授权，且被删符号用 LSP `findReferences`（无 LSP 则 Grep）确认没有残留调用方。
 
 ---
 
@@ -342,7 +358,11 @@ Read `{Plugin agents dir}/crystal-fidelity.md` and execute all verification step
 
 #### AR. 架构审查（架构变更时）
 
-Read `{Plugin agents dir}/architecture-review.md` and execute all verification steps described there.
+目的：抓并行路径、不完整替代、死保底。四个问题：
+- **入口唯一**：计划每个新入口（trigger / scheduler / observer / event handler）最终调用的核心函数，用 LSP `findReferences`（无 LSP 则 Grep 并注明）列出现有调用方。已有另一条上游路径而计划没说明为何共存 → 报冲突。
+- **替代完整**：计划或 ADR 里每个「替代 / 淘汰 / 取代」，都列出了要删的注册、import、配置和要改的引用。没列 → 用 Grep 构建清单并标记计划不完整。
+- **数据流**：主要数据从生产 → 处理 → 持久化 → 展示，每一跳有 file:line；处理函数用 LSP `incomingCalls` 查有没有未协调的第二条调用路径。
+- **保底三问**：每个「保留作为 fallback」的组件，回答谁决定走哪条路（代码位置）、什么条件走旧路（可求值的表达式）、何时删除（可验证的里程碑）。「运行时决定」「新路径失败时」「测试通过后」这类描述不算答案；答不出 → 建议用户决定是否删除旧实现。
 
 ---
 

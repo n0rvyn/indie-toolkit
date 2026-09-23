@@ -83,8 +83,6 @@ skill-master orchestrates; it does not rebuild existing capabilities:
 
 | File | Loaded when | Content |
 |------|------------|---------|
-| structural-validation.md | plugin-dev unavailable | D1 Structural Validation + D2 Reference Integrity |
-| trigger-baseline.md | plugin-dev unavailable | D5.1-5.2 description overlap + D7.3 description quality + D9.1 trigger quality |
 | skills/plugin-master/insights.md | "insights" intent matched | 8-step insights route process |
 | skills/plugin-master/eval-rules.md | create / iterate / package eval steps; plugin-reviewer D9.2 | Eval layout (`evals/<skill>/`), closed `Not observable:` reasons, load check, run depth |
 
@@ -104,8 +102,8 @@ The review route covers 9 dimensions, with ownership split based on plugin-dev a
 
 | # | Dimension | Strategy A Owner | Strategy B Owner |
 |---|-----------|-----------------|-----------------|
-| D1 | Structural Validation | plugin-dev:plugin-validator | plugin-reviewer + structural-validation.md |
-| D2 | Reference Integrity | plugin-dev:plugin-validator | plugin-reviewer + structural-validation.md |
+| D1 | Structural Validation | plugin-dev:plugin-validator | plugin-reviewer (`Baseline checks: on`) |
+| D2 | Reference Integrity | plugin-dev:plugin-validator | plugin-reviewer (`Baseline checks: on`) |
 | D3 | Workflow Logic | plugin-reviewer (core) | plugin-reviewer (core) |
 | D4 | Execution Feasibility | plugin-reviewer (core) | plugin-reviewer (core) |
 | D5 | Trigger & Routing | split: baseline → skill-reviewer; deep → plugin-reviewer | plugin-reviewer (full) |

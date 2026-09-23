@@ -70,7 +70,6 @@ Crystal file: {path or "none"}
 Bug diagnosis: {verbatim value from plan header **Bug diagnosis:** field, or "not applicable"}
 Project root: {path}
 
-Plugin agents dir: ${CLAUDE_PLUGIN_ROOT}/agents
 Previously resolved decisions (do not re-ask these):
 {List of "DP-xxx: Title → Chosen Option X" or "none"}
 

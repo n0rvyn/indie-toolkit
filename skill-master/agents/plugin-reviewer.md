@@ -43,14 +43,14 @@ Before starting, confirm you have:
 2. **Cross-reference files** — other skills/agents in the same plugin(s) for conflict detection
 3. **Plugin manifest path** — `.claude-plugin/plugin.json`
 4. **Eval sources** (optional) — per skill, the `evals/<skill>/` directory and/or the `skills/<skill>/eval.md` path (layout defined in `eval-rules.md` — resolve it as `{Plugin agents dir}/../skills/plugin-master/eval-rules.md`, else Glob `**/skill-master/skills/plugin-master/eval-rules.md`), for trigger plausibility and eval-layout checking
-5. **Supporting files to load** (optional) — list of supporting file names to Read before starting (e.g., `structural-validation.md, trigger-baseline.md`). If "none" or absent, skip the dimensions covered by those files.
-6. **Plugin agents dir** (optional) — absolute path to this plugin's `agents/` directory, for resolving supporting file paths. If absent, use Glob to locate the files.
+5. **Baseline checks** (optional) — `on` or `off`. `on` runs the structural checks (D1/D2) and the baseline trigger checks (D5.1-5.2, D7.3, D9.1) written inline below. `off` or absent: skip them; `plugin-dev` agents cover them.
+6. **Plugin agents dir** (optional) — absolute path to this plugin's `agents/` directory, used only to resolve `eval-rules.md`. If absent, use Glob.
 
 Read each file to review in full before analyzing it. Process one artifact at a time.
 
 ## Review Dimensions
 
-This agent covers 9 review dimensions. Dimensions D1/D2 and sub-parts of D5/D7/D9 are conditionally loaded from supporting files — check the `Supporting files to load` input to determine which dimensions to execute vs. skip (marked "Handled externally" when covered by `plugin-dev` agents).
+This agent covers 9 review dimensions. D1/D2 and parts of D5/D7/D9 run only when `Baseline checks: on`; otherwise mark them "Handled externally" (covered by `plugin-dev` agents).
 
 Skip dimensions that don't apply (e.g., "Trigger" doesn't apply to agents that are never auto-routed; "Metadata & Docs" applies once per plugin, not per artifact).
 
@@ -58,9 +58,11 @@ Skip dimensions that don't apply (e.g., "Trigger" doesn't apply to agents that a
 
 ### Dimension 1 + 2: Structural Validation & Reference Integrity
 
-**Conditional:** If dispatch prompt includes `Supporting files to load:` with `structural-validation.md`:
-Read `{Plugin agents dir}/structural-validation.md` and execute all checks described there.
-Otherwise: skip D1 and D2 (handled by external `plugin-dev:plugin-validator` agent). Mark these rows as "Handled externally" in the Dimension Summary.
+**Conditional:** only with `Baseline checks: on`. Otherwise skip D1 and D2 (handled by `plugin-dev:plugin-validator`) and mark them "Handled externally" in the Dimension Summary.
+
+- Skills: frontmatter has `name` (matching the directory) and a non-empty `description` (Bug if missing); the body has a workflow section and a completion criteria section (Logic if missing).
+- Agents: `name` matches the filename, `description` exists and carries `<example>` blocks; `model` is `opus` / `sonnet` / `haiku` / `inherit`; `tools` lists only tools that exist in the current harness (e.g. `Agent`, not the old `Task`); a read-only agent declares a constraint section and does not list Write / Edit / NotebookEdit (Bug if it does).
+- Every path, skill, agent or reference a file names actually exists (reference integrity).
 
 ---
 
@@ -140,9 +142,7 @@ When a skill instructs the executor to use one of these tools (e.g., `EnterPlanM
 Check for routing conflicts and unintended auto-invocation.
 
 **D5.1-5.2 Baseline overlap checks:**
-**Conditional:** If dispatch prompt includes `Supporting files to load:` with `trigger-baseline.md`:
-Read `{Plugin agents dir}/trigger-baseline.md` and execute D5.1 and D5.2 checks described there.
-Otherwise: skip D5.1-5.2 (handled by external `plugin-dev:skill-reviewer` agent).
+**Conditional:** only with `Baseline checks: on`; otherwise skip (handled by `plugin-dev:skill-reviewer`). Compare the reviewed skill's `description` with every other skill in the same plugin, and the reviewed agent's description and examples with every other agent: flag any pair that would match the same user input, listing the ambiguous phrases.
 
 **Dispatch loop detection (always run):**
 1. Trace: Skill A dispatches Agent X → does Agent X's output trigger Skill B → does Skill B dispatch Agent Y → ... → does any skill re-dispatch Skill A's agent?
@@ -204,9 +204,7 @@ Check that skills and agents follow Agent Skills Spec conventions for runtime op
    - If Bash usage is diverse (build, test, arbitrary commands) → no finding, scoping would limit function
 
 **7.3 Description quality:**
-**Conditional:** If dispatch prompt includes `Supporting files to load:` with `trigger-baseline.md`:
-Execute D7.3 checks from `{Plugin agents dir}/trigger-baseline.md`.
-Otherwise: skip (handled by external `plugin-dev:skill-reviewer` agent).
+**Conditional:** only with `Baseline checks: on`; otherwise skip (handled by `plugin-dev:skill-reviewer`). Same checks as D9.1, applied to agent descriptions.
 
 **7.4 File size:**
 1. Count total lines in the SKILL.md file
@@ -343,9 +341,7 @@ Check that skill descriptions have clear trigger scenarios, eval-source triggers
 **Skip condition:** This dimension applies to skills only. Skip agents.
 
 **9.1 Description trigger quality:**
-**Conditional:** If dispatch prompt includes `Supporting files to load:` with `trigger-baseline.md`:
-Execute D9.1 checks from `{Plugin agents dir}/trigger-baseline.md`.
-Otherwise: skip (handled by external `plugin-dev:skill-reviewer` agent).
+**Conditional:** only with `Baseline checks: on`; otherwise skip (handled by `plugin-dev:skill-reviewer`). The description opens with a trigger pattern ("Use when / Use for / Use after / Use before / 当…时使用" or equivalent) and names a concrete trigger scenario, not bare vague words ("guidance", "best practices", "helper"). mactools skill descriptions carry both Chinese and English. Severity: Logic.
 
 **9.2 Eval source consumption (if eval sources provided):**
 

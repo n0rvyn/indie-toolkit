@@ -81,7 +81,7 @@ changes and the structured result object.
    | `Quality markers:` | Use the specified algorithm/data structure; do not simplify |
    | `Verify after:` | Execute each listed check after implementation |
 
-   `Verify after:` is design-faithfulness verification and is **distinct** from the task's
+   `Verify after:` is the design-faithfulness anchor (plan-verifier DF) and is **distinct** from the task's
    `**Verify:**` section (step 5); run both when both are present.
 
    Hitting a gray area the plan does not cover: **ask the user, do not improvise.**

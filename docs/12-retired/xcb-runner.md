@@ -20,7 +20,7 @@
 每一步单独看都说得通。但没有人在「实现代价 vs 用户目标」这一层卡过它。用户原话：「为了省那点token浪费这么多精力测试、开发、eval，我觉得不值。」
 
 **当时怎么做的**
-代码保存在本地分支 `archive/xcb-runner`（未 push）：
+代码原先保存在本地分支 `archive/xcb-runner`（未 push），该分支已于 2026-09-23 按用户要求删除。之后只能在 reflog 过期前（默认 90 天）用 `git show 1d05dff:<path>` 取回，下面的路径也照此替换：
 - `git show archive/xcb-runner:apple-dev/scripts/xcb/xcb.py`：runner，包含 resolve-destination、flock 锁、run/await/cancel、summarize、build-results 分类
 - `git show archive/xcb-runner:apple-dev/skills/run-tests/SKILL.md`
 - `git show archive/xcb-runner:apple-dev/scripts/xcb/tests/REAL_PATH.md`：两台真机、macOS、SPM 的实测记录

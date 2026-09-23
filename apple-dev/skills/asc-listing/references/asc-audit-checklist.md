@@ -176,12 +176,9 @@ Grep "仅供.*参考|不构成.*建议" --path <project_source>/
 3. **权限声明**：Info.plist 中的权限描述键（`NS*UsageDescription`）必须与隐私政策中的权限列表匹配
 4. **已移除功能**：代码中已删除的功能（如 HealthKit），隐私政策中不应再提及
 
-### Notion 同步状态
+### 公开副本一致性
 
-如果使用 Notion 托管法律文档 public URL：
-1. 确认 `.claude/notion-sync.local.md` 存在且配置正确
-2. 确认 4 个文档都有对应的 Notion page ID
-3. 使用 `/notion-page-sync` 确认 Notion 页面内容与本地文件一致
+如果法律文档有公开副本（自有站点、Notion 页面等）：打开 ASC 里填的每个 URL，确认页面内容与本地文件一致。
 
 ### App Store Connect 配置
 

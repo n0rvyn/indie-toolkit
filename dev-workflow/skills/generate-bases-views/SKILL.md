@@ -12,7 +12,7 @@ Generates Obsidian Bases `.base` files that provide structured table/board/list 
 
 ## Arguments
 
-- `--target TARGET`: Which views to generate (crystals | lessons | vault-knowledge | vault-all | cross-project | product-lens | all). Default: all
+- `--target TARGET`: Which views to generate (crystals | lessons | vault-knowledge | vault-all | cross-project | all). Default: all
 - `--output DIR`: Output directory. Default: `~/Obsidian/PKOS/99-System/bases/`
 
 ## Process
@@ -45,21 +45,6 @@ For each note, extract frontmatter: `type`, `tags`, `quality`, `status`, `create
 Glob(pattern="**/*.md", path="~/Obsidian/PKOS/30-Projects")
 ```
 For each note, extract frontmatter: `type`, `tags`, `harvest_project`, `harvest_type`, `created`.
-
-**product-lens:**
-```
-Glob(pattern="**/*.md", path="~/Obsidian/PKOS/30-Projects")
-```
-For each note, extract frontmatter when present:
-- `type`
-- `source`
-- `producer_intent`
-- `decision`
-- `confidence`
-- `project`
-- `feature`
-- `status`
-- `projection_status`
 
 ### Step 2: Generate Base Files
 
@@ -320,66 +305,6 @@ views:
       and:
         - 'file.cday >= date(today) - dur(7 days)'
 ```
-
-**product-lens-portfolio.base** — portfolio signals, verdicts, feature reviews, and stale follow-up:
-```yaml
-filters:
-  and:
-    - file.inFolder("30-Projects")
-    - 'source == "product-lens"'
-
-views:
-  - type: table
-    name: "Recent Signals"
-    order:
-      - project
-      - signal_kind
-      - evidence_weight
-      - file.cday
-    filters:
-      and:
-        - 'type == "signal"'
-        - 'file.cday >= date(today) - dur(14 days)'
-
-  - type: table
-    name: "Portfolio Verdicts"
-    order:
-      - project
-      - decision
-      - confidence
-      - file.cday
-    filters:
-      and:
-        - 'type == "verdict"'
-
-  - type: table
-    name: "Feature Reviews"
-    order:
-      - project
-      - feature
-      - decision
-      - confidence
-      - file.cday
-    filters:
-      and:
-        - 'type == "feature-review"'
-
-  - type: table
-    name: "Stale Verdicts"
-    order:
-      - project
-      - projection_status
-      - file.cday
-    filters:
-      and:
-        - 'type == "verdict"'
-        - 'projection_status == "stale" || projection_status == "failed"'
-```
-
-Note type semantics (from `product-lens/references/pkos/note-schemas.md`):
-- `signal` — single observation (commit cluster, README shift, scan finding); evidence-only, no decision.
-- `verdict` — project-level decision at a point in time (focus/maintain/freeze/stop).
-- `feature-review` — decision about a specific built feature or recent slice.
 
 ### Step 3: Write Base Files
 

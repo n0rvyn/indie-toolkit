@@ -18,7 +18,6 @@
 - "隐私标签应该怎么填" → asc-listing
 - "帮我填 ASC 的字段" → asc-listing
 - "上架前代码合规检查" → asc-submit-preview
-- "这个需求有人要吗" → product-lens:demand-check
 - "Review my code quality"
 - "截图一下这个页面"
 

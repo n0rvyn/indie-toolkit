@@ -1,6 +1,6 @@
 ---
 name: html-report
-description: "Render the work just done in this session (a bug fix, root-cause investigation, review, migration, analysis) into ONE self-contained, dark-themed HTML report that a human reads for acceptance. Trigger phrases — '/html-report', '出一份 HTML 报告', '把这次工作/这次排查写成 HTML 报告', '生成一份验收报告', 'make an HTML report of what we did', 'render this as an HTML report', 'ship report'. Manual, on-demand: the user runs it when they want the polished artifact. Not when: the user wants a markdown summary in chat (just write markdown), or a token-spend audit (use dev-workflow:audit-tokens), or to sync docs to Notion (use notion-page-sync)."
+description: "Render the work just done in this session (a bug fix, root-cause investigation, review, migration, analysis) into ONE self-contained, dark-themed HTML report that a human reads for acceptance. Trigger phrases — '/html-report', '出一份 HTML 报告', '把这次工作/这次排查写成 HTML 报告', '生成一份验收报告', 'make an HTML report of what we did', 'render this as an HTML report', 'ship report'. Manual, on-demand: the user runs it when they want the polished artifact. Not when: the user wants a markdown summary in chat (just write markdown), or a token-spend audit (use dev-workflow:audit-tokens)."
 disable-model-invocation: false
 allowed-tools: Read, Write, Bash(open *), Bash(mkdir -p *), Bash(git rev-parse *)
 ---

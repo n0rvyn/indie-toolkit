@@ -79,23 +79,9 @@ model: sonnet
 
 将审计发现的差异逐项修改到 `.md` 文件中。修改前必须让用户确认修改方案。
 
-### 4. 同步到 Notion（可选）
+### 4. 更新公开副本
 
-检查 `.claude/notion-sync.local.md` 是否存在：
-
-- **存在**：调用 `notion-page-sync` skill，将 Step 3 中实际修改的文件路径作为 args 传入。具体形式：
-  ```
-  Skill(skill="notion-page-sync", args="<space-separated paths of files modified in Step 3>")
-  ```
-  例如修改了 privacy-policy.md 和 market.md：
-  ```
-  Skill(skill="notion-page-sync", args="docs/10-app-store-connect/privacy-policy.md docs/10-app-store-connect/market.md")
-  ```
-  该 skill 负责 token 验证、parent 可达性检查、page-ID 映射、update/create、汇总报告，并原子写回 `.claude/notion-sync.local.md`。本步骤不再内嵌任何 `notion_api.py` 调用。
-
-- **不存在**：跳过，输出提示：
-  "⚠️ Notion sync skipped — .claude/notion-sync.local.md not found.
-   To enable: configure .claude/notion-sync.local.md (the notion-page-sync skill ships with shared-utils@indie-toolkit)."
+这些文档如果在别处有公开副本（自有站点，或 Notion 页面），把 Step 3 改过的文件同步过去；Notion 可以用官方 Notion MCP。同步后打开 ASC 里填的 URL，确认页面内容已经是新版本。本 skill 不自带同步工具。
 
 ### 5. 输出 App Store Connect 操作清单
 

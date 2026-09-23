@@ -60,21 +60,6 @@
       "strict": true
     },
     {
-      "name": "product-lens",
-      "source": "./product-lens",
-      "description": "Product evaluation for indie developers: demand validation, market/moat assessment, feature assessment, and product comparison",
-      "version": "1.0.0",
-      "category": "product",
-      "tags": [
-        "product",
-        "evaluation",
-        "indie",
-        "market-analysis",
-        "comparison"
-      ],
-      "strict": true
-    },
-    {
       "name": "skill-master",
       "source": "./skill-master",
       "description": "Unified plugin lifecycle: create, eval, review, iterate, and package Claude Code plugins and components. Single entry /plugin-master with intent routing.",
@@ -93,13 +78,12 @@
     {
       "name": "shared-utils",
       "source": "./shared-utils",
-      "description": "Reusable utility scripts and skills shared across indie-toolkit plugins: Notion API helpers, MongoDB queries, and other cross-plugin primitives",
+      "description": "Reusable utility scripts and skills shared across indie-toolkit plugins: HTML acceptance reports, MongoDB queries, and other cross-plugin primitives",
       "version": "0.2.2",
       "category": "development",
       "tags": [
         "shared",
         "utilities",
-        "notion",
         "mongodb",
         "cross-plugin"
       ],

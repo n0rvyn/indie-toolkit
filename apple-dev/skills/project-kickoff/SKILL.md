@@ -864,8 +864,8 @@ Read `references/doc-templates.md` 的「project-brief.md 模板」段，按模�
 ### 9. 初始化项目结构（按目标平台门控）
 
 子步分为两类：
-- **通用子步（所有平台执行）**：9.1 docs 结构 / 9.2 CLAUDE.md / 9.3 AI-CONTEXT / 9.4 architecture README / 9.5 features README / 9.7 不预建 / 9.9 Notion / 9.11 GitHub Issue
-- **苹果专属子步（仅 `platform==apple`，非苹果项目跳过）**：9.2.1 平台 API 规则表 / 9.2.2 Build Env / 9.6 DesignSystem / 9.8 ASC / 9.10 CI-CD
+- **通用子步（所有平台执行）**：9.1 docs 结构 / 9.2 CLAUDE.md / 9.3 AI-CONTEXT / 9.4 architecture README / 9.5 features README / 9.7 不预建 / 9.11 GitHub Issue
+- **苹果专属子步（仅 `platform==apple`，非苹果项目跳过）**：9.2.1 平台 API 规则表 / 9.2.2 Build Env / 9.6 DesignSystem / 9.8 ASC / 9.9 公开 URL / 9.10 CI-CD
 
 模板内容在 references/ 目录中，按需加载。
 
@@ -976,9 +976,11 @@ Read `references/doc-templates.md` 的「Design System 初始化」段。Token �
 
 Read `references/doc-templates.md` 的「App Store Connect 文档初始化」段，在 `docs/10-app-store-connect/` 下创建 4 个模板文件（privacy-policy、terms-of-use、support-page、market）。
 
-#### 9.9 Notion 同步配置
+#### 9.9 法律文档公开 URL
 
-Read `references/doc-templates.md` 的「Notion 同步配置」段。如果用户计划使用 Notion，按指引创建配置文件。
+**仅 `platform==apple`（iOS/macOS）；非苹果项目跳过。**
+
+问用户 9.8 那几份文档（隐私政策、使用条款、支持页）打算放在哪个公开 URL（自有站点等），记进 `docs/10-app-store-connect/market.md`。ASC 的 Privacy Policy URL 等字段填的就是这些地址。
 
 #### 9.10 CI/CD 配置初始化
 

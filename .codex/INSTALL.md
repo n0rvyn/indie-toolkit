@@ -26,7 +26,6 @@ mkdir -p ~/.codex/skills
 ln -sfn ~/.codex/indie-toolkit/dev-workflow/skills ~/.codex/skills/indie-toolkit-dev-workflow
 ln -sfn ~/.codex/indie-toolkit/apple-dev/skills ~/.codex/skills/indie-toolkit-apple-dev
 ln -sfn ~/.codex/indie-toolkit/mactools/skills ~/.codex/skills/indie-toolkit-mactools
-ln -sfn ~/.codex/indie-toolkit/product-lens/skills ~/.codex/skills/indie-toolkit-product-lens
 ln -sfn ~/.codex/indie-toolkit/skill-master/skills ~/.codex/skills/indie-toolkit-skill-master
 ln -sfn ~/.codex/indie-toolkit/domain-intel/skills ~/.codex/skills/indie-toolkit-domain-intel
 ln -sfn ~/.codex/indie-toolkit/session-reflect/skills ~/.codex/skills/indie-toolkit-session-reflect
@@ -45,7 +44,6 @@ ln -sfn ~/.codex/indie-toolkit/netease-cloud-music/skills ~/.codex/skills/indie-
 ls -la ~/.codex/skills/indie-toolkit-dev-workflow
 ls -la ~/.codex/skills/indie-toolkit-apple-dev
 ls -la ~/.codex/skills/indie-toolkit-mactools
-ls -la ~/.codex/skills/indie-toolkit-product-lens
 ls -la ~/.codex/skills/indie-toolkit-skill-master
 ls -la ~/.codex/skills/indie-toolkit-domain-intel
 ls -la ~/.codex/skills/indie-toolkit-session-reflect
@@ -58,7 +56,6 @@ ls -la ~/.codex/skills/indie-toolkit-netease-cloud-music
 find ~/.codex/skills/indie-toolkit-dev-workflow -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-apple-dev -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-mactools -name SKILL.md | wc -l
-find ~/.codex/skills/indie-toolkit-product-lens -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-skill-master -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-domain-intel -name SKILL.md | wc -l
 find ~/.codex/skills/indie-toolkit-session-reflect -name SKILL.md | wc -l
@@ -83,7 +80,6 @@ If new skills were added in the repo, re-run the symlink commands once.
 rm ~/.codex/skills/indie-toolkit-dev-workflow
 rm ~/.codex/skills/indie-toolkit-apple-dev
 rm ~/.codex/skills/indie-toolkit-mactools
-rm ~/.codex/skills/indie-toolkit-product-lens
 rm ~/.codex/skills/indie-toolkit-skill-master
 rm ~/.codex/skills/indie-toolkit-domain-intel
 rm ~/.codex/skills/indie-toolkit-session-reflect

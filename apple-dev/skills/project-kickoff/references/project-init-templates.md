@@ -17,7 +17,7 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 | 05-features/ | 功能预期行为、关键代码位置 |
 | 06-plans/ | 开发指南、设计文档、实施计划 |
 | 07-changelog/ | 变更历史 |
-| 08-product-evaluation/ | product-lens 评估报告 |
+| 08-product-evaluation/ | 产品评估记录 |
 | 09-lessons-learned/ | 踩坑记录 |
 | 10-app-store-connect/ | ASC 提交文档（隐私政策、用户协议、支持页、营销文案） |
 | 11-crystals/ | 决策结晶（crystallize / distill-discussion 输出） |

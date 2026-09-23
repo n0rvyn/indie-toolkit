@@ -463,26 +463,6 @@ enum AppColor {
 ## What's New (v1.0)
 ```
 
-## Notion 同步配置
-
-如果用户计划使用 Notion 托管法律文档的 public URL：
-
-创建 `.claude/notion-sync.local.md`（添加到 `.gitignore`）：
-```yaml
----
-token: ""
-workspace: ""
-parent_page_id: ""
-pages: {}
----
-```
-
-提示用户：
-1. 在 Notion 创建 Internal Integration 获取 token
-2. 创建 "App Store Connect" 页面作为父页面
-3. 将 token 和 parent_page_id 填入配置
-4. 后续使用 `/update-asc-docs` 或 `/notion-page-sync` 同步
-
 ## CI/CD 配置初始化
 
 **询问用户：是否配置 CI/CD（Xcode Cloud + 自动版本管理）？**

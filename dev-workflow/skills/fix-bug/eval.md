@@ -9,7 +9,7 @@ Runnable cases live in `dev-workflow/evals/fix-bug/`. They grade outcomes (cause
 - "The app crashes when I tap save, here's a screenshot"
 - "Build fails with 'ambiguous reference' after my changes"
 
-**Multi-issue loop mode** (must route to `dev-workflow/references/multi-issue-loop.md`):
+**Multi-issue loop mode** (must route to `${CLAUDE_PLUGIN_ROOT}/references/multi-issue-loop.md`):
 - "Fix #12, #15, and #17 and verify each via the API"
 - "Dogfood this batch of 4 bugs against the running platform"
 - "修一批 issue 并通过平台自验证"

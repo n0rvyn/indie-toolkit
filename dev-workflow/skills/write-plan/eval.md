@@ -25,8 +25,8 @@
 - [ ] Step 1 Gather Context item 12 is "Bug diagnosis", activated only when invocation prompt's first non-empty line is the literal `Caller: dev-workflow:fix-bug` marker (marker-based, not content-based)
 - [ ] Plan Document Format header includes `**Bug diagnosis:**` field between `**Crystal file:**` and `**Threat model:**`, with size-bound clause for bundles exceeding ~100 lines
 - [ ] Step 2.5 is a judgment call per `references/readback.md`: no `readback:intent-echoer` dispatch, no `.claude/readback-state.json`, no stop for confirmation; skipped for run-phase / next-increment / fix-bug callers
-- [ ] Step 1 item 8 Pre-flight Audit references dev-workflow/references/deep-modules-pattern.md for module-shape scan (shallow / adapter / locality signals), with declarative-UI caveat
-- [ ] Task Structure section contains the "On the verify-first ordering" callout pointing to dev-workflow/references/tdd-research-2026.md
+- [ ] Step 1 item 8 Pre-flight Audit references ${CLAUDE_PLUGIN_ROOT}/references/deep-modules-pattern.md for module-shape scan (shallow / adapter / locality signals), with declarative-UI caveat
+- [ ] Task Structure section contains the "On the verify-first ordering" callout pointing to ${CLAUDE_PLUGIN_ROOT}/references/tdd-research-2026.md
 - [ ] Existing line "vertical slice per Pocock TDD" remains present in Task Structure section (regression: do not remove)
 - [ ] Decision points presented if any ambiguities exist
 

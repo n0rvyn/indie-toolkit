@@ -141,7 +141,7 @@ Source: `references/apple-swift-rules.md` → SwiftUI Correctness Checklist
 
 ## Topic Router (Local References)
 
-For Apple framework API details NOT covered by `references/apple-swift-rules.md`, grep the matching local reference under `apple-dev/references/external/` first. If unsure which reference applies, read `apple-dev/references/apple-swift-rules.md` → SwiftUI Correctness Checklist and Topic Router.
+For Apple framework API details NOT covered by `references/apple-swift-rules.md`, grep the matching local reference under `${CLAUDE_PLUGIN_ROOT}/references/external/` first. If unsure which reference applies, read `${CLAUDE_PLUGIN_ROOT}/references/apple-swift-rules.md` → SwiftUI Correctness Checklist and Topic Router.
 
 | Topic | Guide | API Reference |
 |---|---|---|

@@ -36,11 +36,11 @@ If the user already has 2+ concrete options and needs to pick one, use `dev-work
 Then:
 - Read relevant code, configs, and docs
 - Understand what exists before proposing anything new
-- **Read `docs/02-architecture/ubiquitous-language.md` if it exists** (per `dev-workflow/references/ubiquitous-language-pattern.md`). Use the canonical terms from this file when phrasing every subsequent question, recap, and design proposal — never invent a new term when an entry covers the concept. If the file is missing, do not auto-create it (Step 6 may suggest creation if the brainstorm produces new domain vocabulary).
+- **Read `docs/02-architecture/ubiquitous-language.md` if it exists** (per `${CLAUDE_PLUGIN_ROOT}/references/ubiquitous-language-pattern.md`). Use the canonical terms from this file when phrasing every subsequent question, recap, and design proposal — never invent a new term when an entry covers the concept. If the file is missing, do not auto-create it (Step 6 may suggest creation if the brainstorm produces new domain vocabulary).
 
 ### 2. Grill-Loop: Ask Clarifying Questions with Recommended Answers
 
-**Intensity calibration (before asking the first question):** check whether this brainstorm meets the escalation triggers in `dev-workflow/references/grill-protocol.md`:
+**Intensity calibration (before asking the first question):** check whether this brainstorm meets the escalation triggers in `${CLAUDE_PLUGIN_ROOT}/references/grill-protocol.md`:
 
 - Touches 2+ existing modules (cross-impact, dependent decisions)
 - Requirements use abstract / evaluative words without observable criteria
@@ -229,7 +229,7 @@ After design is approved, inform the user based on the design type:
 
 **If recurring domain terms emerged** (3+ session mentions of a noun that doesn't yet appear in `docs/02-architecture/ubiquitous-language.md`, OR the user corrected the AI's terminology):
 
-> Consider updating `docs/02-architecture/ubiquitous-language.md` per `dev-workflow/references/ubiquitous-language-pattern.md`. The file is the shared term ↔ identifier ↔ meaning contract between AI, user, and any domain expert — keeping it current makes subsequent `/write-plan` and `/fix-bug` sessions noticeably tighter (less paraphrasing, fewer terminology corrections).
+> Consider updating `docs/02-architecture/ubiquitous-language.md` per `${CLAUDE_PLUGIN_ROOT}/references/ubiquitous-language-pattern.md`. The file is the shared term ↔ identifier ↔ meaning contract between AI, user, and any domain expert — keeping it current makes subsequent `/write-plan` and `/fix-bug` sessions noticeably tighter (less paraphrasing, fewer terminology corrections).
 
 ## Completion Criteria
 

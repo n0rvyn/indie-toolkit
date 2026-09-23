@@ -73,10 +73,10 @@ Read each section individually with offset and limit derived from the Grep outpu
 **iOS 26+ deployment target 检测**：
 
 读取项目 deployment target（从 Xcode project 或用户输入）。
-- 若 ≥ iOS 26：在 Step 2 派生色板前，先 grep `apple-dev/references/external/ios-liquid-glass/` 获取 Liquid Glass token 模式；grep `apple-dev/references/external/hig/` 获取 Apple HIG 当前规范
+- 若 ≥ iOS 26：在 Step 2 派生色板前，先 grep `${CLAUDE_PLUGIN_ROOT}/references/external/ios-liquid-glass/` 获取 Liquid Glass token 模式；grep `${CLAUDE_PLUGIN_ROOT}/references/external/hig/` 获取 Apple HIG 当前规范
 - 若 < iOS 26：跳过此步
 
-补充来源：`apple-dev/references/swift-api-changes-ios26.md` 的 glassEffect 段亦含 iOS 26 specifics，可作为交叉验证。
+补充来源：`${CLAUDE_PLUGIN_ROOT}/references/swift-api-changes-ios26.md` 的 glassEffect 段亦含 iOS 26 specifics，可作为交叉验证。
 
 ### 2. Derive Color Palette from Primary Color
 
@@ -349,11 +349,11 @@ Return:
 ✅ Design System 生成完成。
 
 **iOS 26+ 项目**：
-- Liquid Glass UX 建议（色彩对比度、glass effect 是否过度使用）→ grep `apple-dev/references/external/ios-design-consultant.md`
+- Liquid Glass UX 建议（色彩对比度、glass effect 是否过度使用）→ grep `${CLAUDE_PLUGIN_ROOT}/references/external/ios-design-consultant.md`
 - 想用 screenshot-driven 视觉迭代生成具体 view → `design-parity-build` skill
 
 **实施时**：
-- 检测 hardcoded value / token 未落地 → `/review-execution`，diff 碰到 `*View.swift` 时自动派 `apple-dev:ui-reviewer`，判据是 `apple-dev/references/design-contract-schema.md`
+- 检测 hardcoded value / token 未落地 → `/review-execution`，diff 碰到 `*View.swift` 时自动派 `apple-dev:ui-reviewer`，判据是 `${CLAUDE_PLUGIN_ROOT}/references/design-contract-schema.md`
 
 > **这里曾经有两条指向 `sync-design-md` / `validate-design-tokens` 的路由，2026-09-04 随两个 skill 一起退役**（记录见 `docs/12-retired/`）。
 >

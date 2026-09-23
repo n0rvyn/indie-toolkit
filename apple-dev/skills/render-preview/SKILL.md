@@ -1,6 +1,6 @@
 ---
 name: render-preview
-description: "Internal tool-wrapper that renders a SwiftUI #Preview to a downsampled PNG and returns a structured { channel, pngPath, downsampled, error } result. Internal callee for run-phase's visual feedback step (hidden from the / menu); not for ad-hoc user requests. Primary path: Apple Xcode MCP RenderPreview; headless fallback: axe / swiftui-render. Not for: running-app / navigation / animation screenshots or XCUITest visual regression (use simctl io or XcodeBuildMCP; patterns in apple-dev/references/xc-ui-test-guide.md), UDID-targeted tests, or design-vs-render diffing (that's the caller's job)."
+description: "Internal tool-wrapper that renders a SwiftUI #Preview to a downsampled PNG and returns a structured { channel, pngPath, downsampled, error } result. Internal callee for run-phase's visual feedback step (hidden from the / menu); not for ad-hoc user requests. Primary path: Apple Xcode MCP RenderPreview; headless fallback: axe / swiftui-render. Not for: running-app / navigation / animation screenshots or XCUITest visual regression (use simctl io or XcodeBuildMCP; patterns in ${CLAUDE_PLUGIN_ROOT}/references/xc-ui-test-guide.md), UDID-targeted tests, or design-vs-render diffing (that's the caller's job)."
 user-invocable: false
 model: haiku
 context: fork
@@ -50,7 +50,7 @@ background: false
 
 ## Process（通道选择，对齐 D-003/D-007）
 
-精确命令参数参见 `apple-dev/references/xcode-mcp-setup.md`，并在执行前核对各工具 `--help`/README。
+精确命令参数参见 `${CLAUDE_PLUGIN_ROOT}/references/xcode-mcp-setup.md`，并在执行前核对各工具 `--help`/README。
 
 ### Step 1：RenderPreview（主路，需 Xcode MCP）
 
@@ -153,5 +153,5 @@ magick <pngPath> -resize 33.333% <outputDir>/<name>_1x.png
 
 ## 参考文档
 
-- 工具安装 + 命令细节：`apple-dev/references/xcode-mcp-setup.md`
+- 工具安装 + 命令细节：`${CLAUDE_PLUGIN_ROOT}/references/xcode-mcp-setup.md`
 - Simulator / xctest 能力分工：`~/.claude/references/xcodebuild-simulator-testing.md`

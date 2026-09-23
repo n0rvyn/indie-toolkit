@@ -137,7 +137,7 @@ For each file provided, check the following dimensions:
 - [ ] 阴影是否克制？（推荐 `opacity ≤ 0.08, radius ≤ 4`）
 - [ ] 卡片内是否有足够 padding（≥ 12pt）不贴边？
 
-> **Same-suffix layout consistency (self-contained gloss):** 同后缀组件按 9 后缀闭集（`Card` / `Row` / `Cell` / `Badge` / `Chip` / `Tile` / `Banner` / `Pill` / `Tag`）成组；同组比对五项属性：宽度行为 / 内边距 / 背景 / 圆角 / 阴影。canonical 4 步算法见 `apple-dev/references/design-contract-schema.md` § 3. Same-suffix layout consistency algorithm（同源、prose 互引、无 runtime 依赖，沿用 line-34 模式）。提取每个组件的 `.frame(` / `.padding(` / `.background(` / `.clipShape(` / `.shadow(` 修饰符，逐项对比；不一致项标记 🔴。
+> **Same-suffix layout consistency (self-contained gloss):** 同后缀组件按 9 后缀闭集（`Card` / `Row` / `Cell` / `Badge` / `Chip` / `Tile` / `Banner` / `Pill` / `Tag`）成组；同组比对五项属性：宽度行为 / 内边距 / 背景 / 圆角 / 阴影。canonical 4 步算法见 `${CLAUDE_PLUGIN_ROOT}/references/design-contract-schema.md` § 3. Same-suffix layout consistency algorithm（同源、prose 互引、无 runtime 依赖，沿用 line-34 模式）。提取每个组件的 `.frame(` / `.padding(` / `.background(` / `.clipShape(` / `.shadow(` 修饰符，逐项对比；不一致项标记 🔴。
 
 ### A6. 图标一致性
 
@@ -193,7 +193,7 @@ For each file provided, check the following dimensions:
 
 ### A12. 间距刻度合规（Spacing Scale Membership）
 
-> 原则：所有间距值必须属于 canonical 间距刻度（`apple-dev/references/design-contract-schema.md` § 1. Canonical spacing scale——同源、prose 互引、无 runtime 依赖，沿用 line-34 模式）。"on scale" 当且仅当值 ∈ `{2, 4, 8, 12, 16, 24, 32, 48, 64}`；set 已 inline 自包含。
+> 原则：所有间距值必须属于 canonical 间距刻度（`${CLAUDE_PLUGIN_ROOT}/references/design-contract-schema.md` § 1. Canonical spacing scale——同源、prose 互引、无 runtime 依赖，沿用 line-34 模式）。"on scale" 当且仅当值 ∈ `{2, 4, 8, 12, 16, 24, 32, 48, 64}`；set 已 inline 自包含。
 
 **检查项**：
 - [ ] 所有 `.padding()` / `spacing:` 数值是否在 canonical 间距刻度内（即 ∈ `{2, 4, 8, 12, 16, 24, 32, 48, 64}`）？
@@ -206,7 +206,7 @@ For each file provided, check the following dimensions:
 
 ### A13. 边框过度使用（Border Overuse）
 
-> 原则：1pt 边框是最弱的容器暗示，堆叠使用 = 视觉拥挤（`apple-dev/references/ui-design-principles.md` §19.5）。替代手段的完整对照表与反例见该文件 §19.5：阴影 / 背景色阶 / 留白 / Section 分组 / 单条强调色边框（§19.2 模式：`.overlay(alignment: .leading) { Rectangle().fill(.accent).frame(width: 3) }`）。
+> 原则：1pt 边框是最弱的容器暗示，堆叠使用 = 视觉拥挤（`${CLAUDE_PLUGIN_ROOT}/references/ui-design-principles.md` §19.5）。替代手段的完整对照表与反例见该文件 §19.5：阴影 / 背景色阶 / 留白 / Section 分组 / 单条强调色边框（§19.2 模式：`.overlay(alignment: .leading) { Rectangle().fill(.accent).frame(width: 3) }`）。
 
 **代码检查**（用 `Grep` **工具**，不要写 Bash —— 本 agent 的 `allowed-tools` 只放行 `mkdir` / `date`）：
 
@@ -227,7 +227,7 @@ For each file provided, check the following dimensions:
 
 ### A14. 核心交互控件用了系统默认样式
 
-> 原则：设置页 / 引导页 / 支付页这类主屏上的 `Toggle` / `Picker` / `DatePicker`，值得定制以体现品牌（`apple-dev/references/ui-design-principles.md` §19.1，含 `BrandToggleStyle` / `BrandSegmentedPickerStyle` / `BrandDatePickerTrigger` 三段可直接抄的实现）。
+> 原则：设置页 / 引导页 / 支付页这类主屏上的 `Toggle` / `Picker` / `DatePicker`，值得定制以体现品牌（`${CLAUDE_PLUGIN_ROOT}/references/ui-design-principles.md` §19.1，含 `BrandToggleStyle` / `BrandSegmentedPickerStyle` / `BrandDatePickerTrigger` 三段可直接抄的实现）。
 
 **代码检查**（用 `Grep` **工具**，两次，都取行号）：
 
@@ -248,7 +248,7 @@ For each file provided, check the following dimensions:
 
 ### A15. Hero / 大标题区域无装饰
 
-> 原则：顶部 Section 或大标题区裸 `Text(...).font(.largeTitle)` 而无背景装饰 = 错失品牌时刻（`apple-dev/references/ui-design-principles.md` §19.3，装饰手段：radial gradient / Canvas pattern / illustration）。
+> 原则：顶部 Section 或大标题区裸 `Text(...).font(.largeTitle)` 而无背景装饰 = 错失品牌时刻（`${CLAUDE_PLUGIN_ROOT}/references/ui-design-principles.md` §19.3，装饰手段：radial gradient / Canvas pattern / illustration）。
 
 **代码检查**（用 `Grep` **工具**，三次）：
 
@@ -271,7 +271,7 @@ For each file provided, check the following dimensions:
 
 ### A16. 材质卡片背景无装饰
 
-> 原则：纯 `.background(.regularMaterial)` 而无强调边框 / 渐变 / 图案 → 工程师感强（`apple-dev/references/ui-design-principles.md` §19.2 单侧 accent border / §19.3 装饰背景）。**注意这问的不是 A5 那个问题** —— A5 问"同类卡片彼此一致吗"，本项问"这张卡有没有性格"。两张一样朴素的卡片能一起通过 A5。
+> 原则：纯 `.background(.regularMaterial)` 而无强调边框 / 渐变 / 图案 → 工程师感强（`${CLAUDE_PLUGIN_ROOT}/references/ui-design-principles.md` §19.2 单侧 accent border / §19.3 装饰背景）。**注意这问的不是 A5 那个问题** —— A5 问"同类卡片彼此一致吗"，本项问"这张卡有没有性格"。两张一样朴素的卡片能一起通过 A5。
 
 **代码检查**（用 `Grep` **工具**）：
 
@@ -285,7 +285,7 @@ For each file provided, check the following dimensions:
 
 ---
 
-> A13–A16 来自已退役的 `apple-dev:audit-finishing-touches`（对 `apple-dev/references/ui-design-principles.md` §17–§20 的机械打磨扫描）。**每条的 §-引用都带上了文件路径** —— 原 skill 有一个「加载参考」步骤先把那份文件读进来，所以它可以裸写 §19.1；搬进 agent 后那个步骤没了，裸 §-号会变成无处可查的引用。它原有 5 项检查，其中 4 项本 agent 没有覆盖，全部搬来；第 5 项（空状态覆盖）本来就**不执行扫描**，只是一句指向 `feature-reviewer` B3 与 `ui-reviewer` 的指针 —— 而 `/review-execution` 已经按 diff 形状派发那两个 agent，指针失去了对象。退役记录：`docs/12-retired/audit-finishing-touches.md`。
+> A13–A16 来自已退役的 `apple-dev:audit-finishing-touches`（对 `${CLAUDE_PLUGIN_ROOT}/references/ui-design-principles.md` §17–§20 的机械打磨扫描）。**每条的 §-引用都带上了文件路径** —— 原 skill 有一个「加载参考」步骤先把那份文件读进来，所以它可以裸写 §19.1；搬进 agent 后那个步骤没了，裸 §-号会变成无处可查的引用。它原有 5 项检查，其中 4 项本 agent 没有覆盖，全部搬来；第 5 项（空状态覆盖）本来就**不执行扫描**，只是一句指向 `feature-reviewer` B3 与 `ui-reviewer` 的指针 —— 而 `/review-execution` 已经按 diff 形状派发那两个 agent，指针失去了对象。退役记录：`docs/12-retired/audit-finishing-touches.md`。
 
 ---
 

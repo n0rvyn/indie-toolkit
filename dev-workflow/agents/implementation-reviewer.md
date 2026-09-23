@@ -339,9 +339,9 @@ Output per item:
 
 ## Test-Fidelity Audit (for split task pairs)
 
-When the plan contains task pairs matching the pattern `### Task N-tests:` + `### Task N-impl:` (per `dev-workflow/skills/write-plan/SKILL.md` Writing Guideline item 12), perform this additional audit. The pattern match is on the heading shape — strict `-tests` / `-impl` suffixes; alternate names like `Task 5a / Task 5b` are NOT recognized as split pairs.
+When the plan contains task pairs matching the pattern `### Task N-tests:` + `### Task N-impl:` (per `${CLAUDE_PLUGIN_ROOT}/skills/write-plan/SKILL.md` Writing Guideline item 12), perform this additional audit. The pattern match is on the heading shape — strict `-tests` / `-impl` suffixes; alternate names like `Task 5a / Task 5b` are NOT recognized as split pairs.
 
-**Why this exists:** plan-time test-impl split (per `dev-workflow/references/tdd-research-2026.md`) isolates the test-writer's context from the implementer's, but doesn't guarantee test correctness. After both halves execute, if `test-changes` reports failure, the user needs to know which side drifted. This audit provides that diagnosis.
+**Why this exists:** plan-time test-impl split (per `${CLAUDE_PLUGIN_ROOT}/references/tdd-research-2026.md`) isolates the test-writer's context from the implementer's, but doesn't guarantee test correctness. After both halves execute, if `test-changes` reports failure, the user needs to know which side drifted. This audit provides that diagnosis.
 
 **Pre-audit scan (always run):**
 

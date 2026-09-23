@@ -184,4 +184,4 @@ python3 $SC assert <app> --locale zh-Hans --field keywords --present 记账 \
 ✅ ASC 上架审查完成。
 
 **ASO 优化**（与 ASC 合规审查互补，关注 metadata discoverability）：
-- App Store 关键词 / 标题 / 副标题 / description 优化与本地化策略 → grep `apple-dev/references/aso-guide.md`
+- App Store 关键词 / 标题 / 副标题 / description 优化与本地化策略 → grep `${CLAUDE_PLUGIN_ROOT}/references/aso-guide.md`

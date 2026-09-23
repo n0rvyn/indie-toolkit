@@ -85,7 +85,7 @@ Execute the audit subset per mode (see **Mode Behavior** section below). For eac
 
 **Reuse rules** (do not re-implement):
 
-- Token value comparison (color, spacing, typography): follow `apple-dev/references/design-contract-schema.md` § 2 (per-channel max-delta ≤ 4 for color; exact for spacing; ±0.01 opacity for shadows) — that file is the authority and carries the exact one-liner.
+- Token value comparison (color, spacing, typography): follow `${CLAUDE_PLUGIN_ROOT}/references/design-contract-schema.md` § 2 (per-channel max-delta ≤ 4 for color; exact for spacing; ±0.01 opacity for shadows) — that file is the authority and carries the exact one-liner.
 - Token field naming and `DESIGN.md → Swift` mapping: follow `apple-dev:project-kickoff` `references/doc-templates.md` section "DESIGN.md → Swift Token 映射" rules where applicable.
 
 For each implemented page, search the iOS codebase by:

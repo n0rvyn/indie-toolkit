@@ -124,7 +124,7 @@ If the user specifies a different Phase number, use that instead.
 
 Before Step 1.5, read `.claude/dev-workflow-health.json` if present.
 
-- If state is missing, OR `last_health` has any red signal, OR state's `updated_at` is older than 7 days, run `dev-workflow/scripts/project_health_scan.py --mode full --reason plan --check-staleness 7 --max-ms 5000 --format markdown --write-state` and use the fresh report.
+- If state is missing, OR `last_health` has any red signal, OR state's `updated_at` is older than 7 days, run `${CLAUDE_PLUGIN_ROOT}/scripts/project_health_scan.py --mode full --reason plan --check-staleness 7 --max-ms 5000 --format markdown --write-state` and use the fresh report.
 - Otherwise reuse cached `last_health` from state (no scan invocation).
 - Summarize red/yellow Project Health signals before planning.
 - Feed those signals into the write-plan context so the plan header includes `**Project health:**`.

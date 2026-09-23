@@ -95,7 +95,6 @@ Do NOT paste the full HTML or large tables into chat. The HTML is the deliverabl
 - HTML written to `~/Desktop/token-audit-<timestamp>.html`
 - HTML opened in default browser
 - 3-bullet summary delivered in chat (total / top driver / top recommendations)
-- **Cadence marker written**: `mkdir -p ~/.claude && date -u +%Y-%m-%dT%H:%M:%SZ > ~/.claude/last-audit-tokens-run` — the `suggest-skills.sh` UserPromptSubmit hook reads this file's mtime to compute "days since last audit" and suppress its 14-day cadence nudge. Without this write, the bootstrap nudge fires perpetually.
 
 ## Notes
 

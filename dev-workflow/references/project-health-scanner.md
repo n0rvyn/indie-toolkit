@@ -17,15 +17,6 @@
 | `test_pressure` | Source/test ratio pressure |
 | `active_churn` | Dirty worktree and changed-file pressure |
 
-## Hook Contract
-
-`suggest-skills.sh` runs light mode only for plan/fix/dev-guide/commit prompts with `--max-ms 250`.
-
-Hook behavior:
-- print at most one `[health-hint]`
-- never ask questions
-- exit 0 on scanner failure, timeout, or corrupt state
-
 ## State Contract
 
 `--write-state` writes only to:

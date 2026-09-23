@@ -10,9 +10,7 @@ import sys
 import tempfile
 
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
 SCRIPT = pathlib.Path(__file__).with_name("project_health_scan.py")
-HOOK = ROOT / "dev-workflow" / "hooks" / "suggest-skills.sh"
 
 
 def run(*args: str, cwd: pathlib.Path | None = None, stdin: str | None = None) -> subprocess.CompletedProcess[str]:
@@ -58,19 +56,6 @@ def main() -> int:
         assert state_path.exists()
         # Defensive: confirm the renamed file did not leak into a hardcoded historical path elsewhere on disk
         assert not pathlib.Path("/Users/norvyn/.adam/dev-workflow-health.json").exists()
-
-    hook = subprocess.run(
-        ["bash", str(HOOK)],
-        cwd=ROOT,
-        input='{"prompt":"write a plan for this change"}',
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
-    assert hook.returncode == 0, hook.stderr
-    health_lines = [line for line in hook.stdout.splitlines() if line.startswith("[health-hint]")]
-    assert len(health_lines) <= 1
 
     print("project-health-scan-fixtures-ok")
     return 0

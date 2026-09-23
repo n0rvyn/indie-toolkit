@@ -1,9 +1,8 @@
-{"session": "b1d8259f", "project": "-Code-Projects-EasyBoard", "start": "2026-08-31T01:10", "minutes": 86.6, "main_usd": 17.07, "sub_usd": 7.86, "tools": 104, "agents": 5, "human_turns": 3, "frustration": 0}
-{"session": "000c2c1b", "project": "-Code-Projects-EasyBoard", "start": "2026-08-31T02:38", "minutes": 164.8, "main_usd": 44.77, "sub_usd": 0, "tools": 204, "agents": 0, "human_turns": 14, "frustration": 6}
-{"session": "2f88dd90", "project": "die-toolkit-dev-workflow", "start": "2026-09-12T01:07", "minutes": 97.4, "main_usd": 10.41, "sub_usd": 0, "tools": 55, "agents": 0, "human_turns": 5, "frustration": 0}
-{"session": "da20a73e", "project": "vyn-Code-Projects-Cashie", "start": "2026-09-17T00:59", "minutes": 146.4, "main_usd": 24.36, "sub_usd": 4.22, "tools": 129, "agents": 1, "human_turns": 2, "frustration": 0}
-{"session": "60418387", "project": "vyn-Code-Projects-Cashie", "start": "2026-09-17T00:59", "minutes": 174.5, "main_usd": 35.02, "sub_usd": 0, "tools": 167, "agents": 1, "human_turns": 2, "frustration": 0}
-{"session": "7fe28372", "project": "vyn-Code-Projects-Cashie", "start": "2026-09-17T04:02", "minutes": 66.3, "main_usd": 17.59, "sub_usd": 10.16, "tools": 113, "agents": 3, "human_turns": 1, "frustration": 0}
-{"session": "aae458c5", "project": "vyn-Code-Projects-Lifuel", "start": "2026-09-20T05:03", "minutes": 115.2, "main_usd": 35.06, "sub_usd": 4.14, "tools": 162, "agents": 2, "human_turns": 3, "frustration": 0}
-{"session": "41a8d0c0", "project": "vyn-Code-Projects-Lifuel", "start": "2026-09-22T07:54", "minutes": 87.6, "main_usd": 17.53, "sub_usd": 0.2, "tools": 103, "agents": 1, "human_turns": 7, "frustration": 2}
-# episodes=8 median_usd=28.16 mean_usd=28.55 median_min=106.30000000000001 median_tools=121.0 median_agents=1.0 median_human_turns=3.0 episodes_with_frustration=2
+{"session": "b1d8259f", "version": "old", "project": "-Code-Projects-EasyBoard", "start": "2026-08-31T01:10", "minutes": 86.6, "main_usd": 17.07, "sub_usd": 7.86, "tools": 104, "agents": 5, "human_turns": 3, "frustration": 0}
+{"session": "000c2c1b", "version": "old", "project": "-Code-Projects-EasyBoard", "start": "2026-08-31T02:38", "minutes": 164.8, "main_usd": 44.77, "sub_usd": 0, "tools": 204, "agents": 0, "human_turns": 14, "frustration": 6}
+{"session": "da20a73e", "version": "old", "project": "vyn-Code-Projects-Cashie", "start": "2026-09-17T00:59", "minutes": 146.4, "main_usd": 24.36, "sub_usd": 4.22, "tools": 129, "agents": 1, "human_turns": 2, "frustration": 0}
+{"session": "60418387", "version": "old", "project": "vyn-Code-Projects-Cashie", "start": "2026-09-17T00:59", "minutes": 174.5, "main_usd": 35.02, "sub_usd": 0, "tools": 167, "agents": 1, "human_turns": 2, "frustration": 0}
+{"session": "7fe28372", "version": "old", "project": "vyn-Code-Projects-Cashie", "start": "2026-09-17T04:02", "minutes": 66.3, "main_usd": 17.59, "sub_usd": 10.16, "tools": 113, "agents": 3, "human_turns": 1, "frustration": 0}
+{"session": "aae458c5", "version": "old", "project": "vyn-Code-Projects-Lifuel", "start": "2026-09-20T05:03", "minutes": 115.2, "main_usd": 35.06, "sub_usd": 4.14, "tools": 162, "agents": 2, "human_turns": 3, "frustration": 0}
+{"session": "41a8d0c0", "version": "old", "project": "vyn-Code-Projects-Lifuel", "start": "2026-09-22T07:54", "minutes": 87.6, "main_usd": 17.53, "sub_usd": 0.2, "tools": 103, "agents": 1, "human_turns": 7, "frustration": 2}
+# version=old episodes=7 median_usd=28.58 mean_usd=31.14 median_min=115.2 median_tools=129 median_agents=1 median_human_turns=3 episodes_with_frustration=2

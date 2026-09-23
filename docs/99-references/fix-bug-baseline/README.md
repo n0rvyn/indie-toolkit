@@ -2,10 +2,11 @@
 
 **2026-09-23 改版**：fix-bug 从固定流程改成「给方向、不给步骤」。改前的流程是：派 readback 代理、硬停等确认、每个修复都经 write-plan 和 verify-plan、先写测试。改后只规定三件事：从哪儿开始（用大白话说清现状和预期），怎样算完成（在用户的真实路径上验证过），哪些路先排除（已知的陷阱）。
 
-**以后回来审计时**：用同一个脚本、同一套价格表再跑一次，拿结果和下面两份基线比。
+**以后回来审计时**：用同一个脚本、同一套价格表再跑一次，拿结果和下面两份基线比。**按 `version` 字段分前后，不要按日期分。** 新版 fix-bug 要等 push、自动发版、再 `/plugin update` 之后才会生效，在那之前的会话加载的仍然是旧版，只按日期切会把新旧两版混在一起。`version` 的判法：看这个 episode 实际加载的技能正文里有没有「Paths that don't lead out」，有就是新版；有「Step pre-0」就是旧版。
 
 ```bash
-python3 docs/99-references/fix-bug-baseline/measure.py --since 2026-09-24 > after-<date>.jsonl
+python3 docs/99-references/fix-bug-baseline/measure.py --since 2026-09-23 > after-<date>.jsonl
+# 看末尾的 `# version=new ...` 那一行，和本文件的 old 基线比
 ```
 
 ## 基线一：本机真实会话（2026-08-05 到 2026-09-23）
@@ -14,19 +15,19 @@ python3 docs/99-references/fix-bug-baseline/measure.py --since 2026-09-24 > afte
 
 | 指标 | 值 |
 |---|---|
-| episode 数 | 8 个（5 个项目） |
-| 每次费用，中位 / 平均 | $28.16 / $28.55 |
-| 每次墙钟，中位 | 106 分钟 |
-| 每次主会话工具调用，中位 | 121 次 |
+| episode 数 | 7 个（3 个项目），全部 `version=old` |
+| 每次费用，中位 / 平均 | $28.58 / $31.14 |
+| 每次墙钟，中位 | 115 分钟 |
+| 每次主会话工具调用，中位 | 129 次 |
 | 每次派子代理，中位 | 1 个 |
 | 每次人工轮次，中位 | 3 轮 |
-| 期间用户发过火的 episode | 2 / 8（EasyBoard 08-31 发火 6 次；Lifuel 09-22 发火 2 次） |
+| 期间用户发过火的 episode | 2 / 7（EasyBoard 08-31 发火 6 次；Lifuel 09-22 发火 2 次） |
 
 说明：
 - 费用按仓库 2026-06 价格表（Opus 4.8 / Sonnet 4.6）计算；实际跑的是 Opus 5 / 5.5。这个数只用来前后对比，不代表真实账单。
-- 另有 2 次 scratchpad 探针运行，没有计入。
-- 发火次数取自 `~/.claude/fuck-moments.jsonl`。这 8 个会话里的 8 条发火记录全部落在 episode 时间窗内，说明时间关联是对的。
-- 样本只有 8 个，前后对比时要一起看逐条记录，不能只看中位数。
+- 没有计入的：2 次 scratchpad 探针运行；1 个只是在工具输出里提到了 fix-bug 的会话（统计时只认用户敲的命令和模型的 Skill 调用）。
+- 发火次数取自 `~/.claude/fuck-moments.jsonl`。这几个会话里的 8 条发火记录全部落在 episode 时间窗内，说明时间关联是对的。
+- 样本只有 7 个，前后对比时要一起看逐条记录，不能只看中位数。
 
 ## 基线二：受控 A/B（2026-09-12，旧版 fix-bug）
 

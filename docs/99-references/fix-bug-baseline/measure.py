@@ -2,14 +2,17 @@
 """Measure fix-bug episodes in local Claude Code transcripts.
 
 Rerun unchanged for the before/after audit:
-    python3 measure.py --since 2026-08-05 --until 2026-09-23   # baseline
-    python3 measure.py --since <change date>                    # after
+    python3 measure.py --since 2026-08-05 --until 2026-09-24   # baseline (all version=old)
+    python3 measure.py --since 2026-09-23                       # after: compare version=new rows
 
 Episode: starts at a fix-bug invocation (model Skill call, or user-typed
 /fix-bug, or /dev-workflow:fix-bug), ends at the next fix-bug invocation in the
 same session, a gap of more than 30 idle minutes, or the session end.
 
-Per episode: wall minutes, main-session USD, subagent USD (sidechain transcripts
+Per episode: which fix-bug body was loaded (`version`: "new" when the loaded
+skill text contains "Paths that don't lead out", "old" when it contains
+"Step pre-0", else "unknown"; the rewrite only reaches a session after the
+plugin cache updates, so split before/after by this field, not by date), wall minutes, main-session USD, subagent USD (sidechain transcripts
 whose first record falls inside the episode), main tool calls, subagents
 dispatched, human turns, frustration hits from ~/.claude/fuck-moments.jsonl.
 
@@ -50,7 +53,11 @@ def is_invocation(d):
         return any(b.get("type") == "tool_use" and b.get("name") == "Skill"
                    and b.get("input", {}).get("skill", "").split(":")[-1] == "fix-bug" for b in c)
     if d.get("type") == "user" and not d.get("isSidechain"):
-        s = c if isinstance(c, str) else json.dumps(c, ensure_ascii=False) if c else ""
+        # typed prompts only: tool_result blocks can quote the tag (greps, file reads)
+        if isinstance(c, str):
+            s = c
+        else:
+            s = " ".join(b.get("text", "") for b in c or [] if isinstance(b, dict) and b.get("type") == "text")
         return bool(re.search(r"<command-name>/(dev-workflow:)?fix-bug</command-name>", s))
     return False
 
@@ -116,6 +123,7 @@ def main():
             stop = starts[n + 1] if n + 1 < len(starts) else len(L)
             t0 = last = ts(L[i])
             usd, tools, agents, humans, seen = 0.0, 0, 0, 0, set()
+            version = "unknown"
             for d in L[i:stop]:
                 t = ts(d)
                 if t and t - last > IDLE:
@@ -132,23 +140,32 @@ def main():
                             tools += 1
                             agents += b.get("name") in ("Agent", "Task", "Workflow")
                 humans += human_turn(d)
+                if version == "unknown" and d.get("type") == "user":
+                    body = json.dumps(m.get("content"), ensure_ascii=False)
+                    if "Paths that don't lead out" in body:
+                        version = "new"
+                    elif "Step pre-0" in body:
+                        version = "old"
             sub = sum(c for t, c in subs if t0 <= t <= last)
             loc = lambda x: x.astimezone().replace(tzinfo=None)
             # the log stores either the 8-char prefix or the full session id
             hits = sum(1 for s, t in rage if s[:8] == sid and loc(t0) <= t <= loc(last))
-            eps.append(dict(session=sid, project=f.split("/")[-2][-24:], start=t0.isoformat()[:16],
+            eps.append(dict(session=sid, version=version, project=f.split("/")[-2][-24:], start=t0.isoformat()[:16],
                             minutes=round((last - t0).total_seconds() / 60, 1), main_usd=round(usd, 2),
                             sub_usd=round(sub, 2), tools=tools, agents=agents, human_turns=humans, frustration=hits))
     eps.sort(key=lambda e: e["start"])
     for e in eps:
         print(json.dumps(e, ensure_ascii=False))
-    if eps:
-        tot = [e["main_usd"] + e["sub_usd"] for e in eps]
-        med = lambda k: statistics.median(e[k] for e in eps)
-        print(f"# episodes={len(eps)} median_usd={statistics.median(tot):.2f} mean_usd={statistics.mean(tot):.2f} "
+    for v in ("old", "new", "unknown"):
+        grp = [e for e in eps if e["version"] == v]
+        if not grp:
+            continue
+        tot = [e["main_usd"] + e["sub_usd"] for e in grp]
+        med = lambda k: statistics.median(e[k] for e in grp)
+        print(f"# version={v} episodes={len(grp)} median_usd={statistics.median(tot):.2f} mean_usd={statistics.mean(tot):.2f} "
               f"median_min={med('minutes')} median_tools={med('tools')} median_agents={med('agents')} "
               f"median_human_turns={med('human_turns')} "
-              f"episodes_with_frustration={sum(e['frustration'] > 0 for e in eps)}")
+              f"episodes_with_frustration={sum(e['frustration'] > 0 for e in grp)}")
 
 
 if __name__ == "__main__":

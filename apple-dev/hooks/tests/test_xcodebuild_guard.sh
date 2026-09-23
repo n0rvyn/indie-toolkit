@@ -59,6 +59,13 @@ except Exception:
 echo "== layer a: heredoc bodies are not shell =="
 
 # The exact shape that was denied twice on 2026-08-10.
+run_case "env-assignment prefix does not hide name= (2026-09-23 bypass)" \
+    "FOO=1 xcodebuild test -scheme A -destination 'platform=iOS Simulator,name=iPhone 16'" deny
+run_case "quoted env-assignment prefix does not hide name=" \
+    "A='x y' B=2 xcodebuild test -scheme A -destination 'platform=iOS Simulator,name=iPhone 16'" deny
+run_case "env prefix on a non-xcodebuild command stays allowed" \
+    "FOO=1 ls -la" none
+
 run_case "heredoc body quoting the command is not an invocation" \
 "python3 - <<'PYEOF'
 import pathlib

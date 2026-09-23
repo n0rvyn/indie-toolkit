@@ -82,6 +82,10 @@ def _strip_heredocs(command):
     return "\n".join(out)
 
 
+# 行首的 `NAME=value` 赋值；值可带单/双引号（引号内允许空格）。
+_ENV_ASSIGN = re.compile(r"""[A-Za-z_][A-Za-z0-9_]*=(?:'[^']*'|"[^"]*"|\S*)\s+""")
+
+
 def _segments(command):
     """Shell segments, each stripped of leading env assignments and `cd x &&`."""
     for raw in SEGMENT_SPLIT.split(_strip_heredocs(command)):
@@ -96,6 +100,13 @@ def _segments(command):
             head = seg.split(None, 1)
             if len(head) == 2 and head[0] in ("do", "then", "else", "!", "exec"):
                 seg = head[1].strip()
+                continue
+            # ⚠️ 剥掉行首的环境变量赋值（`FOO=1 xcodebuild test …`）。不剥的话首 token
+            #   是 `FOO=1`，`_is_invocation` 认不出，整条放行 —— 2026-09-23 实测：
+            #   带前缀的 `name=` 写法 rc 0 无输出，去掉前缀的同一条被拒（对照）。
+            m = _ENV_ASSIGN.match(seg)
+            if m:
+                seg = seg[m.end():].strip()
                 continue
             break
         if seg:

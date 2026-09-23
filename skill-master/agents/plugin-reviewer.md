@@ -8,7 +8,7 @@ description: |
 
   <example>
   Context: User just created a new skill and agent.
-  user: "Review the new design-drift skill and agents"
+  user: "Review the new next-increment skill and agents"
   assistant: "I'll use the plugin-reviewer agent to review these artifacts."
   </example>
 

@@ -143,7 +143,6 @@ def update_full(report: dict[str, Any], root: pathlib.Path, budget: Budget) -> N
             report["signals"]["doc_drift"] = signal("yellow", ["CLAUDE.md and AGENTS.md share no headings"])
     if (root / "CONTEXT.md").exists() and (root / "docs" / "00-AI-CONTEXT.md").exists():
         report["signals"]["doc_drift"] = signal("red", ["two canonical context candidates: CONTEXT.md and docs/00-AI-CONTEXT.md"])
-        report["suggested_gates"].append("design-drift")
 
     source_exts = {".swift", ".ts", ".tsx", ".js", ".jsx", ".py"}
     source_files = []

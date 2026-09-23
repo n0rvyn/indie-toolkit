@@ -101,7 +101,7 @@ Skills are categorized by how they enter the runtime. This governs `user-invocab
 |---|---|---|
 | **Flow entry** (user types or model routes) | `user-invocable: true` | write-dev-guide, run-phase, write-plan, verify-plan, fix-bug, brainstorm, commit, review-before-commit, review-execution, finalize, finish-branch, issue, kb, crystallize, collect-lesson, handoff, fork-this, audit-tokens |
 | **Inline only** (dispatched by other skills, never user-typed) | `user-invocable: false` | execute-plan, test-changes, feature-spec-writer (agent), design-analyzer (agent), reviewer agents (ui/design/feature/apple-reviewer) |
-| **Long-tail / on-demand** (rarely needed, kept for the case when needed) | `user-invocable: true` | design-drift, audit-rules, next-increment, distill-discussion, generate-bases-views, design-parity-build (apple-dev), characterization-test (apple-dev) |
+| **Long-tail / on-demand** (rarely needed, kept for the case when needed) | `user-invocable: true` | audit-rules, next-increment, distill-discussion, generate-bases-views, design-parity-build (apple-dev), characterization-test (apple-dev) |
 | **Guide / reference** (advisory pattern doc, not executable workflow) | should be a reference, not a skill | parallel-agents (now at references/parallel-agents.md); use EnterWorktree tool directly for worktree operations |
 
 **Adding a new skill?** Decide its role first. Flow-entry skills must map to A/B/C or justify a new flow. Inline-only skills must have a named driver (another skill that dispatches them). Long-tail skills must have a stated trigger condition (typically "when user mentions X" or "when N commits since Y"). Guide-type entries should be reference files under `references/`, not SKILL.md files.
@@ -130,7 +130,6 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | execute-plan | sonnet | Glob, Grep, Read, Write, Edit, Bash, LSP | Per-task plan executor — invoked by the execute-plan Workflow, runs one task + Verify, returns a structured result. Writes no bookkeeping files; the main agent is sole writer of the checkpoint and execution report |
 | test-runner | sonnet | Glob, Grep, Read, Write, Bash | Runs build/test/lint suite, filters output to errors + summary, writes structured report |
 | design-analyzer | opus | Glob, Grep, Read, Write | Multi-modal design prototype analysis (dual-channel image+code) |
-| design-drift-auditor | opus | Glob, Grep, Read | Design document vs codebase drift detection (read-only) |
 | flow-tracer | opus | Glob, Grep, Read | End-to-end call chain tracing with break detection (read-only) |
 | implementation-reviewer | opus | Glob, Grep, Read, Bash, Write | Plan-vs-code verification and design fidelity audit |
 | plan-verifier | opus | Glob, Grep, Read, Bash, Write | Verification-first plan validation (S1/S2/U1/DF/CF/AR) |
@@ -175,7 +174,6 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | audit-rules | dispatcher | Gathers context, dispatches rules-auditor agent |
 | audit-tokens | fork (sonnet) | Multi-dimensional Claude Code token consumption analysis with self-contained HTML report; auto cost-posture recommendations; auto-invokes its own scripts/diagnose.py for root-cause attribution |
 | fork-this | fork (sonnet) | Mid-session orthogonal split: when topic A's discussion surfaces problem B, generate minimal seed prompt for B in a new session WITHOUT polluting current A context |
-| design-drift | dispatcher | Design document vs codebase drift audit |
 | crystallize | interactive | Lock settled decisions from current session into a persistent crystal file |
 | collect-lesson | interactive | Capture development lessons learned |
 | kb | interactive | Cross-project knowledge base search with freshness indicators |

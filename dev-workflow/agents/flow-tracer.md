@@ -3,7 +3,7 @@ name: flow-tracer
 description: |
   Use this agent to trace a call chain end-to-end through the codebase given a natural language flow description.
   Identifies each hop with file:line and reports breaks (signal with no consumer, call to nonexistent target, field written but never read).
-  Can be dispatched by the design-drift skill for deep verification, or directly by a user for diagnostic purposes.
+  Dispatched directly when a user wants a flow traced for diagnosis.
   Optimized for Swift/iOS codebases; search patterns and terminal node definitions reflect Apple platform conventions.
 
   Examples:

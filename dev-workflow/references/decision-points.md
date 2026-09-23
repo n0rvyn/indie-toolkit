@@ -9,7 +9,6 @@ This reference is consumed by skill DP handling steps. Not user-facing.
 - `run-phase` Step 6 #6 — spec file, mode `full`, recording default
 - `run-phase` Step 7 #8 — review report, mode `mixed`, recording default
 - `understand-design` — design-analysis file, mode `mixed`, recording default
-- `design-drift` — drift report, mode `mixed`, recording `conversation-only`
 - `write-feature-spec` — spec file, mode `mixed`, recording default
 - `audit-rules` — audit report, mode `mixed`, recording `conversation-only`
 - `execute-plan` Step 1 #3 — plan file, **inline short-form** (see §"Note on inline variant"), recording default
@@ -158,13 +157,12 @@ This is what downstream consumers depend on:
 
 ### Conversation-only recording (`recording: conversation-only`)
 
-Some skills (`design-drift`, `audit-rules`) produce DPs from transient findings — drift items or rule-audit recommendations — that don't belong in a long-lived plan or spec. For these:
+Some skills (`audit-rules`) produce DPs from transient findings — rule-audit recommendations — that don't belong in a long-lived plan or spec. For these:
 
 - Record the user's choice in the ongoing conversation only (note which option was chosen for each DP).
 - **Do not write `**Chosen:**` back to the source file.**
 - Downstream handling varies by skill:
   - **Same-skill consumption**: `audit-rules` Step 4-5 reads the conversation record to decide which fixes to apply in the current run.
-  - **Advisory handoff**: `design-drift` ends after presenting findings; the user carries the choices forward into follow-up work (doc updates, issue creation) outside this skill.
 
 ## Note on Inline Variant
 

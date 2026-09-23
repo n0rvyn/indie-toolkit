@@ -37,6 +37,7 @@ git 重建不出来的：**为什么当初做它、为什么后来不要了、�
 
 | 记录 | 退役日 | 一句话 |
 |---|---|---|
+| [design-drift](design-drift.md) | 2026-09-23 | 对用户隐藏又无调用方，零使用；职责已被 DF / implementation-reviewer / ui-reviewer 分掉 |
 | [notion-skills](notion-skills.md) | 2026-09-23 | ASC 文档迁出 Notion，需求消失；直接用官方 Notion MCP |
 | [product-lens](product-lens.md) | 2026-09-23 | 纯推理打分框架，零使用；产品判断要挂在真实数据上 |
 | [readback](readback.md) | 2026-09-23 | 复述想法保留为 reference；hook + 代理 + 状态文件的机械触发与硬停退役 |

@@ -133,8 +133,6 @@ rm -rf "$SIM"
 
 printf '\n\033[1mD · Wires (repo greps — v1 checks, kept)\033[0m\n'
 w() { if eval "$2"; then say_ok "$1"; else say_bad "$1"; fi }
-w "design-drift-auditor extracts from ## Build Contract" \
-  "grep -q '## Build Contract' '$TK/dev-workflow/agents/design-drift-auditor.md'"
 w "ui-reviewer reads design-rules.md" \
   "grep -q 'design-rules.md' '$TK/apple-dev/agents/ui-reviewer.md'"
 w "flow-tracer has field-never-written" \

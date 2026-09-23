@@ -37,6 +37,7 @@ git 重建不出来的：**为什么当初做它、为什么后来不要了、�
 
 | 记录 | 退役日 | 一句话 |
 |---|---|---|
+| [xcb-runner](xcb-runner.md) | 2026-09-23 | 测试 runner + run-tests 技能；目标是省 token，投入严重不成比例，未发布即退役 |
 | [swiftdata-patterns](swiftdata-patterns.md) | 2026-09-04 | 参考加载器壳，Topic Router 已指向同一文件 |
 | [testing-guide](testing-guide.md) | 2026-09-04 | 同上；且唯一的调用方没有调用能力 |
 | [profiling](profiling.md) | 2026-09-04 | 同上 |

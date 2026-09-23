@@ -140,3 +140,8 @@ Removing/renaming input or changing default behavior → breaking, requires `wor
 
 **Scope**：使用 plugin 名（如 `feat(dev-workflow):`），跨 plugin 用 `chore(release):` 或 `docs:`。
 
+
+## 区域约束（revert 后提取）
+
+- ⛔ 不动：为 xcodebuild / swift 跑测试另建 runner 脚本、锁、function hook 这类基础设施（2026-09-23 revert，解除需用户明确说可以改）。现有做法是 reference 加规则里的一行命令，以及已有的经典守卫 `xcodebuild-guard.py`。背景见 `docs/12-retired/xcb-runner.md`
+- 来源：session_01LgDSGegJDwseq7ma1SM9pK 用户原话「全不要了，把这个skill也销了；skill里面有啥reference里面没有的内容，补足（如果double确认有用）。为了省那点token浪费这么多精力测试、开发、eval，我觉得不值。」

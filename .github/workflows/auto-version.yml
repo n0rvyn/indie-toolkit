@@ -8,7 +8,6 @@ on:
       - "apple-dev/**"
       - "mactools/**"
       - "skill-master/**"
-      - "shared-utils/**"
       - "miniprogram/**"
   workflow_call:
     inputs:
@@ -70,7 +69,7 @@ jobs:
           else
             # push path (indie-toolkit's own native trigger)
             MARKET_FILE=".claude-plugin/marketplace.json"
-            ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "skill-master" "shared-utils" "miniprogram")
+            ALL_PLUGINS=("dev-workflow" "apple-dev" "mactools" "skill-master" "miniprogram")
             MARKET_TAG_PREFIX="indie-toolkit-"
           fi
 

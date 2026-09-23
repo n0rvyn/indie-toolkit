@@ -76,20 +76,6 @@
       "strict": true
     },
     {
-      "name": "shared-utils",
-      "source": "./shared-utils",
-      "description": "Reusable utility scripts and skills shared across indie-toolkit plugins: HTML acceptance reports, MongoDB queries, and other cross-plugin primitives",
-      "version": "0.2.2",
-      "category": "development",
-      "tags": [
-        "shared",
-        "utilities",
-        "mongodb",
-        "cross-plugin"
-      ],
-      "strict": true
-    },
-    {
       "name": "miniprogram",
       "source": "./miniprogram",
       "description": "WeChat mini program development QA: headless UI verification against running devtools, and pre-submission config/compliance checks",

@@ -10,7 +10,6 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 | `apple-dev` | development | iOS/macOS/iPadOS development: review agents, design parity, visual audit, runtime feature verification, CI/CD, App Store review prep |
 | `mactools` | productivity | macOS automation for Notes, Calendar, Mail, Safari, Spotlight, Reminders, OCR, Photos, Contacts, OmniFocus, disk reclaim |
 | `skill-master` | development | Unified plugin lifecycle: create, eval, review, iterate, package Claude Code plugins. Entry: `/plugin-master` |
-| `shared-utils` | development | Reusable utility scripts and skills shared across plugins: HTML acceptance reports, MongoDB queries, cross-plugin primitives |
 | [miniprogram](miniprogram/README.md) | development | WeChat mini program QA: headless UI verification against running devtools (screenshot + `page.data()` + geometry), and pre-submission config/compliance checks |
 
 ## Repository Layout
@@ -21,7 +20,6 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 ├── apple-dev/
 ├── mactools/
 ├── skill-master/
-├── shared-utils/
 ├── docs/
 └── .claude-plugin/   # marketplace manifest
 ```
@@ -41,7 +39,6 @@ Install plugins:
 /plugin install apple-dev@indie-toolkit
 /plugin install mactools@indie-toolkit
 /plugin install skill-master@indie-toolkit
-/plugin install shared-utils@indie-toolkit
 ```
 
 For personal OS plugins — `/health`, `/reflect`, `/intel`, `/scout`, `/pkos`, `/portfolio-scan` and related — see the [personal-os marketplace](https://github.com/n0rvyn/personal-os).
@@ -60,4 +57,3 @@ Each plugin has its own `README.md`:
 - `apple-dev/README.md` — iOS/macOS/iPadOS development
 - `mactools/README.md` — macOS automation
 - `skill-master/README.md` — Plugin lifecycle management
-- `shared-utils/README.md` — Reusable cross-plugin utility scripts and skills

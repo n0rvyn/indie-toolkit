@@ -23,7 +23,7 @@ disable-model-invocation: true
 1. **Drive to green** — suppress pacing pauses; honor every severity gate. Auto-resolve low-severity decisions to their recommended option.
 2. **Every stop drops a thin handoff card** — at any terminal enumerated in `## The Stop Policy` (severity gates *and* cannot-proceed terminals; that table is the single list, never restated elsewhere), it writes a thin card (`Stopped at` / `Why` / `Next action` / `Pointers` / `Resume with`) at `.claude/self-pacing/<target-slug>-handoff.md`, then **ends the turn** so the user gets a CC idle notification.
 3. **You come back (hot resume in the same session, or cold resume in a new one)** — read the handoff card to locate the stop, then follow the `Pointers` to the crystal / run-log / checkpoint / state / plan files to pick up.
-4. **Closure** — when the run reaches green (or halts at a severity gate), emit a final HTML report via `shared-utils:html-report`, with the run log + crystal as source of truth.
+4. **Closure** — when the run reaches green (or halts at a severity gate), write a final HTML report (one self-contained file), with the run log + crystal as source of truth.
 
 User decisions (blocking DPs) lock into crystals via `crystallize`; automatic actions (auto-resolved decisions, deferrals, seam crossings, stops) accumulate in the run log. The handoff card is **thin by design** — it carries pointers + stop-delta, not full context. Source of truth stays on disk (code, state files, crystal, run log).
 
@@ -260,10 +260,10 @@ Per unit (one plan / one phase):
 
 ### Step 4: Final consolidated review (the promised single review)
 
-**Invoke `shared-utils:html-report`** to render the consolidated review. Constraints (these are non-negotiable — violating them breaks resume + source-of-truth):
+**Write the consolidated review as one self-contained HTML file** at `docs/reports/{YYYY-MM-DD}-{target-slug}.html`: inline CSS, no JavaScript, no external URLs, so it opens offline. Constraints (these are non-negotiable — violating them breaks resume + source-of-truth):
 
 - **Source of truth: run log + crystal.** The HTML report reads from `.claude/self-pacing/<target-slug>.md` (every auto-decision, deferral, seam crossing, screenshot path, stop) and `docs/11-crystals/*-crystal.md` (user-locked decisions). No narrative reconstruction from chat history — chat is not authoritative; the run log + crystal are.
-- **Main session, not forked.** Invoke `shared-utils:html-report` in this session. Do NOT use `context: fork` for it — a forked agent cannot see this session's chat context (and on cold-start resume, the session context is empty anyway). The report must be produced by a renderer that reads disk artifacts, not by an agent that reconstructs them from memory.
+- **Main session, not forked.** Write the report in this session. Do NOT hand it to a forked agent — a forked agent cannot see this session's chat context (and on cold-start resume, the session context is empty anyway). The report must be produced by a renderer that reads disk artifacts, not by an agent that reconstructs them from memory.
 
 Present at the stop point (phase mode: the seam; guide mode: end of all phases, or wherever it halted):
 
@@ -342,4 +342,4 @@ Do not skip the card and read the artifacts directly — they answer "what" with
 - **If ≥1 blocking DP was resolved at the Step 2 sweep**, the corresponding crystal exists at `docs/11-crystals/<date>-<topic>-crystal.md` (one file, written by Step 2's `crystallize` invocation after the user answered the DPs). If zero blocking DPs were collected, this criterion does not apply — the run is complete without a crystal by design.
 - Every STOP that fired during the run has a stop card on disk (`.claude/self-pacing/<target-slug>-handoff.md`); the final card reflects the most recent stop, not a stale one.
 - Every **terminal** STOP (per the `Two-tier handoff` mode table) also has a `docs/06-plans/HANDOFF-YYYY-MM-DD-HHMM.md` on disk, hooked into the project `CLAUDE.md`, and the card's `Next action` names it by absolute path.
-- The final consolidated review was emitted as HTML via `shared-utils:html-report` (Step 4), with run-log + crystal as source of truth.
+- The final consolidated review was written as one self-contained HTML file (Step 4), with run-log + crystal as source of truth; anything unverified is labelled pending, never shown as passed.

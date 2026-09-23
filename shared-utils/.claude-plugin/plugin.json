@@ -1,8 +1,0 @@
-{
-  "name": "shared-utils",
-  "version": "0.2.2",
-  "description": "Reusable utility scripts and skills shared across indie-toolkit plugins: HTML acceptance reports, MongoDB queries, and other cross-plugin primitives",
-  "author": {
-    "name": "Norvyn"
-  }
-}

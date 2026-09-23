@@ -13,7 +13,6 @@ on:
           - apple-dev
           - mactools
           - skill-master
-          - shared-utils
           - miniprogram
           - all
       bump:
@@ -113,7 +112,7 @@ jobs:
             UPDATE_MARKETPLACE="${{ inputs.update_marketplace }}"
             MARKET_FILE=".claude-plugin/marketplace.json"
             MARKET_TAG_PREFIX="indie-toolkit-"
-            PLUGINS_WHEN_ALL_STR="dev-workflow apple-dev mactools skill-master shared-utils miniprogram"
+            PLUGINS_WHEN_ALL_STR="dev-workflow apple-dev mactools skill-master miniprogram"
           fi
 
           bump_semver() {

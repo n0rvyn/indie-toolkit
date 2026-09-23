@@ -10,7 +10,7 @@
 - 对照：同一个仓库里的 `aso-research` 直接从 Apple 的接口拉真实数据（排名、联想词、竞品名称），它有人在用。
 
 **当时怎么做的**
-`git show 5482440:product-lens/`。评分口径在 `references/_scoring.md`、`_calibration.md`；Obsidian 笔记与 Notion 摘要的契约在 `references/pkos/`。
+`git show d5e2e95:product-lens/`。评分口径在 `references/_scoring.md`、`_calibration.md`；Obsidian 笔记与 Notion 摘要的契约在 `references/pkos/`。
 
 **再做的话要不同在哪**
 先定数据来源，再定框架。维度框架本身不产生信息，信息得来自真实数据：商店排名、搜索联想、自己 app 的留存和付费。

@@ -12,7 +12,7 @@ App Store Connect 要求填写隐私政策、使用条款、支持页的公开 U
 - 以后要直接操作 Notion，用官方 Notion MCP 就行。
 
 **当时怎么做的**
-`git show 5482440:shared-utils/skills/notion-with-api/` 与 `git show 5482440:shared-utils/skills/notion-page-sync/SKILL.md`。
+`git show d5e2e95:shared-utils/skills/notion-with-api/` 与 `git show d5e2e95:shared-utils/skills/notion-page-sync/SKILL.md`。
 
 **迁移期注意**
 Cashie 的 `CLAUDE.md:383-385` 里，ASC 的三个公开 URL 仍指向 notion.site。页面本身不受影响。在迁到 norvyn.com 之前，如果要改这几页的内容，就用官方 Notion MCP，或者手动在 Notion 里改。

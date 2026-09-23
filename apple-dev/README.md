@@ -16,8 +16,6 @@ claude plugin uninstall apple-skills@apple-skills
 /plugin install apple-dev@indie-toolkit
 ```
 
-For Codex/OpenCode: see `.codex/INSTALL.md` or `.opencode/INSTALL.md`.
-
 ## Daily entry points
 
 | Skill | Trigger | Description |

@@ -23,9 +23,7 @@ Multi-plugin monorepo for Claude Code plugins, published to the `indie-toolkit` 
 ├── skill-master/
 ├── shared-utils/
 ├── docs/
-├── .claude-plugin/   # marketplace manifest
-├── .codex/           # Codex install docs
-└── .opencode/        # OpenCode install docs
+└── .claude-plugin/   # marketplace manifest
 ```
 
 ## Claude Code
@@ -50,14 +48,9 @@ For personal OS plugins — `/health`, `/reflect`, `/intel`, `/scout`, `/pkos`, 
 
 Versions are not duplicated here — `.claude-plugin/marketplace.json` is the authority, and `auto-version` bumps it on every release.
 
-## Codex / OpenCode
+## Other agents
 
-Both Codex and OpenCode use file-based installation. The sources of truth are:
-
-- Codex: `.codex/INSTALL.md`
-- OpenCode: `.opencode/INSTALL.md`
-
-Skills for each platform are linked via these install guides. Each plugin's `skills/` folder contains its skill definitions.
+Only Claude Code is supported. Other agents (Codex, OpenCode, …) can read this README and each plugin's `skills/` folder and install the skills themselves.
 
 ## Plugin Docs
 

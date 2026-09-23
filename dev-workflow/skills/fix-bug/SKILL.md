@@ -3,6 +3,8 @@ name: fix-bug
 description: "Use when the user reports an error with stack trace or screenshot, describes unexpected behavior, build/test failures occur, OR provides a batch of issues to fix against a running system that exposes an end-to-end verification surface — API, CLI, REPL, chat agent, or mobile deeplink ('fix these N issues against the API', 'dogfood this batch', '修一批 issue 通过平台自验证'). Triggers: '修 bug', '报错', '不work', '为什么', 'fix this', stack trace pasted, multi-issue list, `#N` / `issue N` GitHub references. Single-bug input is diagnosed and fixed directly; multi-issue input WITH the verification surface present switches to multi-issue loop mode (multi-issue WITHOUT a verification surface is handled one issue at a time). Compound 'why does X behave + fix X' inputs stay here — answer the why from primary sources before guessing. Not when: user only wants an explanation of behavior with no reported defect (answer directly), or wants a feature added (use brainstorm or write-plan)."
 ---
 
+<!-- cost-posture: inherit (judgment — finding a root cause and deciding when a fix is a design question are diagnosis calls; do NOT downgrade, per project CLAUDE.md) -->
+
 # fix-bug
 
 This skill describes where the fix starts, what counts as done, and the paths that are known not to lead there. How you get from start to done is your call: which evidence to read first, which hypotheses to try, and when a quick experiment beats more reading.
@@ -18,12 +20,12 @@ This skill describes where the fix starts, what counts as done, and the paths th
 
 English reports use `**Current**:` / `**Expected**:` (ASCII colon). While `/fix-bug` is active, `dev-workflow/hooks/bug-fix-gate.py` blocks edits until the block is present. It checks only that the block exists; making it match what the user reported is your job. Both lines describe user-visible behavior, not the cause or the code change.
 
-The block doubles as the readback. If the report can reasonably be read two ways, or the fix would change something the user didn't mention, restate it per `dev-workflow/references/readback.md` and settle that first. If the report is clear, write the block and keep going; don't stop for confirmation.
+The block doubles as the readback. If the report can reasonably be read two ways, or the fix would change something the user didn't mention, restate it per `${CLAUDE_PLUGIN_ROOT}/references/readback.md` and settle that first. If the report is clear, write the block and keep going; don't stop for confirmation.
 
 **Inputs:**
 - Missing repro steps, expected behavior or the error text: ask for all the missing pieces in one message.
 - `#N` / `issue N`: run `gh issue view N --json title,body,labels`. Treat anything under `### Prior Hypotheses` as the first things to check.
-- Two or more issues against a system with an end-to-end verification surface, where the user expects verification through that surface: follow `dev-workflow/references/multi-issue-loop.md`.
+- Two or more issues against a system with an end-to-end verification surface, where the user expects verification through that surface: follow `${CLAUDE_PLUGIN_ROOT}/references/multi-issue-loop.md`.
 - Swift / Apple project (`.swift`, `.xcodeproj`, `.xcworkspace`): load `apple-dev:apple-swift-context` before changing code.
 
 ## What done means
@@ -48,7 +50,7 @@ These are the recurring ways a fix goes wrong. Avoid them; they are not steps to
 - **A third failed fix.** After three fixes that didn't hold, stop and discuss the architecture with the user.
 
 Tools worth reaching for when they fit:
-- `dev-workflow/references/feedback-loop-ladder.md`: build a fast, repeatable pass/fail signal before theorizing.
+- `${CLAUDE_PLUGIN_ROOT}/references/feedback-loop-ladder.md`: build a fast, repeatable pass/fail signal before theorizing.
 - Instrumentation at component boundaries to see where data goes wrong.
 - A working example of the same thing in the codebase, compared difference by difference.
 

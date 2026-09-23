@@ -340,9 +340,9 @@ Then skip full agent verification. Instead:
 2. Invoke `dev-workflow:verify-plan` with the plan from Step 2 (pass `--fast` flag if set in Step 2)
 3. Update state: `verification_report: <summary>`, `last_updated: <now>`
 
-**If still "Must revise" after 2 revision cycles:**
+**If "Must revise" and a blocking item cannot be revised in the plan** (it needs a decision or information you do not have):
 Present the remaining issues to the user:
-> "Plan verification failed after 2 revision attempts. Remaining issues:
+> "Plan verification left blocking items I cannot resolve in the plan. Remaining issues:
 > [list specific issues from verifier output]
 >
 > Options:

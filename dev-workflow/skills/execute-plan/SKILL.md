@@ -29,7 +29,7 @@ The plan's final verification task is no longer required — full test suite exe
 1. Read the plan file
 2. **Verification pre-check**: Look for a `## Verification` section with `Verdict: Approved` in the plan file
    - If found: verification is done, continue
-   - If not found: invoke `dev-workflow:verify-plan` before proceeding. If verify-plan returns "must-revise", apply revisions and re-verify before continuing
+   - If not found: invoke `dev-workflow:verify-plan` before proceeding. If verify-plan returns "must-revise", apply the revisions before continuing (re-verify only after a structural change, per verify-plan Step 3)
 3. **Task Contract pre-check**:
    - If plan frontmatter has `contract_version: 1` or later, every task in the execution range must include `**Task Contract:**`.
    - If any selected task lacks `Task Contract`, collect its id into a `contract_failed` list (do NOT write the checkpoint here — it does not exist until Step 2.3). These ids are recorded as `failed` during the post-segment reconciliation (Step 2.4, "Reconcile") once the file exists, and are passed in `failed_or_blocked` so their dependents are skipped. Never dispatch a contract-failed task.

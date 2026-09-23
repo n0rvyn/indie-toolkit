@@ -43,7 +43,7 @@ Two halves of one invariant. Both defend the *continue* side of the policy, whic
 | no-auto-fix's premise | holds for source code | holds for a plan file |
 |---|---|---|
 | changing it alters product behavior | yes | no — it is text in `docs/06-plans/` |
-| the loop is unbounded / no defined exit | yes (a failing test can be "fixed" forever) | no — verify-plan Step 3 caps it at 2 cycles with a defined exit |
+| the loop is unbounded / no defined exit | yes (a failing test can be "fixed" forever) | no — verify-plan Step 3 allows one round, plus one re-verify only after a structural change |
 | resolving it needs the user's judgment | often | the items that do surface as `blocking` DPs, which stop on their own row |
 
 Classifying `must-revise` as severe produced the observed failure: a guide-mode run that writes its own phase plan at Step 3.1 halts on its first verification round, handing off before one line of code exists. The plan-authoring inner loop was mistaken for a run failure. If you are about to "restore" `must-revise` to the severe row, you are re-introducing that.

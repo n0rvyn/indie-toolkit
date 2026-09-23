@@ -89,7 +89,7 @@ When the agent completes:
 2. Present the summary to the user
 3. Report the verdict. The verdict is mechanical — zero **blocking** findings means approved; advisory findings never block (see plan-verifier's `Verdict rule`):
    - **Approved** — proceed to Step 4. If the return carries `Advisory items: N > 0`, present them, state plainly that they do not block, and let the user take or leave them. **`Approved` with open advisories is the normal outcome, not a compromise** — do not re-dispatch the verifier to try to clear them.
-   - **Must revise** — at least one blocking finding exists; the summary lists them. Apply revisions to the plan, then re-dispatch (max 2 revision cycles).
+   - **Must revise** — at least one blocking finding exists; the summary lists them. Apply the revisions to the plan and show the user what changed. **One verification round per plan: do not re-dispatch by default.** Re-verify only when the user asks, or when the revision changed the plan's structure (tasks added or removed, a different architecture). A structural rewrite is effectively a new plan. Measured across 57 plans before this rule: each round cost ~$5 / 18 min, 2.7 rounds per plan on average, and only 13 plans ever reached `Approved`. The verdict rarely converged, and at least 15 of the 40 plans still at `must-revise` were executed anyway, so repeated rounds bought little.
    - ⛔ Do not treat an advisory item as a reason to revise, and do not ask the user to adjudicate one before proceeding. Prior to this rule the verifier returned `must-revise` on 54 of 63 runs with **zero** approvals in 30 days, and every run ended by the orchestrator overriding it — which is what made the verdict meaningless.
 4. For detailed analysis: read the full report at the path returned by the agent
 5. **Decision Points:** Check the agent's return for `Decisions:` count.
@@ -121,4 +121,4 @@ When the plan is approved:
 ## Completion Criteria
 
 - Plan file has `## Verification` section with `Verdict: Approved` appended, plus the `Advisories:` line (`none` is a valid value)
-- Or: user explicitly chose to proceed after 2 revision cycles with blocking items still open (verdict noted as "partial")
+- Or: `Must revise` with every blocking item revised in the plan and shown to the user (append `Verdict: Revised` plus the list of items addressed); or the user chose to proceed with items still open (verdict noted as "partial")

@@ -1,566 +1,69 @@
 ---
 name: fix-bug
-description: "Use when the user reports an error with stack trace or screenshot, describes unexpected behavior, build/test failures occur, OR provides a batch of issues to fix against a running system that exposes an end-to-end verification surface — API, CLI, REPL, chat agent, or mobile deeplink ('fix these N issues against the API', 'dogfood this batch', '修一批 issue 通过平台自验证'). Triggers: '修 bug', '报错', '不work', '为什么', 'fix this', stack trace pasted, multi-issue list, `#N` / `issue N` GitHub references. Single-bug input runs the linear diagnostic; multi-issue input WITH the verification surface present switches to multi-issue loop mode (multi-issue WITHOUT a verification surface falls back to per-issue single-bug flow, not loop mode). Compound 'why does X behave + fix X' inputs stay here — the Hard Gate resolves the why-question via primary sources before hypothesis generation. Not when: user only wants an explanation of behavior with no reported defect (answer directly), or wants a feature added (use brainstorm or write-plan)."
+description: "Use when the user reports an error with stack trace or screenshot, describes unexpected behavior, build/test failures occur, OR provides a batch of issues to fix against a running system that exposes an end-to-end verification surface — API, CLI, REPL, chat agent, or mobile deeplink ('fix these N issues against the API', 'dogfood this batch', '修一批 issue 通过平台自验证'). Triggers: '修 bug', '报错', '不work', '为什么', 'fix this', stack trace pasted, multi-issue list, `#N` / `issue N` GitHub references. Single-bug input is diagnosed and fixed directly; multi-issue input WITH the verification surface present switches to multi-issue loop mode (multi-issue WITHOUT a verification surface is handled one issue at a time). Compound 'why does X behave + fix X' inputs stay here — answer the why from primary sources before guessing. Not when: user only wants an explanation of behavior with no reported defect (answer directly), or wants a feature added (use brainstorm or write-plan)."
 ---
 
-## Input
+# fix-bug
 
-Trigger this command when:
-- User reports an error with stack trace or screenshot
-- User describes unexpected behavior
-- Build/test failures occur
-- User provides a batch of bugs/issues to fix against a running system
+This skill describes where the fix starts, what counts as done, and the paths that are known not to lead there. How you get from start to done is your call: which evidence to read first, which hypotheses to try, and when a quick experiment beats more reading.
 
-If input is incomplete, use `AskUserQuestion` with a single batch covering the missing pieces:
-1. Steps to reproduce
-2. Expected vs actual behavior
-3. Full error message or stack trace
+## Where it starts
 
-Ask in one turn, not three. Only include questions for fields you don't already have.
-
-**Fallback**: if `AskUserQuestion` is not available in the current invocation context (e.g., skill invoked via hook or programmatic dispatch), ask in prose as a single consolidated message instead — do not split into sequential turns.
-
-## Mode Detection
-
-Inspect the input. If **all** of these hold, switch to the multi-issue loop documented in `dev-workflow/references/multi-issue-loop.md`:
-
-1. Input references 2+ issues (e.g., `#N1 #N2 #N3`, "fix these 4 issues", "dogfood this batch", a list of bug IDs, or 2+ symptom paragraphs separated as items)
-2. The system under repair has an end-to-end verification surface (HTTP API, CLI, REPL, chat agent, mobile deeplink, or equivalent)
-3. The user expects verification through that surface (not just unit-test green) — explicit ("verify via the platform itself"), or implicit (the bugs are user-visible behaviors that only manifest at runtime)
-
-In loop mode, the linear flow below is wrapped by a Baseline → Bundle → per-bundle pipeline. Within each bundle, this skill's Steps 1–6 (diagnostic) still run per-issue — only Step 7 (`/write-plan`) is invoked once per bundle, covering all issues in that bundle. Read `dev-workflow/references/multi-issue-loop.md` and follow its L0–L5 process; treat the steps below as the diagnostic substrate that L4.0 calls into.
-
-Otherwise (single bug, OR no end-to-end verification surface): proceed with the steps below as the normal single-bug flow.
-
-## Hard Gate: "Why does X behave this way" Questions
-
-When the bug report includes a "why does X happen" / "how is X supposed to work" / "what's the design intent of Y" sub-question (separate from "fix the error"), resolve it via primary sources before generating hypotheses:
-
-- **Required first action**: Read the relevant files (or dispatch `Explore`) and locate the actual behavior. Then `git log -p {file}` or `git blame` if intent over time matters.
-- **Forbidden**: Inferring "what was intended" from function names, comments alone, or training-data patterns. Step 2.5 (Understand intent) already enforces this for non-trivial logic, but the gate also applies the moment the user asks the question — do not answer from memory and then dive into hypotheses.
-- **Self-check**: Did I read or grep at least one specific file in this turn before stating what the code "is supposed to" do? If no, do that first.
-
-The user's friction reports show speculative architecture answers are a top frustration mode; this gate prevents starting a fix-bug flow with a wrong premise.
-
-## 现状/预期 必填块 (Pre-Edit Gate)
-
-In **single-bug mode**, before invoking any Edit / Write / MultiEdit / NotebookEdit tool, you MUST print this block — verbatim format, both lines required:
+**Current / Expected block.** Before your first Edit / Write / MultiEdit / NotebookEdit, print these two lines:
 
 ```
-**现状**: <one sentence describing what the user actually sees, no code-layer terms>
-**预期**: <one sentence describing what the user should see after fix, no code-layer terms>
+**现状**: <what the user actually sees now, no code-layer terms>
+**预期**: <what the user should see after the fix, no code-layer terms>
 ```
 
-**Rules:**
-- "现状" describes the user-observable symptom (e.g., "点相册按钮变成拍照功能"), NOT the root cause hypothesis
-- "预期" describes the user-observable success state (e.g., "点相册按钮进入照片选择界面"), NOT the planned code change
-- Write in the project's primary language (中文 if the bug was reported in 中文; English otherwise)
-- 冒号可以是半角 `:` 或全角 `：`，hook 两种都识别
-- **English variant** (use when bug was reported in English) — note hook accepts ASCII colon only for English form:
-
-  ```
-  **Current**: <one sentence describing what the user actually sees>
-  **Expected**: <one sentence describing what the user should see after fix>
-  ```
-- The bug-fix-gate hook (`dev-workflow/hooks/bug-fix-gate.py`) detects this block; missing it inside /fix-bug = Edit blocked
-- The block's truthfulness is your responsibility — hook can only verify presence, not whether "现状" actually matches what the user reported. Writing a fake block to bypass the gate violates fix-bug protocol.
-- **If you see `[fix-gate]` after fixing a `[readback-mandate]` block**: both gates are independent. readback-mandate checks user-intent alignment; fix-gate checks bug-fix expected-behavior anchor. Satisfy each separately.
-
-**Why this exists:** the frustration audit (`.claude/research/frustration-audit-2026-05-23.md`) showed multiple cases where the model fixed the wrong bug or did a partial undo because the misunderstanding wasn't surfaced before code changes. Stating the user-visible target explicitly gives the user a checkpoint to redirect cheaply.
-
-**Multi-issue loop mode:** see `dev-workflow/references/multi-issue-loop.md` — that mode's per-bundle reproduction step already serves this function. Skip the block requirement when multi-issue mode is active.
-
-## Process
-
-### Step Echo (audit aid — read before executing any step)
-
-Before executing any step below (pre-0, 0, 0.5, 0.7, 0.8, 0.9, 1, 2, 2.5, 3, 4, 4.5, 5, 6, 7, 8, 9, 10), emit a one-line marker as the FIRST line of the response chunk for that step:
-
-```
-[fix-bug] Step={n} — {name}
-```
-
-Where `{n}` is the step number (e.g., `3` or `4.5`) and `{name}` is the step's bold title (e.g., `BV: Generate falsifiable assertions`).
-
-This is an audit aid, not an enforced gate — no hook intercepts a missing marker. Its value is post-hoc: the user can grep the response for `[fix-bug] Step=` to see which steps actually ran. Skipping from Step 2 directly to Step 7 ("Plan the fix") without emitting markers for 3/4/5/6/7 leaves the gap visible.
-
-**Why this exists:** the 2026-04 to 2026-05 insights report shows assistant frequently lands on the first plausible hypothesis and ships a fix, skipping the BV (Step 3) / verification (Step 4) / value-domain trace (Step 5) gates. Explicit step markers make skipping visible to the user even when it's not blocked.
-
-## Step pre-0: Readback Gate (always — required for fix-bug)
-
-Before any reproduction / diagnosis / planning work:
-
-0. **Unattended-mandate check — decide this BEFORE writing state.**
-
-   This gate exists to align with a human who is present. When the user has already told this session to run on its own, nobody is there to type "go": stopping does not protect them, it strands the whole run at step zero. So the readback still gets produced and presented — it is the record — but it is self-confirmed and the flow continues.
-
-   The mandate holds only if **all** of these are true:
-   - The authorizing words are the **user's own, in this session** — `/loop`, `/afk`, `/goal`, `/self-pacing`, `until fix`, `一直修到好`, `你自己跑`, `别问我`, `don't ask me`. A skill **I** invoked does not authorize anything; neither does my own paraphrase of what they meant.
-   - The mandate is still live (the user has not since taken the keyboard back with a narrowing instruction).
-
-   Corroborating signal, not a substitute: `.claude/scheduled_tasks.lock` carrying the current `sessionId` means a self-paced run is active in this session.
-
-   **Mandate holds** → still do steps 1, 2 and 4 (dispatch the agent, present the echo verbatim), write state per step 3 with `user_confirmed: true`, `confirmed_by: "unattended"` and `authorizing_utterance` set to the user's phrase **verbatim**, then say one line — `无人值守授权（原话「…」）→ 复述已记录，不等确认，继续` — and go straight to Step 0. Do not stop. Do not schedule a wakeup to wait for a confirmation that is not coming.
-
-   **Mandate does not hold** → steps 1–5 below, unchanged.
-
-   Recording the utterance verbatim is what makes a wrong self-exemption auditable afterwards instead of silent; a branch taken without quotable user words is a violation of this step, not a judgment call.
-
-   Note: `user_confirmed: true` is also `write-plan`'s consent token (`write-plan/SKILL.md` Step 2.5). Under an unattended mandate write-plan will therefore enter echo-only mode — intended: same mandate, same delegation, one echo instead of two.
-
-1. Collect inputs for readback:
-   - `user_request`: the user's original prompt (full text)
-   - `context_terms`: 3-5 project-specific terms the user used in this session
-
-2. Dispatch `readback:intent-echoer` agent via Agent tool (subagent_type = `readback:intent-echoer`).
-
-3. Write `.claude/readback-state.json`:
-
-   First, capture the agent's verbatim output into a shell variable. **Substitute the literal content between the EOF markers with the actual text returned by intent-echoer** — do not modify, escape, or summarize. (If agent output contains the literal string `EOF_AGENT_OUTPUT`, use a unique marker variant for both lines.)
-
-   ```bash
-   AGENT_OUTPUT=$(cat <<'EOF_AGENT_OUTPUT'
-   {paste the intent-echoer agent's literal output here; do not modify}
-   EOF_AGENT_OUTPUT
-   )
-   ```
-
-   Then write state:
-   ```bash
-   mkdir -p .claude
-   jq -n \
-     --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-     --arg text "$AGENT_OUTPUT" \
-     '{
-       created_at: $ts,
-       session_id: null,
-       skill: "fix-bug",
-       readback_done: true,
-       readback_text: $text,
-       user_confirmed: false,
-       confirmed_at: null,
-       confirmed_by: null,
-       authorizing_utterance: null,
-       correction_count: 0
-     }' > .claude/readback-state.json
-   ```
-
-   Under an unattended mandate (step 0) the same write instead carries `user_confirmed: true`, `confirmed_at: $ts`, `confirmed_by: "unattended"`, and `authorizing_utterance` set to the user's authorizing phrase verbatim.
-
-   Note: skill bash writes `session_id: null` (it cannot read hook stdin); the readback plugin's `PreToolUse` hook stamps the real session id into the file on first read after user confirmation. See `readback/references/state-schema.md` for the v2 two-phase identity model.
-
-4. Present agent output VERBATIM to user. Under an unattended mandate (step 0), continue to Step 0 now — the remaining wait does not apply. Otherwise: stop, do not proceed to Step 0.
-
-5. Wait for user response (attended path only):
-   - "go" / "OK" / "对" / 等价表达 → update state `user_confirmed: true, confirmed_at: <now>` → continue to Step 0
-   - Correction → increment `correction_count`, re-dispatch agent with correction, present again
-   - `correction_count` ≥ 2 → STOP, suggest user invoke `/dev-workflow:brainstorm` (alignment broken upstream)
-
-### Why this gate exists
-
-readback plugin's `pre-tool-use.sh` hook is registered globally. When skill=fix-bug and user_confirmed=false, it BLOCKS Write/Edit/MultiEdit/NotebookEdit. This step ensures the model produces a plain-language echo and gets user confirmation before any code changes. See the `readback` plugin in the indie-toolkit marketplace (`readback@indie-toolkit`).
-
-0. **Parse input and read GitHub Issue (if reference provided)**
-
-   If input contains `#N` or `issue N` (e.g., `/fix-bug #5`, `/fix-bug issue 5`):
-
-   1. Extract issue number N
-   2. Run: `gh issue view N --json title,body,labels,milestone`
-   3. If `gh issue view` returns an error (issue not found, `gh` not installed, no network): inform the user of the error and fall through to Step 0.5 without prior hypotheses
-   4. Parse the issue body — extract content under `### Prior Hypotheses` section
-   5. Present: "Prior hypotheses from issue #N:" followed by the extracted assertions
-   6. Show the full issue body for context
-   7. Store these hypotheses for use in Step 3
-
-   If input does not contain an issue reference, skip to Step 0.5.
-
-0.5. **Retrieve historical context** (via local knowledge base)
-   - Extract 3-5 keywords from the bug description (error type, component name, API name, symptom)
-   - Invoke `dev-workflow:kb` skill via the Skill tool, passing the keywords as the query. The kb skill searches `~/.claude/knowledge/` (categories: api-misuse / api-usage / architecture / bug-postmortem / data-research) and returns relevant past lessons.
-   - If results are returned: present them as "Related historical records:" before proceeding
-   - If the kb skill returns no matches, or the knowledge directory is empty: skip silently and proceed to Step 1
-   - Do not block investigation if the kb skill is unavailable in the current invocation context
-
-0.7. **Project Health** — see `dev-workflow/references/project-health-scanner.md`. If scanner exists and cached state is missing/red/stale (>7 days), run full mode with `--reason fix --max-ms 5000 --write-state`. Treat red/yellow signals as regression guards for the fix plan.
-
-0.8. **Project Context Contract + Ubiquitous Language** — see `dev-workflow/references/project-context-contract.md`. Read `docs/00-AI-CONTEXT.md` if present; otherwise mark `Project context contract: missing` and continue. Do not create `CONTEXT.md`. Also check `docs/02-architecture/ubiquitous-language.md` (per `dev-workflow/references/ubiquitous-language-pattern.md`); if present, read it and use the term mappings when reasoning about the bug and describing the fix — keeps AI vocabulary aligned with the project's domain language. If absent, do not auto-create it; suggesting maintenance is part of `brainstorm`'s flow, not `fix-bug`'s.
-
-**Parallel execution note (Steps 0.5 / 0.7 / 0.8):** these three preflight steps are read-only and independent. Issue them in **one tool-call batch** (single message, parallel Skill / Bash / Read calls) — Opus 4.7's 1M context easily holds all three results. Sequential execution costs latency without informational benefit.
-
-**Agent dispatch verification gate (applies to any agent dispatch later in this skill, including Step 7 `/write-plan` and any `Explore` calls):** the `~/.claude/hooks/verify-agent-output.py` hook intercepts sub-agent stdout — when an agent claims it wrote a file but the file isn't actually on disk, the hook surfaces "files NOT on disk" to this skill. **Treat agent stdout as a claim, not a fact**: after every Agent return, before acting on the agent's reported changes, verify with `ls` or `Read` against the actual paths it claims to have written. Apply this gate without exception (we have a confirmed past case of sub-agent reporting file writes that did not persist).
-
-## Step 0.9: Feedback Loop (mandatory before Step 3)
-
-Pick the lowest viable Feedback Loop level. Long-form rationale at `dev-workflow/references/feedback-loop-ladder.md`.
-
-| Level | Signal |
-|-------|--------|
-| 1 | Failing test (unit/integration/E2E) |
-| 2 | Curl / HTTP against running dev server |
-| 3 | CLI invocation with fixture input, diff stdout vs snapshot |
-| 4 | Headless browser script (Playwright/Puppeteer) |
-| 5 | Replay captured trace (network request/payload/event log) |
-| 6 | Throwaway harness (minimal subset, one function call) |
-| 7 | Property / fuzz loop (1000 random inputs) |
-| 8 | Bisection harness (`git bisect run`-able) |
-| 9 | Differential loop (old vs new, diff outputs) |
-| 10 | HITL bash script (drive human via structured loop, last resort) |
-
-Before Step 1, output:
-
-```
-[Feedback Loop] level={N} (1–10) — {one-line description of the signal}
-Command: {exact command to invoke the loop}
-Pass: {what stdout / exit code / state means "bug NOT present"}
-Fail: {what stdout / exit code / state means "bug PRESENT"}
-```
-
-If no level is constructable, output `[Feedback Loop] level=0 — not constructable, blocking on: {what's missing}` and either build it or escalate.
-
-**Step 3 cross-reference:** each assertion in Step 3 must declare which Feedback Loop level its `Verify:` line runs on.
-
-1. **Reproduce first**
-   - Confirm the bug can be reproduced
-   - If cannot reproduce: ask for more context, do not guess
-   - Document the exact steps that trigger the bug
-
-2. **Understand the error**
-   - Read the complete error message and stack trace
-   - Identify the exact location where the error occurs
-   - Note any relevant context (user action, data state)
-   - **Native crash without stack trace** (iOS/Android, simulator, or device): apply user-level CLAUDE.md "Native crash → stack trace gate" before generating any hypothesis at Step 3. If user-level CLAUDE.md is not present, the inline fallback is: get stack trace before any hypothesis — iOS device `idevicecrashreport -e -k <path>` then read the .ips file; Android `adb logcat -b crash`; simulator stderr stream. Hypothesis must reference a specific frame (image symbol + osVersion) from the stack trace before being voiced. Hypothesis switches without a stack trace (e.g., guessing "double sheet" → "detents" → "FocusState") are instances of the same "guess known SDK bug" framework, not a framework switch under the 3-Strike Rule.
-
-2.5. **Understand intent — and the layer it lives in** (trigger: bug location involves non-trivial logic — conditional branches, state machines, multi-step transformations)
-
-   Before generating assertions, answer these questions by reading code + git history:
-
-   ```
-   [Intent Analysis]
-   - Original intent: what was this code trying to achieve?
-     (cite: comments, function name, commit message, surrounding context)
-   - Actual behavior: what does it actually do? (cite: code trace)
-   - Gap type: intentional workaround / unintentional bug /
-     incomplete implementation / outdated assumption
-   - Evidence for gap type: {git blame date, TODO comment, related issue, etc.}
-   - Current goal: what do we want it to do now?
-   - Delta: {original intent} -> {current goal} — same or different?
-   - If different: upstream/downstream impact assessment required before proceeding
-   ```
-
-   **Then answer the layer question.** A bug is almost always a by-product of an existing design. Tracing only *how the symptom is produced* keeps you inside that design; the question that decides whether the fix is a fix is one level up — should that design still be there at all?
-
-   The layer question inherits this step's trigger and nothing more: a genuinely local defect (a wrong constant, an off-by-one) does not pay this tax. **Two things escalate a bug into it even when the trigger would not fire:** this is the second or later fix at the same site, or the first attempt already produced more than one candidate (see the alarm signal below). Repeat visits are the signal that the design, not the line, is what keeps failing.
-
-   ```
-   [Layer Check]
-   - Does the original intent still hold today? yes / no
-     → no: STOP. Do not remove the design on your own (see the stop branch below).
-     → yes: continue.
-   - Is there a better way to achieve that intent today than the current design?
-     → no: patching the current design is authorized. Proceed to Step 3.
-     → yes: this is a REPLACEMENT, not a patch. Fill [Replacement Tradeoff] first.
-   ```
-
-   ⚠️ **Alarm signal — N candidates means you are at the wrong layer.** If you have accumulated N candidate fixes and they are all circling the same obstacle, or all resting on one premise you never verified ("these two can't happen in the same pass", "A must precede B"), that is not a "which one" question. It is a report that you are patching one level too low. Go back to the top of `[Intent Analysis]`; falsifying the shared premise usually makes the whole choice disappear.
-
-   **[Replacement Tradeoff] — mandatory whenever the layer check says replace.** A replacement written up with only its benefits is how a problem comes back two weeks later wearing different clothes.
-
-   ```
-   [Replacement Tradeoff]
-   - Existing design exists to: {one line}
-   - Existing design's present cost: {the bug being fixed}
-   - Replacement achieves that same intent? yes / no / partial → {what is lost}
-   - Replacement's newly introduced problems: {list}
-   - Verdict: (1) acceptable known defect
-              (2) robbing Peter to pay Paul
-              (3) the same problem in a new costume
-   - Regression condition: {under what condition the rejected path comes back}
-   ```
-
-   - Verdict **(2) or (3) → do not replace.** Return to the layer check and look again, or patch the existing design honestly. Record which it was.
-   - Telling **(1) apart from (3)**: ask "when will the new problem bite me?" If the answer is the same scenario and the same trigger condition as the old problem, it is (3).
-   - Verdict **(1) → this fix is Complex** at Step 7 (architectural change). Carry this table into the diagnosis bundle. Then continue to Step 3 as normal — a replacement still needs the symptom's mechanism verified, because a design swapped out on a mistaken read of why it failed is verdict (3) that nobody caught.
-
-   **Stop branch — `intentional workaround`, or an intent that no longer holds:**
-
-   Stop. Do not treat it as a bug, and do not delete or replace the design on your own — removing existing behavior is a user-visible change that requires explicit authorization (global CLAUDE.md 行为约束 →「参考文档未提及 ≠ 应该删除」). Present the finding with its evidence:
-
-   - gap type = intentional workaround → "This appears to be an intentional workaround from {date/commit}: {evidence}."
-   - intent no longer holds → "The purpose this design served no longer applies: {evidence — git blame date, superseded API, removed feature}."
-
-   Then: "Confirm: patch it, replace it, or preserve it?" — accompanied by your recommendation and the reasoning behind it. Do not present a bare N-way choice; if `[Layer Check]` and `[Replacement Tradeoff]` already point at one option, say which and why, and let the user overturn it.
-
-   **This stop authorizes a direction, not a plan.** Step 7 remains the mandatory approval gate for the fix itself — a "replace it" here does not pre-approve what the replacement does, and answering it does not let Step 7 be skipped. Conversely, do not re-litigate the direction at Step 7: carry the answer forward as settled and put the plan, not the choice, in front of the user.
-
-3. **BV: Generate falsifiable assertions**
-
-   Based on error symptoms and code context, generate 3-5 specific, falsifiable assertions.
-   Each assertion must include: hypothesis + file location + verification method + expected outcome for both cases + which Feedback Loop level (Step 0.9) the verification runs on.
-
-   **If Step 0 extracted prior hypotheses from a GitHub Issue:** prepend them to the assertion list as highest-priority items, marked with source: "Prior hypothesis from issue #N". Verify these first before generating additional assertions.
-
-   ```
-   [Bug Assertion 1] {specific hypothesis}
-   Location: {file:line}
-   Verify: read {file:line}; if correct, expect {X}; if wrong, expect {Y}
-   ```
-
-   Assertions must cover different dimensions (pick the 3-5 most suspicious):
-   - **Value domain error** — type/range/format mismatch
-   - **State timing error** — race condition, wrong lifecycle stage
-   - **Path routing error** — data reaching wrong handler
-   - **Missing guard** — null/empty/boundary unhandled
-   - **Stale code interference** — replaced component still active
-
-   Principle: backward verification (testing specific assertions) is significantly more accurate than forward generation (guessing a single cause). Even if all assertions are falsified, the verification process exposes reasoning paths that reveal the root cause.
-
-
-4. **Verify assertions systematically**
-   - Test each assertion from Step 3, one at a time
-   - Record result: confirmed / falsified / inconclusive
-   - If an assertion is confirmed: proceed to fix
-   - If all falsified: the verification traces usually reveal the actual cause; form a new assertion based on what you learned
-   - Do not test multiple assertions at once
-
-4.5. **Hypothesis reset** (trigger: user negates a core assumption underlying the confirmed assertion)
-
-   **Active self-check:** After each user response during Step 4 verification, ask yourself: "Does the user's response contradict any premise of the current assertions?" If yes, invoke this step.
-
-   When the user provides information that invalidates the foundation of the current diagnosis (e.g., "the data is user-provided, not AI-generated"):
-
-   1. Stop current investigation path
-   2. Record what was invalidated and the user's correction
-   3. Return to Step 3: regenerate assertions incorporating the user's new information
-   4. After new assertions are verified, Step 7 (plan the fix) must be executed again — the previous plan (if any) was based on invalidated premises
-
-   Do NOT patch the old hypothesis. A negated foundation requires new assertions.
-   Do NOT skip ahead to implementation — reset means the full gate chain (Step 3 → 4 → 7) restarts.
-
-5. **Trace value domain — MANDATORY GATE for value-related bugs**
-
-   ⛔ **If bug symptom is value-related, this step is MANDATORY. Do not proceed to Step 7 without producing the `[值域检查]` table below.**
-
-   A bug is value-related if: a wrong number/string/enum appears where a different one was expected, OR a field displays data from the wrong source, OR a computed result is incorrect. When in doubt, treat as value-related.
-
-   - Reverse-trace from bug location to data source (record each variable rename)
-   - **Forward-trace consumers — LSP first, grep fallback**:
-     - If the project has a registered LSP server for the file's language (Swift / TypeScript / Python / Rust / Go), prefer `LSP findReferences` at the symbol's declaration site — it identifies real references (handles same-name-different-scope, follows renames, ignores comment/string occurrences).
-     - If no LSP server, or LSP returns errors: fall back to `Grep` for the source field name + each intermediate variable name.
-     - Hybrid is OK: LSP for the declaration's direct references, then grep for transformed copies (e.g., field renamed via destructuring).
-   - Verify unit/domain/format assumptions at each consumer
-   - Output format:
-     ```
-     [值域检查] {file:line} — {生产/消费} — 假设值域 {X} — ✅ 一致 / ❌ 同类问题
-     ```
-   - All ❌ must be fixed in the same pass
-   - Skipping this step for value-related fixes = incomplete fix, even if original symptom disappears
-
-6. **Check for parallel paths** (trigger: Step 5 finds multiple producers, or same core function has multiple upstream callers)
-   - List all processing paths from source to sink
-   - Check coordination mechanisms between paths (shared state, mutex, idempotency check)
-   - Format:
-     ```
-     [路径检查] {核心函数}
-     - 路径 A: {file:line} → {file:line} → {核心函数}
-     - 路径 B: {file:line} → {核心函数}
-     - 协调机制: {具体代码位置 / 无}
-     ```
-   - Parallel paths without coordination = architectural issue; flag as "⚠️ needs architectural fix" and inform user; do not fix only one path
-
-7. **Plan the fix — MANDATORY GATE**
-
-   ⛔ **DO NOT write any fix code until this step is completed and the user has approved the plan.**
-
-   **Expectation Gate (precedes any "how"):**
-
-   Before the Task Contract structured block below, write two plain-language preambles:
-
-   1. `[Expected behavior]` — 1–3 sentences describing what the user/reviewer will observe after the fix lands. No technical jargon. No file paths. No API names. Pure user-visible result.
-   2. `[Verifiable steps]` — a bullet list. Each bullet is a single action the user or reviewer can run independently (no AI required), paired with the output they should see when the fix works. If a step requires a device or environment the AI cannot reach, mark it `(needs-device)`.
-
-   These two blocks anchor the rest of Step 7 in user reality. The structured Task Contract below restates the same Expected behavior in machine-readable form for plan-verifier; they reinforce, not duplicate.
-
-   Do NOT proceed to the Task Contract block until `[Expected behavior]` and `[Verifiable steps]` are written.
-
-   **Pre-check:** If bug symptom involves value display/transfer, verify Step 5 `[值域检查]` table was produced. If not → return to Step 5 before proceeding.
-
-   **Task Contract:** Before presenting the fix plan, write:
-   ```
-   [Task Contract]
-   - Expected behavior: {what the user should observe after the fix}
-   - Current behavior: {observed failure}
-   - Reproduction / verification method: {exact command, test, API call, or device path}
-   - Regression shield: {adjacent behavior that must remain unchanged}
-   - Project Health: {red/yellow signals from Step 0.7, or none}
-   ```
-
-   **Relationship to write-plan's Task Contract schema:** when fix complexity is Complex and Step 7 invokes `/write-plan`, the structured `**Task Contract:**` block in the resulting plan uses a different (more granular) field shape: `Expected behavior` / `Automated verify` / `Real path verify` / `Manual/device verify` (see `dev-workflow/skills/write-plan/SKILL.md` § Task Structure). Translation when handing off: this skill's `[Task Contract].Expected behavior` → plan's `Expected behavior`; `Reproduction / verification method` → split into plan's `Automated verify` (the command/fixture) plus `Real path verify` (the user-perspective check); `Regression shield` → plan's per-task `Regression shield:` line. Do not duplicate this skill's `[Task Contract]` block into the plan — let `/write-plan` regenerate using its own schema.
-
-   If the bug touches Swift, iOS, macOS, SwiftUI, SwiftData, `.xcodeproj`, or `.xcworkspace`, load `apple-dev:apple-swift-context` internally before the fix plan.
-
-   **Consumer impact (mandatory for any fix that changes a field's value or source):**
-
-   Before presenting the plan, enumerate all consumers of the modified field. **Use `LSP findReferences` on the field's declaration to get the canonical reference list** (when an LSP server is available for the language). For untyped languages or projects without LSP, fall back to `Grep` of the field name + transformed copies. List all callers:
-   ```
-   [Consumer Impact]
-   - {consumer file:line} — 当前读取: {X} — 修复后读取: {Y} — 行为变化: {description}
-   ```
-   Cannot produce this list = have not traced the data flow = return to Step 5.
-
-   Classify fix complexity:
-
-   **Simple** — ALL must be true:
-   - Fix is confined to ≤2 file locations
-   - All changes are directly evident from verified assertions
-   - Step 5 not triggered, or all consumers showed ✅
-   - Step 6 not triggered, or no parallel path issues flagged
-   - Step 2.5's `[Layer Check]` authorized a patch (no replacement)
-
-   **Complex** — ANY is true:
-   - Fix spans 3+ file locations
-   - Step 5 found any ❌ consumer beyond the original bug site
-   - Step 6 flagged parallel paths without coordination
-   - Step 2.5's `[Replacement Tradeoff]` reached verdict (1) — a replacement is going ahead
-   - Fix requires architectural changes
-
-   **Required actions:**
-
-   → If **Simple**: invoke `dev-workflow:write-plan` with the same caller marker and diagnosis
-     bundle as the Complex branch below (the bundle will be small — at minimum the confirmed
-     assertions and the `[Consumer Impact]` list, which Step 7 produces before classification). Expect a 1–2 task plan; user approves the plan file, then proceed to
-     Step 8. Do NOT use Claude Code native plan mode (`EnterPlanMode`) — global CLAUDE.md
-     forbids it for planning.
-
-   → If **Complex**: invoke `dev-workflow:write-plan` with a **structured diagnosis bundle** as input. The invocation prompt MUST begin with this caller marker line (literal, on its own line as the first non-empty line of the prompt):
-
-     ```
-     Caller: dev-workflow:fix-bug
-     ```
-
-     write-plan reads this marker as the single source of truth for caller identity (gates both Step 1 item 12 Bug-diagnosis population AND Step 2.5 echo-only mode). Without it, write-plan falls through to standalone flow.
-
-     Bundle contents (write-plan Step 1 item 12 consumes these and lands them in the plan header's `**Bug diagnosis:**` field):
-
-     1. Confirmed assertions from Step 4 — list every `[Bug Assertion N]` that resolved to "confirmed", with the file:line evidence cited during verification
-     2. `[值域检查]` table from Step 5 — paste verbatim if Step 5 was triggered; include every ❌ consumer (write-plan tasks must address all of them)
-     3. `[路径检查]` table from Step 6 — paste verbatim if Step 6 was triggered; include the coordination-mechanism finding
-     4. `[Consumer Impact]` list from this Step 7 — every consumer of the modified field with current vs post-fix read values
-     5. `[Replacement Tradeoff]` table from Step 2.5 — paste verbatim whenever the layer check ruled "replace". Its `Replacement's newly introduced problems` and `Regression condition` rows are plan inputs, not commentary: the former must appear as tasks or as an explicit accepted-defect note, the latter belongs in the plan header so the rejected path is recoverable later. Omitting the table means the plan describes a replacement with only its benefits stated.
-
-     Readback continuity: this skill's Step pre-0 already obtained `user_confirmed: true` for the bug report. write-plan's Step 2.5 echo-only mode will skip re-prompting iff all of: (a) the `Caller:` marker above is present, (b) `.claude/readback-state.json` is fresh (created within last 30 min), (c) no new requirements were introduced after pre-0. **Conservative default: when in doubt about (c), state it explicitly when invoking write-plan so it falls through to the full readback flow.** Re-prompting costs one echo; silently skipping alignment costs a misaligned plan.
-
-     Session-freshness caveat: this continuity claim assumes Step pre-0 and Step 7 ran in the same Claude Code session. If you resumed fix-bug from a prior session (e.g., `dev-workflow/references/multi-issue-loop.md` state restore), the readback state file is stale relative to the current session and write-plan's freshness check will fail; full readback will run automatically. To force a fresh readback even within the same session, delete `.claude/readback-state.json` before invoking write-plan.
-
-     Wait for plan approval before proceeding.
-
-   **Proceeding to Step 8 without a user-approved plan is a violation of this skill's protocol.**
-
-8. **Fix the root cause**
-   - Address the actual cause, not just the symptom
-   - Consider edge cases and related scenarios
-   - Ensure the fix doesn't introduce new issues
-   - After the fix is complete, suggest: "Consider running `/collect-lesson` to record this bug pattern for future retrieval."
-
-9. **Verify the fix**
-   - Build the project
-   - Reproduce the original bug scenario - confirm it's fixed
-   - Test related scenarios to catch regressions
-   - **If this fix originated from a GitHub Issue (Step 0):** ask the user: "Close issue #N?" If yes, run: `gh issue close N`. Display the closed issue URL.
-
-10. **Tradeoff Report**
-
-   After verification, produce a fix report. Format depends on complexity
-   (same classification as Step 7):
-
-   **Simple fix (1-2 locations):**
-
-   ```
-   [Fix Summary] 修复 X/Y 项（跳过: {items} — {理由}）
-
-   [Tradeoff] {修复内容} — 行为变化: {before -> after} — 代价: {known cost} — 验证: {status}
-   ```
-
-   **Complex fix (3+ locations):**
-
-   ```
-   [Fix Summary] 修复 X/Y 项（跳过: {items} — {理由}）
-
-   | Issue | 修复前行为 | 修复后行为 | 收益 | 代价 | 验证状态 | 回归风险 |
-   |-------|-----------|-----------|------|------|---------|---------|
-   | ...   | ...       | ...       | ...  | ...  | ...     | ...     |
-   ```
-
-   **Mandatory fields:**
-   - **验证状态**: `verified` (ran test/command and saw expected output) or
-     `needs-device-verification: {specific steps}` (cannot verify in current environment)
-   - **回归风险**: if behavioral change, state impact scope (which callers/consumers affected)
-   - **Completeness**: "修复 X/Y 项" — every skipped item must have a reason
-
-   Build passing alone is compile-time verification only. Runtime behavioral changes
-   (conditional rendering, data-dependent logic, network failure paths) require either
-   a test or explicit `needs-device-verification` annotation.
-
-## Escalation Rules
-
-### 3-Strike Rule
-
-If you have attempted 3+ fixes and none resolved the issue:
-
-**Stop fixing. Question the architecture.**
-
-Signals of an architectural problem:
-- Each fix reveals new coupling or shared state in a different place
-- Fixes require "massive refactoring" to implement
-- Each fix creates new symptoms elsewhere
-
-Action: Discuss with the user before attempting more fixes. This is not a failed hypothesis; this is likely a wrong architecture.
-
-### Proposal Rejection Circuit Breaker
-
-If the user rejects 2 consecutive fix proposals:
-
-**Stop proposing. Return to diagnosis.**
-
-A rejection is any user response that does not approve proceeding with the proposed fix. Partial approvals ("direction is right but...") count as rejections; they indicate the proposal was insufficient.
-
-1. The rejections indicate incomplete understanding, not a communication problem
-2. Return to Step 5 (value domain trace) or Step 6 (parallel paths); whichever was skipped or incomplete
-3. Produce the full `[值域检查]` or `[路径检查]` output before making another proposal
-4. Do NOT ask "is this direction correct?"; show the trace results and let the data speak
-5. If both Step 5 and Step 6 were already completed, escalate to the 3-Strike Rule or ask the user what dimension was missed
-
-Continuing to propose without deeper investigation = repeating the same mistake with different words.
-
-### Diagnostic Layering (multi-component systems)
-
-When the bug spans multiple components (e.g., CI -> build -> signing, API -> service -> database):
-
-**Before proposing any fix**, add diagnostic instrumentation at each component boundary:
-
-```
-For EACH component boundary:
-  - Log what data enters the component
-  - Log what data exits the component
-  - Verify environment/config propagation
-  - Check state at each layer
-```
-
-Run once to gather evidence showing WHERE the break occurs. Then narrow investigation to the specific failing component. Do not guess which layer is broken.
-
-### Pattern Analysis
-
-When the root cause isn't obvious from assertions alone:
-
-1. **Find a working example** — locate similar working code in the same codebase
-2. **Compare systematically** — list every difference between working and broken, however small
-3. **Don't assume irrelevance** — "that can't matter" is how bugs hide
+English reports use `**Current**:` / `**Expected**:` (ASCII colon). While `/fix-bug` is active, `dev-workflow/hooks/bug-fix-gate.py` blocks edits until the block is present. It checks only that the block exists; making it match what the user reported is your job. Both lines describe user-visible behavior, not the cause or the code change.
+
+The block doubles as the readback. If the report can reasonably be read two ways, or the fix would change something the user didn't mention, restate it per `dev-workflow/references/readback.md` and settle that first. If the report is clear, write the block and keep going; don't stop for confirmation.
+
+**Inputs:**
+- Missing repro steps, expected behavior or the error text: ask for all the missing pieces in one message.
+- `#N` / `issue N`: run `gh issue view N --json title,body,labels`. Treat anything under `### Prior Hypotheses` as the first things to check.
+- Two or more issues against a system with an end-to-end verification surface, where the user expects verification through that surface: follow `dev-workflow/references/multi-issue-loop.md`.
+- Swift / Apple project (`.swift`, `.xcodeproj`, `.xcworkspace`): load `apple-dev:apple-swift-context` before changing code.
+
+## What done means
+
+1. The reported symptom no longer occurs on the user's real path, and you saw it happen: an API call, the running app, a device. A green unit test is a starting signal, not the finish.
+2. Every other place with the same cause is fixed in the same pass: the same wrong value read elsewhere, the same bad assumption in a sibling. Find consumers with LSP `findReferences` where a language server exists, and grep otherwise.
+3. Behavior next to the fix still works.
+4. The closing message says, in plain words, what the user saw before, what they see now, and how you verified it. Anything you couldn't verify is named, with the exact steps for the user to check it.
+
+## Paths that don't lead out
+
+These are the recurring ways a fix goes wrong. Avoid them; they are not steps to perform.
+
+- **Guessing before reading.** The error, the stack trace, the logs, and any file or screenshot the user pointed to come first. For a native crash, get the stack trace (`idevicecrashreport`, `adb logcat -b crash`, simulator stderr) before naming a cause. For a "why does X do this" question, read the code and `git log -p` before answering. Don't infer intent from names.
+- **Skipping what you already know.** When the symptom names a platform or third-party service together with an error code, search the knowledge base (`dev-workflow:kb`) before your first hypothesis.
+- **Reading an error code as a diagnosis.** A code tells you the category of failure, not why it happened this time. Go to the real log.
+- **Blaming something external** before you have followed the call chain hop by hop and found where it actually breaks.
+- **Stacking workarounds.** If you are about to add a second layer to work around the same thing, the first explanation was wrong. Look at the logs on the side you have been working around.
+- **Circling.** After two failed hypotheses, change the frame, don't just try a third variant. If several candidate fixes all rest on one premise you never verified, test that premise.
+- **Assuming a change took effect.** If a change made no difference and nothing errored, first make sure you are looking at the artifact you changed: a stale build, the wrong process, a server that compiled once.
+- **Patching a design that should go.** If the code is doing what it was designed to do and the design itself is the problem, say so with evidence (git blame, the superseded requirement) and ask before removing or replacing that behavior. If you do replace it, state what the old design was for, what the replacement newly costs, and under what condition the old path would come back.
+- **A third failed fix.** After three fixes that didn't hold, stop and discuss the architecture with the user.
+
+Tools worth reaching for when they fit:
+- `dev-workflow/references/feedback-loop-ladder.md`: build a fast, repeatable pass/fail signal before theorizing.
+- Instrumentation at component boundaries to see where data goes wrong.
+- A working example of the same thing in the codebase, compared difference by difference.
+
+## Basic rules
+
+- No code edit before the Current / Expected block.
+- Don't change user-visible behavior beyond the bug without asking.
+- **Fix size decides whether to plan.**
+  - A fix that spans many files, changes architecture, or replaces a design: write a plan with `dev-workflow:write-plan` and wait for approval. Make the literal line `Caller: dev-workflow:fix-bug` the first line of that prompt, followed by the diagnosis evidence: the confirmed cause with file:line, the other sites with the same cause, the affected consumers, and the replacement costs if a design is being replaced.
+  - A small, local fix: just make it.
+- A subagent saying it wrote a file is a claim. Check the file is on disk before acting on it.
+- For work that came from issue `#N`, ask before running `gh issue close N`.
+- If the cause was non-obvious, suggest `/collect-lesson` at the end.
 
 ## Completion Criteria
 
-- Root cause identified with code evidence (file:line)
-- Fix applied and build passes
-- Original bug scenario verified fixed (Step 9 completed)
-- `[Layer Check]` answered (if Step 2.5 triggered) — a patch was applied only because no better way to serve the original intent exists today, or the replacement carries a `[Replacement Tradeoff]` verdict of (1) with its regression condition recorded
-- All ❌ consumers from value domain trace fixed (if Step 5 triggered)
-- No parallel path coordination issues left unresolved (if Step 6 triggered)
-- Tradeoff Report produced with verification status for every fix item (Step 10 completed)
+- The cause is stated with code evidence (file:line).
+- Everything under "What done means" holds, or each unmet item is named with its reason and the steps for the user to verify it.

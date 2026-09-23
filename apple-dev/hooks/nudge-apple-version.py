@@ -70,8 +70,9 @@ APPLE_KEYWORDS = re.compile(
 def emit(context: str) -> None:
     """Print the non-blocking additionalContext payload and exit 0.
 
-    Shape verified against readback/hooks/post-tool-use.sh, whose identical
-    payload reaches the model in practice. PostToolUse is the only event that
+    Shape verified against the retired readback plugin's post-tool-use.sh
+    (git show b2f8b39:readback/hooks/post-tool-use.sh), whose identical
+    payload reached the model in practice. PostToolUse is the only event that
     can inject free-form context to the model WITHOUT blocking the tool:
     PreToolUse's documented outputs are allow/deny/ask/defer + updatedInput
     only (no additionalContext), so a non-blocking PreToolUse nudge would be

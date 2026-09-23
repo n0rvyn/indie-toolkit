@@ -12,7 +12,7 @@ Enter this loop only when **all** of these hold:
 2. The system under repair exposes an end-to-end verification surface — at least one of: REST/RPC API, CLI command, chat agent, mobile app deeplink, REPL
 3. The user expects fixes to be verified through that surface (not just unit-test green)
 
-If any of these is missing, fall back to single-bug `fix-bug` per issue.
+If any of these is missing, handle the issues one at a time with `fix-bug`.
 
 ## Why verify-then-fix order matters
 
@@ -103,24 +103,9 @@ Restore after the bundle's final verify, not after each attempt.
 
 For each bundle in dependency order:
 
-**Per-step routing for loop mode** — when this loop invokes `fix-bug`, not every step from fix-bug's linear flow runs at the same scope. Use this table to decide what runs once per bundle vs once per issue:
+**L4.0 Diagnosis (per issue)** — for each issue in the bundle, find the cause the way `fix-bug` describes: its "Paths that don't lead out" apply here too. Run the knowledge-base search once per bundle, not once per issue. Don't write a plan per issue; the bundle's plan comes in L4.1. For each issue, collect for L4.1: the confirmed cause with file:line, the other sites with the same cause, and the affected consumers.
 
-| fix-bug step | Loop-mode scope | Rationale |
-|--------------|-----------------|-----------|
-| 0 (parse input + read GitHub issue) | Once per issue (already itemized in L0) | Each issue has its own number/body |
-| 0.5 (kb retrieval) | Once per **bundle** at L1 entry | Re-running kb per issue is redundant when issues share keywords |
-| 0.7 (project health) | Once per bundle at L1 entry | Health state doesn't change between issues in the same bundle |
-| 0.8 (AI-CONTEXT + ubiquitous-language) | Once per bundle at L1 entry | Project context is shared across issues |
-| 0.9 (Feedback Loop ladder declaration) | Per issue (declared at L4.0 per-issue diagnostic entry) | Each issue may need a different feedback loop level |
-| 1, 2, 2.5, 3, 4, 4.5, 5, 6 | Per issue at L4.0 | These are the diagnostic steps that vary per issue |
-| 7 (Plan the fix) | Once per bundle at L4.1 | The plan covers all issues in the bundle |
-| 8 (Fix the root cause) | Once per bundle (via L4.3 execute-plan) | Execution covers the whole bundle |
-| 9 (Verify the fix) | Once per bundle at L4.6 | The bundle reproducer IS the verify |
-| 10 (Tradeoff Report) | Once per bundle at L4.9 | One commit, one tradeoff report |
-
-**L4.0 Diagnostic (route through fix-bug Steps 1-6 per issue)** — for each issue in the bundle, run `fix-bug` Step 0.9 (Feedback Loop declaration) → 1 (Reproduce) → 2 (Understand error) → 2.5 (Understand intent + layer check) → 3 (BV assertions) → 4 (Verify assertions) → 5 (Value domain trace) → 6 (Parallel paths). Stop at Step 6; do **not** invoke `fix-bug` Step 7 (`/write-plan`) per-issue — the plan covers the whole bundle and is written in L4.1 below. Skip Steps 0.5/0.7/0.8 (already ran once at L1 bundle entry). Collect the confirmed assertions, value-domain table, parallel-path findings, and any `[Replacement Tradeoff]` table Step 2.5 produced as input for L4.1.
-
-Two Step 2.5 outcomes interrupt the per-issue sweep rather than feeding L4.1: an `intentional workaround`, and an original intent that no longer holds. Both stop for user authorization (removing existing behavior is a user-visible change). Do not silently patch around either to keep the bundle moving — pull that issue out of the bundle, carry the rest forward, and surface the finding with its evidence when the bundle's plan is presented.
+If the cause turns out to be a design doing what it was built to do, stop and ask the user before removing or replacing that behavior. Don't patch around it just to keep the bundle moving. Take that issue out of the bundle, carry the rest forward, and present the finding with its evidence alongside the bundle's plan.
 
 **L4.1 `/write-plan`** — write the implementation plan covering all issues in the bundle. The plan's verification commands must include the bundle reproducer from L2. The plan's Impact Map must incorporate the value-domain consumers and parallel paths found in L4.0.
 
@@ -188,7 +173,7 @@ Write before starting each step so crash-resume works.
 - **Blind retry on verify fail**: same wrong plan executed twice, looks like flake, real cause is acceptance-criteria gap
 - **Real-channel pollution**: verifying a daily-email pipeline sends 6 real emails per attempt
 - **State drift across bundles**: Bundle C breaks Bundle A's invariant, no one notices because A's reproducer was never re-run
-- **Skipping diagnostic**: jumping straight to `/write-plan` per bundle without running `fix-bug` Steps 1-6, leaving root cause unverified
+- **Skipping diagnosis**: jumping straight to `/write-plan` per bundle without confirming each issue's cause (L4.0), leaving the root cause unverified
 
 ## Outputs
 

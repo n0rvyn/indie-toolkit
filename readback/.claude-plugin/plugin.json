@@ -1,8 +1,0 @@
-{
-  "name": "readback",
-  "version": "1.0.2",
-  "description": "Before-action read-back protocol — model must restate intent in plain language before writing code. Inspired by aviation/medical closed-loop communication.",
-  "author": {
-    "name": "Norvyn"
-  }
-}

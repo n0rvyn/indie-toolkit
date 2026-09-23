@@ -71,7 +71,7 @@ docs: update shared-utils README with new auth flow
 feat(pkos)!: change inbox routing to require explicit destination
 chore: bump dependencies across all plugins
 refactor(dev-workflow): extract bump detection into reusable function
-perf(readback): reduce plugin scan time by caching manifest
+perf(mactools): reduce plugin scan time by caching manifest
 test(commit): add audit gate coverage for secret patterns
 fix!: drop Node 16 support (no scope, breaking)
 ```

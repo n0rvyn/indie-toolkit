@@ -74,7 +74,7 @@ Keep tables tight. Each row should fit on one screen line. If a meaning needs a 
 
 - `brainstorm` Step 1: reads the file if present; uses canonical terms in clarifying questions; at Step 6 suggests updating if recurring domain terms emerged
 - `write-plan` Step 1: reads alongside `docs/00-AI-CONTEXT.md`; plan tasks use canonical terms in `Expected behavior`, `User interaction`, and `Touched surface` fields
-- `fix-bug` Step 0.8: reads if present; uses canonical terms in `Task Contract.Expected behavior` and `[值域检查]` table rows
+- `fix-bug`: uses canonical terms in the Current / Expected block and the closing before/after report
 - `feature-spec-writer`: reads if present; feature specs use canonical terms in user journey descriptions
 
 Skills should read but not auto-write the file — updates require explicit user confirmation (the file is a shared contract, not session state).

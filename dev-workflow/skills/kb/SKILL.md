@@ -5,7 +5,7 @@ user-invocable: true
 model: sonnet
 context: fork
 agent: Explore
-# background: false — brainstorm Step 1.3 / fix-bug Step 0.5 consume this skill's
+# background: false — brainstorm Step 1.3 / fix-bug (known-error lookup) consume this skill's
 # result in the SAME turn (they phrase the next question from the retrieved lessons).
 # `background` defaults to true, which returns only the agent name.
 background: false

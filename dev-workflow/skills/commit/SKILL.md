@@ -128,7 +128,7 @@ Optional body explaining:
 **Examples (plugin-monorepo scope convention — see references/conventional-commits.md for full list):**
 - `fix(apple-dev): use healthKitWorkoutId for stable log binding`
 - `feat(dev-workflow): auto-refresh on sync success`
-- `docs(readback): add setup instructions`
+- `docs(mactools): add setup instructions`
 - `refactor(commit): check persistentModelID before inserting`
 - `feat(pkos)!: breaking change to inbox routing` (note `!` after scope, not before)
 

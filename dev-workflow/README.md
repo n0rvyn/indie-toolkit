@@ -78,12 +78,11 @@ commit                                   → conventional commit
 For reported errors, unexpected behavior, build failures, or batches of issues against a verification surface.
 
 ```
-fix-bug                                  → diagnostic substrate (Steps 0-6)
-  ↓ (Simple/Medium fix)
+fix-bug                                  → start (现状/预期) + finish line (verified on the real path) + known dead ends; the path is the model's call
+  ↓ (small, local fix)
   direct edit + verify
-  ↓ (Complex fix)
-  fix-bug Step 7 → invoke write-plan with structured diagnosis bundle
-                 → execute-plan + test-changes
+  ↓ (multi-file / architectural / replacing a design)
+  write-plan with the diagnosis evidence → execute-plan + test-changes
   ↓ (optional, post-fix)
 collect-lesson                           → ~/.claude/knowledge/<topic>.md
 ```
@@ -92,7 +91,7 @@ collect-lesson                           → ~/.claude/knowledge/<topic>.md
 
 **When NOT to use**: feature additions (use Flow B); explanation-only questions with no defect to fix (answer directly).
 
-**Multi-issue mode**: when input is N issues against a running verification surface (API/CLI/REPL/agent), fix-bug auto-switches to loop mode — runs diagnostic per issue, bundles into a single plan, dispatches once.
+**Multi-issue mode**: when input is N issues against a running verification surface (API/CLI/REPL/agent), fix-bug auto-switches to loop mode — diagnoses per issue, bundles into a single plan, dispatches once.
 
 ### Skill Index by Role
 
@@ -156,7 +155,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 |-------|------|-------------|
 | run-phase | orchestrator | Phase lifecycle: plan → verify → execute (segmented, checkpoint-gated) → test → review → fix → done |
 | review-execution | dispatcher | **The single review dispatcher for this marketplace.** 5 always-on lenses (correctness / test-coverage / breaking-changes / root-cause-depth / secrets-and-transport) + `implementation-reviewer` when given a plan + Apple reviewers routed by what the diff touches. Inputs: `plan_path`, `scope_files`, `mode` (`gated` \| `advisory`). Callers pass inputs, not agent lists — `run-phase` Step 6, `execute-plan`'s standalone finish, `self-pacing`'s per-unit gate and `/afk`'s terminal stop all route through it |
-| fix-bug | interactive | Systematic diagnosis with value domain tracing |
+| fix-bug | interactive | Bug fixing by outcome: plain-language 现状/预期, verified on the user's real path, known dead ends ruled out |
 | write-plan | interactive | Writes implementation plan with Impact Map and Task Contract |
 | write-dev-guide | interactive | Writes phased dev-guide for multi-unit work |
 | commit | fork (sonnet) | Conventional commit analysis and execution |

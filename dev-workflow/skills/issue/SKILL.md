@@ -152,4 +152,4 @@ End with: "Run `/fix-bug #{N}` to start fixing, or `/issue` to see all open issu
 
 1. **Zero overhead**: `gh` CLI only, no MCP or external service setup required
 2. **Prior hypotheses are optional**: issue creation must not fail if files are unreadable or issue is not a bug
-3. **Format consistency**: issue body sections must match what `/fix-bug` Step 0 expects to parse (section header: `### Prior Hypotheses`)
+3. **Format consistency**: issue body sections must match what `/fix-bug` reads from `gh issue view` (section header: `### Prior Hypotheses`)

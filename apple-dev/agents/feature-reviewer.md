@@ -17,7 +17,6 @@ description: |
   user: "Check if the onboarding flow covers all scenarios"
   assistant: "I'll use the feature-reviewer agent for product+UX completeness review."
   </example>
-model: sonnet
 tools: Glob, Grep, Read, Bash, Write
 allowed-tools: Bash(mkdir*) Bash(date*) Write(*/.claude/reviews/*)
 maxTurns: 30

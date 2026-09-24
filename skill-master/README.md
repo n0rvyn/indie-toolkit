@@ -77,7 +77,7 @@ skill-master orchestrates; it does not rebuild existing capabilities:
 | intent-distiller | sonnet | Extract structured plugin/skill development intent from user requests |
 | trigger-arbiter | opus | Cross-plugin trigger overlap and conflict detection |
 | proposer | sonnet | (insights route) Drafts skill description / Examples edits from real usage findings; outputs strict JSON candidates list |
-| judge | sonnet | (insights route, DP-V1=D) Evaluates Proposer candidates for semantic accumulation / drift / original-intent divergence; returns approvals + rejections |
+| judge | inherit | (insights route, DP-V1=D) Evaluates Proposer candidates for semantic accumulation / drift / original-intent divergence; returns approvals + rejections |
 
 ### Supporting Files
 

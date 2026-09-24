@@ -20,13 +20,14 @@ from collections import Counter, defaultdict
 from html import escape
 from pathlib import Path
 
-# Pricing (USD per 1M tokens) — Fable 5 / Opus 4.8 / Sonnet 4.6 / Haiku 4.5 public list (2026-06)
-# Cache multipliers: cw_5m = 1.25x base, cw_1h = 2x base, cr (cache read) = 0.1x base.
+# Pricing (USD per 1M tokens) — Fable 5.1 / Opus 5.5 / Sonnet 5 / Haiku 4.5 public list (2026-09,
+# platform.claude.com/docs/en/about-claude/pricing). Cache reads are NOT a fixed 0.1x of input:
+# Opus 5.5 and Sonnet 5 both read at $0.20. Older generations are priced at these rates too.
 # Unknown models (class "other") fall back to opus pricing — see turn_cost().
 PRICING = {
-    "fable":  {"in": 10.00, "cw_1h": 20.00, "cw_5m": 12.50, "cr": 1.00, "out": 50.00},
-    "opus":   {"in":  5.00, "cw_1h": 10.00, "cw_5m":  6.25, "cr": 0.50, "out": 25.00},
-    "sonnet": {"in":  3.00, "cw_1h":  6.00, "cw_5m":  3.75, "cr": 0.30, "out": 15.00},
+    "fable":  {"in": 10.00, "cw_1h": 20.00, "cw_5m": 12.50, "cr": 0.25, "out": 50.00},
+    "opus":   {"in":  4.00, "cw_1h":  8.00, "cw_5m":  5.00, "cr": 0.20, "out": 20.00},
+    "sonnet": {"in":  2.00, "cw_1h":  4.00, "cw_5m":  2.50, "cr": 0.20, "out": 10.00},
     "haiku":  {"in":  1.00, "cw_1h":  2.00, "cw_5m":  1.25, "cr": 0.10, "out":  5.00},
 }
 
@@ -227,72 +228,80 @@ def classify_skill_by_description(description: str) -> str:
 
 
 def scan_skills_for_gaps(rows):
-    """Find installed plugin skills that look like cost-posture candidates.
+    """Find installed plugin skills whose cost posture breaks cost-posture.md.
 
-    Returns a list of dicts: {skill, plugin, class, current_model, opus_turns, opus_cost, recommended}
-    Only includes skills with actual Opus usage in the window (cost > $5)
-    AND a clear non-judgment classification.
+    Two deterministic findings, one row each:
+      - inline_pin:   `model:` set without `context: fork` — a no-op when Claude auto-invokes
+                      the skill (probed CC 2.1.281, 2026-09-24). Always reported.
+      - fork_candidate: lookup / tool-wrapper skill running inline with >= $5 of main-model
+                      usage in the window — move it behind `context: fork` + a small model.
+
+    "Small model on judgment work" is deliberately NOT checked here: keyword classification
+    mislabels forked lookup skills whose descriptions mention "design"/"review". That check
+    needs the skill body read, so it lives in plugin-reviewer Dimension 7.5.A.2.
+
+    Returns a list of dicts: {skill, plugin, class, finding, opus_turns, opus_cost, est_save, recommended, path}
     """
-    # Per-skill Opus usage from the window
     skill_opus = defaultdict(lambda: {"n": 0, "cost": 0.0})
     for r in rows:
         if r["model_class"] == "opus" and r["skill"] != "_none_":
             skill_opus[r["skill"]]["n"] += 1
             skill_opus[r["skill"]]["cost"] += turn_cost("opus", r)
 
-    # Scan installed SKILL.md
+    def usage_for(name):
+        for skill_key, val in skill_opus.items():
+            if skill_key.split(":")[-1] == name:
+                return val
+        return {"n": 0, "cost": 0.0}
+
     home = os.path.expanduser("~/.claude/plugins")
     candidates = []
     seen_names = set()  # dedupe across marketplaces/symlinks
-    for skill_md in glob.glob(os.path.join(home, "**", "SKILL.md"), recursive=True):
+    # Newest copy wins when a skill exists in several cached versions.
+    paths = glob.glob(os.path.join(home, "**", "SKILL.md"), recursive=True)
+    paths.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+    for skill_md in paths:
         fm = parse_frontmatter(skill_md)
         name = fm.get("name") or os.path.basename(os.path.dirname(skill_md))
         if name in seen_names:
             continue
         seen_names.add(name)
-        cur_model = fm.get("model", "")  # empty = inherit
-        if cur_model:  # already configured, skip
+        cur_model = fm.get("model", "").lower()
+        forked = fm.get("context", "").lower() == "fork"
+        klass = classify_skill_by_description(fm.get("description", ""))
+        usage = usage_for(name)
+
+        finding = rec = None
+        est_save = 0.0
+        if cur_model and cur_model != "inherit" and not forked:
+            if fm.get("disable-model-invocation", "").lower() == "true":
+                continue  # typed-only skill: the pin does switch; an owner decision, not a gap
+            finding = "inline_pin"
+            rec = "remove `model:` (no-op on auto-invoke), or add `context: fork` if this is lookup work"
+        elif not cur_model and not forked and klass in ("retrieval", "tool_wrapper"):
+            if usage["cost"] < 5.0:
+                continue
+            finding = "fork_candidate"
+            rec = "context: fork\\nmodel: sonnet" + ("\\nagent: Explore" if klass == "retrieval" else "")
+            # Forked lookups keep bulk reads out of the main thread; Sonnet 5 is half of Opus 5.5
+            # on input/output and equal on cache reads, so savings are well under half.
+            est_save = usage["cost"] * 0.3
+        if not finding:
             continue
-        description = fm.get("description", "")
-        klass = classify_skill_by_description(description)
-        if klass not in ("mechanical", "retrieval", "tool_wrapper"):
-            continue  # judgment / unknown — don't recommend
-
-        # Match against actual usage. Skills in the TSV are namespaced like "plugin:name".
-        # Try several matching strategies.
-        usage = None
-        for skill_key, val in skill_opus.items():
-            tail = skill_key.split(":")[-1]
-            if tail == name:
-                usage = val
-                break
-        if usage is None or usage["cost"] < 5.0:
-            continue
-
-        if klass == "mechanical":
-            rec = "model: sonnet"
-        elif klass == "retrieval":
-            rec = "model: sonnet  (consider also context: fork, agent: Explore)"
-        else:  # tool_wrapper
-            rec = "model: haiku\\ncontext: fork"
-
-        # Estimate post-downgrade cost as a fraction of the observed Opus cost. Tool wrappers
-        # (recommended → haiku) drop ~95% of Opus per-turn cost; mechanical and retrieval
-        # (recommended → sonnet) drop ~93%. Lower ratio = bigger savings.
-        ratio = 0.05 if klass == "tool_wrapper" else 0.07
-        est_save = usage["cost"] * (1 - ratio)
 
         candidates.append({
             "skill": name,
             "path": skill_md,
             "class": klass,
+            "finding": finding,
             "opus_turns": usage["n"],
             "opus_cost": usage["cost"],
             "est_save": est_save,
             "recommended": rec,
         })
 
-    candidates.sort(key=lambda c: -c["est_save"])
+    order = {"inline_pin": 0, "fork_candidate": 1}
+    candidates.sort(key=lambda c: (order[c["finding"]], -c["est_save"]))
     return candidates
 
 
@@ -504,12 +513,12 @@ def render(rows, days: int, candidates):
     parts.append("<section>")
     parts.append("<h2>Cost-Posture Recommendations</h2>")
     if not candidates:
-        parts.append("<div class='rec-card rec-empty'>No optimization gaps detected. Either everything is already configured, or no skills have crossed the $5 Opus threshold in this window.</div>")
+        parts.append("<div class='rec-card rec-empty'>No posture findings. No inline pins, and no lookup skill crossed the $5 main-model threshold in this window.</div>")
     else:
-        parts.append(f"<div style='font-size:13px;color:#4b5563;margin-bottom:14px;'>Found {len(candidates)} skill(s) currently inheriting Opus that classify as mechanical/retrieval/tool-wrapper per the cost-posture heuristic. Estimated savings assume Sonnet ≈ 5-15% and Haiku ≈ 5% of the Opus per-turn cost based on observed usage patterns. Always validate with real usage before committing.</div>")
+        parts.append(f"<div style='font-size:13px;color:#4b5563;margin-bottom:14px;'>Found {len(candidates)} posture finding(s) per cost-posture.md: <b>inline_pin</b> (inline <code>model:</code> without <code>context: fork</code> — a no-op when Claude auto-invokes the skill), <b>fork_candidate</b> (lookup work running inline). Savings are only estimated for fork candidates; always validate with real usage before committing.</div>")
         for c in candidates:
             parts.append("<div class='rec-card'>")
-            parts.append(f"<div class='rec-skill'>{escape(c['skill'])} <span class='tag tag-{c['class']}'>{c['class']}</span></div>")
+            parts.append(f"<div class='rec-skill'>{escape(c['skill'])} <span class='tag tag-{c['class']}'>{c['class']}</span> <span class='tag'>{escape(c['finding'])}</span></div>")
             parts.append(f"<div class='rec-meta'>{fmt_int(c['opus_turns'])} Opus turns · {fmt_money(c['opus_cost'])} spent · est save <strong>{fmt_money(c['est_save'])}</strong></div>")
             parts.append(f"<div class='rec-fix'>{escape(c['recommended'])}</div>")
             parts.append(f"<div class='rec-meta' style='margin-top:6px;'>{escape(c['path'])}</div>")

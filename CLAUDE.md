@@ -20,28 +20,21 @@ When closing out a response with a "next step" suggestion or follow-up plan:
 
 ## Skill Cost Posture
 
-Every skill and agent SKILL.md / agent.md in this marketplace must declare a deliberate cost posture via `model:` / `effort:` / `context:` frontmatter. Skills that omit these inherit the session model (Opus by default in this team's setup), which silently charges ~20× a Sonnet turn for work Sonnet handles correctly.
+**Authoritative rule + classification**: `skill-master/skills/plugin-master/cost-posture.md`
 
-**Authoritative heuristic + decision table**: `skill-master/skills/plugin-master/cost-posture.md`
+1. Small models only for lookup work (search, read logs/output, CLI wrappers), and only through `context: fork` or an agent definition.
+2. Everything else — judgment, synthesis, orchestration, anything that writes code or files — stays on the main model: no `model:` pin.
+3. When quality or cost is off, change `effort` before changing the model.
 
-**Quick reference** (classify by *dominant work at runtime*):
+**Never write an inline `model:` (without `context: fork`).** Probed on CC 2.1.281 (2026-09-24): it switches only when the user types `/skill`, never when Claude auto-invokes the skill; inline `haiku` did not switch at all. 16 such pins were removed on 2026-09-24. Evidence: `~/.claude/knowledge/platform-constraints/2026-09-24-inline-skill-model-switches-only-on-typed.md`.
 
-| Class | Config |
-|---|---|
-| Mechanical execution (follows pre-written plan/spec) | `model: sonnet` |
-| Retrieval + extract (search corpus, return snippets) | `model: sonnet` + optional `context: fork agent: Explore` |
-| Tool wrapper (CLI/API call, structured output) | `model: haiku` + `context: fork` |
-| Judgment / Synthesis / Orchestration | inherit (do not downgrade) |
+**Why the old "~20× a Sonnet turn" rule is gone**: at current list prices Opus 5.5 vs Sonnet 5 is 2× on input/output and equal on cache reads; over 60 days all Sonnet/Haiku downgrades together saved ~1.4% of spend. The real win in `execute-plan` came from pinning its Workflow **agents** to sonnet, not the skill.
 
 **When this rule fires:**
 
-- **Creating a new skill/agent**: `skill-master:plugin-master` Step 2a.5 runs the cost posture recommendation; do not commit a new SKILL.md without it set or explicitly marked "keep inherit".
-- **Auditing**: `skill-master:plugin-reviewer` Dimension 7.5 flags missing optimization (mechanical skill on inherit) AND misuse (judgment skill on haiku). Both directions matter.
-- **Refactoring an existing skill**: if you change what a skill *does*, re-classify and update the posture.
-
-**Why we enforce this**: real usage data over 3 days showed `execute-plan` running 626 turns on Opus ($487) vs 3054 turns on Sonnet ($103) — the Sonnet half worked, the Opus half was inherited default. The fix was a one-line frontmatter change per skill.
-
-**Do not downgrade**: write-plan, brainstorm, design-decision, verify-plan, run-phase, fix-bug (diagnosis), review-execution, plugin-master itself. These do judgment / synthesis / orchestration; quality loss cascades downstream and costs more than the per-turn savings.
+- **Creating a new skill/agent**: `skill-master:plugin-master` Step 2a.5 checks the posture.
+- **Auditing**: `skill-master:plugin-reviewer` Dimension 7.5 flags inline pins, small models on judgment/writing work, and lookup skills that should be forked.
+- **Refactoring an existing skill**: if you change what a skill *does*, re-classify.
 
 **Operating principles**: see `dev-workflow/skills/audit-tokens/SKILL.md §Principles` for the two governance rules (enhance-not-break; recover-unwarranted-cost-only).
 

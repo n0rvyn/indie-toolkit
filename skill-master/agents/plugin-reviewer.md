@@ -225,41 +225,38 @@ This sub-dimension checks both directions: misconfigured fields AND missed optim
 
 **7.5.A — Misuse checks (fields are set but wrong):**
 
-1. If skill has `context: fork`:
+1. If a skill has `model:` set **without** `context: fork`:
+   - If it has `disable-model-invocation: true` and a comment saying the pin is deliberate → do not flag.
+   - Otherwise → flag as Minor: "Inline `model:` is a no-op when Claude auto-invokes the skill (it switches only on a typed `/skill`, and inline `haiku` did not switch at all — probed CC 2.1.281, 2026-09-24). Remove it, or add `context: fork` if this is lookup work that needs no conversation history. See cost-posture.md anti-pattern 1."
+2. If a skill or agent has `model: haiku` or `model: sonnet` AND its dominant work is judgment, synthesis, orchestration, or writing code/files (per cost-posture.md classification): flag as Bug — "Keep {class} work on the main model; a small model here risks silent quality loss downstream. See cost-posture.md anti-pattern 2."
+3. If skill has `context: fork`:
    - Check if the skill is multi-step with agent dispatch that produces results needed by later steps. If yes → flag as Minor: "context: fork isolates this skill from conversation state; multi-step workflows that return results to the user may lose context"
    - Check if skill body lacks an actionable task prompt (only guidelines/conventions). If yes → flag as Logic: "context: fork subagent will receive guidelines with no task and return empty"
    - Check if skill body contains `AskUserQuestion` calls, "Wait for user", "ask the user via", "user confirms", or "用户确认" patterns. If yes → flag as Bug: "context: fork only surfaces the subagent's final message to the main session; intermediate AskUserQuestion calls in the forked subagent cannot reach the user, which breaks the skill's interactive design. Remove `context: fork` or refactor to defer user interaction to the dispatcher."
-2. If skill has `model: haiku`:
-   - Check if the skill instructions require complex reasoning (multi-step analysis, architectural decisions, nuanced judgment, creative generation). If yes → flag as Bug: "haiku does not handle the complexity described; misclassification, missed defects, or wrong output likely downstream"
-3. If skill has `model:` set but `effort:` mismatched (e.g. `model: haiku, effort: high`): flag as Minor — Haiku does not support high effort, the field is silently ignored.
+4. If `model:` set but `effort:` mismatched (e.g. `model: haiku, effort: high`): flag as Minor — Haiku supports no effort level, the field is silently ignored.
+5. Pinned `effort:` on judgment/review work, or below-default `effort:` on work with verification duty: flag as Bug (cost-posture.md anti-patterns 6–7).
 
-**7.5.B — Missing optimization checks (fields not set but should be):**
+**7.5.B — Missed isolation check (lookup work running inline):**
 
-For each skill without a `model:` field set, classify the skill's dominant work using the heuristic in `cost-posture.md`:
+Only lookup and tool-wrapper work is a downgrade candidate, and only through an isolated context. For each skill **without** `context: fork`, classify its dominant work:
 
 | Detected class | Recommendation | Severity if missing |
 |---|---|---|
-| Mechanical execution (follows pre-written plan/spec, applies edits, parses output) | `model: sonnet` | Minor |
-| Retrieval + extract (search corpus, filter, return snippets) | `model: sonnet` + `context: fork agent: Explore` (REQUIRED when the skill is dispatched by ≥1 orchestrator skill/agent; consider otherwise) | Major if orchestrator-called and missing fork; Minor otherwise |
-| Tool wrapper (CLI/API call, structured output) | `model: haiku` + `context: fork` | Minor |
-| Judgment / Synthesis / Orchestration | inherit (do not flag) | — |
+| Lookup / retrieval (search, read logs or output, return snippets or a summary) that needs no conversation history or AskUserQuestion | `context: fork` + `model: sonnet` (+ `agent: Explore` if it needs no CLAUDE.md) | Major if an orchestrator skill/agent dispatches it; Minor otherwise |
+| Tool wrapper (CLI/API call, structured output, no judgment) that needs no conversation history | `context: fork` + `model: sonnet` or `haiku` | Minor |
+| Mechanical execution that writes, Judgment, Synthesis, Orchestration | inherit — do not flag, do not recommend a `model:` | — |
 
-**Classification precedence — judgment keywords win.** When scanning the skill's description and body, if BOTH a judgment keyword AND a mechanical/retrieval keyword appear, classify as **judgment** (do not flag). This matches the implementation in `audit-tokens/scripts/generate_report.py:classify_skill_by_description` (canonical keyword lists live there). Without this precedence rule, the text-reviewer report and the python-driven `audit-tokens` HTML report can produce conflicting recommendations on the same skill.
+**Classification precedence — judgment keywords win.** If a judgment keyword AND a lookup/wrapper keyword both appear, classify as judgment (do not flag). This matches `audit-tokens/scripts/generate_report.py:classify_skill_by_description` (canonical keyword lists live there), so the two reports cannot disagree on the same skill.
 
 Detection signals — apply in this order:
 
 1. **Judgment** (stop scanning if any match): "judge", "judges", "critique", "critiques", "review", "reviews", "diagnose", "diagnoses", "design", "designs", "synthesize", "synthesizes", "brainstorm", "decide", "decides", "orchestrate", "orchestrates", "evaluate", "evaluates", "assess", "assesses"
 2. **Tool wrapper**: "wraps", "wrapper", "cli", "api call", "rest call", "send", "post", "trigger"
 3. **Retrieval**: "search", "retrieve", "query", "find", "look up", "lookup", "fetch", "fetches"
-4. **Mechanical** (most permissive bucket): "execute", "executes", "apply", "applies", "run", "runs", "parse", "parses", "scan", "scans", "audit", "audits", "validate", "validates", "verify", "verifies", "sync", "syncs", "extract", "extracts", "generate", "generates", "lint", "format", "mechanical"
 
-Additional signal: a skill body that dispatches a sub-agent already running on sonnet/haiku means the orchestration layer itself is doing mechanical work — recommend matching the sub-agent's model.
+Anything else is treated as mechanical/writing work and is not flagged here. Never recommend a `model:` pin on a skill that stays inline.
 
-When flagging, include the detected class and a citation: e.g. "Detected class: Mechanical execution (skill description: 'Executes plan tasks mechanically'). Recommend `model: sonnet`. See cost-posture.md for criteria."
-
-**7.5.C — Judgment/Synthesis/Orchestration do-not-downgrade check:**
-
-If skill has `model: haiku` or `model: sonnet` AND the skill's dominant work is judgment, synthesis, or orchestration (per cost-posture.md examples): flag as Bug — "Downgrading {class} skills risks silent quality loss that costs more downstream than the per-turn savings. See cost-posture.md anti-patterns."
+When flagging, include the detected class and a citation: e.g. "Detected class: Lookup (description: 'Searches the knowledge base…'). Recommend `context: fork` + `model: sonnet`. See cost-posture.md."
 
 **7.6 Prose economy (deletion test):**
 

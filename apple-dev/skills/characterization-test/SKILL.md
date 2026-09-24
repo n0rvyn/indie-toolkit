@@ -4,7 +4,6 @@ description: "Swift/iOS/macOS only. Use before refactoring legacy Swift code, or
 compatibility: Requires macOS and Xcode
 user-invocable: true
 argument-hint: "<module / file / type to lock behavior for>"
-model: sonnet
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
 ---
 

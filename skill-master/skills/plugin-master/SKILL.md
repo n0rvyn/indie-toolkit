@@ -113,27 +113,26 @@ After creation completes, apply step 2 of **Single skill** below (eval rules) to
 
 #### 2a.5: Cost Posture Recommendation
 
-Before auto-review, classify the new artifact's dominant work and recommend `model` / `effort` / `context` frontmatter.
+Before auto-review, classify the new artifact's dominant work and check its `model` / `effort` / `context` frontmatter.
 
-1. Read `${CLAUDE_PLUGIN_ROOT}/skills/plugin-master/cost-posture.md` for the classification heuristic, decision questions, and recommended configs. If the file cannot be located, skip this step.
+1. Read `${CLAUDE_PLUGIN_ROOT}/skills/plugin-master/cost-posture.md` for the rule, classification, and anti-patterns. If the file cannot be located, skip this step.
 
-2. Apply the heuristic to the newly created artifact:
+2. Apply the classification to the newly created artifact:
    - Read the artifact's description and body
-   - Walk the decision questions (writes spec vs follows / output consumed downstream / needs CLAUDE.md / failure cost)
-   - Determine the class: Mechanical / Retrieval / Tool wrapper / Judgment / Synthesis / Orchestration
+   - Walk the decision questions (needs conversation history or AskUserQuestion / lookup with cheap-to-check output / writes, judges, designs or coordinates / visibly lazy or slow)
+   - Determine the class: Lookup / Tool wrapper / Mechanical execution that writes / Judgment / Synthesis / Orchestration
 
-3. If the artifact already has `model:` or `context:` set: verify it matches the recommended config for its class.
-   - If it matches: no action, note "cost posture: aligned"
-   - If it conflicts with the heuristic (e.g. mechanical skill on inherit, or synthesis skill set to haiku): present the conflict and ask the user to confirm or override
+3. If the artifact already has `model:` or `context:` set: check it against the anti-patterns.
+   - Aligned → no action, note "cost posture: aligned"
+   - Conflict (e.g. an inline `model:` without `context: fork`, or a judgment/writing artifact pinned to sonnet/haiku) → present the conflict and ask the user to confirm or override
 
-4. If the artifact has no `model:` / `context:` set: present the recommendation as an AskUserQuestion:
-   - Class: {detected}
-   - Recommended frontmatter: `model: {sonnet|haiku}` + optional `context: fork agent: {Explore|...}`
-   - Reason: cite the relevant row from cost-posture.md
-   - Options: "Apply recommendation" / "Keep inherit (default Opus)" / "Custom"
-   - If "Apply recommendation": Edit the artifact's frontmatter
-   - If "Keep inherit": continue without changes
-   - If "Custom": ask for explicit values
+4. If the artifact has no `model:` / `context:` set:
+   - Lookup or Tool wrapper that needs no conversation history → present the recommendation as an AskUserQuestion:
+     - Class: {detected}
+     - Recommended frontmatter: `context: fork` + `model: {sonnet|haiku}` (+ `agent: Explore` if it needs no CLAUDE.md)
+     - Reason: cite the relevant row from cost-posture.md
+     - Options: "Apply recommendation" / "Keep inline on the main model" / "Custom"
+   - Any other class → no question; note "cost posture: inherit ({class})". Never recommend an inline `model:` pin.
 
 5. Note the cost posture decision in the **Completion (create)** summary at the end of this route, so the user has it on record.
 

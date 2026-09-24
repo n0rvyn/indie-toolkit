@@ -2,15 +2,11 @@
 name: asc-submit-preview
 description: "Use before submitting to App Store, or when the user says 'asc submit preview', 'asc pre-submit check', '上架前自检', 'will this pass review'. Checks app code against Apple's App Review Guidelines to catch common rejection reasons. Not for ASC 后台材料 (privacy labels / screenshots / store description) — use /asc-listing."
 compatibility: Requires macOS and Xcode
-model: sonnet
 ---
 
-<!-- cost-posture rationale:
-  This skill is mechanical rule-checking: enumerate guideline sections,
-  grep imports/Info.plist for characteristic signals, classify findings.
-  No judgment calls on which fix is correct, no synthesis of new content.
-  model: sonnet (mechanical rule-checking standard).
-  See docs/06-plans/2026-06-28-reviewer-slimdown-safe-plan.md Task 3 (7.7). -->
+<!-- cost-posture: inherit. An inline `model:` only switches on a typed /command, never when Claude
+  auto-invokes the skill (probed on CC 2.1.281, 2026-09-24), so a pin here was a no-op; and
+  classifying findings against review guidelines is judgment, which stays on the main model. -->
 
 ## Division of Responsibility
 

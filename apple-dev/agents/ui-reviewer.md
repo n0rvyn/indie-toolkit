@@ -17,7 +17,6 @@ description: |
   user: "Check UI compliance for the updated screens"
   assistant: "I'll use the ui-reviewer agent for a fresh-context compliance review."
   </example>
-model: sonnet
 tools: Glob, Grep, Read, Bash, Write
 allowed-tools: Bash(mkdir*) Bash(date*) Write(*/.claude/reviews/*)
 maxTurns: 30

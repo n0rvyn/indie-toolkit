@@ -17,7 +17,6 @@ description: |
   user: "Check the visual quality of the new dashboard"
   assistant: "I'll use the design-reviewer agent for a fresh-context design review."
   </example>
-model: sonnet
 tools: Glob, Grep, Read, Bash, Write
 allowed-tools: Bash(mkdir*) Bash(date*) Write(*/.claude/reviews/*)
 maxTurns: 30

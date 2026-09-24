@@ -35,15 +35,17 @@ from html import escape
 # Keyed by model FAMILY (substring match), not full model id — model strings
 # in the wild have suffixes (`claude-opus-4-7[1m]`) and version variants
 # (`claude-sonnet-4-5`) that exact-match would miss.
-# USD per 1M tokens — Fable 5 / Opus 4.8 / Sonnet 4.6 / Haiku 4.5 public list (2026-06).
-# cw5 = 1.25x base, cw1 = 2x base, cache_read = 0.1x base.
+# USD per 1M tokens — Fable 5.1 / Opus 5.5 / Sonnet 5 / Haiku 4.5 public list (2026-09,
+# platform.claude.com/docs/en/about-claude/pricing). Cache reads are NOT a fixed 0.1x of input:
+# Opus 5.5 and Sonnet 5 both read at $0.20. Older model generations are priced at these rates
+# too, so the numbers are a normalized ranking, not historical billing.
 # "unknown" mirrors opus pricing, matching generate_report.py's unknown→opus fallback.
 PRICE_PER_M = {
-    "fable":   {"input": 10.0, "cw5": 12.5,  "cw1": 20.0, "cache_read": 1.0,  "output": 50.0},
-    "opus":    {"input": 5.0,  "cw5": 6.25,  "cw1": 10.0, "cache_read": 0.5,  "output": 25.0},
-    "sonnet":  {"input": 3.0,  "cw5": 3.75,  "cw1": 6.0,  "cache_read": 0.3,  "output": 15.0},
+    "fable":   {"input": 10.0, "cw5": 12.5,  "cw1": 20.0, "cache_read": 0.25, "output": 50.0},
+    "opus":    {"input": 4.0,  "cw5": 5.0,   "cw1": 8.0,  "cache_read": 0.2,  "output": 20.0},
+    "sonnet":  {"input": 2.0,  "cw5": 2.5,   "cw1": 4.0,  "cache_read": 0.2,  "output": 10.0},
     "haiku":   {"input": 1.0,  "cw5": 1.25,  "cw1": 2.0,  "cache_read": 0.1,  "output": 5.0},
-    "unknown": {"input": 5.0,  "cw5": 6.25,  "cw1": 10.0, "cache_read": 0.5,  "output": 25.0},
+    "unknown": {"input": 4.0,  "cw5": 5.0,   "cw1": 8.0,  "cache_read": 0.2,  "output": 20.0},
 }
 
 

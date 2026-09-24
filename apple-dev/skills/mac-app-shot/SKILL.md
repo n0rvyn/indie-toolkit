@@ -1,6 +1,5 @@
 ---
 name: mac-app-shot
-model: sonnet
 compatibility: Requires macOS and Xcode
 description: "Use when you need to VISUALLY verify a running macOS GUI app from the CLI: capture just ONE app window (not the whole screen) by its window id, optionally drive the app via clicks + keystrokes, and read the PNG with the Read tool to check layout / style / behavior empirically. Covers the edit → rebuild → relaunch → screenshot loop for verifying UI or code changes, and a fallback for snapshotting a single SwiftUI view in a sandboxed app (ImageRenderer + base64-over-stdout). Triggers: 'screenshot the app', 'verify the UI', 'check the layout/style', 'screenshot-verify', visual QA of a Mac app, '截图验证', '看一下界面', '对着图改', '取 app 的截图'. NOT for: full-screen captures, web pages (use a browser/WebFetch tool), or unit/logic tests (those never show layout)."
 ---

@@ -1,7 +1,6 @@
 ---
 name: judge
 description: Evaluates Proposer agent's candidates for semantic accumulation / drift / original-intent divergence in target skill files. Dispatched only from the /plugin-master insights flow. Returns approvals + rejections JSON.
-model: sonnet
 color: blue
 tools:
   - Read

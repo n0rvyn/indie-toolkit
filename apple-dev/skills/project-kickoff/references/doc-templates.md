@@ -465,12 +465,4 @@ enum AppColor {
 
 ## CI/CD 配置初始化
 
-**询问用户：是否配置 CI/CD（Xcode Cloud + 自动版本管理）？**
-
-如果选 Yes：
-- 调用 `setup-ci-cd` skill
-- 统一所有 target 版本号 + 启用 Apple Generic versioning
-- 生成 `.github/workflows/auto-version.yml`（conventional commit → semver bump，ubuntu-latest）
-- 生成 `ci_scripts/ci_post_clone.sh`（Xcode Cloud 构建号自动设置）
-- 输出 Xcode Cloud workflow 配置指引（Dev to TestFlight / Main to App Store）
-- 零 GitHub Secret 配置
+跳过：Xcode Cloud 由用户在 Xcode App 里配置（`setup-ci-cd` 已于 2026-09-24 退役）。

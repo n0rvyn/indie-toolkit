@@ -28,9 +28,9 @@ Before prompting for `primaryColor`, `colorRelationship`, or font-related inputs
 - If present: parse it per the spec below and seed inputs from the file. Skip prompting for the three fields that parsed successfully.
 - If absent: proceed with the existing prompts as before.
 
-This hook is upstream-only — the rest of the Process below is unchanged. The personality file is produced by `dev-workflow:choose-personality`; consumers of this skill should run `/choose-personality` first when starting a new project.
+This hook is upstream-only — the rest of the Process below is unchanged. The file was produced by `dev-workflow:choose-personality`, retired 2026-09-24 (`docs/12-retired/choose-personality.md`); new projects settle personality in Claude Design's Design System, so the file is read only where an older project still has it.
 
-#### Parse spec (consumer contract — keep in sync with `dev-workflow:choose-personality` Step 5)
+#### Parse spec (consumer contract — the format `choose-personality` Step 5 wrote; `git show 4583a9f:dev-workflow/skills/choose-personality/SKILL.md`)
 
 Read `docs/02-architecture/design-personality.md` line-by-line and extract the following fields by literal heading + line pattern. All regex matches are case-sensitive and require the heading line to appear **before** the value line.
 

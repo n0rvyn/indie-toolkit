@@ -28,7 +28,6 @@ Policy for this pass:
 - `handoff` (moved from manual 2026-08-26, commit `1c70b5b`: model-invocation is load-bearing for the AFK path — "keep going, handoff if you hit a real block" with no `/self-pacing` typed has nothing governing it, so without description-match routing nothing fires at the block. Also invoked as a callee by `self-pacing` at terminal STOPs.)
 
 `dev-workflow` manual entries:
-- `audit-rules`
 - `generate-design-prompt`
 - `afk` (goal-oriented unattended driver — walking away and suppressing stops must be a deliberate user choice, never model-routed. Invokes `handoff` as a callee at every stop.)
 - `self-pacing` (superseded by `afk`; kept for verified multi-phase dev-guide runs. Same rule: deliberate user choice, never model-routed)

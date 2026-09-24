@@ -10,7 +10,6 @@ This reference is consumed by skill DP handling steps. Not user-facing.
 - `run-phase` Step 7 #8 — review report, mode `mixed`, recording default
 - `understand-design` — design-analysis file, mode `mixed`, recording default
 - `write-feature-spec` — spec file, mode `mixed`, recording default
-- `audit-rules` — audit report, mode `mixed`, recording `conversation-only`
 - `execute-plan` Step 1 #3 — plan file, **inline short-form** (see §"Note on inline variant"), recording default
 
 Each consuming skill declares its parameters (source file path, mode, recording) at the DP handling step and points here for execution.
@@ -157,12 +156,12 @@ This is what downstream consumers depend on:
 
 ### Conversation-only recording (`recording: conversation-only`)
 
-Some skills (`audit-rules`) produce DPs from transient findings — rule-audit recommendations — that don't belong in a long-lived plan or spec. For these:
+Some skills produce DPs from transient findings that don't belong in a long-lived plan or spec (no current skill uses this mode; kept for the next one). For these:
 
 - Record the user's choice in the ongoing conversation only (note which option was chosen for each DP).
 - **Do not write `**Chosen:**` back to the source file.**
 - Downstream handling varies by skill:
-  - **Same-skill consumption**: `audit-rules` Step 4-5 reads the conversation record to decide which fixes to apply in the current run.
+  - **Same-skill consumption**: a later step of the same skill reads the conversation record to decide which fixes to apply in the current run.
 
 ## Note on Inline Variant
 

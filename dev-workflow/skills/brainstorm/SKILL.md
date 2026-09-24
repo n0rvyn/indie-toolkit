@@ -217,7 +217,7 @@ After design is approved, inform the user based on the design type:
 >
 > Or skip prototyping and go directly to `/write-plan`.
 >
-> **Personality not yet locked?** If this is a fresh project and the visual + linguistic personality (vibe / audience / radius / font character / language tone) has not been pinned down, run `/choose-personality` before any design-system or component work — it writes `docs/02-architecture/design-personality.md` so downstream generators (e.g. `generate-design-system` skill, auto-routed) skip re-asking those questions.
+> **Personality not yet locked?** If this is a fresh project and the visual + linguistic personality (vibe / audience / radius / font character / language tone) has not been pinned down, settle it in Claude Design's Design System before any design-system or component work.
 
 **If the design is infrastructure-only (no UX Assertions):**
 

@@ -37,6 +37,10 @@ git 重建不出来的：**为什么当初做它、为什么后来不要了、�
 
 | 记录 | 退役日 | 一句话 |
 |---|---|---|
+| [choose-personality](choose-personality.md) | 2026-09-24 | 设计性格改由 Claude Design 的 Design / Design System 定，零使用 |
+| [setup-ci-cd](setup-ci-cd.md) | 2026-09-24 | Xcode Cloud 直接在 Xcode App 里配；GitHub 侧版本 bump 不需要 |
+| [update-asc-docs](update-asc-docs.md) | 2026-09-24 | 与 asc-listing 重叠；「扫代码对照隐私政策」并入其核对清单 |
+| [audit-rules](audit-rules.md) | 2026-09-24 | 连同 rules-auditor；全局规则审计改为带 eval 的独立专项 |
 | [shared-utils](shared-utils.md) | 2026-09-23 | html-report 不再需要技能；mongo 脚本无调用方；插件空了一起退 |
 | [design-drift](design-drift.md) | 2026-09-23 | 对用户隐藏又无调用方，零使用；职责已被 DF / implementation-reviewer / ui-reviewer 分掉 |
 | [notion-skills](notion-skills.md) | 2026-09-23 | ASC 文档迁出 Notion，需求消失；直接用官方 Notion MCP |

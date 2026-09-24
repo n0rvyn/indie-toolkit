@@ -101,7 +101,7 @@ Skills are categorized by how they enter the runtime. This governs `user-invocab
 |---|---|---|
 | **Flow entry** (user types or model routes) | `user-invocable: true` | write-dev-guide, run-phase, write-plan, verify-plan, fix-bug, brainstorm, commit, review-before-commit, review-execution, finalize, finish-branch, issue, kb, crystallize, collect-lesson, handoff, fork-this, audit-tokens |
 | **Inline only** (dispatched by other skills, never user-typed) | `user-invocable: false` | execute-plan, test-changes, feature-spec-writer (agent), design-analyzer (agent), reviewer agents (ui/design/feature/apple-reviewer) |
-| **Long-tail / on-demand** (rarely needed, kept for the case when needed) | `user-invocable: true` | audit-rules, next-increment, distill-discussion, generate-bases-views, design-parity-build (apple-dev), characterization-test (apple-dev) |
+| **Long-tail / on-demand** (rarely needed, kept for the case when needed) | `user-invocable: true` | next-increment, distill-discussion, generate-bases-views, design-parity-build (apple-dev), characterization-test (apple-dev) |
 | **Guide / reference** (advisory pattern doc, not executable workflow) | should be a reference, not a skill | parallel-agents (now at references/parallel-agents.md); use EnterWorktree tool directly for worktree operations |
 
 **Adding a new skill?** Decide its role first. Flow-entry skills must map to A/B/C or justify a new flow. Inline-only skills must have a named driver (another skill that dispatches them). Long-tail skills must have a stated trigger condition (typically "when user mentions X" or "when N commits since Y"). Guide-type entries should be reference files under `references/`, not SKILL.md files.
@@ -135,7 +135,6 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | plan-verifier | opus | Glob, Grep, Read, Bash, Write | Verification-first plan validation (S1/S2/U1/DF/CF/AR) |
 | dev-guide-verifier | opus | Glob, Grep, Read, Bash, Write | Dev-guide quality verification (coverage, dependencies, data flow, code overlap, terms, criteria, structure) |
 | feature-spec-writer | sonnet | Glob, Grep, Read, Write | Design-vs-implementation feature spec generation |
-| rules-auditor | sonnet | Glob, Grep, Read | CLAUDE.md rules audit for conflicts and loopholes (read-only) |
 | distill-discussion-reader | sonnet | Read, Glob, Grep | Discussion file classification and structured extraction (read-only) |
 
 ## Skills
@@ -163,7 +162,6 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | self-pacing | ⚠️ superseded by `afk` | Kept for the one case `afk` does not cover: driving an already-verified multi-phase dev-guide across phase seams. Its plan/dev-guide precondition is what `afk` drops. `DESIGN.md` invariants 1/2/6 still authoritative for stop + handoff behavior. Original description: drives verified work to green autonomously — suppresses *pacing* hard-stops, gates only on *severity* (blocking DP / severe failure / must-fix / explicit `<!-- checkpoint -->`), auto-takes recommended DPs, accumulates everything into one final review. Two modes: `/self-pacing` = whole dev-guide across all phases; `/self-pacing phase` = one phase/plan then stop at the seam. Prompt-only: reuses execute-plan mechanics + test-changes + reviewers, modifies no other skill |
 | test-changes | dispatcher | Dispatches test-runner agent for build/test/lint suite execution |
 | brainstorm | interactive | Design exploration before implementation |
-| choose-personality | interactive | Lock 6-dimension visual + linguistic personality before design-system generation |
 | design-decision | interactive | Trade-off analysis with essential/accidental complexity |
 | handoff | main session (inherit) | Full context transfer for cross-day/cross-person session hand-off; the callee `/afk` invokes at **every** stop (its only handoff outlet) and `self-pacing` at a terminal STOP (its stop card locates, this doc transfers). **Not forked** — `context: fork` was dropped in `2ea667f`, and a fork would break both consumers: a forked agent cannot see the live session, and it runs in the background so the doc would not exist on disk before the calling turn ends |
 | generate-design-prompt | interactive | Cross-platform design tool prompt generation (iOS/macOS → Stitch DSL; Web → Figma placeholder); supports initial and refinement modes |
@@ -171,7 +169,6 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | verify-plan | dispatcher | Gathers context, dispatches plan-verifier agent |
 | next-increment | interactive | Proposes 3-5 archetype-diverse next-step candidates for mature codebases, writes mini-spec for chosen one |
 | write-feature-spec | dispatcher | Gathers context, dispatches feature-spec-writer agent |
-| audit-rules | dispatcher | Gathers context, dispatches rules-auditor agent |
 | audit-tokens | fork (sonnet) | Multi-dimensional Claude Code token consumption analysis with self-contained HTML report; auto cost-posture recommendations; auto-invokes its own scripts/diagnose.py for root-cause attribution |
 | fork-this | fork (sonnet) | Mid-session orthogonal split: when topic A's discussion surfaces problem B, generate minimal seed prompt for B in a new session WITHOUT polluting current A context |
 | crystallize | interactive | Lock settled decisions from current session into a persistent crystal file |

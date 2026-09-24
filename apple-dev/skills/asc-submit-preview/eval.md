@@ -11,7 +11,7 @@
 - "scan for App Store rejection reasons"
 
 ## Negative Trigger Tests
-- "Update ASC docs" (→ update-asc-docs)
+- "Update ASC docs" (→ asc-listing)
 - "Review my plugin" (→ /plugin-master review)
 - "Fill in App Privacy labels" (→ asc-listing)
 - "What screenshots do I need for ASC?" (→ asc-listing)

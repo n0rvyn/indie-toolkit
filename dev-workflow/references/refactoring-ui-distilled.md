@@ -2,7 +2,7 @@
 
 Platform-agnostic distillation of Refactoring UI (Adam Wathan + Steve
 Schoger) Chapters 1–3. Used by: `dev-workflow:brainstorm`,
-`dev-workflow:choose-personality`, `dev-workflow:design-decision`, and
+`dev-workflow:design-decision`, and
 downstream design-system generators (e.g. `apple-dev:generate-design-system`).
 
 ## Section A: Pre-design Workflow
@@ -196,11 +196,10 @@ creative tools. A professional tone maintains credibility — appropriate for
 business and technical products. Tone shapes error messages, empty states,
 placeholder text, and all microcopy.
 
-These six dimensions feed `dev-workflow:choose-personality` as six explicit
-questions. The answers are written to `docs/02-architecture/design-personality.md`
-and consumed by downstream design-system generators so those tools skip
-re-asking decisions that are already made. This is the handoff between the
-methodology layer and the implementation layer.
+These six dimensions are the personality a design system encodes. When the
+design comes from Claude Design, they are settled in its Design System; an
+older project may still carry them in `docs/02-architecture/design-personality.md`,
+which design-system generators read if present.
 
 ## Section E: Limit Your Choices
 

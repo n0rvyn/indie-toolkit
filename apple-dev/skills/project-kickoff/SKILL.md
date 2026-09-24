@@ -835,12 +835,11 @@ WebSearch 搜到的每一条，要进 project-brief 的结论，**必须先用 W
 | `CLAUDE.md` 内 `## Swift 6 并发` 段、Swift Design System token 表、平台 API 规则行 | 苹果专属约束 |
 | `[项目名]/DesignSystem/DesignSystem.swift` | Design System 代码 |
 | `docs/10-app-store-connect/` | ASC 文档模板（4 个文件） |
-| Step 9.10 CI/CD 触发提示 | Xcode Cloud + GitHub Actions auto-version |
 | CLAUDE.md `## Build Environment` 段 | xcodebuild 元数据表（step 9.2.2） |
 
 **[Expectation Recap]**
 
-告诉用户：「我准备帮你建项目骨架：写一份 project-brief、建 docs 目录、生成 CLAUDE.md{，`platform==apple` 时：初始化 Design System {如果有 Stitch 设计}、设置 ASC 文档模板、`platform==apple` 时的 CI/CD 初始化项}。这些一次性创建好之后，开发阶段就直接 /run-phase 推进。」
+告诉用户：「我准备帮你建项目骨架：写一份 project-brief、建 docs 目录、生成 CLAUDE.md{，`platform==apple` 时：初始化 Design System {如果有 Stitch 设计}、设置 ASC 文档模板}。这些一次性创建好之后，开发阶段就直接 /run-phase 推进。」
 再问：「这套初始化范围你认吗? 不要的项告诉我跳过。」
 
 **询问用户**（使用 AskUserQuestion）：
@@ -986,14 +985,7 @@ Read `references/doc-templates.md` 的「App Store Connect 文档初始化」段
 
 **仅 `platform==apple`（iOS/macOS）；非苹果项目跳过。**
 
-询问用户是否配置 CI/CD（Xcode Cloud + GitHub Actions 自动版本管理）。如果选 Yes，提示用户运行 `/setup-ci-cd`。
-
-`/setup-ci-cd` 会：
-- 统一所有 target 的版本号
-- 启用 Apple Generic versioning
-- 创建 GitHub Actions auto-version workflow（conventional commit → semver bump）
-- 创建 Xcode Cloud ci_post_clone.sh（自动设置 build number）
-- 输出 Xcode Cloud workflow 配置指引
+跳过：Xcode Cloud 由用户在 Xcode App 里配置，本流程不生成 CI 文件（`setup-ci-cd` 已于 2026-09-24 退役，见 `docs/12-retired/setup-ci-cd.md`）。
 
 #### 9.11 GitHub Issue 基础设施初始化
 

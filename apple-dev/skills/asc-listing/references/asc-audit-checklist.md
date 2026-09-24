@@ -149,10 +149,30 @@ Grep "仅供.*参考|不构成.*建议" --path <project_source>/
 ```
 
 ### 隐私政策一致性检查
+
+先从代码收集事实，再逐项对 `docs/10-app-store-connect/privacy-policy.md`：
+
 ```bash
-# 对比隐私政策中提及的数据类型与代码中的实际功能
-# 手动核对：privacy-policy.md 中每个数据类型都有对应的代码功能
+# 敏感框架
+Grep "import HealthKit|import CoreLocation|import Contacts|import Photos|import AVFoundation|import Speech" --path <project_source>/
+# Info.plist 权限键
+Grep "NS[A-Za-z]*UsageDescription" --path <project>/
+# 本地存储了什么
+Grep "UserDefaults|@AppStorage|SwiftData|CoreData|FileManager" --path <project_source>/
+# 发往服务器的数据、第三方 SDK / 数据处理方（AI 大模型、语音识别等）
+Grep "URLSession|URLRequest|import [A-Z][A-Za-z]*SDK" --path <project_source>/
+# 用户同意流程
+Grep "consent|agree|同意" --path <project_source>/
 ```
+
+差异分三类列出，**每条附代码证据（文件:行号）**，不凭记忆：
+- 代码里有、文档没提的数据收集 → 文档补上
+- 文档提了、代码已删掉的 → 文档删掉
+- 第三方服务名称或用途不一致 → 以代码为准
+
+`terms-of-use.md` 同理对照：StoreKit 产品 ID 与订阅层级、AI 功能的免责声明、用户内容的存储 / 删除 / 导出。`support-page.md` 和 `market.md` 对照功能现状：不列已删除的功能，不承诺不存在的功能。
+
+改文档前先把差异清单给用户确认；改完同步公开副本（见下文「公开副本一致性」）。
 
 ---
 
@@ -188,7 +208,7 @@ Grep "仅供.*参考|不构成.*建议" --path <project_source>/
 - [ ] Privacy Labels 与隐私政策一致
 - [ ] 如有自定义 EULA，已在 App Information 中配置
 
-**工具**：使用 `/update-asc-docs` 可自动审计代码并更新文档。
+**做法**：按上文「隐私政策一致性检查」的扫描配方收集证据，再改文档。
 
 ---
 

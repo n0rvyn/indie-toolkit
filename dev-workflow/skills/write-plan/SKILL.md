@@ -66,6 +66,14 @@ Read relevant source files (design docs, existing code the plan will touch, crys
 
 Save the plan to `docs/06-plans/YYYY-MM-DD-<feature-name>-plan.md`.
 
+Then lint it:
+
+```bash
+python3 "${CLAUDE_SKILL_DIR}/scripts/lint_plan.py" docs/06-plans/<plan-file>.md
+```
+
+It checks only the formats downstream tools depend on, using execute-plan's own parser: every task heading is one execute-plan can see (`### Task N:` / `### Task N-tests:` / `### Task N-impl:`), each task has `**Files:**` and `**Verify:**`, `**Depends on:**` names one existing task (or says `None`), and `-tests` / `-impl` come in pairs. Exit 1 → fix every listed error in the plan and lint again before Step 2.5; a plan that fails lint loses tasks silently at execution. Warnings go into the Step 3 summary.
+
 ### Step 2.5: Readback (judgment, not a gate)
 
 Follow `${CLAUDE_PLUGIN_ROOT}/references/readback.md`. If the request had two readings that lead to different plans, or the plan adds scope the user did not ask for, put a short plain-language readback in front of the plan summary: what the user asked, what the plan does, and what they will see when it is done. Mark any added scope with `⚠️ AI 补充`. Otherwise skip it. Don't stop for confirmation here; Step 3 already puts the plan in front of the user.

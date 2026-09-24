@@ -60,7 +60,7 @@ When closing out a response with a "next step" suggestion or follow-up plan:
 
 `python3 .claude/skills/call-graph/scripts/check_section_contract.py`（同为本地工具）核对三端段名一致；`--selftest` 先证明它能红。
 
-⚠️ **这条链在本仓测不了**：`HAS_VIEW_MODIFIED` / `HAS_NEW_VIEW` 匹配 `*View.swift`，本仓 9 个 `.swift` 里 0 个符合、0 个 Xcode 工程 —— 三个 Apple reviewer 在这里从不会被派出。真正的端到端只能在 Apple 项目里改一个 View 时发生。**所以在这儿，段名一致是唯一可得的验证形式，不要把它当成「跑通了」。**
+⚠️ **这条链在本仓只测得了一半**：「哪个 diff 派哪个 Apple reviewer」由 `review-execution/scripts/route.py` 计算，`test_route.py` 用临时 git 仓库覆盖（2026-09-24 起）。但 reviewer 真的被派出、段名一路传到 run-phase，这一段只能在 Apple 项目里改一个 View 时发生。**所以在这儿，路由单测 + 段名一致是可得的验证形式，不要把它当成「跑通了」。**
 
 ## Plugin Evals（`claude plugin eval`）
 

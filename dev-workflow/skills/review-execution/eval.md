@@ -29,12 +29,9 @@
 - [ ] `mode` defaults to `advisory` when absent
 
 **Routing — computed from the diff, never from the user's wording:**
-- [ ] `ui-reviewer` fires on `HAS_VIEW_MODIFIED` (`*View.swift` in the diff), **not** on any `.swift`
+- [ ] Step 1 computes the routing by running `scripts/route.py`, not by asking the model to run `find` / `grep` / `ls` checks. Which reviewer fires on which diff (`*View.swift` → ui-reviewer, new View incl. untracked → design-reviewer, .plist/entitlements/xcassets/xcconfig/Package.swift/.pbxproj → apple-reviewer, feature spec → feature-reviewer always, logic-only change → no UI reviewer, apple-dev missing → none, empty scope intersection → stop) is pinned by `scripts/test_route.py`, not here
 - [ ] ⛔ No bare `HAS_SWIFT` flag exists anywhere in the file — it fires on pure logic changes, which is how a state-machine bug reached the UI reviewer
-- [ ] `apple-reviewer` fires on `HAS_APPLE_NONSWIFT` (.plist / entitlements / xcassets / xcconfig / Package.swift / .pbxproj), **not** on "project is Apple" — "always" is not a route
-- [ ] `feature-reviewer` fires on `HAS_FEATURE_SPEC` or `SPANS_LAYERS`, **not** on phrases in the user's message
-- [ ] `design-reviewer` fires on `HAS_NEW_VIEW`
-- [ ] `HAS_FEATURE_SPEC` and the apple-dev availability probe use `find`, never `ls` — `ls` is absent from `allowed-tools`, and its permission denial is indistinguishable from "not found"
+- [ ] `feature-reviewer` without a feature spec dispatches only when the model judges `SPANS_LAYERS`, **not** on phrases in the user's message
 - [ ] Five base lenses (correctness / test-coverage / breaking-changes / root-cause-depth / secrets-and-transport) always dispatch
 - [ ] Lens F (secrets & transport) is always-on and NOT path-routed — a leaked key has no predictable path, so a path-shaped route would miss its own use case
 - [ ] All applicable reviewers go out in ONE Agent batch, never a sequential follow-up

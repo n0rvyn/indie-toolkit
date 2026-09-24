@@ -2,7 +2,7 @@
 name: review-execution
 description: "The single review dispatcher for this marketplace. Use when the user says 'review execution', 'parallel review', 'deep review', 'review my code', 'review after coding', 'execution review', '审查执行', '并行 review', '写完 review 一下', '代码 review 一下', '深度代码审查', '执行后审查', or wants a fresh-context multi-lens review of uncommitted changes BEFORE commit. Also the callee for run-phase Step 6, execute-plan's standalone finish, and an /afk terminal stop — it routes lenses from the diff's shape, so callers do not each keep their own reviewer list. Dispatches 5 always-on lenses (correctness, test-coverage, breaking-changes, root-cause-depth, secrets-and-transport), adds implementation-reviewer when a plan path is supplied, and adds Apple reviewers by what the diff actually touches. Not when: pre-commit semantic classification only — use review-before-commit (deliberately outside every pipeline, a manual double-check). Not when project is Apple-only and you want only ASC pre-submit review — use /asc-submit-preview. Not when auditing a plugin/skill/agent as an ARTIFACT (trigger quality, dispatch wiring, eval coverage) rather than reviewing a diff — use skill-master:plugin-master; in a plugin monorepo the diff IS plugin content, so say which question you are asking."
 user-invocable: true
-allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*, find:*, grep:*), Agent, Task
+allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*, find:*, grep:*, python3:*), Agent, Task
 ---
 
 ## Overview
@@ -46,16 +46,20 @@ Plan-vs-code audit is **no longer** a reason to go elsewhere: pass `plan_path` a
 1. Run: `git status` — confirm uncommitted changes exist. If none, STOP: "无 uncommitted changes — review-execution 无对象。"
 2. Run: `git diff --stat` + `git diff --staged --stat` — get scope. **If `scope_files` was supplied, intersect with it and use the intersection everywhere below**; if the intersection is empty, STOP and say so rather than falling back to the whole tree (a silent widening is exactly what passing `scope_files` was meant to prevent).
 3. Identify project root and primary language(s) for the lens-prompts.
-4. Detect project type using shell:
-   - Run `find . -maxdepth 3 \( -name "*.xcodeproj" -o -name "*.xcworkspace" -o -name "Package.swift" \) -print -quit`
-   - If output is non-empty → mark project as Apple (use this flag in Step 2)
-   - Else → mark as non-Apple
-5. Compute the routing flags from **what the diff actually touches**. Each flag exists to give exactly one reviewer something the others cannot see; a flag that fires on everything is not routing:
-   - `HAS_VIEW_MODIFIED`: `git diff --name-only HEAD | grep -q 'View\.swift$'`
-   - `HAS_NEW_VIEW`: `git diff --name-only --diff-filter=A HEAD | grep -q 'View\.swift$'`
-   - `HAS_APPLE_NONSWIFT`: `git diff --name-only HEAD | grep -qE '\.(plist|entitlements|xcassets|xcconfig)|Package\.swift|\.pbxproj'`
-   - `SPANS_LAYERS`: the diff touches ≥3 of {View, ViewModel/Store/Presenter, Model/Service/Repository} — judge from paths and type names
-   - `HAS_FEATURE_SPEC`: `find docs/05-features -name '*.md' -print -quit 2>/dev/null` is non-empty
+4. Compute the routing from **what the diff actually touches** with the script, not by running the checks yourself:
+
+   ```bash
+   python3 "${CLAUDE_SKILL_DIR}/scripts/route.py" --root . [--scope-file <path> ...]
+   ```
+
+   Pass every `scope_files` entry as `--scope-file`. It prints one JSON object:
+   - `stop` present → STOP and say its text (no changes, or the `scope_files` intersection is empty).
+   - `apple_project`, `apple_dev_installed` → use in Step 2.
+   - `flags`: `HAS_VIEW_MODIFIED`, `HAS_NEW_VIEW` (untracked new files count as new), `HAS_APPLE_NONSWIFT`, `HAS_FEATURE_SPEC`.
+   - `apple_reviewers`: the Apple agents to dispatch, each with the files to pass. `apple-dev:feature-reviewer` carries `when`: `always`, or `only if SPANS_LAYERS`.
+
+   Each flag exists to give exactly one reviewer something the others cannot see; a flag that fires on everything is not routing. The script's tests (`scripts/test_route.py`) pin these routes.
+5. Judge the one flag the script cannot compute: `SPANS_LAYERS` — the diff touches ≥3 of {View, ViewModel/Store/Presenter, Model/Service/Repository}, judged from paths and type names. It only matters for the `feature-reviewer` entry marked `only if SPANS_LAYERS`.
 
    ⛔ **Do not reintroduce a bare `HAS_SWIFT`.** It fires on pure logic changes, which is how `ui-reviewer` ended up reviewing a state-machine bug — and why, on one measured run, three of seven reviewers returned the same finding. The redundancy was a routing defect, not a sign there were too many lenses.
 
@@ -169,12 +173,12 @@ Dispatch `dev-workflow:implementation-reviewer`, passing `plan_path`, the projec
 
 **Additionally dispatched in the SAME batch when project is Apple AND apple-dev plugin is installed:**
 
-First verify apple-dev availability: `find ~/.claude/plugins/cache -maxdepth 3 -type d -name apple-dev -print -quit 2>/dev/null`. (⛔ Not `ls` — it matches no pattern in this skill's `allowed-tools`, and a permission denial returns no output, which reads identically to "not installed". That silently skipped every Apple reviewer on every run.) If no output, skip ALL four reviewers below and add to the Step 3 summary table: "apple-dev not installed — Apple-platform review coverage skipped for this run". If installed:
+Take the list from `route.py`'s `apple_reviewers` (it has already checked `apple_project` and `apple_dev_installed` — do not re-check with `ls`/`find`; a permission-denied check returns no output, which once read as "not installed" and silently skipped every Apple reviewer). If `apple_project` is true but `apple_dev_installed` is false, add to the Step 3 summary table: "apple-dev not installed — Apple-platform review coverage skipped for this run". Otherwise dispatch each entry with its files:
 
-- `apple-dev:ui-reviewer` — if `HAS_VIEW_MODIFIED` — pass the modified `*View.swift` files
-- `apple-dev:design-reviewer` — if `HAS_NEW_VIEW` — pass the new View files
-- `apple-dev:feature-reviewer` — if `HAS_FEATURE_SPEC` **or** `SPANS_LAYERS` — pass the spec path and the touched layers
-- `apple-dev:apple-reviewer` — if `HAS_APPLE_NONSWIFT` — pass the non-Swift Apple-surface files
+- `apple-dev:ui-reviewer` — routed when `HAS_VIEW_MODIFIED` — pass the modified `*View.swift` files
+- `apple-dev:design-reviewer` — routed when `HAS_NEW_VIEW` — pass the new View files
+- `apple-dev:feature-reviewer` — `when: always` (a feature spec exists) or `when: only if SPANS_LAYERS` (dispatch only if your Step 1 item 5 judgment says yes) — pass the spec paths and the touched layers
+- `apple-dev:apple-reviewer` — routed when `HAS_APPLE_NONSWIFT` — pass the non-Swift Apple-surface files
 
 ⛔ **`apple-reviewer` is no longer "always when Apple".** "Always" is not a route: on a Swift diff it duplicated `ui-reviewer` outright. Its own charter is the non-Swift Apple surface (.plist, entitlements, Package.swift, asset catalogs, project file) — give it exactly that and the overlap disappears.
 

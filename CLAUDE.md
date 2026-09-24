@@ -56,11 +56,11 @@ When closing out a response with a "next step" suggestion or follow-up plan:
 
 **3. 靠段落名跨环节传数据的，加一个检查器。**
 
-`reviewer agent → review-execution → run-phase` 这条链靠 markdown 段名逐字搬运，三端都是散文，没有任何东西在运行时校验。2026-09-04 一天之内断了两次：一次是 agent 只返回计数而 dispatcher 承诺逐字透传，一次是 `gated` 把交回内容截断成 must-fix。两次都没有测试发现，因为没有测试。
+`reviewer agent → review-execution → run-phase` 这条链现在中间一跳走 schema：`review.workflow.js` 用 `agent(prompt, {schema})` dispatch 每个 reviewer，必填字段对应该 reviewer 的契约字段，漏一个 StructuredOutput 直接拒收并重试——这一跳不再是散文。仍未在运行时校验的是**字段名**：`review.workflow.js` 里 `CONTRACT` 这个单一常量的 heading 是否还和各 producer agent 的 **Return** 块一致，以及 run-phase / afk 等消费端引用的 `passthrough['<agentType>'].<field>` 是否命中 CONTRACT 里真实存在的字段。2026-09-04 一天之内断了两次：一次是 agent 只返回计数而 dispatcher 承诺逐字透传，一次是 `gated` 把交回内容截断成 must-fix。两次都没有测试发现，因为没有测试。
 
-`python3 .claude/skills/call-graph/scripts/check_section_contract.py`（同为本地工具）核对三端段名一致；`--selftest` 先证明它能红。
+`python3 dev-workflow/skills/review-execution/scripts/test_contract.py`（tracked，随插件发布）核对这三件事：producer 的 Return 块含有 CONTRACT 要求的每个 heading；消费端每处 `passthrough[...].field` 引用命中 CONTRACT 里的真实字段；run-phase/SKILL.md 对 run-phase 实际消费的每个字段至少引用一次——**零引用必须报红，不许报「干净」**（`check_section_contract.py:100-104` 记录过更早那次「查出零个、报告干净」的失败）。本地工具 `.claude/skills/call-graph/scripts/check_section_contract.py` 已被这条测试**取代**——SKILL.md 不再按 heading 名字派发之后它的真实运行会转红，不要把它当作可选的交叉检查继续跑。
 
-⚠️ **这条链在本仓只测得了一半**：「哪个 diff 派哪个 Apple reviewer」由 `review-execution/scripts/route.py` 计算，`test_route.py` 用临时 git 仓库覆盖（2026-09-24 起）。但 reviewer 真的被派出、段名一路传到 run-phase，这一段只能在 Apple 项目里改一个 View 时发生。**所以在这儿，路由单测 + 段名一致是可得的验证形式，不要把它当成「跑通了」。**
+⚠️ **这条链在本仓能测到 reviewer 这一端，run-phase 那一端测不到**：「哪个 diff 派哪个 Apple reviewer」由 `review-execution/scripts/route.py` 计算，`test_route.py` 用临时 git 仓库覆盖。Apple reviewer 真的被派出、字段真的回来，**不需要真 Apple 项目**：在 scratchpad 建一个临时 git 仓库，放 `Package.swift` + 一个已提交的 `*View.swift`，改它、再加一个未跟踪的新 View，先跑 `route.py --root <tmp>` 确认 `apple_reviewers` 非空，再用仓库里的绝对路径真跑一次 `review.workflow.js`，看 `status.ok` 与各 `passthrough` 字段（2026-09-24 实跑：ui / design / feature 三个 reviewer 的字段全部到达，`contract_warnings` 为空）。**测不到的是 run-phase 在一个真 Phase 里读这些字段**——那要真项目。
 
 ## Plugin Evals（`claude plugin eval`）
 

@@ -47,7 +47,7 @@ This skill dispatches sub-agents at multiple steps (Step 4 execute-plan, Step 5 
 - After every Agent return in Step 4/5/6, before recording the report path into state, verify the claimed report file actually exists on disk (`ls` or `Read`). If missing: do NOT advance `phase_step`; either re-dispatch the agent with explicit Write tool requirement, or surface the failure to the user.
 - For execute-plan (Step 4): the Workflow returns per-task structured results; spot-check by verifying every path in each result's `files_written` array exists on disk (defense-in-depth — the `~/.claude/hooks/verify-agent-output.py` hook also intercepts at agent return time). The execute-plan skill itself owns the segment loop and the checkpoint file, but the run-phase orchestrator should not blindly trust the final summary.
 - For test-changes (Step 5): its report file (`docs/06-plans/execution-report.md`, `.claude/test-reports/*.md`) must exist before the next step.
-- For review (Step 6): **do NOT check for `.claude/reviews/*.md`.** `review-execution` returns one consolidated block and this skill no longer hunts for per-agent report files (Step 6.4). The success signal is that the return contains a `### Coverage notes` section; a return without it is the failure to act on. Checking for files here would block on artifacts the contract does not promise the dispatcher ever sees.
+- For review (Step 6): **do NOT check for `.claude/reviews/*.md`.** `review-execution` returns one consolidated object and this skill no longer hunts for per-agent report files (Step 6.4). The success signal is `status.ok === true` on the return object. `status.ok === false` means the review **failed** (a dispatched reviewer threw or returned null, or nothing arrived): surface `status.errored` and never treat the run as clean. Do not infer success from the presence of `coverage` — the script always returns it, including on a failed run. Checking for files here would block on artifacts the contract does not promise the dispatcher ever sees.
 
 This gate is non-negotiable: we have a confirmed past case of a sub-agent reporting file writes that never persisted, caught only because the verify-agent-output hook fired.
 
@@ -415,7 +415,14 @@ This step closes the visual gap between implemented UI and design reference befo
    Each agent receives a fresh context — they have no memory of how the code was written.
    This removes confirmation bias from self-review.
 
-4. **When they return:** `review-execution` returns one consolidated findings list (must-fix / nice-to-have / coverage notes) — read that, not per-agent report files. If it reports an agent that errored or returned nothing, carry that line into the summary as a coverage gap; do not retry review agents (their output is informational, and a retry doubles the cost of the most expensive step in this phase).
+4. **When they return:** `review-execution` returns one consolidated object — read that, not per-agent report files:
+   - `must_fix` / `nice_to_have` — arrays of `{lens, agentType, file, line, text}`
+   - `coverage` — per-lens counts (`'errored'` for a lens that died), `lens_e`, `scope`, `apple`, `dispatched`, `contract_warnings`
+   - `passthrough` — keyed by agentType, each reviewer's `verdict`, `report_path` and its contract fields (items 5, 7, 8 and Step 7 read these)
+   - `status` — `{ok, arrived, missing, errored}`, the success signal
+   - `rendered` — the markdown block to show the user as-is
+
+   ⛔ **Gate on `status.ok` before anything below.** `status.ok === true` → continue. `status.ok === false` → the review **failed**, it is not a clean result: show `rendered` (it opens with a `⚠️ Review incomplete` line) and every `status.errored` entry (`label`, `agentType`, `error`), then ask the user whether to re-run the review or accept the partial coverage. Still run item 7 (its dispatched-vs-arrived check is exactly what names the missing device items on a failed run), but do not reach item 9 until the user has answered — item 9's sentinel is what lets Step 8.0's gate pass, so writing it after a failed review records a review that did not happen. Do not retry review agents on your own (their output is informational, and a retry doubles the cost of the most expensive step in this phase).
 
    `feature-spec-writer` still returns on its own and is handled as before.
 
@@ -424,7 +431,7 @@ This step closes the visual gap between implemented UI and design reference befo
 | Agent | Verdict | Issues |
 |-------|---------|--------|
 | Feature Spec: {name} | ✅/❌ | {user story counts} |
-| Implementation | ✅/❌ | {gap counts} — Tests: {required}/{exist}/{covered} |
+| Implementation | ✅/❌ | {gap counts from `passthrough['dev-workflow:implementation-reviewer'].gaps_line`}, {pre-existing count from `passthrough['dev-workflow:implementation-reviewer'].pre_existing_line`} — Tests: {required}/{exist}/{covered} from `passthrough['dev-workflow:implementation-reviewer'].tests_line` |
 | UI | ✅/❌ | {counts} |
 | Design | ✅/⚠️ | {counts} |
 | Feature Review | ✅/❌ | {counts} |
@@ -441,10 +448,10 @@ This step closes the visual gap between implemented UI and design reference befo
        - Mode: `full`
        - Recording: `default`
 
-7. **Surface human verification items:** read them from the review return's `### Per-reviewer passthrough` block — not from per-agent report files, which this step no longer hunts for. Extract these sections when present:
-     - ui-reviewer: `### Part C: 人工验证清单`
-     - design-reviewer: `### Part B: 设备验证清单` (its 🔴 lines arrive separately, in `### Part A 🔴 项`)
-     - feature-reviewer: `### Part C: 设备验证清单`
+7. **Surface human verification items:** read them from the review return's `passthrough` object — not from per-agent report files, which this step no longer hunts for. Extract these fields when present:
+     - `passthrough['apple-dev:ui-reviewer'].part_c_human_verification`
+     - `passthrough['apple-dev:design-reviewer'].part_b_device_verification` (its 🔴 lines arrive separately, in `passthrough['apple-dev:design-reviewer'].part_a_red`)
+     - `passthrough['apple-dev:feature-reviewer'].part_c_device_verification`
    - Consolidate, deduplicate, and present in plain language below the summary table:
 
    > 以下需要在设备上确认（来自 review 报告）：
@@ -454,18 +461,25 @@ This step closes the visual gap between implemented UI and design reference befo
 
    This is informational — do not block with AskUserQuestion. The user can raise issues during Step 7 (Fix Gaps).
 
-   - ⛔ **Before moving on, cross-check dispatched-vs-arrived.** The review return's `### Coverage notes` lists which Apple reviewers were dispatched. For every reviewer named there whose section is **absent** from `### Per-reviewer passthrough`, print:
+   - ⛔ **Before moving on, cross-check dispatched-vs-arrived.** Read two lists from the review return, and print one ⚠️ line per entry — never a summary count, never nothing:
+     - `status.missing` — every dispatched reviewer that did not arrive. Named reviewers appear by agentType (the same key `passthrough` uses); the five plain lenses appear as `lens:A`…`lens:F`. Skip the `lens:*` entries here (they carry no `passthrough` fields, and the item-4 gate already surfaced them via `status.errored`). For each remaining entry print:
 
-     > ⚠️ {reviewer} 跑过了，但它的 {section} 没有出现在透传块里 —— 设备验证项这一轮是缺的，不是没有。报告文件：`.claude/reviews/{reviewer}-*.md`
+       > ⚠️ {agentType} 跑过了，但它的字段没有出现在 `passthrough` 里 —— 设备验证项这一轮是缺的，不是没有。报告文件：`.claude/reviews/{reviewer}-*.md`
 
-     **Why this line has to exist:** the failure mode of this chain is silence. If a reviewer returns only counts, or the dispatcher trims the handback, this step prints nothing and the phase looks clean — which is exactly how the device-verification items went missing before 2026-09-04. A dispatched reviewer with no arriving section is a broken contract, not an empty result; the two must be distinguishable on screen. Same distinction `review-execution` already makes for its routing flags: "assessed, nothing applied" is not "never looked".
+     - `coverage.contract_warnings` — a reviewer that arrived but in a broken shape: `kind: 'count_mismatch'` (the counts-only shape — it declared N items and the field does not hold N lines) or `kind: 'empty'` (the empty-field shape — a line that always carries a count, such as implementation-reviewer's `Tests:`, came back empty). For each entry print:
 
-8. **Surface test coverage summary:** If the review return's `### Per-reviewer passthrough` carries an implementation-reviewer `Tests:` line:
+       > ⚠️ {agentType}.{field} 的内容和它自己报的不一致（{declared_count} 声明 / {actual_lines} 实际，或为空）—— 这一项不能当成「没有」。
+
+     On a healthy run both lists are empty and nothing is printed — every `passthrough` key is in `status.arrived`, so this check raises no false warnings.
+
+     **Why this line has to exist:** the failure mode of this chain is silence. If a reviewer returns only counts, or the dispatcher trims the handback, this step prints nothing and the phase looks clean — which is exactly how the device-verification items went missing before 2026-09-04. A dispatched reviewer with no arriving `passthrough` entry is a broken contract, not an empty result; the two must be distinguishable on screen. Same distinction `review-execution` already makes for its routing flags: "assessed, nothing applied" is not "never looked".
+
+8. **Surface test coverage summary:** If the review return's `passthrough['dev-workflow:implementation-reviewer'].tests_line` is present:
    - Extract: required, exist, pass, shell counts
    - If shell > 0 or pass < required: present warning below the human verification items:
      > ⚠️ 测试覆盖不完整：{N} 个计划要求的测试中，{M} 个为空壳或未覆盖核心路径
 
-9. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set 'review_reports=["review-execution:consolidated"]' 'review_findings={"must_fix": <N>, "nice_to_have": <M>}'`
+9. Update state, with N = `must_fix.length` and M = `nice_to_have.length` from the review return (only after `status.ok === true`, or after the user accepted a failed review's partial coverage at item 4): `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set 'review_reports=["review-execution:consolidated"]' 'review_findings={"must_fix": <N>, "nice_to_have": <M>}'`
 
    ⛔ **Do not write report file paths here.** `review-execution` returns findings, not paths — recording `[]` and then hitting the Step 8.0 gate below produces a false "no test or review reports found" block on a phase that was actually reviewed. The sentinel records *that review ran*; the counts record *what it found*.
 10. **PushNotification checkpoint 2**: emit `PushNotification` with message like `Phase {N} reviews complete — {N} gaps, {M} verifications need device` (see "## User-Visible Notifications" above). Skip if all agents passed with zero issues AND the user has been responding within the last minute.
@@ -478,7 +492,7 @@ If any of the following have issues: execution report (blocked/failed tasks), te
 2. Collect all issues from three sources:
    a. **Execution failures** (from Step 4): blocked/failed tasks from the execute-plan agent report
    b. **Test failures** (from Step 5): build errors, test failures, lint errors from the test-changes report
-   c. **Review gaps** (from Step 6): plan-vs-code gaps, pre-existing issues
+   c. **Review gaps** (from Step 6): `passthrough['dev-workflow:implementation-reviewer'].gaps_line` (plan-vs-code gaps), `passthrough['dev-workflow:implementation-reviewer'].pre_existing_line` (pre-existing issues)
    Read the relevant report files for full details. Skip entries that are not file paths (e.g. the `"user-override"` and `"review-execution:consolidated"` sentinels — the latter means the findings are in the consolidated return, not on disk).
 3. List all issues sorted by severity (critical first, then warnings)
    Separate by origin:
@@ -489,14 +503,14 @@ If any of the following have issues: execution report (blocked/failed tasks), te
    > - Tests: {failing test names + assertion messages}
    > - Lint: {errors if any}
    - **Review 问题（{N} 个）：**
-   > - {plan-vs-code gaps}
+   > - {`passthrough['dev-workflow:implementation-reviewer'].gaps_line`}
    - **已有问题（{M} 个）：**
-   > - {pre-existing issues from implementation-reviewer}
+   > - {`passthrough['dev-workflow:implementation-reviewer'].pre_existing_line`}
 
 4. Ask the user: "Fix these issues before moving on, or mark as known issues?"
 5. If fixing:
-   a. **Separate design issues from code issues.** If the review return's `### Per-reviewer passthrough` carries a design-reviewer section:
-      - Extract all 🔴 items from design-reviewer's `### Part A 🔴 项` section in the passthrough
+   a. **Separate design issues from code issues.** If the review return's `passthrough['apple-dev:design-reviewer']` is present:
+      - Extract all 🔴 items from `passthrough['apple-dev:design-reviewer'].part_a_red`
       - Group by category: Hierarchy (A1, A11, A15), Spacing (A3, A12), Consistency (A5, A6), Color (A2), Polish (A13, A14, A16)
       - Present design issues separately from other review issues:
         > 设计问题（{N} 个必须修复）：
@@ -509,11 +523,11 @@ If any of the following have issues: execution report (blocked/failed tasks), te
       Other reviewers (implementation, UI, feature) follow existing behavior.
 6. If skipping: note the known issues and proceed
 7. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set gaps_remaining=<count>`
-8. **Decision Points:** Check each review report for `Decisions:` count.
-   - If any report has Decisions > 0:
+8. **Decision Points:** Check `passthrough['dev-workflow:implementation-reviewer'].decisions_line` for a Decisions count.
+   - If Decisions > 0:
      - First time this session: Read `${CLAUDE_PLUGIN_ROOT}/references/decision-points.md`
      - Apply the rules with parameters:
-       - Source file: the review report
+       - Source file: `passthrough['dev-workflow:implementation-reviewer'].report_path`
        - Mode: `mixed`
        - Recording: `default`
    - Then proceed to Step 8

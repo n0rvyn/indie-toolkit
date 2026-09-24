@@ -1,0 +1,13 @@
+{
+  "project": "fixture",
+  "current_phase": 1,
+  "phase_name": "Foundation",
+  "phase_step": "execute",
+  "dev_guide": "dev-guide.md",
+  "plan_file": "plan-a.md",
+  "verification_report": null,
+  "task_progress": null,
+  "review_reports": [],
+  "test_report": null,
+  "gaps_remaining": 0
+}

@@ -25,12 +25,12 @@ Policy for this pass:
 - `issue`
 - `finish-branch`
 - `execute-plan` (also auto-invoked by `run-phase`; kept user-visible for direct re-runs after manual fixes)
-- `handoff` (moved from manual 2026-08-26, commit `1c70b5b`: model-invocation is load-bearing for the AFK path — "keep going, handoff if you hit a real block" with no `/self-pacing` typed has nothing governing it, so without description-match routing nothing fires at the block. Also invoked as a callee by `self-pacing` at terminal STOPs.)
+- `handoff` (moved from manual 2026-08-26, commit `1c70b5b`: model-invocation is load-bearing for the AFK path — "keep going, handoff if you hit a real block" with no `/afk` run governing has nothing governing it, so without description-match routing nothing fires at the block. Also invoked as a callee by `/afk` at every stop.)
 
 `dev-workflow` manual entries:
 - `generate-design-prompt`
 - `afk` (goal-oriented unattended driver — walking away and suppressing stops must be a deliberate user choice, never model-routed. Invokes `handoff` as a callee at every stop.)
-- `self-pacing` (superseded by `afk`; kept for verified multi-phase dev-guide runs. Same rule: deliberate user choice, never model-routed)
+- `self-pacing` (pointer to `/afk` dev-guide mode. Same rule: deliberate user choice, never model-routed)
 
 
 `apple-dev` daily entries for the follow-up task:

@@ -3,7 +3,7 @@
 ## Trigger Tests
 - "handoff"
 - "Continue this in a new session"
-- "跑到重大 block 就 handoff" —— AFK 场景，**没有** `/self-pacing` 在管，靠 description 匹配路由。
+- "跑到重大 block 就 handoff" —— AFK 场景，**没有** `/afk` 在管，靠 description 匹配路由。
   这条是 `disable-model-invocation: false` 的存在理由（`1c70b5b`），改回 `true` 会让它静默失效
 - "上下文到 82% 了，交接一下吧" —— **必须带实测 `[ctx]` 数字**才算合法触发
 
@@ -14,10 +14,7 @@
 - "Park this for later" (should route to /fork-this)
 - "这轮上下文感觉挺满的，先交接吧" —— **裸的感觉，无实测数字 → 不该触发**。
   被禁的是「感觉满了」，不是「高占用时交接」（全局 CLAUDE.md 禁止行为 →
-  「断言上下文余量而不引本轮 `[ctx]` 行原文」；self-pacing SKILL.md
-  「Context occupancy is not a terminal」）
-- self-pacing `phase` 模式停在一个 blocking DP 上 —— 该只写 stop card，**不该**产出 doc
-  （self-pacing `## Two-tier handoff` 模式表）
+  「断言上下文余量而不引本轮 `[ctx]` 行原文」）
 
 ## Output Assertions
 - [ ] Output generates cold-start prompt for session transfer
@@ -34,8 +31,11 @@
       ⛔ 不是 `-EVENING` / `-NIGHT` 这类判断型后缀）
 - [ ] 挂进项目 CLAUDE.md 必读顺序，**且把上一条降成一行归档指针** —— 改完必读顺序里
       `HANDOFF-` 恰好一条
-- [ ] **self-pacing 模式**：§6 含 run-log / checkpoint / stop card 三条绝对路径（反向指针）
-- [ ] **self-pacing 模式**：§5 来自 run log 里被延后的 `nice-to-have`，§可核性的数字来自
+- [ ] **自主运行模式**（`.claude/afk/<slug>.md` 或 legacy `.claude/self-pacing/<slug>.md`）：§6 含 run-log 与 checkpoint（存在时）的绝对路径（反向指针）；dev-guide mode / legacy self-pacing 另含 stop card 路径
+- [ ] **afk goal mode 的一次 stop**（例如 `[范围]` 之外的改动、同一 `[判据]` 跨改动红两次）—— **该**产出本 doc，**不该**写 stop card，§6 里也不列 stop card
+  （goal mode 不写 stop card；只有 dev-guide mode 才写 `.claude/afk/<slug>-handoff.md`，afk/SKILL.md § Artifacts）
+- [ ] **afk dev-guide mode 的一次 stop**：doc 的 §7 写的续跑方式是「敲 `/afk`，再粘它交回的新 `/goal` 行」，⛔ 不是「粘 stop card 上那行」
+- [ ] **自主运行模式**（`.claude/afk/<slug>.md` 或 legacy `.claude/self-pacing/<slug>.md`）：§5 来自 run log 里被延后的 `nice-to-have`，§可核性的数字来自
       checkpoint `completed` map —— 不是从会话叙述里重建的
 
 ## Regression Cases（2026-08-25 实测，改这份 skill 就是为了修它们）

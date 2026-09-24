@@ -1,0 +1,1 @@
+{"type":"user","sessionId":"sess-namespaced","timestamp":"2026-09-20T10:05:00.000Z","message":{"role":"user","content":"<command-message>dev-workflow:self-pacing</command-message>\n<command-name>/dev-workflow:self-pacing</command-name>"}}

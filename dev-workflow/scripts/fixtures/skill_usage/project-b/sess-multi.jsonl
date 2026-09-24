@@ -1,0 +1,2 @@
+{"type":"user","sessionId":"sess-multi","timestamp":"2026-09-21T09:00:00.000Z","message":{"role":"user","content":"<command-message>self-pacing</command-message>\n<command-name>/self-pacing</command-name>"}}
+{"type":"user","sessionId":"sess-multi","timestamp":"2026-09-21T09:30:00.000Z","message":{"role":"user","content":"<command-message>self-pacing</command-message>\n<command-name>/self-pacing</command-name>"}}

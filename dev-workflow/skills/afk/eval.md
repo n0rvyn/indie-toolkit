@@ -78,16 +78,32 @@
 - [ ] Writes NO review-report file
 
 **Cross-skill:**
-- [ ] `handoff` SKILL.md's autonomous-run section triggers on `.claude/afk/<slug>.md`, not only the self-pacing path
+- [ ] `handoff` SKILL.md's autonomous-run section triggers on `.claude/afk/<slug>.md` and on the legacy `.claude/self-pacing/<slug>.md` path
 - [ ] `public-entry-policy.md` lists `afk` as manual-only
-- [ ] `self-pacing` SKILL.md body-top carries the superseded marker
+- [ ] `self-pacing` SKILL.md is a pointer stub to `/afk` dev-guide mode
 - [ ] `disable-model-invocation: true` present
-- [ ] Goal-met terminal **invokes** `dev-workflow:review-execution` with `scope_files` (what the run touched) and `mode: advisory`
-- [ ] It passes **no** `plan_path` — an `/afk` run has no plan, so Lens E is skipped and the remaining lenses still apply
+- [ ] Goal mode's goal-met terminal **invokes** `dev-workflow:review-execution` with `scope_files` (what the run touched) and `mode: advisory`
+- [ ] Goal mode passes **no** `plan_path` — an `/afk` goal-mode run has no plan, so Lens E is skipped and the remaining lenses still apply
+- [ ] Dev-guide mode's per-phase gate **invokes** `dev-workflow:review-execution` with `plan_path` (the phase plan) and `mode: gated` — every phase gets a gated review, not an advisory pass over the whole run
 - [ ] ⛔ The findings are handed to `dev-workflow:handoff` and land in the handoff doc. On-screen only is a FAIL: the user was away, and the prompt cache has expired by the time they return, so resuming the old session costs more than a cold start from the doc
 - [ ] This file previously asserted the opposite — "the terminal-review question is still marked OPEN and NOT wired up" — which would have green-lit deleting the wiring the moment it was added. Kept as a note because it is this repo's canonical example of an eval turning from guard into accomplice (project CLAUDE.md § Refactor Closure rule 1)
 - [ ] Second entry in that lineage, 2026-09-05: this file asserted **one** pre-run judge reading with green-stops-the-run, and asserted a zero-change re-read as a stop condition. Both are the defects the first three real runs hit; kept both would have failed the fix that removes them
 - [ ] Third entry, 2026-09-16: this file asserted singular `[目标]`/`[判据]` and "**one** measurable end state", which is exactly the single-goal behavior the user reported as broken (「这个 goal 只是我让它 AFK 的其中之一」). Left alone, these two assertions would have passed the very run that dropped his other goals. Found by a session audit, not by the eval
+
+**Dev-guide mode:**
+Not observable: interactive, workflow-tool
+- [ ] `guide.py sweep-dps` sweeps only `state.plan_file` (when the state's `current_phase` equals `locate`'s phase) plus the plans named with `--plans`; it never globs `docs/06-plans/`
+- [ ] Setup resumes at `state.phase_step` when the state exists, is not `done`/`finalized`, and its `current_phase` equals `locate`'s phase — no `phase.py init`
+- [ ] Every stop after the goal is armed emits `## 终止：{row}` in the turn and writes both the card (`guide.py card`) and the `dev-workflow:handoff` doc
+- [ ] The card's `Resume with` tells the user to **type `/afk`** (dev-guide mode resumes from state and hands back a fresh `/goal` line), and quotes the last goal line `guide.py goal-line` wrote — byte-identical, constraints included — for reference only. ⛔ A card whose resume instruction is "paste this line" FAILS: `/afk` is `disable-model-invocation`, so a pasted condition alone never loads the Stop Policy (DP-003 in the plan)
+- [ ] The `/goal` line `guide.py goal-line` produces starts with `/goal `
+- [ ] A typed `/afk` on a stopped run resumes via `guide.py resume-point` (branch `resume`, no `init`), re-runs `goal-line --reuse-constraints`, and hands back the fresh line
+- [ ] Resuming a phase stopped at the pre-execute gate (`phase_step: verify`, `verification_report` set) enters at the gate — verify-plan is **not** dispatched a second time (`resume-point` `enter_at: pre-execute-gate`)
+- [ ] State `done` on a phase the dev-guide still shows unfinished → `phase.py check-off`, never `init` (`resume-point` branch `check-off`)
+- [ ] verify-plan's DPs are swept from its **report** (`--verify-report <Report path>`), not only the plan; its interactive DP step is not asked mid-run — blocking → STOP row, recommended → `guide.py adopt-dp` writes `**Chosen:**`
+- [ ] An unverified plan (no `Verdict: Approved`/`Revised`, or `partial`) never executes — `unit-signals` `stop_rows: verify-missing`
+- [ ] Every script invocation in the dev-guide section uses a full `${CLAUDE_PLUGIN_ROOT}/skills/...` path
+- [ ] Dev-guide mode never runs `phase.py init --force` on its own; a phase mismatch is put to the user first
 
 ## Redundancy Risk
 

@@ -1,6 +1,6 @@
 ---
 name: afk
-description: "Use when the user is stepping away and wants work driven to a stated end state on its own — '/afk', 'afk', '我出去一趟', '你自己跑', '一直推到 block', '推到头', 'run this while I'm out', 'push it to the end', \"don't ask me, just decide\". Sets up a native `/goal` run: distills **every** goal handed over (not the most tractable one), characterises each completion check (proves it can currently fail, and measures its own noise so the threshold is not drawn inside it), clears the human-required unblocks that kill unattended Apple runs (device lock, wireless transport, on-device trust dialog, sudo), and hands back **one** ready-to-paste `/goal` line covering all of them plus the constraints the user stated in session — `/goal` holds one goal per session, so a second pasted line would replace the first. For work whose END STATE is writable but whose ROUTE is not yet known — route-known work belongs in write-plan → execute-plan, and work whose end state cannot be written needs the user present. Not when: you already have a verified multi-phase dev-guide and only need it driven across phase seams (use /self-pacing — the route is known, so this skill's setup step has nothing to add); the user is at the keyboard iterating turn by turn; the work is divergent design exploration (use brainstorm); a verified plan exists and should be executed task-by-task (use execute-plan)."
+description: "Use when the user is stepping away and wants work driven to a stated end state on its own — '/afk', 'afk', '我出去一趟', '你自己跑', '一直推到 block', '推到头', 'run this while I'm out', 'push it to the end', \"don't ask me, just decide\". Also use when a verified multi-phase dev-guide exists and needs driving across phase seams — dev-guide mode. Sets up a native `/goal` run: distills **every** goal handed over (not the most tractable one), characterises each completion check (proves it can currently fail, and measures its own noise so the threshold is not drawn inside it), clears the human-required unblocks that kill unattended Apple runs (device lock, wireless transport, on-device trust dialog, sudo), and hands back **one** ready-to-paste `/goal` line covering all of them plus the constraints the user stated in session — `/goal` holds one goal per session, so a second pasted line would replace the first. For work whose END STATE is writable but whose ROUTE is not yet known — route-known work belongs in write-plan → execute-plan, except a verified dev-guide, which dev-guide mode drives, and work whose end state cannot be written needs the user present. Not when: the user is at the keyboard iterating turn by turn; the work is divergent design exploration (use brainstorm); a verified plan exists and should be executed task-by-task (use execute-plan)."
 disable-model-invocation: true
 ---
 
@@ -27,6 +27,7 @@ Two questions, each answered by **trying to write something**, not by judging:
 |---|---|---|
 | **End state can be written** | `write-plan` → `verify-plan` → `execute-plan` | **`/afk`** |
 | **End state cannot be written** | — | **The user must stay.** `brainstorm`, or plain conversation |
+| **End state = the dev-guide's remaining phases complete** | route known (a verified dev-guide exists) → **`/afk` dev-guide mode** | — |
 
 - "Can the end state be written?" = can you write `[判据]` below. Write it; if you cannot, that is the answer.
 - "Is the route known?" = can you list the task sequence. Same test.
@@ -154,6 +155,143 @@ This is the moment a fresh-context review is worth most: nobody watched any of t
 
 (The dependency question that held this back is answered: `review-execution` declares and is in fact standalone — it needs no plan and no dev-guide. It was never chain-bound; `implementation-reviewer` is the chain-bound one, and it is simply skipped here.)
 
+## Dev-guide mode
+
+Dev-guide mode is afk's second entry point: an **AFK autonomous driver** for an already-verified, already-planned multi-phase dev-guide. It drives every remaining phase to green without a timer, without scheduling, and without the user at the keyboard — auto-resolving low-severity decisions to their recommended option and honoring every severity gate. While it runs it is the **governing context**: when it reuses lower-level machinery (`run-phase`'s `phase.py` sequence, `verify-plan`, `execute-plan`, `test-changes`, `review-execution`), the Stop Policy below takes precedence over that machinery's own pacing and prompting behavior — pacing pauses are suppressed, severity gates are not.
+
+Under `/goal`, "end the turn" alone does not end a run — the evaluator re-enters on the user's return. So every dev-guide-mode stop also emits `## 终止` (see "Every stop after the goal is armed" below), which releases the goal and leaves nothing pending. See `DESIGN-dev-guide-mode.md` for why this holds cold and hot alike.
+
+**When:** `phase.py guide` resolves a dev-guide, and `phase.py locate` shows incomplete phases. **Resuming a stopped run is the same entry:** the user types `/afk` again. `/afk` is `disable-model-invocation`, so only a typed command loads it — a pasted `/goal` condition on its own never loads this section's Stop Policy or per-phase sequence. Setup item 1 finds the existing state and resumes it.
+
+Every script below is invoked by its full path under `${CLAUDE_PLUGIN_ROOT}`, the convention `run-phase` uses. `guide.py` resolves every relative path against `--root` (default: the current directory, i.e. the project root), never against where it was launched from.
+
+### Which goal-mode sections apply here
+
+The rest of this file's goal-mode sections are written for a goal with no route. Some still apply as-is; some are overridden. This list is the single place that says which — do not infer it from reading both sections side by side.
+
+- **Step 1 — One block per goal, and one refusal** does not apply. The judge is `phase.py locate`, the blocks are the dev-guide's remaining phases, and Step 1's "do not write a plan file, and do not invoke `write-plan`" rule is overridden: dev-guide mode writes each phase's plan itself, as part of the per-phase loop below.
+- **Step 2 — Clear what only a human can clear** applies unchanged. This is new for dev-guide runs, which had no device pre-flight before.
+- **Step 3 — Hand over the `/goal` line** is replaced by `guide.py goal-line` (see Setup item 5 below). The three notices it tells the user — auto mode only, survives `--continue`/`--resume`, only the user can `/goal clear` it — still apply and are still told to the user.
+- **`## During the run`'s two gates** (a done-claim carries fresh output; no prose hand-back) apply. The done-claim re-runs `phase.py locate` and pastes the last phase's gated `review-execution` return, in place of re-running `[判据 N]`.
+- **The goal-mode Stop table** is replaced by the dev-guide Stop Policy below. In particular, "the work turns out to need a plan → stop" does not apply — writing the phase's plan is this mode's normal work, not an escalation.
+- **"Every stop writes the handoff first" and "log every self-made decision"** apply, with the stop order given under "Every stop after the goal is armed" below.
+- **"No review-report files"** applies, and is why findings go into the handoff doc and run log rather than a final HTML report.
+- **The goal-met advisory review** (`mode: advisory`, no `plan_path`) is replaced. Each phase already gets a `mode: gated` review with `plan_path` (Per phase, item 6). At goal-met, no extra advisory pass runs — the last phase's gated review is the final review, and `goal-line`'s judge condition (2) already requires it to show zero must-fix. `[选]` no extra pass; `[据]` goal-line condition (2) already requires that review to show zero must-fix; `[可推翻]` add an advisory pass over the whole run's `scope_files`.
+
+### Setup (the user is present)
+
+The user is present for every item here — on a first run because they just asked, and on a resume because they typed `/afk`.
+
+1. **Target and branch.** `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py guide` resolves the dev-guide P (`ok:false` with `candidates` → ask which). Then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/afk/scripts/guide.py resume-point --dev-guide P` names the branch:
+   - **`state-error`** → the state file is unusable; follow run-phase Step 1 item 1's `ok:false` branches as written there (not restated here), then re-run `resume-point`. `migrate_first: true` → run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py migrate` first, per the same item.
+   - **`all-complete`** → nothing to drive: the "No target resolved" setup-time terminal below.
+   - **`init`** → `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py init --phase N --name … --dev-guide P --project …` for `locate_phase`.
+   - **`resume`** → state exists, is not `done`/`finalized`, and is on `locate`'s phase. No `init`. The per-phase sequence below enters at `resume-point`'s `enter_at` — `state.phase_step`, except `pre-execute-gate` when the phase sits at `verify` and verify-plan already ran (re-dispatching it would break verify-plan's one-round rule, and a fresh verifier would re-raise the DP the user just answered in the report). `verify_report` is that phase's verify-plan report, read back from `state.verification_report`; pass it as `--verify-report` wherever a step below needs it. This is the normal branch when the user types `/afk` after a stop.
+   - **`check-off`** → state says `done` but the dev-guide still shows that phase unfinished: the last run crashed between `phase.py step done` and `phase.py check-off`. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py check-off --dev-guide P --phase N`, log it, and re-run `resume-point` (it now says `init` for the next phase, or `all-complete`). ⛔ Never `init` on this branch — `init` wipes `plan_file` and `task_progress`, and the finished phase would be driven again from scratch.
+   - **`phase-mismatch`** → state exists and is not done, but on a different phase than `locate`'s. Show both phases in the authorization text (item 3) and let the user pick which to drive. Never run `init --force` on your own — it wipes `plan_file` and `task_progress`.
+     - user picks the state's phase → resume at `state.phase_step`, and pass `state.plan_file` to `guide.py sweep-dps` via `--plans` (the `--dev-guide` source skips it, because `current_phase` ≠ `locate`'s phase).
+     - user picks `locate`'s phase → the question itself must say `init --force` will wipe the other phase's `plan_file` and `task_progress`; run it only on that explicit answer.
+
+   **Slug.** A new run picks a short kebab-case slug S for `.claude/afk/<slug>.*`. A resume reuses the one in `resume-point`'s `slugs` (the run that already has a goal file); several → ask which. **Empty `slugs` on a resume** (a legacy self-pacing run, or state left by `run-phase`) → pick a new slug, do **not** pass `--reuse-constraints` at item 5 (there is nothing stored; it exits 3), and collect the constraints from the user, who is present.
+2. **Sweep and answer.** `python3 ${CLAUDE_PLUGIN_ROOT}/skills/afk/scripts/guide.py sweep-dps --dev-guide P [--plans …] [--verify-report R …]`, with any plan the user names and, on a resume, `resume-point`'s `verify_report` (the current phase's verify-plan report). Exit 3 with a non-empty `missing` means a named file is not there — fix the path; ⛔ never read a missing file as "zero open DPs". Ask every open blocking DP surfaced in one `AskUserQuestion` batch — on a resume this is where the DP the run stopped on gets answered. Record each answer with `python3 ${CLAUDE_PLUGIN_ROOT}/skills/afk/scripts/guide.py adopt-dp --file <dp.file> --dp <dp.id> --label <A|B|…>` (the sweep's `file` field: the plan or the verify report the DP lives in). Invoke `dev-workflow:crystallize` only when at least one was answered, then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/afk/scripts/guide.py crystal --slug S --path <the crystal file it wrote>` so the stop card points at that crystal and not at whichever crystal happens to be newest. Tell the user in the authorization text that later phases' decisions (their plans do not exist yet) surface in-loop instead. **If the card's last stop was "Awaiting visual sign-off"**, take the user's answer here too: log it to the run log; "looks right" → continue; a correction → apply it inside the plan's declared `**Files:**` before item 5, and log what changed.
+3. **Authorization text** — names the dev-guide, `locate`'s starting phase **with its `checked/total` acceptance-criteria counts** (`resume-point`'s `locate_phase`), the number of remaining phases (`remaining_phases`), the full Stop Policy list below, and "every stop releases the goal; you resume by typing `/afk`, which hands you a fresh `/goal` line to paste." Only an explicit yes proceeds — on a resume too (autonomous mode is opt-in every time).
+4. **Device unblocks** — run `## Step 2 — Clear what only a human can clear` here, unchanged. On a resume, re-check auto-lock at least: the device has had the whole away-time to change.
+5. **Goal line.** `python3 ${CLAUDE_PLUGIN_ROOT}/skills/afk/scripts/guide.py goal-line --dev-guide P --slug S --constraint … --constraint …`, with every constraint the user stated this session, passed **most → least load-bearing**: over the 4,000-character condition cap, `goal-line` drops constraints from the end, and its `dropped` list names them — tell the user each dropped one by name. The line starts with `/goal `; present it verbatim together with the three notices from `## Step 3`. On a resume, add `--reuse-constraints`: the stored constraints from the first setup come first, then any new ones — on a cold resume there is no chat to re-collect them from. Always hand back this fresh line, never the card's old one: it carries the current plugin-cache paths, and a versioned cache path from before an update no longer exists.
+
+### Per phase — the `phase.py` sequence
+
+Copied from `run-phase`'s Step 1–8, in the order run-phase uses. "Resume at `state.phase_step`" (Setup item 1) enters this list at the matching step instead of starting at item 1.
+
+1. **plan** — `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step plan` (a no-op right after `init`). Write the phase's plan with the Plan Writing Reference in `${CLAUDE_PLUGIN_ROOT}/skills/write-plan/SKILL.md`, skipping run-phase's scope-confirmation pause (the Setup authorization already covers it), then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set plan_file=<path>`. From this point on, the card's `plan` pointer comes from `state.plan_file`.
+2. **verify** — `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step verify`, then `dev-workflow:verify-plan`. Its return carries `Report: <path>` — the `--verify-report` for items 3, 6 and 7 (recorded in state below, so a resume reads it back through `resume-point`). verify-plan writes its decision points into that **report**, not into the plan.
+   - ⛔ **verify-plan's interactive DP step (its Step 3 item 5) is not asked mid-run.** Nobody is there to answer it. Every DP it wrote goes through item 3 instead: a `blocking` one takes the Critical-decision STOP row, a `recommended` one is adopted and logged.
+   - `approved` → verify-plan Step 4 appends `- **Verdict:** Approved` to the plan.
+   - `must-revise` → the Plan-fails-verification row: apply the revision items to the plan text only, log them, then append `- **Verdict:** Revised` with the items addressed to the plan's `## Verification` section (verify-plan's own completion-criteria form). Re-verify once only after a structural change. Without that line, item 3's gate reads the plan as unverified and stops — which would turn every `must-revise` back into a stop (`DESIGN-dev-guide-mode.md` invariant 4(a)).
+   - Then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set verification_report="<verdict> — <Report path>"` — exactly that shape (`resume-point` parses the path after ` — `), and log the same line to the run log.
+3. **Pre-execute gate** — `python3 ${CLAUDE_PLUGIN_ROOT}/skills/afk/scripts/guide.py unit-signals --plan <plan_file> --verify-report <Report path>`. Its `stop_rows` is the mechanical part of the Stop Policy — act on it, do not re-derive it by hand:
+   - `blocking-dp` → the Critical-decision STOP row, batched with every other open item per the "ask everything at once" Hard Rule.
+   - `verify-missing` (no verdict, or `partial`) → STOP (Plan fails verification row, loop exhausted). Verification is mandatory: the run will not pause per segment for human review, so plan quality matters more, not less, and an unverified plan never executes.
+   - `author-checkpoint` → **not now.** It lists the marked tasks; it fires at the segment boundary after their batch completes (item 4).
+   - every open `recommended` DP in `open_dps.dps` → `python3 ${CLAUDE_PLUGIN_ROOT}/skills/afk/scripts/guide.py adopt-dp --file <dp.file> --dp <dp.id>`, which writes `**Chosen:**` back into that file, and log it. (Conservative default applies: a DP whose severity looks wrong is treated as `blocking`.)
+   - **Every non-trivial task has an executable verify line** (`**Verify:**` / `Automated verify`, or annotated `N/A — trivial`). A missing one is a plan-text defect, not a run failure — same class as `must-revise`: derive the line from the task's own `**Steps:**` and `**Files:**` (the command that would show the task worked), write it into the plan, and log the derivation. Only when nothing is derivable from the task as written does the "No derivable verify signal" terminal fire. Presentational/UI tasks (build + visual sign-off only) take the "Awaiting visual sign-off" path instead.
+4. **execute** — `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step execute`, then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/execute-plan/scripts/compute_checkpoints.py <plan_file> --k 3 --batch-size 5`, the `execute-plan` checkpoint init/resume, and the `${CLAUDE_PLUGIN_ROOT}/skills/execute-plan/execute-plan.workflow.js` segments it dispatches (this mode is a sanctioned Workflow trigger). Segment boundaries apply the Stop Policy below; a boundary whose batch contains a task from item 3's `author-checkpoint` row is the Author-declared-seam STOP.
+5. **test** — `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step test`, then `dev-workflow:test-changes`, then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set test_report=<report path>`. The `visual` step is skipped (`test → review` is an allowed transition). UI tasks take the "Awaiting visual sign-off" cannot-proceed terminal instead, not the visual feedback loop.
+6. **review** — `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step review`, then one `dev-workflow:review-execution` call with `plan_path`, `scope_files` (the plan's declared `**Files:**`), and `mode: gated`. Count must-fix N and nice-to-have M from the return, then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set 'review_reports=["review-execution:consolidated"]' 'review_findings={"must_fix": N, "nice_to_have": M}'`, then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/afk/scripts/guide.py unit-signals --plan <plan_file> --verify-report <Report path> --must-fix N`. N > 0 → the In-scope must-fix row; **whether the repair stays inside the declared `**Files:**` (`unit-signals`' `files`) is your call** — inside → item 7, outside → the Severe-failure STOP.
+7. **fix** (only for an in-scope must-fix, one cycle) — `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step fix`, repair the finding, back to **test**, re-review, then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/afk/scripts/guide.py unit-signals --plan <plan_file> --verify-report <Report path> --must-fix N --after-repair` with the re-review's count. A `must-fix-after-repair` row → the Severe-failure STOP. Then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set gaps_remaining=<count>`.
+8. **Clean seam** — `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py complete-gate`. `ok:true` → `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step done` → `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py check-off --dev-guide P --phase N` → log "crossed phase N seam" to the run log. Then, if `all_phases_complete` is true, this is the goal-met terminal (the "During the run" done-claim gate). Otherwise, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py init` for the next phase `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py locate --dev-guide P` names, and loop back to item 1. A `complete-gate` block (`ok:false`) is never overridden — no `--override` here — and takes the severe row of the Stop Policy.
+
+### Stop Policy
+
+No phase-mode column (this mode has none); the phase-boundary row is folded into Per-phase item 8. **Every STOP row below ends the turn by emitting `## 终止：{row}`** (see "Every stop after the goal is armed"): under `/goal` that section is the only thing on record that releases the goal, so a stop that only ends the turn gets re-entered by the evaluator while the user is away.
+
+| Situation | Maps to existing tag | Action |
+|---|---|---|
+| Critical decision | an unresolved `blocking` DP (plan or verify report) — `unit-signals` `stop_rows: blocking-dp` | **STOP** — the question verbatim in the card's `Why` and in the `## 终止` section. No `AskUserQuestion` in the stop turn: the user answers after typing `/afk`, at Setup item 2. |
+| First red on a check | a task's `Automated verify` fails after its steps, build/test/lint goes red, or a prior-green check regresses | **RE-RUN ONCE** — the byte-identical command, changing no files. Green on the second run → log `flake: <command>` to the run log and continue. Red again → the severe row below. |
+| Severe failure | the same check red twice, a review must-fix whose fix would touch a file outside the plan's declared `**Files:**`, or `stop_rows: must-fix-after-repair` | **STOP** — card + `## 终止` carry the failing command and the relevant output from both runs. Do NOT invoke `fix-bug`, do NOT auto-fix. |
+| In-scope must-fix | a must-fix repairable entirely inside the plan's declared `**Files:**` | **REPAIR ONCE** — apply the fix, re-run `test-changes`, re-dispatch the review. Clean → continue. Still must-fix (`must-fix-after-repair`), or the repair needs a file outside the declared set → STOP (severe row). |
+| Plan fails verification | `verify-plan` returns `must-revise` | **CONTINUE** — apply the revision to the plan text only (never source files), append `Verdict: Revised`, and log it. Re-verify once only after a structural change. STOP only when a revision item needs a blocking decision (takes the blocking row above), a structural re-verify still returns `must-revise`, or `stop_rows: verify-missing` fires at the pre-execute gate. |
+| Low-severity decision | a `recommended` DP | **CONTINUE** — `guide.py adopt-dp` writes its `**Chosen:**`; log it. |
+| Low-severity finding | a `nice-to-have` review item | **CONTINUE** — defer to the run log. |
+| Routine pacing pause | a `compute_checkpoints.py` hard-stop from batch 0 or a green dependency-hub batch | **CONTINUE** — auto-advance to the next segment. |
+| Author-declared seam | an explicit `<!-- checkpoint -->` marker in the plan body (`stop_rows: author-checkpoint`), at the segment boundary after its task | **STOP** — the author placed it deliberately; skipping it is a forbidden silent downgrade. Resume: the user types `/afk`. |
+| Clean phase seam | Per-phase item 8, `complete-gate` `ok:true` and no open must-fix | **CONTINUE** — cross the seam, log it, and loop to the next phase (Per-phase item 8). |
+
+**Notes:**
+- `must-revise` is not a severe failure — see `DESIGN-dev-guide-mode.md` invariant 4(a). Revising plan text is bounded, alters no product behavior, and any item that genuinely needs the user surfaces as its own `blocking` DP.
+- **Conservative default — scoped, and scoped by reversibility.** If a decision's severity is ambiguous, or a finding could plausibly be critical, treat it as `blocking` and STOP. This governs only *how severe an already-occurring failure or decision is*; it never answers "should I keep working" — that question has no doubt-default, only the enumerated rows (`DESIGN-dev-guide-mode.md` invariant 4(b)). Where severity itself is genuinely ambiguous, resolve it on **reversibility, not confidence**: ambiguity about something that would mutate source files or ship user-visible behavior → stop; ambiguity confined to plan text, process ordering, or two equivalent approaches → continue and log. Confidence is unfalsifiable; reversibility is checkable.
+- Every STOP row above, and every cannot-proceed terminal below, fires after the goal is armed and writes or refreshes the stop card before the turn ends. Do not skip it, and do not batch two stops into one card. Setup-time terminals (further below) write none.
+- Every auto-decision — an adopted `recommended` DP, a deferred `nice-to-have`, an auto-crossed seam — must land in the run log. A silent auto-decision is what makes a finished run untrustworthy.
+
+### Cannot-proceed terminals
+
+These are not severity gates — the run physically cannot continue without a human, so there is nothing to weigh. **The distinguishing test is reversibility, not confidence:** a cannot-proceed terminal is one where no amount of additional model effort produces the missing input — a human preference, a human eye, an authorization. "A process document told me to stop" is not one of these; that is a rule conflict, resolved by the precedence order, not a block.
+
+| Terminal | Fires when | Card variant |
+|---|---|---|
+| No derivable verify signal | a non-trivial task in the phase's own plan has no `Automated verify`, and one cannot be derived from the task's own `**Steps:**`/`**Files:**` (Per-phase item 3) | the task id + why no signal is derivable; `Next action` = revise that task in the plan |
+| Awaiting visual sign-off | a presentational/UI task reached build-clean and its screenshot needs human eyes | screenshot path (in the run log and the handoff doc, not an HTML report) + what to confirm; `Next action` = "looks right" or the correction, given after typing `/afk` |
+
+### Setup-time terminals
+
+Before `guide.py goal-line` has run, the user is present and no goal is armed — tell them directly. No card and no `## 终止` are needed; `guide.py card` refuses without a goal file, which is correct at this point in the flow.
+
+| Terminal | Fires when | Tell the user |
+|---|---|---|
+| No target resolved | no dev-guide exists, `resume-point` says `all-complete`, or the user declined at Setup item 3 | "no target resolved — {which branch}"; no dev-guide → `write-dev-guide`. There is no phase-mode fallback here. |
+
+### Every stop after the goal is armed
+
+Every STOP row above, and every cannot-proceed terminal, follows this order:
+
+1. Write the stop to the run log (`.claude/afk/<slug>.md`).
+2. Invoke `dev-workflow:handoff` (main session).
+3. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/afk/scripts/guide.py card --slug S --stopped-at … --why … --next … --doc <handoff path>` — doc first, so the card can name it. The card's `Resume with` tells the user to type `/afk` and quotes the last goal line for reference.
+4. End the turn with the `## 终止：{row}` section, verbatim, plus that turn's raw output. This is what releases `/goal`. The same text is already in the run log from item 1.
+
+### Hard rules kept
+
+Carried over from self-pacing's Hard Rules (its last version before the merge, `git show 55c52da:dev-workflow/skills/self-pacing/SKILL.md`), adapted to dev-guide mode:
+
+- Autonomous mode is opt-in, every time (Setup item 3 names the phase count explicitly, on a resume too). Never enter by inference.
+- Severity gates are never suppressed — only pacing pauses are. A `blocking` DP and an explicit `<!-- checkpoint -->` stop when they fire. The three bounded-loop gates (`must-revise`, a red check, a `must-fix`) stop only after their one-cycle loop is exhausted, and the exhausted loop is itself the gate.
+- **Stopping is enumerated, not judged — there is no default stop.** The run ends at green or at a row of the Stop Policy / cannot-proceed tables, which *is* the concrete blocking point; the card's `Why` + `Next action` *is* where it blocked and what unblocks it. **If no row fires, continue.** "This is the best state reachable in this session" / "good enough for a handoff" is not a terminal and must never be written as one — it is self-assessment, unfalsifiable and always available. Inherited from the user-wide CLAUDE.md 禁止行为 →「把还在跑的验证写成「未完成 / 待办 / 下轮再看」交回用户」(run it 「跑到出结论（通过 / 失败 / 一个具体的阻塞点）」), which already outranks this file (`DESIGN-dev-guide-mode.md` invariant 4(b)–(c)).
+- **Context occupancy is not a terminal, and not a reason to move to a new session** — not mid-run, and not at the Setup authorization. The model has no token counter; "this session feels long" is not a measurement (measured instances sat at 28% / 57% / 73% while described as full). Where the environment surfaces a measured occupancy figure, only that figure is admissible; where none reaches the run, the claim is unavailable and the run continues. Hitting the limit does not lose work — the harness clears old tool output and summarizes. (`DESIGN-dev-guide-mode.md` invariant 4(b), its observed instance.)
+- Pass the four-gate check before every STOP that is a judgment call (a `blocking` DP, an ambiguous-severity classification — not the severe-failure row or any cannot-proceed terminal, which stop unconditionally): what problem is being solved, is stopping aimed at it, is there an obviously better option, and are the candidates N workarounds circling one obstacle. Gate 4 in particular: if every option on the table circles the same obstacle, the question is not "which one" — it is a report that the work sits one layer too low; falsify the shared premise before stopping.
+- When you do ask, ask everything at once — Setup item 2's sweep plus any in-loop blocking DP or open question from the current phase, batched.
+- **The one class that is always the user's, however reversible: a difference they can directly perceive** — a default, wording, an interaction shape, a layout — where technical fact does not resolve it to one answer. "Option A performs better, so the experience is better" is a technical fact, not this; rank it yourself.
+- No invisible auto-decisions — everything resolved, deferred, or auto-crossed appears in the run log.
+- Bounded retry, never blind retry — exactly the two loops in the Stop Policy table (RE-RUN ONCE, REPAIR ONCE), each capped at one cycle and fully logged. Dev-guide mode still never invokes `fix-bug` and never diagnoses.
+- Every STOP writes the stop card; every stop after the goal is armed also writes the handoff doc and ends with `## 终止` (see above). A card that has grown a "what I delivered" section is a doc that was written into the wrong file.
+- `run-log ≠ crystal`, never mixed — user decisions the Setup sweep resolved go to a crystal via `crystallize` (recorded with `guide.py crystal`); in-loop decisions are recorded as `**Chosen:**` in the plan or verify report only (`guide.py adopt-dp`); auto-actions go to the run log incrementally.
+- No timer, no background scheduling. Every stop ends the turn and releases `/goal`; resume is the user typing `/afk`, hot or cold.
+
+### State & resume
+
+`phase.py status` + the card. Cold resume: read the card, then its `Next action` doc, then its `Pointers`, then **type `/afk`**. Setup item 1 (`guide.py resume-point`) finds the existing state and resumes at `state.phase_step` (or finishes an interrupted `check-off`); item 2 asks any DP the run stopped on, now that the user is there; item 5 regenerates the goal line with `--reuse-constraints`; the user pastes that fresh line. The card's quoted goal line is for reference only — pasting it alone re-arms a condition without loading this mode's Stop Policy or per-phase sequence, and its plugin-cache paths go stale on the next plugin update.
+
+See `DESIGN-dev-guide-mode.md` for the invariants this mode inherits.
+
 ## Artifacts
 
 | Artifact | Path | When |
@@ -161,15 +299,21 @@ This is the moment a fresh-context review is worth most: nobody watched any of t
 | Run log | `.claude/afk/<slug>.md` | incrementally, every self-made decision |
 | Raw judge readings | `.claude/afk/logs/<date>-<judge>-<arm>.log` | every judge run, one file per round |
 | Handoff doc | `docs/06-plans/HANDOFF-YYYY-MM-DD-HHMM.md` (via `dev-workflow:handoff`) | at every stop |
+| Stop card (dev-guide mode only) | `.claude/afk/<slug>-handoff.md` (via `guide.py card`) | at every dev-guide-mode stop |
+| Goal file (dev-guide mode only) | `.claude/afk/<slug>-goal.txt` (via `guide.py goal-line`) | at Setup (first run and every resume), so `card` can quote the last line for reference |
+| Constraints (dev-guide mode only) | `.claude/afk/<slug>-constraints.json` (via `guide.py goal-line`) | at Setup; a resume passes `--reuse-constraints` so the user's constraints survive a cold start |
+| Crystal pointer (dev-guide mode only) | `.claude/afk/<slug>-crystal.txt` (via `guide.py crystal`) | after Setup item 2's `crystallize`; the card's `crystal` pointer reads it |
+
+State and checkpoint are owned by `phase.py` (`.claude/dev-workflow-state.json`) and `execute-plan` (`.claude/execute-plan-checkpoint.json`), not by this skill.
 
 ⛔ **Readings do not go in the session scratchpad.** A run lost `arm-b1.log` / `arm-b3.log` that way and had to buy the rounds again on device. `.claude/` is gitignored — local only, but it survives the session, and these readings are the next run's `[分辨力]` prior, which is the whole reason they have to outlive the session that produced them.
 
-The code plus these three are the source of truth. Chat is not — on a cold resume there is no chat.
+The code plus these files are the source of truth. Chat is not — on a cold resume there is no chat.
 
 ## Relationship to the rest of the flow
 
 - **`/goal`** (native) owns the loop and the completion judgment. This skill owns the setup and hands off to it.
-- **`write-plan` → `verify-plan` → `execute-plan`** owns route-known work. `/afk` does not invoke it and does not replace it; the table above routes between them.
-- **`self-pacing`** is superseded by this skill, and kept only for driving an already-verified multi-phase dev-guide across seams.
+- **`write-plan` → `verify-plan` → `execute-plan`** owns route-known work. Goal mode does not invoke that chain and does not replace it; the table above routes between them. Dev-guide mode is the exception: it drives that chain itself, once per phase (Per-phase items 1–4), because a verified dev-guide is route-known work that spans phase seams.
+- **`/self-pacing`** is now a pointer to `/afk` dev-guide mode.
 - **`fix-bug`** remains the diagnostic protocol for a reported defect. `/afk` does not invoke it and runs no formal diagnosis — though the layer question it enforces (what did the existing design solve; is this patch treating a symptom) is the same question the ⚠️ above asks before a stop.
-- Nothing else is modified by this skill.
+- Nothing else is modified — except, in dev-guide mode, the dev-guide and state file (via `phase.py`), each phase's plan (written and revised by the run), and the `**Chosen:**` lines `guide.py adopt-dp` writes into plans and verify-plan reports.

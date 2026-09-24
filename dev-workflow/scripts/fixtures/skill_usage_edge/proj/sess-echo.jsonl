@@ -1,0 +1,1 @@
+{"type":"user","sessionId":"sess-echo","timestamp":"2026-09-20T11:00:00.000Z","message":{"role":"user","content":[{"tool_use_id":"toolu_9","type":"tool_result","content":"  16 <command-name>/dev-workflow:self-pacing</command-name>\n   3 <command-name>/self-pacing</command-name>"}]}}

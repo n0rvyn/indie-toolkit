@@ -1,6 +1,8 @@
-# self-pacing — design invariants (maintainer note)
+# dev-guide mode of afk — design invariants (maintainer note)
 
-Not loaded at runtime. Read this before changing the stop / handoff / resume behavior. Each invariant looks removable until you trace why it exists; the first three are interlocked — removing or "enhancing" one breaks the resume model. Invariant 4 is the opposite hazard: it exists because the stop policy drifts toward stopping if nobody defends the continue side.
+This was `self-pacing`'s design note until 2026-09-24, when dev-guide mode absorbed self-pacing and this file moved and was edited to fit the `/goal` loop.
+
+Not loaded at runtime. Read this before changing the stop / handoff / resume behavior of `dev-guide mode of afk`. Each invariant looks removable until you trace why it exists; the first three are interlocked — removing or "enhancing" one breaks the resume model. Invariant 4 is the opposite hazard: it exists because the stop policy drifts toward stopping if nobody defends the continue side.
 
 ## 1. A STOP is a complete handoff the instant it fires
 
@@ -11,6 +13,8 @@ At every STOP the skill writes the thin card (`<slug>-handoff.md`) and **ends th
 
 Nothing depends on the original session staying alive. That is the whole point of AFK durability.
 
+**Under `/goal`, "ends the turn" alone is not enough.** The evaluator re-enters an ended turn on its own, so a STOP that only ends the turn does not end the run — the run resumes itself before the user is back. So a dev-guide-mode STOP also emits `## 终止：{原因}` verbatim in that turn (`afk/SKILL.md`, "Every stop after the goal is armed"), which is the only thing on record that releases `/goal`. That section is what closes the handoff this invariant already required to be complete: the card is written, the doc is written, and now the goal itself is released, so nothing pending remains — not even a re-entering evaluator. Hot and cold resume are both the same action from here: the user types `/afk` — dev-guide mode's Setup item 1 (`guide.py resume-point`) finds the state and resumes at `phase_step`, and Setup item 5 hands back a freshly generated `/goal` line to paste. Not a re-paste of the old line: `/afk` is `disable-model-invocation`, so only a typed command loads it, and a pasted condition alone would re-arm `/goal` without ever loading the Stop Policy or the per-phase sequence; regenerating also refreshes the versioned plugin-cache paths the old line carries (decision DP-003 in `docs/06-plans/2026-09-24-afk-absorbs-self-pacing-plan.md`).
+
 ## 2. Run log ≠ handoff card — it does NOT hand off per task or per batch
 
 | | written when | ends the turn? |
@@ -18,7 +22,7 @@ Nothing depends on the original session staying alive. That is the whole point o
 | Run log (`<slug>.md`) | incrementally, on **every** auto-action (crash-safe record) | no |
 | Handoff card (`<slug>-handoff.md`) | **only at a STOP** | yes |
 
-Between stops the skill runs continuously, suppressing pacing pauses. It cards-out only at a **severity** gate (blocking decision / severe failure / explicit `<!-- checkpoint -->`; + phase seam in phase mode) — **never** at a clean batch/segment boundary.
+Between stops the skill runs continuously, suppressing pacing pauses. It cards-out only at a **severity** gate (blocking decision / severe failure / explicit `<!-- checkpoint -->`) — **never** at a clean batch/segment boundary.
 
 > "跑一批就 handoff" is wrong. "severity 停才 handoff,每步只记 log" is right.
 
@@ -32,7 +36,9 @@ The recurring tempting enhancement is "notify, wait N minutes, then auto-handoff
 
 The warm "did you reply in time?" window a timer would buy is already provided **for free** by the prompt cache (invariant 1): within the cache TTL any reply resumes hot with no held session; beyond it, the card gives a cheap cold resume. Both paths are covered without a timer.
 
-This is why "No timer, no background scheduling" is a Hard Rule in SKILL.md — it is a consequence of the architecture, not a tunable.
+**This still holds under `/goal`, and the reasoning sharpens rather than weakens.** `/goal`'s own re-entry is not a timer in disguise — it is the loop the user authorized at Setup, and it is meant to keep firing turns *while no stop has fired*. That is the opposite of scheduling a wait: there is no idle window, no wake-up to schedule, nothing waiting on a clock. But the same mechanism that makes the loop useful is exactly why a STOP has to actively release it (invariant 1's `## 终止`): an armed goal that keeps re-entering a turn *after* a STOP has fired is precisely the auto-resume this invariant bans, just implemented by the harness instead of by a timer this skill would have to add. Releasing the goal at every STOP is what keeps dev-guide mode on the right side of this invariant.
+
+This is why "No timer, no background scheduling" is a Hard Rule in `afk/SKILL.md` — it is a consequence of the architecture, not a tunable.
 
 ## 4. Revising a plan is not auto-fixing — and stopping is enumerated, not judged
 
@@ -46,11 +52,11 @@ Two halves of one invariant. Both defend the *continue* side of the policy, whic
 | the loop is unbounded / no defined exit | yes (a failing test can be "fixed" forever) | no — verify-plan Step 3 allows one round, plus one re-verify only after a structural change |
 | resolving it needs the user's judgment | often | the items that do surface as `blocking` DPs, which stop on their own row |
 
-Classifying `must-revise` as severe produced the observed failure: a guide-mode run that writes its own phase plan at Step 3.1 halts on its first verification round, handing off before one line of code exists. The plan-authoring inner loop was mistaken for a run failure. If you are about to "restore" `must-revise` to the severe row, you are re-introducing that.
+Classifying `must-revise` as severe produced the observed failure: a guide-mode run that writes its own phase plan at the per-phase plan step halts on its first verification round, handing off before one line of code exists. The plan-authoring inner loop was mistaken for a run failure. If you are about to "restore" `must-revise` to the severe row, you are re-introducing that.
 
 **(b) There is no default stop.** The terminal conditions are a closed enumeration (the Stop Policy rows, or green). Do **not** add a judged terminal like "the best state reachable in this session", "good enough to hand off", or a quality bar the model scores itself against. Such a criterion is unfalsifiable and always satisfiable — every premature stop can be narrated as the best attainable state — so it degrades into "stop whenever it feels hard". `Conservative default` (ambiguous → blocking) is deliberately scoped to *severity classification of something that already happened*; it is not a bias toward stopping, and widening it to cover "should I keep working" reproduces (b).
 
-**The observed instance of (b): context occupancy.** On 2026-08-07 a run was about to start and the driver instead recommended moving all six remaining phases to a new session, on the stated ground that 「这轮上下文已经很满」. Measured occupancy at that message was **283,947 of 1,000,000 tokens — 28%**; two earlier instances measured 57% and 73%. The mechanism is worth naming because it is not laziness: the model has no token counter, so it substitutes a felt proxy ("this session has been long, there have been many tool outputs"), and that proxy is uncorrelated with the real number. This skill's own architecture then makes the wrong move look free — invariant 1 advertises session-independent resume, so "start it in a fresh session" reads as *using* the design rather than evading the work. It is still (b): an unfalsifiable self-assessment used as a terminal. SKILL.md Hard Rules names it explicitly, in environment-neutral terms — the skill ships to installs that have no measurement wired up, so it may require *a* measured figure without presuming *which* mechanism supplies it.
+**The observed instance of (b): context occupancy.** On 2026-08-07 a run was about to start and the driver instead recommended moving all six remaining phases to a new session, on the stated ground that 「这轮上下文已经很满」. Measured occupancy at that message was **283,947 of 1,000,000 tokens — 28%**; two earlier instances measured 57% and 73%. The mechanism is worth naming because it is not laziness: the model has no token counter, so it substitutes a felt proxy ("this session has been long, there have been many tool outputs"), and that proxy is uncorrelated with the real number. This skill's own architecture then makes the wrong move look free — invariant 1 advertises session-independent resume, so "start it in a fresh session" reads as *using* the design rather than evading the work. It is still (b): an unfalsifiable self-assessment used as a terminal. `afk/SKILL.md` → Dev-guide mode → "Hard rules kept" names it explicitly, in environment-neutral terms — the skill ships to installs that have no measurement wired up, so it may require *a* measured figure without presuming *which* mechanism supplies it.
 
 **Closing it mechanically (owner's environment, not a plugin dependency).** Hooks do not receive `context_window`; only the status line does. So the owner's setup mirrors the harness's own numbers from `~/.claude/statusline.py` to `~/.claude/.ctx-cache/<session_id>.json`, and a `UserPromptSubmit` hook (`~/.claude/hooks/context-budget.py`) injects them each turn as a `[ctx]` line, with a policy floor of 80% below which proposing `/clear`, a new session, a handoff, or a scope cut is forbidden. The two user-wide rules that consume it are CLAUDE.md 行为约束 →「上下文余量不授权收尾」 (triggers on the number, so motive is not an exit) and 禁止行为 →「断言上下文余量而不引 `[ctx]` 实测数」. None of this is required by the skill; it is one worked example of the environment obligation SKILL.md states abstractly.
 
@@ -70,11 +76,11 @@ Reversal of the earlier "no bounded retry" position, plus the in-scope repair ad
 | Loop | Cap | What it mutates | Escalates to |
 |---|---|---|---|
 | Re-run a red check, byte-identical | 1 | nothing | severe → STOP on the second red |
-| Repair a `must-fix` inside the plan's declared `**Files:**` | 1 | only files the user authorized at Step 2 | severe → STOP if still `must-fix`, or if the repair needs a file outside the declared set |
+| Repair a `must-fix` inside the plan's declared `**Files:**` | 1 | only files in the plan's declared `**Files:**` — the scope the Setup authorization covers | severe → STOP if still `must-fix`, or if the repair needs a file outside the declared set |
 
 **Why the original rejection was wrong.** It read "masks real failures" — but a flake written into the run log and the final review is the opposite of masked. The rejection conflated *suppressing* a signal with *recording* one. The real constraint was never "never re-run"; it was "never let a failure disappear," and logging satisfies that.
 
-**Why the line sits at authorization, not at confidence.** The tempting formulation is "auto-fix when confident." That is unfalsifiable and expands under pressure — the same defect as a judged terminal in invariant 4(b). Authorization is checkable: a re-run changes zero bytes, and an in-scope repair changes only files the user named when approving the plan at Step 2. Everything past the declared `**Files:**` has no authorization behind it, which is exactly what `no-auto-fix` protects. That rule is unchanged; these two loops sit inside it, not around it.
+**Why the line sits at authorization, not at confidence.** The tempting formulation is "auto-fix when confident." That is unfalsifiable and expands under pressure — the same defect as a judged terminal in invariant 4(b). Authorization is checkable: a re-run changes zero bytes, and an in-scope repair changes only files in the plan's declared `**Files:**`. The user authorized the run at Setup item 3 (the authorization text names the dev-guide and its remaining phases); dev-guide mode writes each phase's plan itself, and `**Files:**` is where that authorized scope becomes a checkable list. Everything past the declared `**Files:**` has no authorization behind it, which is exactly what `no-auto-fix` protects. That rule is unchanged; these two loops sit inside it, not around it.
 
 **What motivated the change.** Both are the common mid-run death causes for an AFK run: one flaky test, or one `must-fix` on code the run itself just wrote, ends a multi-hour run and the user returns to nothing delivered. A driver that reliably dies before finishing a phase is not a conservative driver, it is a broken one. Read this together with invariant 4: 4 keeps the *policy* from drifting toward stopping; 5 keeps the *machinery* from doing the same.
 
@@ -94,7 +100,7 @@ Reversal of the original "self-pacing writes its own thin card; it does not call
 - **Where the pairing did happen, it happened by improvisation.** `ArtLens/.claude/self-pacing/concurrent-pipeline-guide-handoff.md` (1,127 bytes, conforming) and `ArtLens/docs/06-plans/HANDOFF-2026-08-18.md` (8,435 bytes, `type: handoff`, §0 present) have the **same mtime, 2026-08-18 16:38** — both written at one STOP, the card's `Next action` reading `读 docs/06-plans/HANDOFF-2026-08-18.md §0`. Nothing in either skill specified this. That same day produced three docs (16:38, 19:37 `-EVENING`, 21:07 `-NIGHT`) because `HANDOFF-YYYY-MM-DD.md` has no room for a second stop.
 - **The link was one-way.** `grep "self-pacing\|run-log\|checkpoint"` on that doc: **zero hits**. A cold session that read only the doc lost the authoritative artifacts.
 
-**Why the discriminator is mode, not judgment.** The tempting rule is "write the doc when resuming would need context re-established." That is the shape invariant 4(b) bans: unfalsifiable, always satisfiable, and it drifts to "always write the doc". `guide` mode is session-terminal *by construction* — the user authorized an unattended multi-phase run, so they are not at the keyboard when it stops. That is checkable from the invocation, not from a self-assessment. `phase` mode keeps the card-only path for the two stops that expect a hot resume (blocking DP, author checkpoint), which is invariant 1 doing its job.
+**Why the discriminator is mode, not judgment.** The tempting rule is "write the doc when resuming would need context re-established." That is the shape invariant 4(b) bans: unfalsifiable, always satisfiable, and it drifts to "always write the doc". Under `/goal`, the discriminator collapses to one case: **every dev-guide-mode stop is terminal, because it releases `/goal` (invariant 1's `## 终止`)** — there is no hot-resume-inside-the-turn path left to distinguish, the way self-pacing's phase mode once kept for a blocking DP or an author checkpoint. So every stop writes card **and** doc, unconditionally; this is still checkable from the mode itself, not from a self-assessment — it is simply that dev-guide mode now has only the one mode self-pacing's `guide` mode was.
 
 **What did not change.** The card is still thin, still written at *every* stop, still ends the turn immediately (invariants 1–2 intact). The doc is additive and only at terminal stops. `run-log ≠ crystal` is untouched; the doc is a third thing, authoritative on neither — it reads both.
 
@@ -102,7 +108,7 @@ Reversal of the original "self-pacing writes its own thin card; it does not call
 
 ## Rejected enhancement ideas (and why)
 
-Evaluated and rejected as over-design relative to the AFK user's intent (`/self-pacing` already implies: verified plan exists, long run expected, don't interrupt unless truly blocked):
+Evaluated and rejected as over-design relative to the AFK user's intent (dev-guide mode already implies: verified plan exists, long run expected, don't interrupt unless truly blocked):
 
 - **Token budget / runaway cap** — contradicts "I expect a long run." AFK = long by intent. (If you are about to re-add this as "just a context check before continuing", read invariant 4(b)'s observed instance first — a context-occupancy gate is the judged terminal that section bans, and the driver already gets a measured `[ctx]` number without one.)
 - **Scope-drift check at phase seams** — relies on the user editing the dev-guide mid-run, which they don't after authorizing and walking away.

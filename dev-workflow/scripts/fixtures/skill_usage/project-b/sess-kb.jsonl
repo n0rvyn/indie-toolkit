@@ -1,0 +1,1 @@
+{"type":"assistant","sessionId":"sess-kb","timestamp":"2026-09-21T09:45:00.000Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_2","name":"Skill","input":{"skill":"kb","args":"self-pacing 0 times"}}]}}

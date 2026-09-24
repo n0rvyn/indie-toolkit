@@ -243,7 +243,7 @@ Sort must-fix by file path; group by lens within each section.
 
 ### Step 4: Present and STOP — `advisory` only
 
-⛔ **Skip this entire step when `mode` is `gated`.** Step 3b already returned the must-fix table to the caller, and the caller owns the fix loop (`run-phase` asks at its own Step 6; `self-pacing` at its per-unit gate). Running Step 4 as well asks the user to pick fixes twice for one review.
+⛔ **Skip this entire step when `mode` is `gated`.** Step 3b already returned the must-fix table to the caller, and the caller owns the fix loop (`run-phase` asks at its own Step 6; `/afk` dev-guide mode at its per-phase gate). Running Step 4 as well asks the user to pick fixes twice for one review.
 
 Present the consolidated table to the user. Add the tail:
 

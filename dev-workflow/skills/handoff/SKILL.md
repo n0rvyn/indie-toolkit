@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: "Use when ending the current session and transferring ALL current work to a new session (next day, different person), the user says 'handoff', '交接'. Also invoked by dev-workflow:afk at EVERY stop (its only handoff outlet) and by dev-workflow:self-pacing at a terminal STOP, where it reads the run's disk artifacts instead of the conversation. End-of-session full transfer — not for mid-session orthogonal splits (use /fork-this for that), and not for the thin locator card a self-pacing stop writes (self-pacing writes that itself)."
+description: "Use when ending the current session and transferring ALL current work to a new session (next day, different person), the user says 'handoff', '交接'. Also invoked by dev-workflow:afk at every stop (its only handoff outlet), where it reads the run's disk artifacts instead of the conversation. End-of-session full transfer — not for mid-session orthogonal splits (use /fork-this for that), and not for the thin locator card afk dev-guide mode writes (`guide.py card` writes that itself)."
 disable-model-invocation: false
 ---
 
@@ -9,9 +9,9 @@ disable-model-invocation: false
      produces a summary, which is the failure mode eval.md's Redundancy Risk section names. -->
 
 <!-- ⚠️ model-invocation is deliberately ON. It is load-bearing for the AFK path where the user
-     says "keep going, handoff if you hit a real block" WITHOUT typing /self-pacing — nothing is
+     says "keep going, handoff if you hit a real block" WITHOUT typing /afk — nothing is
      governing there, so without description-match routing nothing fires at the block.
-     When /self-pacing IS governing, its Two-tier handoff table decides; this skill is the callee. -->
+     When /afk dev-guide mode is governing, it decides; this skill is the callee. -->
 
 
 <!-- attribution-gate: exempt — 本文件是交接 skill 的规则原文，第 11 条逐字复述
@@ -34,9 +34,9 @@ disable-model-invocation: false
 
 ## 自主运行模式（来源是磁盘，不是聊天）
 
-**触发条件是产物在不在，不是谁调起的**：手上这摊活对应的 `.claude/afk/<slug>.md`（`/afk` 的 run log）**或** `.claude/self-pacing/<slug>.md` 存在 → **先读产物，不要从会话叙述里重建**。两条路径等价触发本节；`/afk` 是目标导向的那条，`self-pacing` 是需要预写计划的那条（已被前者取代，见其 SKILL.md 顶部）。`/afk` 在**每一次** STOP 都调用本 skill，所以这一节是它唯一的交接产出口。self-pacing 明文禁止 narrative reconstruction from chat（其 Step 4：run log + crystal 才是 source of truth），这一条在这里同样成立。
+**触发条件是产物在不在，不是谁调起的**：手上这摊活对应的 `.claude/afk/<slug>.md`（`/afk` 的 run log）**或** `.claude/self-pacing/<slug>.md`（legacy；`self-pacing` 已退役为指向 `/afk` dev-guide mode 的指针 stub，见其 SKILL.md）存在 → **先读产物，不要从会话叙述里重建**。两条路径等价触发本节；`/afk` 在**每一次** STOP 都调用本 skill（goal mode 与 dev-guide mode 都是），所以这一节是它唯一的交接产出口。`/afk` 明文禁止 narrative reconstruction from chat（`afk/SKILL.md` § Artifacts：代码 + 这些文件才是 source of truth，chat 不是；设计缘由见 `afk/DESIGN-dev-guide-mode.md`），这一条在这里同样成立。
 
-⛔ **不要写成「由 self-pacing 调起时才适用」**。用户「自主推进，遇到重大 block 就 handoff」而**没有**敲 `/self-pacing` 时，没有任何 skill 在管，本 skill 是按 description 匹配直接触发的 —— 那正是最需要读产物的场合（它连自己在一次被跟踪的 run 里都不知道）。按调用方设条件会让这一节在唯一真正需要它的路径上失效。
+⛔ **不要写成「只在被 skill 调起时才适用」**。用户「自主推进，遇到重大 block 就 handoff」而**没有**敲 `/afk` 时，没有任何 skill 在管，本 skill 是按 description 匹配直接触发的 —— 那正是最需要读产物的场合（它连自己在一次被跟踪的 run 里都不知道）。按调用方设条件会让这一节在唯一真正需要它的路径上失效。
 
 产物不存在 → 本节不适用，按正常流程从会话上下文写。产物存在但明显属于更早的一摊活 → 照读，但在 §6 注明它是哪一轮的，⛔ 不要把旧 run 的结论当本轮的。
 
@@ -44,9 +44,10 @@ disable-model-invocation: false
 
 | 读什么 | 它是什么的权威 |
 |---|---|
-| `.claude/afk/<slug>.md`（`/afk` run log） | **发生了什么**——它自己做的每个裁决、被绕过的东西、`[判据]` 每次跑的结果。`/afk` 不写 stop card，本 doc 就是它的全部交接 |
-| `.claude/self-pacing/<slug>-handoff.md` | 停在哪、为什么停（本次 STOP 的 delta） |
-| `.claude/self-pacing/<slug>.md`（run log） | **发生了什么**——自动裁决、被延后的 nice-to-have、跨过的 seam、flake、截图路径 |
+| `.claude/afk/<slug>.md`（`/afk` run log） | **发生了什么**——它自己做的每个裁决、被绕过的东西、`[判据]` 每次跑的结果。goal mode 不写 stop card，本 doc 就是它的全部交接；dev-guide mode 另写 `.claude/afk/<slug>-handoff.md` |
+| `.claude/afk/<slug>-handoff.md`（dev-guide mode 的 stop card） | 停在哪、为什么停（本次 STOP 的 delta）；`Resume with` = 敲 `/afk`（dev-guide mode 从 state 续跑，交回新的 `/goal` 行再粘），卡上附的旧 goal 行仅供参考。doc 的 §7 照这个写续跑方式，⛔ 不要写成「粘卡上那行」 |
+| `.claude/self-pacing/<slug>-handoff.md`（legacy） | 停在哪、为什么停（本次 STOP 的 delta） |
+| `.claude/self-pacing/<slug>.md`（legacy run log） | **发生了什么**——自动裁决、被延后的 nice-to-have、跨过的 seam、flake、截图路径 |
 | `docs/11-crystals/*-crystal.md` | **该做什么**——用户锁定的决策 |
 | `.claude/execute-plan-checkpoint.json` | 任务级完成映射 |
 | `.claude/dev-workflow-state.json` | guide 模式的相位指针 |
@@ -58,7 +59,7 @@ disable-model-invocation: false
 - 自动裁决（`recommended` DP 采纳了哪个）进 §1；用户裁决在 crystal 里，进 §6 指针，不重抄
 - run log 里同一条判据红了两次、或修了又红——那是 §3「已推翻的」的原料
 
-⛔ **doc 必须带反向指针**：§6 至少列 run-log、checkpoint、stop card 三条绝对路径。实测过一次反面例：`ArtLens/docs/06-plans/HANDOFF-2026-08-18.md` 里 `grep "self-pacing\|run-log\|checkpoint"` 零命中，冷会话只读到 doc 就丢了权威产物。
+⛔ **doc 必须带反向指针**：§6 至少列 run-log 与 checkpoint（存在时）的绝对路径；dev-guide mode（及 legacy self-pacing）另列 stop card —— goal mode 不写 stop card，没有这一条可列。实测过一次反面例：`ArtLens/docs/06-plans/HANDOFF-2026-08-18.md` 里 `grep "self-pacing\|run-log\|checkpoint"` 零命中，冷会话只读到 doc 就丢了权威产物。
 
 ## 输出格式
 
@@ -120,7 +121,7 @@ Crystal file：[docs/11-crystals/xxx-crystal.md | 无]
 - ⭐ `绝对路径` — 说明（⭐ = 新会话必读）
 - `绝对路径` — 说明
 
-（self-pacing 模式下，这一节**必须**含 run-log / checkpoint / stop card 三条绝对路径）
+（自主运行模式（afk 或旧 self-pacing 产物）下，这一节**必须**含 run-log 与 checkpoint（存在时）的绝对路径；dev-guide mode / legacy self-pacing 另含 stop card —— goal mode 没有 stop card）
 
 ## 7. 下一步
 
@@ -189,7 +190,7 @@ ArtLens 的 `CLAUDE.md` 里 `HANDOFF` 出现 **22 次**，从第 70 行铺到第
 - ⛔ 项和「需裁决」项分开了？
 - 自己犯的错写进去了？
 - 落盘的话，文件名带 `-HHMM` 了？`CLAUDE.md` 必读顺序里的 `HANDOFF-` 条目**恰好一条**？
-- self-pacing 模式下：§6 有没有 run-log / checkpoint / stop card 三条路径？§5 是不是照抄了
+- 自主运行模式（afk 或旧 self-pacing 产物）下：§6 有没有 run-log / checkpoint 路径？dev-guide mode（或 legacy self-pacing）下有没有 stop card 路径？§5 是不是照抄了
   run log 里被延后的 `nice-to-have`，而不是自己重判的？
 
 ## ⚠️ 改这份 skill 之后

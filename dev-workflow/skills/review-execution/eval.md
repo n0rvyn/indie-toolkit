@@ -9,7 +9,7 @@
 **Should trigger (as callee — no user phrase involved):**
 - `run-phase` Step 6
 - `execute-plan` standalone finish
-- `self-pacing` per-unit quality gate
+- `/afk` dev-guide mode's per-phase gate
 - an `/afk` terminal stop
 
 **Should NOT trigger:**
@@ -57,7 +57,7 @@
 **Caller closure (these live in other files but break if this contract changes):**
 - [ ] `run-phase` Step 6 makes one call and keeps no reviewer list
 - [ ] `execute-plan` finish **invokes** rather than suggests
-- [ ] `self-pacing` per-unit gate calls it rather than naming agents
+- [ ] `/afk` dev-guide mode's per-phase gate calls it rather than naming agents
 - [ ] `/afk` terminal calls it without `plan_path`
 - [ ] No caller dispatches `implementation-reviewer` or an apple-dev reviewer directly. Verify with: `python3 .claude/skills/call-graph/scripts/call_graph.py --plugin dev-workflow`
 

@@ -1,0 +1,1 @@
+{"type":"assistant","sessionId":"sess-skill-tool","timestamp":"2026-09-20T10:10:00.000Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_1","name":"Skill","input":{"skill":"dev-workflow:self-pacing","args":"continue"}}]}}

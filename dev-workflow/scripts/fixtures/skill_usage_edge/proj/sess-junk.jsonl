@@ -1,0 +1,5 @@
+{not json at all
+[1, 2, 3]
+"just a string"
+
+{"type":"user","sessionId":"sess-junk","timestamp":"2099-01-01T00:00:00.000Z","message":{"role":"user","content":"<command-message>self-pacing</command-message>\n<command-name>/dev-workflow:self-pacing</command-name>"}}

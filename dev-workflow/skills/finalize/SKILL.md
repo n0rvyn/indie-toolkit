@@ -1,7 +1,7 @@
 ---
 name: finalize
 description: "Use after all phases of a dev-guide are complete, or when the user says 'finalize', 'final check', 'cross-phase validation'. Runs full test suite, verifies acceptance criteria across all phases, audits cumulative test coverage, and produces a final validation report."
-allowed-tools: Bash(npm:*) Bash(cargo:*) Bash(pytest:*) Bash(go:*) Bash(xcodebuild:*) Bash(swift:*) Bash(git:*) Bash(mkdir:*) Bash(test:*) Bash(cat:*) Bash(ls:*) Bash(date:*) Bash(wc:*) Bash(find:*)
+allowed-tools: Bash(npm:*) Bash(cargo:*) Bash(pytest:*) Bash(go:*) Bash(xcodebuild:*) Bash(swift:*) Bash(git:*) Bash(mkdir:*) Bash(test:*) Bash(cat:*) Bash(ls:*) Bash(date:*) Bash(wc:*) Bash(find:*) Bash(python3:*)
 ---
 
 ## Overview
@@ -22,19 +22,17 @@ Validate preconditions (all phases done?)
 
 ### Step 1: Validate Preconditions
 
-1. Read `.claude/dev-workflow-state.json` (legacy fallback: `.yml`) using the Read tool.
-   - If the file exists: read `dev_guide` path from it
-   - If no state file: search `docs/06-plans/*-dev-guide.md`. If `docs/06-plans/` does not exist, ask user for the dev-guide path via AskUserQuestion. If multiple dev-guides found, prefer the file with `current: true` in frontmatter; if none has `current:`, ask user.
-2. Read the dev-guide file
-3. Parse all `## Phase N:` sections. For each Phase:
-   - Count acceptance criteria: `- [x]` = checked, `- [ ]` = unchecked
-   - Record: phase number, phase name, total criteria, checked criteria
-4. If ANY Phase has unchecked acceptance criteria:
-   - List incomplete Phases with their unchecked criteria
+1. Locate the dev-guide: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py guide`.
+   - `ok:true` → its `path` field is the dev-guide.
+   - `ok:false` with `candidates` (several dev-guides found, none marked as the current one) → ask the user via AskUserQuestion which one.
+   - `ok:false` with no candidates (none found) → ask the user for the dev-guide path via AskUserQuestion.
+2. Parse phases: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py phases --dev-guide <path>` → `{phases:[{n,name,total,checked,complete,status_line,no_criteria?}], unparseable_reason}`. This is the same parser `run-phase` uses to check off criteria — `finalize` no longer runs its own copy. Note `complete` is also true for a Phase whose `**Status:**` line says `✅ Completed` even when boxes are unticked (that is how a Phase without a criteria list completes) — so this audit checks the counts, not only `complete`.
+3. If ANY entry in `phases` has `checked < total` (unchecked acceptance criteria, even under a `✅ Completed` status line) or `complete:false` (a Phase never marked done):
+   - List incomplete Phases with their unchecked criteria (`total - checked` per Phase)
    - **BLOCK** with AskUserQuestion:
      - Option A: "Go back and complete phases" → stop
      - Option B: "Override and validate anyway" → proceed, note override in report
-5. Record: `total_phases`, `phase_list`, `dev_guide_path`, `override` (true/false)
+4. Record: `total_phases` (`len(phases)`), `phase_list` (the `phases` array), `dev_guide_path`, `override` (true/false)
 
 ### Step 2: Full Test Suite
 
@@ -177,14 +175,12 @@ Untested source files (no corresponding test):
 
 ### Step 5: Generate Report
 
-1. **Update state file:** If `.claude/dev-workflow-state.json` exists, update it (preserve all other keys, only modify the two below):
-   ```json
-   {
-     "phase_step": "finalized",
-     "last_updated": "<now>"
-   }
-   ```
-   If only legacy `.yml` exists (pre-migration project), first migrate per `run-phase`'s spec, then write the JSON update above. This prevents the SessionStart hook from prompting "Resume phase?" after finalization.
+1. **Update state file:** `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py status` first.
+   - `exists:false` → no state file to update; skip.
+   - `source:"yaml"` or `legacy_leftover:true` → `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py migrate` first (converts or archives the leftover `.yml`).
+   - `ok:false`, or a later `step finalized` returning `refused:"invalid-result"` (a field has the wrong type, e.g. a letter `current_phase` carried over from a legacy file): the state cannot be written as-is. Show the `errors` to the user and repair with `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set KEY=VALUE` using the value they give, then retry; an unreadable file goes through `phase.py quarantine` instead (see run-phase Step 1).
+   - `step` already `finalized` → no-op, skip.
+   - Otherwise: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step finalized`. If the current step is not `done` (the Step 1 Option B override path proceeded with unchecked criteria), the transition is refused without a reason — pass `--override --reason "finalize Option B override — unchecked criteria accepted"`. This prevents the SessionStart hook from prompting "Resume phase?" after finalization.
 2. `mkdir -p .claude/reviews`
 3. Write to `.claude/reviews/finalize-{YYYY-MM-DD-HHmmss}.md`:
 

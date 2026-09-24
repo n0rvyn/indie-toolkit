@@ -19,6 +19,11 @@
             "type": "command",
             "if": "Bash(git *)",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scan-secrets.sh"
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/guard-state-file.py",
+            "timeout": 3
           }
         ]
       },
@@ -28,6 +33,11 @@
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/bug-fix-gate.py",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/guard-state-file.py",
             "timeout": 3
           }
         ]

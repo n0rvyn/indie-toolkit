@@ -143,7 +143,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 
 | Skill | Type | Description |
 |-------|------|-------------|
-| run-phase | orchestrator | Phase lifecycle: plan → verify → execute (segmented, checkpoint-gated) → test → review → fix → done |
+| run-phase | orchestrator | Phase lifecycle: plan → verify → execute (segmented, checkpoint-gated) → test → review → fix → done. State + dev-guide parsing owned by `scripts/phase.py`, the sole writer of `.claude/dev-workflow-state.json` |
 | review-execution | dispatcher | **The single review dispatcher for this marketplace.** 5 always-on lenses (correctness / test-coverage / breaking-changes / root-cause-depth / secrets-and-transport) + `implementation-reviewer` when given a plan + Apple reviewers routed by what the diff touches. Inputs: `plan_path`, `scope_files`, `mode` (`gated` \| `advisory`). Callers pass inputs, not agent lists — `run-phase` Step 6, `execute-plan`'s standalone finish, `self-pacing`'s per-unit gate and `/afk`'s terminal stop all route through it |
 | fix-bug | interactive | Bug fixing by outcome: plain-language 现状/预期, verified on the user's real path, known dead ends ruled out |
 | write-plan | interactive | Writes implementation plan with Impact Map and Task Contract |
@@ -185,6 +185,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | SessionStart | check-workflow-state.sh | Detects in-progress phase, prompts resume |
 | PreToolUse | bug-fix-gate.py | Enforces the fix-bug flow's **现状: / 预期:** statement before a fix edit lands |
 | PreToolUse (Bash, `git *`) | scan-secrets.sh | Intercepts git commit (incl. `git -C <path> commit`, `--git-dir`, `cd <dir> && git commit`), blocks if secrets detected in the target repo's staged content |
+| PreToolUse (Edit / Write / MultiEdit / NotebookEdit, Bash) | guard-state-file.py | Denies hand writes of `.claude/dev-workflow-state.json` / `.yml` — file-tool edits, and shell writes (`>`, `tee`, `sed -i`, `cp`/`mv` onto it, interpreter one-liners); `phase.py` is the only writer |
 
 > **2026-09-05 迁出。** 九个 hook 移到了 `~/.claude/hooks/`（注册改在 `settings.json`）：
 > `backup-before-checkout.py` / `nudge-named-source.py` / `design-sync-guard.py` / `kb-tripwire.py` /
@@ -196,13 +197,14 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 > `git checkout` 前备份 / Edit 前陈述预期），或以全局 CLAUDE.md 本身为作用对象（`lint-claude-md` 扫的是
 > 这台机器上**所有** plugin 的 skill 目录），不是本插件任何 skill 的规则。
 >
-> 留下的三个反过来——各自绑着本插件的 skill 或状态文件：`bug-fix-gate` ↔ `/fix-bug` 模板、
-> `check-workflow-state` ↔ `dev-workflow-state.json`、`scan-secrets` ↔ `/commit` 流程（且失效代价是密钥泄漏，不为归属整洁去动它）。
+> 留下的四个反过来——各自绑着本插件的 skill 或状态文件：`bug-fix-gate` ↔ `/fix-bug` 模板、
+> `check-workflow-state` 与 `guard-state-file` ↔ `dev-workflow-state.json`（后者 2026-09-24 随 `phase.py` 新增）、
+> `scan-secrets` ↔ `/commit` 流程（且失效代价是密钥泄漏，不为归属整洁去动它）。
 > 改规则时该同时改哪个 hook，按这条判据找。
 
 ## Workflow State
 
-`run-phase` persists progress to `.claude/dev-workflow-state.json` (legacy `.yml` is auto-migrated on first encounter), enabling cross-session resume. The SessionStart hook detects this file and prompts the user to continue.
+`run-phase` persists progress to `.claude/dev-workflow-state.json` via `run-phase/scripts/phase.py` — the sole reader/writer, and the sole dev-guide parser, shared by `finalize`, `execute-plan`, `review-before-commit` and `self-pacing` (legacy `.yml` is auto-migrated via `phase.py migrate` on first encounter), enabling cross-session resume. The SessionStart hook detects this file (through `phase.py status --hook`) and prompts the user to continue.
 
 ## Design Principles
 

@@ -1,6 +1,6 @@
 ---
 name: run-phase
-description: "Use when the user says 'run phase', 'start phase N', 'next phase', '继续开发', '跑下一阶段', '开始第N阶段', or when continuing development guided by a dev-guide. Orchestrates the plan-execute-review cycle for one phase of a development guide: write-plan → verify-plan → execute-plan → test-changes → review agents in parallel → fix issues. Produces: phase completion report + updated workflow state in .claude/dev-workflow-state.json. Not when: no dev-guide exists — run write-dev-guide first."
+description: "Use when the user says 'run phase', 'start phase N', 'next phase', '继续开发', '跑下一阶段', '开始第N阶段', or when continuing development guided by a dev-guide. Orchestrates the plan-execute-review cycle for one phase of a development guide: write-plan → verify-plan → execute-plan → test-changes → review agents in parallel → fix issues. Produces: phase completion report + updated workflow state (via scripts/phase.py, the sole writer of .claude/dev-workflow-state.json). Not when: no dev-guide exists — run write-dev-guide first."
 ---
 
 ## Overview
@@ -23,33 +23,21 @@ Locate/Resume Phase
 
 ## State File
 
-Location: `.claude/dev-workflow-state.json` (JSON format, matches `execute-plan-checkpoint.json` for consistency).
+Location: `.claude/dev-workflow-state.json`. `${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py` is the only writer — never hand-edit it (a `PreToolUse` guard hook enforces this). For anything that doesn't fit an owned key, use `phase.py note "<text>"` — that is the sanctioned place for what used to become an invented key.
 
-This file tracks progress across sessions. Update it **before** starting each step (so crash-resume works). Read/write via the Read and Write tools.
+Subcommands (each prints one JSON object on stdout; exit 0 success, exit 3 refused/invalid, never a traceback):
 
-**Legacy migration**: If `.claude/dev-workflow-state.yml` exists (from prior versions) and `.json` does not, read the YAML, write equivalent JSON to `.claude/dev-workflow-state.json`, delete the `.yml`, and surface `ℹ️ Migrated dev-workflow state file from legacy YAML to JSON format` to the user. After migration, continue with the JSON path.
+- `status [--hook]` — read + validate; `--hook` prints the one-line SessionStart text (or nothing)
+- `init --phase N --name S --dev-guide P [--project S] [--force]` — start a phase (refuses unless current step is `done`/`finalized`)
+- `step TARGET [--reason S] [--override]` — move `phase_step` along the transition graph; a refused transition is a stop, not something to work around
+- `set KEY=VALUE ...` — write an owned key (not `phase_step`)
+- `note TEXT` — append a free-text note
+- `migrate` — legacy `.yml` → `.json` (or archive the leftover when both exist)
+- `quarantine [--target PATH]` — rename an unreadable state file out of the way so `init` can proceed
+- `guide` / `phases --dev-guide P` / `locate --dev-guide P` / `check-off --dev-guide P --phase N` / `scope-mode --dev-guide P` — dev-guide operations (Step 1, Step 1.5, Step 8)
+- `plan-facts --plan P [--design-doc P] [--crystal P]` / `ux-map --plan P --design-doc P` / `visual-facts --plan P [--design-analysis P] [--design-doc P]` / `complete-gate` — the rule-based gates (Steps 2, 2.5, 3, 5.5, 8.0)
 
-```json
-{
-  "project": "<name>",
-  "current_phase": 2,
-  "phase_name": "Phase Name",
-  "phase_step": "plan",
-  "_comment_phase_step": "one of: plan | ux-review | verify | execute | test | visual | review | fix | done",
-  "dev_guide": "docs/06-plans/YYYY-MM-DD-project-dev-guide.md",
-  "plan_file": null,
-  "_comment_plan_file": "set to docs/06-plans/YYYY-MM-DD-<name>-plan.md after Step 2",
-  "verification_report": null,
-  "task_progress": null,
-  "review_reports": [],
-  "test_report": null,
-  "_comment_test_report": "set to .claude/test-reports/test-run-*.md path after Step 5",
-  "gaps_remaining": 0,
-  "last_updated": "YYYY-MM-DDTHH:MM:SS"
-}
-```
-
-The `_comment_*` keys are informational and can be omitted in real state files (JSON has no native comment syntax; keep state files lean — drop these `_comment_*` keys when writing).
+Every call takes `--root DIR` (default cwd) where relevant.
 
 ## Agent Dispatch Verification Gate
 
@@ -77,46 +65,30 @@ Skip notifications when the user has been actively responding within the last mi
 
 ### Step 1: Resume or Locate Phase
 
-1. Check for an existing state file via the Bash tool:
-   ```
-   cat .claude/dev-workflow-state.json 2>/dev/null || cat .claude/dev-workflow-state.yml 2>/dev/null || echo "NO_STATE_FILE"
-   ```
-   - If output is `NO_STATE_FILE`: proceed to step 2 (starting fresh).
-   - If output is YAML (legacy format): apply the migration described in "## State File" above — read the YAML, write equivalent JSON, delete the `.yml`. Then parse the migrated JSON.
-   - Otherwise: parse the JSON content from the output.
-   - If `phase_step` is `spec` (legacy): treat as `review` and proceed to Step 6
-   - If `phase_step` is `build-test` (legacy): treat as `test` and proceed to Step 5
-   - If `phase_step` is not `done`:
-     - Present: "Phase {N} ({name}) in progress — step: {phase_step}. Resume?"
+1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py status`.
+   - `exists:false` → proceed to step 2 (starting fresh).
+   - `ok:false` → the state file exists but is unusable. Pick the branch by what `errors` says:
+     - **The file itself cannot be used** — `unparseable: …` (JSON or legacy `.yml` syntax error, or not UTF-8), `duplicate keys: …`, or `state is not an object`: show the error to the user and ask which of two they want: (a) they fix the file by hand, then re-run this step; or (b) run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py quarantine` (moves the file it failed on aside as `dev-workflow-state.broken-<timestamp>.<ext>`) and start the phase again with `init` (step 2 below). Do not repair the file yourself — the guard hook denies direct edits and shell rewrites of it.
+     - **A field has the wrong type** — `current_phase is not an int`, `gaps_remaining is not an int`, `review_reports is not a list`, `review_findings is not an object`: show the error, ask the user for the correct value, and repair with `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set KEY=VALUE` (e.g. `set current_phase=3`, `set 'review_reports=[]'`). A `set` that reduces the errors is accepted even while other errors remain; its `remaining_errors` lists what is left.
+     - **Unknown/off-enum `phase_step`** (`unknown step '<value>'`, or `phase_step is not a string`): show the error and ask which step to resume; repair with `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step <chosen-step> --reason "repair: off-enum value was '<old value>'"`, then continue as if that step had been the current one.
+     - Several errors at once: repair field types with `set` first, then the step with `step --reason`, then re-run `status`.
+   - `ok:true` and `source:"yaml"` (only the legacy `.yml` exists): run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py migrate` and tell the user "ℹ️ Migrated dev-workflow state file from legacy YAML to JSON format". If its output carries `validation_errors`, the legacy data was carried over as-is — repair it as in the `ok:false` branches above before continuing, unless `step` is `done`/`finalized` (then skip the repair and go to step 2: nothing is in progress and `init` replaces those keys).
+   - `ok:true` with `warnings` (only when `step` is `done`/`finalized`): the finished state has a bad field (e.g. a letter `current_phase`). Nothing is in progress — carry on to step 2; `init` replaces every owned key.
+   - `ok:true` with `legacy_alias_applied:true`: the on-disk `phase_step` was `spec` or `build-test` (legacy); `step` already reports the aliased value (`review`/`test`) — proceed with that.
+   - `ok:true` and `legacy_leftover:true` (both `.json` and `.yml` exist): run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py migrate` (archives the leftover `.yml`) before continuing.
+   - `ok:true` and `step` is not `done`/`finalized`:
+     - Present: "Phase {current_phase} ({phase_name}) in progress — step: {step}. Resume?"
      - If user accepts:
-       - **Scope drift check** (only when `phase_step` is `plan` AND `plan_file` is not null): Read the Phase's current scope from the dev-guide and compare with the plan file's `Scope:` section. If they differ: "Dev-guide scope has changed since the plan was written. Re-run scope confirmation (Step 1.5)?" If user accepts: reset `phase_step: plan`, `plan_file: null`, and run Step 1.5. If user declines: proceed with existing plan. For steps after `plan` (verify/execute/review/fix): no check needed — the plan is the working document.
-       - Skip to the step indicated by `phase_step`
+       - **Scope drift check** (only when `step` is `plan` AND `state.plan_file` is not null): Read the Phase's current scope from the dev-guide and compare with the plan file's `Scope:` section. If they differ: "Dev-guide scope has changed since the plan was written. Re-run scope confirmation (Step 1.5)?" If user accepts: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step plan --reason "scope drift — re-confirming"` and `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set plan_file=null`, then run Step 1.5. If user declines: proceed with existing plan. For steps after `plan` (verify/execute/review/fix): no check needed — the plan is the working document.
+       - Skip to the step indicated by `step`
      - If user declines: ask which Phase to start
 2. If no state file or starting fresh:
-   - Find dev-guide: `docs/06-plans/*-dev-guide.md` (if multiple, prefer the file with `current: true` in frontmatter; if no file has a `current:` field in frontmatter, treat all as candidates and ask user)
-   - Read the document and check each Phase's acceptance criteria
-   - Phases with all criteria checked = completed
-   - Identify the first incomplete Phase
+   - `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py guide` — picks `docs/06-plans/*-dev-guide.md` (`current: true` in frontmatter breaks ties). `ok:false` with `candidates` → ask the user which one.
+   - `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py locate --dev-guide <path>` — the first Phase with `complete:false`. `all_complete:true` → all Phases are done; tell the user and stop.
+   - Read the dev-guide's Goal, Scope, Architecture decisions, Acceptance criteria for that Phase (judgment: presenting this well is not `phases`' job, it only counts checkboxes).
    - Present Phase summary: Goal, Scope, Architecture decisions, Acceptance criteria
    - Ask: "Start Phase N?"
-3. Initialize state file (write to `.claude/dev-workflow-state.json`):
-
-```json
-{
-  "project": "<from dev-guide title>",
-  "current_phase": <N>,
-  "phase_name": "<Phase name>",
-  "phase_step": "plan",
-  "dev_guide": "<dev-guide path>",
-  "plan_file": null,
-  "verification_report": null,
-  "task_progress": null,
-  "review_reports": [],
-  "test_report": null,
-  "gaps_remaining": 0,
-  "last_updated": "<now>"
-}
-```
+3. Initialize state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py init --phase <N> --name "<Phase name>" --dev-guide <path> --project "<from dev-guide title>"`.
 
 If the user specifies a different Phase number, use that instead.
 
@@ -138,7 +110,7 @@ Before writing the plan, present the Phase scope and visual expectations for exp
 
 **Skip condition:** When resuming from state file with `phase_step` not `plan`, skip this step — scope was already confirmed in a prior session.
 
-**Freshness check:** Before presenting, read the dev-guide's YAML frontmatter for `confirmed_at:`. If the timestamp is within 60 minutes of now, use **lightweight mode** (step 1b). Otherwise, use **full mode** (step 1a).
+**Freshness check:** `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py scope-mode --dev-guide <path>`. `mode:"lightweight"` (frontmatter `confirmed_at` within 60 minutes of now) → step 1b. `mode:"full"` → step 1a.
 
 **1a. Full mode** (default):
 
@@ -243,7 +215,7 @@ This checkpoint catches scope pollution and aligns visual expectations before wr
 
 ### Step 2: Plan (main context)
 
-1. Update state: `phase_step: plan`, `last_updated: <now>`
+1. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step plan`
 2. Gather Phase context from dev-guide:
    - Goal: Phase N's goal
    - Scope: Phase N's scope items
@@ -261,7 +233,7 @@ This checkpoint catches scope pollution and aligns visual expectations before wr
    - If no matches or directory does not exist: skip silently
 5. **Read source files:** Read the design doc, design analysis, crystal file (if any), and key codebase files relevant to the Phase scope. This grounds the plan in actual code state.
 6. **Write the plan** following the Plan Writing Reference in `${CLAUDE_PLUGIN_ROOT}/skills/write-plan/SKILL.md`. Use the gathered Phase context as inputs. Save to `docs/06-plans/YYYY-MM-DD-<feature-name>-plan.md`.
-7. Update state: `plan_file: <path>`, `last_updated: <now>`
+7. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set plan_file=<path>`
 8. Present plan summary to user (task count, key files)
 9. **Decision Points:** Check the `## Decisions` section of the plan file.
    - If Decisions > 0:
@@ -270,26 +242,17 @@ This checkpoint catches scope pollution and aligns visual expectations before wr
        - Source file: the plan file
        - Mode: `full`
        - Recording: `default`
-10. Auto-select verification speed: count tasks in the plan file.
-    If task count < 5: mark `--fast` flag for Step 3 (use Sonnet for verification).
-    If task count ≥ 5: no flag (use Opus default).
+10. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py plan-facts --plan <path> --design-doc <path-or-none> --crystal <path-or-none>` reports `tasks`, `fast` and `auto_approve`. `fast:true` → mark `--fast` for Step 3 (use Sonnet for verification). `fast:false` → no flag (use Opus default).
 11. **PushNotification checkpoint 1**: if the plan's `## Decisions` section has > 0 unresolved DPs, emit a `PushNotification` with message like `Phase {N} plan ready — {K} decisions await your input` (see "## User-Visible Notifications" above).
 
 ### Step 2.5: UX Review (conditional)
 
-**Trigger condition:** The design doc contains a `## UX Assertions` section with at least one assertion row (not just the header). If no design doc, no UX Assertions section, or the table has zero assertion rows, skip to Step 3.
+**Trigger condition:** `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py ux-map --plan <path> --design-doc <path>` reports `triggered:true` when the design doc has a `## UX Assertions` table with ≥1 data row. `triggered:false` → skip to Step 3.
 
-1. Update state: `phase_step: ux-review`, `last_updated: <now>`
+1. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step ux-review`
 2. Read the generated plan file
-3. Read the design doc's `## UX Assertions` table and `## User Journeys` section
-4. Build a mapping table:
-
-For each UX assertion:
-- Find plan tasks with `UX ref: UX-NNN` matching this assertion
-- Extract the task's `User interaction:` line (if present)
-
-For each UI-facing plan task without a `UX ref:`:
-- Note as unmapped
+3. Read the design doc's `## User Journeys` section (`ux-map`'s `rows` already carries the assertion ↔ task ↔ user-interaction mapping; only the journeys section still needs a read)
+4. `ux-map`'s output is the mapping table: `rows` (`{ux_id, assertion, tasks, user_interaction, mapped}`) and `unmapped_ui_tasks`.
 
 5. Present to user:
 
@@ -316,29 +279,22 @@ Confirm this mapping is correct, or provide corrections.
      - Re-present the mapping for confirmation after corrections
    - Max 2 correction cycles; after that, ask via AskUserQuestion (three options: proceed with noted gaps / one more correction round / switch to `/dev-workflow:brainstorm` to re-align). Do NOT proceed unilaterally — the noted gaps are UX-mapping gaps, exactly the "先这样" case global CLAUDE.md forbids deciding alone. If brainstorm is chosen: re-enter this Step after brainstorm concludes; do not advance `phase_step`.
 
-7. Update state: `last_updated: <now>`
+7. No further state write here — `step ux-review` in item 1 already recorded this step; corrections in this step land in the plan file, not the state file.
 
 ### Step 3: Verify
 
-**Auto-approve condition:** If ALL of the following are true:
-- Plan has 3 or fewer tasks
-- No design doc reference (or set to "none")
-- No crystal file reference (or set to "none")
+**Auto-approve condition:** `plan-facts.auto_approve` from Step 2 item 10 (≤3 tasks, no design doc, no crystal file).
 
-Then skip full agent verification. Instead:
-1. Read the plan file
-2. Perform inline sanity check in main context:
-   - Each task has `**Files:**` and `**Steps:**` sections
-   - Task dependencies (if any) are ordered correctly
-   - No obvious gaps (e.g., task references a file not listed in any task's Files)
-3. Update state: `phase_step: verify`, `verification_report: "auto-approved (small plan)"`, `last_updated: <now>`
-4. Skip to Step 4
+When `auto_approve:true`, skip full agent verification. Instead:
+1. `plan-facts.lint` (already computed in Step 2 item 10) is the sanity check — it reports what `write-plan/scripts/lint_plan.py` finds (each task has `**Files:**`/`**Steps:**`, no obvious gaps). Note any findings.
+2. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step verify` then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set verification_report="auto-approved (small plan)"`
+3. Skip to Step 4
 
 **Otherwise:** proceed with full verification below.
 
-1. Update state: `phase_step: verify`, `last_updated: <now>`
+1. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step verify`
 2. Invoke `dev-workflow:verify-plan` with the plan from Step 2 (pass `--fast` flag if set in Step 2)
-3. Update state: `verification_report: <summary>`, `last_updated: <now>`
+3. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set verification_report="<summary>"`
 
 **If "Must revise" and a blocking item cannot be revised in the plan** (it needs a decision or information you do not have):
 Present the remaining issues to the user:
@@ -349,11 +305,11 @@ Present the remaining issues to the user:
 > A. Stop and manually revise the plan, then re-run this step
 > B. Proceed with imperfect plan (issues noted in execution — treat as extra caution points)"
 
-Wait for user choice. If A: stop. If B: mark state `verification_report: "partial"` and continue.
+Wait for user choice. If A: stop. If B: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set verification_report="partial"` and continue.
 
 ### Step 4: Execute (segmented sonnet agent dispatch via Workflow)
 
-1. Update state: `phase_step: execute`, `last_updated: <now>`
+1. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step execute`
 2. Invoke `dev-workflow:execute-plan` to handle execution. The skill manages the full segmented dispatch lifecycle:
    - Runs `compute_checkpoints.py` to derive batches + hard_stops
    - Creates `.claude/execute-plan-checkpoint.json` (segment metadata: `plan_file`, `total`, `batch_size`, `k`, `hard_stops`, `status`; plus the `completed` map owned by the task agents)
@@ -361,7 +317,6 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
    - Cross-session resume: the on-disk checkpoint file's `completed` map is authoritative; `Workflow({resumeFromRunId})` is same-session only
    - Returns an explicit completion signal (the Terminal-write step): `Execution complete: complete` or `Execution complete: completed_with_failures`, or `Paused at hard-stop: waiting for "continue"` — never a silent return
    - On `complete`: deletes the checkpoint file; on `completed_with_failures`: retains it with `status: "completed_with_failures"` (the cross-session source for the fix pass)
-   - Cross-session resume: the on-disk checkpoint file's `completed` map is authoritative; `Workflow({resumeFromRunId})` is same-session only
 3. **Completion detection — trust execute-plan's explicit return (in-context), not a file grep.** execute-plan runs as the same main agent following nested instructions, so its return is available directly:
    - `Execution complete: complete` or `completed_with_failures` → execution finished; proceed (route failures to Step 7). Read the report at `docs/06-plans/execution-report.md` for the summary.
    - `Paused at hard-stop: waiting for "continue"` → NOT finished (see item 4).
@@ -369,18 +324,18 @@ Wait for user choice. If A: stop. If B: mark state `verification_report: "partia
 4. **Do NOT advance to Step 5 while execution is paused at a hard-stop.** If execute-plan returns `Paused at hard-stop`, execution did NOT complete — surface to the user that it is waiting for "continue"; do not advance to Step 5 and do not route to Step 7. Only a `completed_with_failures` return routes failed/blocked tasks to Step 7 (Fix).
 5. Present summary: completed/blocked/failed task counts
 6. If blocked or failed tasks exist: note them for Step 7 (Fix)
-7. Update state: `last_updated: <now>`
+7. No further state write here — item 1's `step execute` already recorded this step; task outcomes are read from execute-plan's return and the execution report, not stored in state.
 
 ### Step 5: Test Changes (sonnet agent dispatch)
 
-1. Update state: `phase_step: test`, `last_updated: <now>`
+1. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step test`
 2. Invoke `dev-workflow:test-changes` with:
    - Project root
    - Plan file path (from state `plan_file`)
 3. When the skill returns: read the test report path from its output
 4. Present test summary: Build (pass/fail), Tests (X/Y passed), Lint (pass/fail)
 5. If test failures exist: note them for Step 7 (Fix)
-6. Update state: `test_report: <report path>`, `last_updated: <now>`
+6. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set test_report=<report path>`
 
 ### Step 5.5: Visual Feedback Loop (main context — opus)
 
@@ -388,22 +343,16 @@ This step closes the visual gap between implemented UI and design reference befo
 
 ⚠️ 需项目验证：真机 iOS 项目里实跑该 step（渲染→diff→修→收敛/交人）本仓无法验证。
 
-1. Update state: `phase_step: visual`, `last_updated: <now>`
+1. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step visual`
 
-2. **Gate ①: prerequisites + UI relevance** — first verify apple-dev (which provides `render-preview`) is installed: `ls ~/.claude/plugins/cache/*/apple-dev/ 2>/dev/null`. If no output → skip this entire step: log `Visual step skipped: apple-dev not installed`, set `phase_step: review`, proceed to Step 6. (Step 6 guards apple-dev too, but it runs after this step, so the check is repeated here.) Then derive the list of modified SwiftUI view files independently in this step:
-   - Primary: scan the plan's per-task `**Files:**` sections (always available since Step 4 has completed) for modified `.swift` files. A file counts as a view if EITHER its name matches a view suffix (`*View` / `*Card` / `*Row` / `*Cell` / `*Tab` / `*Screen` / `*Sheet` / `*Banner`) OR it contains a `#Preview` block or a `: View` conformance. Do NOT filter on `*View.swift` alone: SwiftUI views are frequently named `Card`/`Row`/`Tab`/`Screen`, and a name-only filter silently skips them.
+2. **Gates ① and ②, and the `#Preview` filter — one call:** `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py visual-facts --plan <path> --design-analysis <path-or-omit> --design-doc <path-or-omit>`. It reports `apple_dev_installed`, `views` (modified SwiftUI view files, by the same `*View`/`*Card`/`*Row`/`*Cell`/`*Tab`/`*Screen`/`*Sheet`/`*Banner` suffix OR `#Preview`/`: View` content rule — do NOT narrow this to `*View.swift` only, SwiftUI views are frequently named `Card`/`Row`/`Tab`/`Screen`), `preview_views` (the subset with a `#Preview` block), `design_image` (first existing of `/tmp/design-screenshot-*.png`, the design-analysis doc's first referenced image, the design doc's first referenced image), and `skip_reason` (`apple-dev not installed` | `non-UI phase` | `no design reference image` | `no #Preview blocks`, or `null`).
+   - `skip_reason` not null → skip this entire step: log `Visual step skipped: {skip_reason}`, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step review`, proceed to Step 6.
    - Optional cross-check: `git diff --name-only` against the phase's starting commit (only if a baseline ref was recorded), filtered by the same view-detection rule
-   - If the resulting list is empty → skip this entire step: log `Visual step skipped: non-UI phase`, set `phase_step: review`, proceed to Step 6.
-   - Note: Step 6 no longer computes a ui-reviewer condition itself — it hands `scope_files` to `review-execution`, which routes on `HAS_VIEW_MODIFIED` from the diff. This step still derives its own list because it runs first and needs one before any review exists. The two can differ: this step's view-detection deliberately catches `*Card` / `*Row` / `*Screen` names that a `*View.swift` match misses, and its own fixes may touch further files. Expected, not a defect — but do not "unify" them by narrowing this one to `*View.swift`.
+   - Note: Step 6 no longer computes a ui-reviewer condition itself — it hands `scope_files` to `review-execution`, which routes on `HAS_VIEW_MODIFIED` from the diff. This step still derives its own list because it runs first and needs one before any review exists. The two can differ: `visual-facts`' view-detection deliberately catches `*Card` / `*Row` / `*Screen` names that a `*View.swift` match misses, and its own fixes may touch further files. Expected, not a defect — but do not "unify" them by narrowing this one to `*View.swift`.
 
-3. **Gate ②: Design reference** (only if Gate ① passes) — resolve a design reference **image path** in this order:
-   - (a) `/tmp/design-screenshot-*.png` (understand-design output) — already an image path
-   - (b) `docs/06-plans/*-design-analysis.md` — extract the first referenced image path from the markdown
-   - (c) Design doc path from dev-guide header — extract the first referenced image path from the doc
-   - If no actual image path resolves (none of a/b/c yields an image file) → skip (DP-002=A): log `Visual step skipped: no design reference image`, set `phase_step: review`, proceed to Step 6.
-   - Do NOT attempt self-evaluation without a reference image.
+3. `visual-facts`' `design_image` field is Gate ②'s result — do NOT attempt self-evaluation without a reference image (already enforced by `skip_reason`).
 
-4. **Render-diff-fix loop** (both gates passed) — filter the Gate ① list to views that contain a `#Preview` block. If that filtered list is empty → skip: log `Visual step skipped: no #Preview blocks in modified views`, set `phase_step: review`, proceed to Step 6. Otherwise, for each such view:
+4. **Render-diff-fix loop** (`skip_reason` is null) — iterate `preview_views` from `visual-facts`. For each such view:
 
    a. Invoke `apple-dev:render-preview` via the Skill tool, passing `swiftFile: <absolute path to this view's .swift file>`, `outputDir: <a caller-controlled dir under the repo, e.g. .claude/visual-phase{N}/>` (REQUIRED; do NOT omit, because render-preview's default system-temp dir is non-deterministic to this caller), and `previewId` when the file has multiple `#Preview` blocks. render-preview is `context: fork`, so its returned message is summarized; do NOT parse the returned message for the path. Instead read the authoritative result file it writes at `<outputDir>/<name>.result.json` (`<name>` = the `.swift` basename, plus `-{previewId}` when set) and parse `{channel, pngPath, downsampled, error}` from that file.
       - If the result file is missing OR `error` is not null: log `Render failed for {ViewName}: {error or "no result file"}` and skip this view; continue to next.
@@ -418,11 +367,11 @@ This step closes the visual gap between implemented UI and design reference befo
      > - [ ] {item, spatial language}
    - Emit a `PushNotification` (< 80 chars, follow run-phase notification style), e.g.: `Phase {N} visual loop done — {N} diffs remain for human review`
 
-6. Set `phase_step: review`, proceed to Step 6.
+6. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step review`, proceed to Step 6.
 
 ### Step 6: Document Features & Reviews (parallel agent dispatch)
 
-1. Update state: `phase_step: review`, `last_updated: <now>`
+1. Update state (a no-op if item 6 above already advanced it): `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step review`
 
 2. **Determine agents to dispatch:**
 
@@ -516,7 +465,7 @@ This step closes the visual gap between implemented UI and design reference befo
    - If shell > 0 or pass < required: present warning below the human verification items:
      > ⚠️ 测试覆盖不完整：{N} 个计划要求的测试中，{M} 个为空壳或未覆盖核心路径
 
-9. Update state: `review_reports: ["review-execution:consolidated"]` plus `review_findings: {must_fix: <N>, nice_to_have: <M>}`, `last_updated: <now>`.
+9. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set 'review_reports=["review-execution:consolidated"]' 'review_findings={"must_fix": <N>, "nice_to_have": <M>}'`
 
    ⛔ **Do not write report file paths here.** `review-execution` returns findings, not paths — recording `[]` and then hitting the Step 8.0 gate below produces a false "no test or review reports found" block on a phase that was actually reviewed. The sentinel records *that review ran*; the counts record *what it found*.
 10. **PushNotification checkpoint 2**: emit `PushNotification` with message like `Phase {N} reviews complete — {N} gaps, {M} verifications need device` (see "## User-Visible Notifications" above). Skip if all agents passed with zero issues AND the user has been responding within the last minute.
@@ -525,7 +474,7 @@ This step closes the visual gap between implemented UI and design reference befo
 
 If any of the following have issues: execution report (blocked/failed tasks), test report (build/test/lint failures), or review reports (gaps):
 
-1. Update state: `phase_step: fix`, `last_updated: <now>`
+1. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step fix`
 2. Collect all issues from three sources:
    a. **Execution failures** (from Step 4): blocked/failed tasks from the execute-plan agent report
    b. **Test failures** (from Step 5): build errors, test failures, lint errors from the test-changes report
@@ -559,7 +508,7 @@ If any of the following have issues: execution report (blocked/failed tasks), te
       report remaining design issues and proceed — do not loop.
       Other reviewers (implementation, UI, feature) follow existing behavior.
 6. If skipping: note the known issues and proceed
-7. Update state: `gaps_remaining: <count>`, `last_updated: <now>`
+7. Update state: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py set gaps_remaining=<count>`
 8. **Decision Points:** Check each review report for `Decisions:` count.
    - If any report has Decisions > 0:
      - First time this session: Read `${CLAUDE_PLUGIN_ROOT}/references/decision-points.md`
@@ -571,24 +520,21 @@ If any of the following have issues: execution report (blocked/failed tasks), te
 
 ### Step 8: Phase Completion
 
-0. **Pre-completion gate** (structural enforcement):
-   - Read `review_reports` and `test_report` from state file
-   - If `review_reports` is empty AND `test_report` is null (neither step ran):
+0. **Pre-completion gate** (structural enforcement): `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py complete-gate`.
+   - `ok:true` → proceed to item 1 with a plain `step done` (no `--override`).
+   - `block:"no-reports"` (`review_reports` empty AND `test_report` null — neither step ran):
      **BLOCK**: "Cannot complete phase: no test or review reports found. Run Step 5 and Step 6 before marking phase as done."
-     (`review_reports` is non-empty whenever Step 6.9 wrote its `review-execution:consolidated` sentinel — the gate asks whether review RAN, never whether a file landed.)
      Do NOT proceed. Use AskUserQuestion:
      - Option A: "Run Step 5 now" → return to Step 5
-     - Option B: "Skip test and review, complete phase" → add `review_reports: ["user-override"]`, `test_report: "user-override"`, log override, proceed
-   - If any review report has verdict ❌ AND `gaps_remaining` > 0 (⚠️ `needs-attention` does NOT gate — see the verdict legend in Step 6.5):
+     - Option B: "Skip test and review, complete phase" → proceed to item 1 with `step done --override --reason "user chose to skip test/review"` (writes the `user-override` sentinels into `review_reports`/`test_report`)
+   - `block:"gaps"` (review findings carry `must_fix > 0` AND `gaps_remaining > 0`):
      **BLOCK**: "Cannot complete phase: {gaps_remaining} unresolved gaps."
      Do NOT proceed. Use AskUserQuestion:
      - Option A: "Fix gaps (Step 7)" → return to Step 7
-     - Option B: "Mark as known issues and complete" → proceed with gaps noted
+     - Option B: "Mark as known issues and complete" → proceed to item 1 with `step done --override --reason "gaps accepted as known issues"` (writes a `notes` entry only — real report values are never overwritten)
 
-1. Update state: `phase_step: done`, `last_updated: <now>`
-2. Update the dev-guide:
-   - Check off this Phase's acceptance criteria
-   - Add status line: `**Status:** ✅ Completed — YYYY-MM-DD` after the Phase heading
+1. Update state as decided in item 0: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step done [--override --reason "<reason>"]`
+2. Update the dev-guide: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py check-off --dev-guide <path> --phase <N>` ticks this Phase's acceptance criteria and inserts `**Status:** ✅ Completed — <date>`. Its return carries `all_phases_complete`, used in item 5 below.
 3. **Issue archival** (conditional): If Step 6 has items marked as "known issues" or skipped gaps:
    - Ask: "Create GitHub Issues for {N} deferred items?"
    - If yes:
@@ -602,7 +548,7 @@ If any of the following have issues: execution report (blocked/failed tasks), te
    - `docs/03-decisions/` — if architectural decisions were made
 5. Report:
 
-   **Detect if this is the last phase:** After checking off this Phase's acceptance criteria (step 2 above), re-read the dev-guide. If ALL phases now have all acceptance criteria checked (`- [x]`), this is the last phase.
+   **Detect if this is the last phase:** item 2's `check-off` return already carries `all_phases_complete` — no re-read needed.
 
    **If more phases remain:**
    > Phase N complete.
@@ -621,11 +567,11 @@ If any of the following have issues: execution report (blocked/failed tasks), te
 - **Never skip verification.** Step 3 must run before Step 4.
 - **Phase order matters.** Don't start Phase N+1 if Phase N has unchecked acceptance criteria (unless user explicitly overrides).
 - **Consolidate review output.** Merge all review results into one summary with sections.
-- **State before action.** Update state file before starting each step, not after.
+- **State before action.** Call `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py step <next>` before starting a step, not after. A refused transition is a stop, not something to work around — read the `errors` field and follow the repair path it names (`--reason` for going back or repairing an off-enum step, `--override --reason` for skipping a step forward, `set KEY=VALUE` for a mistyped field, `quarantine` for an unreadable file), never hand-edit the state file to route around a refusal.
 - Visual feedback (Step 5.5) is conditional — skipped for non-UI phases or when no design reference exists; it never blocks (remaining diffs surface as informational human-verification items).
 
 ## Completion Criteria
 
-- Phase acceptance criteria checked off in dev-guide (Step 7)
+- Phase acceptance criteria checked off in dev-guide (Step 8)
 - State file `phase_step` set to `done`
 - Next phase communicated to user

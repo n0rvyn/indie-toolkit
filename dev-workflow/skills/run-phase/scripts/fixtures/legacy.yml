@@ -1,0 +1,13 @@
+project: LegacyProj
+current_phase: 1
+phase_name: "Phase One"
+phase_step: build-test
+dev_guide: docs/06-plans/2026-01-01-legacy-dev-guide.md
+plan_file: docs/06-plans/2026-01-01-legacy-plan.md
+verification_report: null
+task_progress: null
+review_reports:
+  - "review-execution:consolidated"
+test_report: null
+gaps_remaining: 0
+last_updated: "2026-09-18T09:00:00"

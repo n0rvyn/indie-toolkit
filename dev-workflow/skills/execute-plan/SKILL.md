@@ -131,7 +131,7 @@ When execution completes (all tasks have a `completed` entry):
 
 When running within a phase orchestrated by `run-phase`:
 
-If `.claude/dev-workflow-state.json` exists and `phase_step` is `execute`:
+If `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py status` reports `exists:true` and `step` is `execute`:
 - After the Terminal-write step (every id in `completed`, terminal status written), return an **explicit completion signal** to run-phase: `Execution complete: <complete | completed_with_failures>` with the report path. `phase_step` is owned by the orchestrator (do NOT mutate it from this skill). run-phase reads this return **in-context** (it is the same main agent) — this is the primary signal; the report `**Status:**` line is the durable backup. Do NOT rely on the checkpoint `status` for the run-phase handshake — on `complete` the checkpoint is deleted.
 - A hard-stop pause is NOT completion: return `Paused at hard-stop: waiting for "continue"` instead, and do NOT emit the completion signal. run-phase must not advance to Step 5 on a pause return.
 

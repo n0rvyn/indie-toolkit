@@ -178,12 +178,12 @@ This default is scoped to **severity classification of something that already ha
    - no arg → **guide mode**
    - `phase` / `in-phase` / `single` / `one` → **phase mode**
 2. **Resolve the target:**
-   - **guide mode:** find the current dev-guide (`docs/06-plans/*-dev-guide.md`, prefer `current: true`). The unit list = all phases whose acceptance criteria are not yet all checked, in order.
+   - **guide mode:** `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py guide` finds the current dev-guide (`ok:false` with `candidates` → ask the user which one). The unit list = `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py phases --dev-guide <path>` filtered to `complete:false`, in order.
      - **If no dev-guide exists, do NOT silently downgrade.** Present an AskUserQuestion gate with the two real options:
        - **A. write-dev-guide first** — invoke `dev-workflow:write-dev-guide`, then resume guide mode after the guide is approved.
        - **B. phase mode on a single plan** — if a verified standalone plan exists (or can be quickly written + verified), switch to `/self-pacing phase <plan-file>` for just that unit.
      - If the user picks neither (declines both), end the turn (write a thin handoff card recording "no target resolved — user declined both options", per `## Artifacts & the resume model`).
-   - **phase mode:** resolve, in order — an explicit plan file the user named; the in-progress phase from `.claude/dev-workflow-state.json`; otherwise ask which phase / plan. If nothing resolves, send to `write-plan` / `run-phase`.
+   - **phase mode:** resolve, in order — an explicit plan file the user named; the in-progress phase from `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py status` (`state.current_phase` / `state.phase_name`, when `exists:true`); otherwise ask which phase / plan. If nothing resolves, send to `write-plan` / `run-phase`.
 3. **Verification is mandatory** (the run will not pause per-segment for human review, so plan quality matters more, not less): for any plan about to run, require `## Verification` `Verdict: Approved` (or a verify report). If absent, invoke `dev-workflow:verify-plan`; a `must-revise` verdict takes the **Plan fails verification** row of the Stop Policy — revise the plan text and re-verify (≤2 cycles), and STOP only when that loop is exhausted or a revision item needs a blocking decision. For phases without a plan yet (guide mode), the plan is written + verified inside the per-phase loop (Step 3) before execution.
 4. Confirm tasks have executable `Automated verify` (or annotated `N/A — trivial`). A non-trivial task with no verify line is a **plan-text defect, not a run failure** — same class as `must-revise`: first try to derive the verify line from the task's own `**Steps:**` and `**Files:**` (the command that would show the task worked), write it into the plan, and log the derivation. Only when no signal is derivable from the task as written does this become the **No derivable verify signal** cannot-proceed terminal. For presentational / UI tasks (build + visual sign-off only), the presentational branch in `## When NOT to use` applies instead — see that section's acceptance path.
 
@@ -256,7 +256,7 @@ Per unit (one plan / one phase):
    - **Presentational / UI tasks** (the `When NOT to use` presentational branch — only build + visual sign-off, no executable `Automated verify`): the build pass replaces the test signal; record the screenshot path under "Presentational screenshots" in the run log and include it in the final HTML. Visual sign-off is the user-side gate; do not invent it.
 7. **Phase boundary:**
    - **phase mode** → write/refresh handoff card (seam variant) + go to Step 4 (final review).
-   - **guide mode** → if the unit is green with no open `must-fix`: check off the phase's acceptance criteria in the dev-guide, log "crossed phase {N} seam" (incremental), and loop to the next phase (back to step 1). If no phases remain → Step 4.
+   - **guide mode** → if the unit is green with no open `must-fix`: `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py check-off --dev-guide <path> --phase <N>` ticks the phase's acceptance criteria and inserts the status line, log "crossed phase {N} seam" (incremental), and loop to the next phase (back to step 1). If its `all_phases_complete` is true → Step 4.
 
 ### Step 4: Final consolidated review (the promised single review)
 
@@ -313,7 +313,7 @@ Then ask how to proceed: fix open `must-fix` now, accept deferrals as known issu
 ## State & Resume
 
 - Task progress: `.claude/execute-plan-checkpoint.json` (shared with execute-plan; on-disk `completed` map authoritative across sessions).
-- Phase progress (guide mode): the dev-guide's checked acceptance criteria + `.claude/dev-workflow-state.json` if present.
+- Phase progress (guide mode): `python3 ${CLAUDE_PLUGIN_ROOT}/skills/run-phase/scripts/phase.py status` (`state.current_phase` / `state.phase_step`) plus the dev-guide's checked acceptance criteria (`phase.py phases`).
 - Run log (auto-decisions + deferrals + seam crossings + stops): `.claude/self-pacing/<target-slug>.md`, written incrementally so the final review survives a context reset.
 - Crystal (user-locked decisions, only when ≥1 blocking DP was resolved at authorization): `docs/11-crystals/<date>-<topic>-crystal.md` (one file; glob `docs/11-crystals/*-crystal.md` to find it). Zero blocking DPs at sweep → no crystal produced; this is by design, not a missing artifact.
 - Handoff card (thin index written on every STOP): `.claude/self-pacing/<target-slug>-handoff.md`. The card carries `Stopped at` / `Why` / `Next action` / `Pointers` / `Resume with` only.

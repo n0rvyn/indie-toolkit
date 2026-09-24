@@ -22,7 +22,7 @@
 - [ ] Output continues through verify-plan, execute-plan, test-changes, and the review call after reading Project Health
 - [ ] Apple review/testing skills are selected through internal route terms when Swift/iOS/macOS surfaces changed
 - [ ] Phase completion report generated with next phase info
-- [ ] State file uses JSON format (`.claude/dev-workflow-state.json`) with legacy YAML migration on first encounter
+- [ ] State file (`.claude/dev-workflow-state.json`) is written only through `scripts/phase.py` — no hand-written JSON/YAML in the output; legacy `.yml` goes through `phase.py migrate` on first encounter
 - [ ] Agent dispatch verification gate present: Step 4/5 verify report files on disk before advancing `phase_step`
 - [ ] ⛔ The gate does NOT require `.claude/reviews/*.md` for Step 6 — `review-execution` returns a consolidated block and promises no file. The Step 6 signal is a return containing `### Coverage notes`
 - [ ] Step 6.9 records `review_reports: ["review-execution:consolidated"]` + finding counts, never report paths; the Step 8.0 gate therefore never false-blocks a phase that was reviewed

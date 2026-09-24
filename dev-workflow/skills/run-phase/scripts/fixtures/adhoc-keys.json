@@ -1,0 +1,16 @@
+{
+  "project": "AdhocProj",
+  "current_phase": 1,
+  "phase_name": "Phase One",
+  "phase_step": "execute",
+  "dev_guide": "docs/06-plans/2026-01-01-adhoc-dev-guide.md",
+  "plan_file": "docs/06-plans/2026-01-01-adhoc-plan.md",
+  "verification_report": null,
+  "task_progress": null,
+  "review_reports": [],
+  "test_report": null,
+  "gaps_remaining": 0,
+  "last_updated": "2026-09-21T09:00:00",
+  "deploy_notes": "TestFlight build 42 sent",
+  "blocked_by": "waiting on Apple review"
+}

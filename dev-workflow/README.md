@@ -172,8 +172,8 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | audit-tokens | fork (sonnet) | Multi-dimensional Claude Code token consumption analysis with self-contained HTML report; auto cost-posture recommendations; auto-invokes its own scripts/diagnose.py for root-cause attribution |
 | fork-this | fork (sonnet) | Mid-session orthogonal split: when topic A's discussion surfaces problem B, generate minimal seed prompt for B in a new session WITHOUT polluting current A context |
 | crystallize | interactive | Lock settled decisions from current session into a persistent crystal file |
-| collect-lesson | interactive | Capture development lessons learned |
-| kb | interactive | Cross-project knowledge base search with freshness indicators |
+| collect-lesson | interactive | Capture development lessons learned; decides whether a new lesson supersedes, corrects, or only narrows an existing entry, and records `verified_on` for platform constraints |
+| kb | interactive | Cross-project knowledge base search; picks candidates from a title/keyword catalog (semantic, mixed Chinese/English) plus a literal pass, confirmed by reading; hides superseded entries behind their successor and flags platform entries verified on an older Claude Code version |
 | distill-discussion | interactive | Extract structured outputs (crystals, lessons) from raw discussion files |
 | generate-bases-views | interactive | Generate Obsidian Bases (.base) views over crystals, lessons, and vault notes |
 | finalize | interactive | Cross-phase validation: full test suite, acceptance criteria regression, cumulative coverage audit |

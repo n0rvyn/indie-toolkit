@@ -17,7 +17,8 @@
 | Output Assertions | `regex` / `file_exists` / `tool_order` / `llm` |
 | Redundancy Risk | `--ablation with-without` 自动算 Δ |
 
-- 官方测不了的四类，`eval.md` 同样测不了（它什么都不跑）：跨插件调用、AskUserQuestion / 用户回复、Workflow 工具、依赖家目录 / 凭据 / 设备。
+- 官方测不了的四类，`eval.md` 同样测不了（它什么都不跑）：跨插件调用、AskUserQuestion / 用户回复、Workflow 工具、往家目录写 / 凭据 / 设备。
+  - ⛔ 2026-09-26 更正：原文写的是「依赖家目录」。**读家目录可以测**：每次运行有自己的临时 `$HOME`，准备脚本（`scaffold_script`）看到的是同一个 `$HOME`，可以先往里放样本。测不了的只剩**写**：运行只能写自己的工作目录。实测见下表 11–14。
 - skill-creator 保留：`run_loop` 做 description 优化；`run_eval.py:70-90` 在真实环境（继承环境变量、项目根目录、所有已装插件）里测触发竞争，这是官方隔离运行看不到的。它注册的是只含 description 的临时 command 文件（`:60-68`），不是 skill 正文。
 
 ## 实测记录
@@ -34,6 +35,11 @@
 | 8 | `claude plugin eval skill-master --tag plugin-master --max-cost-usd 0` | `No eval cases found … under ~/.claude/plugins/cache/indie-toolkit/skill-master/1.2.0` ——裸名字解析到**已安装副本**，必须传路径 |
 | 9 | `claude plugin eval ./skill-master --tag plugin-master --max-cost-usd 0` | `Ablation: 2 arms × 26 cases (156 runs)`，`cost ceiling $0 hit`，无加载错误 |
 | 10 | 读 skill-creator `run_eval.py` | 读 `item["query"]`（`:204`、`:217`）；plugin-master 原来写的是 `"prompt"`，2026-09-12 已改 |
+| 11 | 2026-09-26 · CC 2.1.283 · 探针用例：准备脚本往 `$HOME/.claude/knowledge/` 写一个标记文件，agent `echo $HOME` 后用 Grep / Read 找它 | agent 的 `$HOME` = `/private/tmp/e-…/home`，工作目录 = `$HOME/cwd`；准备脚本的 `$HOME` 相同，写入成功；Grep、Read 都读到标记。真实 `~/.claude/knowledge` 未被改动。haiku，$0.06 |
+| 12 | 同一探针，Write 三个目标：工作目录、`$HOME/other/`、`$HOME/.claude/knowledge/`；准备脚本在工作目录写了 `.claude/settings.json`（allow 规则 + `additionalDirectories`） | 只有工作目录写成功，另两个 `Permission to use Write has been denied because Claude Code is running in don't ask mode`。项目设置不生效 |
+| 13 | 同上，改用 `--allow-tools "Write(//private/tmp/**)" "Write(~/.claude/knowledge/**)"` | 结果同 12。写入被限定在工作目录，没有放开的办法 |
+| 14 | `dev-workflow/evals/collect-lesson` 首跑 | `tool_used: Write` 的 grader 在 Write **被拒**时仍然通过：它数的是调用，不是结果。证明文件存在要用 `files` 或 `{source: file}` |
+| 15 | `dev-workflow/evals/kb` 首跑 | fork skill 的原始输出（含 `⚠️ 版本已变`）只出现在 `trace` 的 Skill 工具结果里；主 agent 的最终回复把它改写成英文，`last_message` 上的 regex 因此失败。改用 `target: trace` 后两轮都通过。另：regex 里写 `(?i)` 直接报错，要用 `flags: i` |
 
 ## 官方原文摘录
 

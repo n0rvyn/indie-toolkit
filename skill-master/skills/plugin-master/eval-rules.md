@@ -41,7 +41,7 @@ A behavior counts as not observable only for a reason on this closed list:
 | `cross-plugin` | Needs a skill or agent from another plugin (a run loads only the plugin under test) |
 | `interactive` | Sits behind AskUserQuestion or a user reply (runs are non-interactive; `context.history_file` can only test the turn after a reply) |
 | `workflow-tool` | Needs the Workflow tool (not in the read-only allowlist, not in the documented grantable list) |
-| `host-env` | Needs your home directory, credentials, a device, a real app's data, or ungranted network (home is unreadable under the Bash sandbox; mocks cover MCP tools only) |
+| `host-env` | Writes into the home directory, or needs your real home data, credentials, a device, a real app's data, or ungranted network (a run's writes are confined to its workspace; mocks cover MCP tools only). **Reading** `~/…` is not host-env: seed the run's temp home in a `scaffold_script` (see Case recipes) |
 
 Any other reason is not accepted — write the case.
 
@@ -144,7 +144,13 @@ arm: both
 
 Output assertions: `regex` (on the final reply or `{ source: file, path: … }`), `file_exists`, `tool_order`, or `llm` (short outputs only, rubric written as concrete PASS / FAIL conditions). Give each case one grader on the result and one on how Claude got there.
 
+**A skill that reads the home directory** (verified 2026-09-26, Claude Code 2.1.283; example: `dev-workflow/evals/kb/`). Each run has its own temp `$HOME`, and a case's `scaffold_script` runs with that same `$HOME`, so it can seed `~/.claude/knowledge/…` or `~/Obsidian/…` before Claude starts. Add `case.yaml` with `context: {scaffold_script: fixture.sh}` and run with `--scaffold` (without it the case runs against an empty home and fails). The run cannot **write** outside its workspace, even with an allow rule or an `--allow-tools "Write(//…)"` path grant, so grade the step before such a write (a draft, a proposed diff) and keep the write itself on the spec side as `host-env`.
+
 **Grader pitfalls** (verified 2026-09-12 while building `dev-workflow/evals/fix-bug/`; details in its `FINDINGS.md`):
+
+- `tool_used` counts refused calls. A `tool_used: Write` grader passes on a Write the run denied; to prove a file exists, grade `files` or `{source: file, path: …}` (found 2026-09-26).
+- A `context: fork` skill's own output reaches the trace as the Skill tool result; `last_message` is the main agent's paraphrase and can drop exact markers. Grade the skill's literal output with `target: trace` (found 2026-09-26).
+- Inline `(?i)` in a regex pattern throws in the JS engine; use `flags: i`.
 
 - An `llm` grader with `focus: trace` sees only the trace's head and tail; the middle, where Write / Edit calls sit, is elided. Grade what a file became with `focus: { source: file, path: … }`, one file per grader.
 - A prompt starting with `/<plugin>:<skill>` makes the without-arm reply `Unknown command` at $0, so Δ is fake. Name the skill in prose instead.

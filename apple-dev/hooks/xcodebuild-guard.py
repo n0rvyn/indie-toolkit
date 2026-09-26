@@ -19,6 +19,10 @@ cannot wedge every Bash call.
   3. ask  — `xcrun simctl boot`: escalates to a real permission prompt, which is
      what 禁止行为「未经批准启动模拟器」 asks for (approval, not a self-declared marker).
   4. stderr nudge, never blocks — more than one booted simulator (SOP rule 5).
+  7. ask  — killing/kickstarting CoreDeviceService / remotepairingd / remoted while
+     an iPhone is reachable only over Wi-Fi: the CoreDevice tunnel gets rebuilt on
+     Wi-Fi, and on a China-region iPhone every UI test then dies with code 74
+     (knowledge/platform-constraints/2026-09-26-iphone-xctest-code-74-…).
 
 False-positive control, two layers:
   a. heredoc BODIES are removed before segmentation (`_strip_heredocs`), so a doc
@@ -404,6 +408,58 @@ def _kill_verdict(seg, command):
     return None
 
 
+# 杀掉或重启这几个服务，CoreDevice 隧道会按**此刻**的物理连接重建。
+# 2026-09-26 remotepairingd 日志实测：`killall -9 CoreDeviceService` → 隧道 cancelled → 1–3 s 后重建，
+# 建在当时的网卡上（`Got tunnel endpoint: …%en0` = Wi-Fi，en13/en15 = USB）。
+_TUNNEL_SERVICES = re.compile(r"(CoreDeviceService|remotepairingd|\bremoted\b)", re.I)
+
+_KB_CODE74 = ("~/.claude/knowledge/platform-constraints/"
+              "2026-09-26-iphone-xctest-code-74-wireless-data-shared-runner-uuid.md")
+
+
+def _tunnel_rebuild_target(seg, command):
+    """这一段是不是在杀/重启会让 CoreDevice 隧道重建的服务。是 → 回服务名，否 → None。
+
+    与 `_kill_verdict` 同一套取法：「在不在杀」按段判，服务名对整条命令（剥掉 heredoc）判，
+    所以 `for s in …CoreDeviceService; do launchctl kickstart -k …/$s; done` 也认得出。
+    """
+    killing = _kill_targets(seg)
+    if not killing:
+        return None
+    m = (_TUNNEL_SERVICES.search(killing)
+         or _TUNNEL_SERVICES.search(_strip_heredocs(command)))
+    return m.group(0) if m else None
+
+
+def _wifi_only_iphones(devices):
+    """`devicectl list devices --json-output` 里此刻只走 Wi-Fi 的 iPhone 名字。纯函数，便于测试。
+
+    只看 iPhone：2026-09-26 的实证是国行 iPhone，同时段 iPad 在 Wi-Fi 下建隧道照样能跑 UI 测试。
+    `transportType` 是 `wired` 表示插着线，此时重建出来的是 USB 隧道，是安全的。
+    """
+    names = []
+    for dev in devices or ():
+        hp = dev.get("hardwareProperties") or {}
+        cp = dev.get("connectionProperties") or {}
+        if hp.get("deviceType") == "iPhone" and cp.get("transportType") == "localNetwork":
+            names.append((dev.get("deviceProperties") or {}).get("name") or hp.get("udid") or "iPhone")
+    return names
+
+
+@lru_cache(maxsize=1)
+def _devicectl_devices():
+    """已知设备列表（约 1.4 s）。只在要杀隧道服务时才调，不拖慢其它命令。拿不到 → 空，放行。"""
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            out = os.path.join(td, "devices.json")
+            subprocess.run(["xcrun", "devicectl", "list", "devices", "-q", "--json-output", out],
+                           capture_output=True, timeout=5)
+            with open(out) as f:
+                return tuple(json.load(f)["result"]["devices"])
+    except Exception:
+        return ()
+
+
 def decide(decision, reason):
     """Emit a PreToolUse decision. JSON is only honoured on exit 0 (official docs),
     so a crashed or missing script produces no JSON and the call proceeds — the
@@ -456,6 +512,20 @@ def main():
                        "第一反应是去怀疑用户的手机）。"
                        f"在跑的是：{live[0][1][:100]}。"
                        "确认要杀就批准；否则等它结束，或改成只杀那个卡住的 PID。")
+
+        # --- 7. 没插线时重建 CoreDevice 隧道 ---------------------------------
+        svc = _tunnel_rebuild_target(seg, command)
+        if svc:
+            wifi = _wifi_only_iphones(_devicectl_devices())
+            if wifi:
+                decide("ask",
+                       f"⚠️ 你要杀/重启的是 {svc}，它会让 CoreDevice 隧道按**此刻**的连接重建，"
+                       f"而 {', '.join(wifi)} 现在只走 Wi-Fi（没插线）。"
+                       "2026-09-26 国行 iPhone 实测：在 Wi-Fi 下建立的隧道上，UI 测试恒定 code 74 —— "
+                       "国行「无线数据」把所有 UITests-Runner 一起禁了 Wi-Fi（它们共用 XCTRunner 的同一个 UUID），"
+                       "隧道流量算 Wi-Fi；插线时建的隧道拔线后照样能用。"
+                       "要重建就先让用户插线再批准；不跑 UI 测试、或设备不是国行，可以直接批准。"
+                       f"全文：{_KB_CODE74}")
 
         # --- 3. unapproved simctl boot -------------------------------------
         hit = _is_invocation(seg, "simctl")

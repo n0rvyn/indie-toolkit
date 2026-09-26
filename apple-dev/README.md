@@ -73,7 +73,7 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | Hook | Event | Purpose |
 |------|-------|---------|
 | protect-pbxproj | PreToolUse | Prevents direct editing of `.xcodeproj/project.pbxproj` files |
-| xcodebuild-guard | PreToolUse (Bash) | Gates `xcodebuild` invocations against the destination / concurrency SOP; denies via `exit 0` + `permissionDecision: deny` JSON, not a non-zero exit |
+| xcodebuild-guard | PreToolUse (Bash) | Gates `xcodebuild` invocations against the destination / concurrency SOP; denies via `exit 0` + `permissionDecision: deny` JSON, not a non-zero exit. Also asks before killing device/simulator services under a running test. It also asks before restarting CoreDeviceService / remotepairingd / remoted while an iPhone is reachable only over Wi-Fi: the tunnel would be rebuilt on Wi-Fi, and on China-region iPhones UI tests then fail with code 74 |
 | swift-rule-detectors | PreToolUse (Edit\|Write\|MultiEdit) | Delivers the matching section of `references/apple-swift-rules.md` at write time, keyed on what is being written (container-width intent, test framework & placement, control-shape consistency, orientation locking). Once per session per rule |
 | cache-device-udid | SessionStart | Caches the connected device UDID so device-targeted commands skip the slow lookup |
 | protect-preview | PreToolUse | Asks for confirmation when an Edit/Write/MultiEdit would reduce a Swift file's `#Preview`/`PreviewProvider` count (fail-open; never hard-blocks) |

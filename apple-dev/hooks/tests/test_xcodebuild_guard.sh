@@ -382,3 +382,68 @@ check("负控：heredoc 里讲 CoreDevice 的文档 + killall node → 不问",
 sys.exit(1 if bad else 0)
 PY
 if [ $? -eq 0 ]; then PASS=$((PASS + 1)); else FAIL=$((FAIL + 1)); fi
+
+echo "── 没插线时重建 CoreDevice 隧道（2026-09-26）"
+python3 - "$HOOK_SCRIPT" <<'PY'
+import importlib.util, io, json, sys
+spec = importlib.util.spec_from_file_location("guard", sys.argv[1])
+g = importlib.util.module_from_spec(spec); spec.loader.exec_module(g)
+
+bad = 0
+def check(name, ok, extra=""):
+    global bad
+    bad += 0 if ok else 1
+    print(f"  {'✅' if ok else '❌'} {name}{extra}")
+
+T = lambda c: g._tunnel_rebuild_target(c, c)
+# 正控：2026-09-25 20:49 与 2026-09-26 18:49 两次把隧道重建到 Wi-Fi 上的，逐字就是这条
+check("正控：killall -9 CoreDeviceService", T("killall -9 CoreDeviceService") == "CoreDeviceService")
+check("正控：kickstart -k …remotepairingd",
+      T("launchctl kickstart -k user/501/com.apple.CoreDevice.remotepairingd") == "remotepairingd")
+check("正控：killall remoted", T("killall -9 CoreDeviceService remoted") is not None)
+LOOP = ("for s in com.apple.CoreDevice.CoreDeviceService; "
+        "do launchctl kickstart -k user/$(id -u)/$s; done")
+check("正控：循环形态（服务名在 for 段）",
+      g._tunnel_rebuild_target("launchctl kickstart -k user/$(id -u)/$s", LOOP) is not None)
+check("负控：killall CoreSimulatorService 不重建设备隧道",
+      T("killall -9 com.apple.CoreSimulator.CoreSimulatorService") is None)
+check("负控：grep 提到 CoreDeviceService 不算杀", T("grep -rn 'killall CoreDeviceService' .") is None)
+check("负控：killall node", T("killall node") is None)
+
+W = g._wifi_only_iphones
+def dev(kind, transport, name="X"):
+    return {"hardwareProperties": {"deviceType": kind, "udid": "U"},
+            "connectionProperties": {"transportType": transport},
+            "deviceProperties": {"name": name}}
+check("正控：只走 Wi-Fi 的 iPhone → 命中", W([dev("iPhone", "localNetwork", "iPhone")]) == ["iPhone"])
+check("负控：插着线的 iPhone → 不命中", W([dev("iPhone", "wired")]) == [])
+check("负控：只走 Wi-Fi 的 iPad → 不命中（iPad 同条件实测能跑）", W([dev("iPad", "localNetwork")]) == [])
+check("负控：手表 / 字段缺失 → 不命中也不崩",
+      W([dev("appleWatch", None), {}, {"hardwareProperties": None}]) == [])
+check("负控：拿不到设备列表 → 空", W(()) == [] and W(None) == [])
+
+# 端到端：换掉取设备、查在跑测试这两个外部调用，真跑 main()，看它发不发 ask
+def run_main(command, devices):
+    g._devicectl_devices = lambda: tuple(devices)
+    g._other_tests_running = lambda: ()
+    sys.stdin = io.StringIO(json.dumps({"tool_name": "Bash", "tool_input": {"command": command}}))
+    out, real = io.StringIO(), sys.stdout
+    sys.stdout = out
+    try:
+        g.main()
+    except SystemExit:
+        pass
+    finally:
+        sys.stdout = real
+    return out.getvalue()
+o = run_main("killall -9 CoreDeviceService", [dev("iPhone", "localNetwork", "iPhone")])
+check("端到端：iPhone 只走 Wi-Fi + killall CoreDeviceService → ask",
+      '"permissionDecision": "ask"' in o and "code 74" in o)
+check("端到端：iPhone 插着线 → 放行（无输出）",
+      run_main("killall -9 CoreDeviceService", [dev("iPhone", "wired")]) == "")
+check("端到端：无关命令不去查设备 → 放行",
+      run_main("ls -la", [dev("iPhone", "localNetwork")]) == "")
+
+sys.exit(1 if bad else 0)
+PY
+if [ $? -eq 0 ]; then PASS=$((PASS + 1)); else FAIL=$((FAIL + 1)); fi

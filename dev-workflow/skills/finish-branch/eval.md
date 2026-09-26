@@ -18,6 +18,7 @@
 ## Output Assertions
 <!-- What must be true in the skill's output -->
 - [ ] Output runs test suite and stops if tests fail
+- [ ] Apple project: runs xcodebuild test with an `id=` destination (device first, never auto-boots a simulator), no `-only-testing`, and treats totalTestCount == 0 as a failure
 - [ ] Output checks for documentation updates needed (feature specs, ADRs, changelog)
 - [ ] Output presents exactly 4 options: Merge locally / Create PR / Keep as-is / Discard
 - [ ] Output executes the chosen option with correct git commands

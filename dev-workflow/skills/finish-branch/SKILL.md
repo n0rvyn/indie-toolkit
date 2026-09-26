@@ -1,7 +1,7 @@
 ---
 name: finish-branch
 description: "Use when implementation is complete and you need to decide how to integrate the work, or the user says 'finish branch', 'finalize branch', '完成分支', '结束分支', '收尾', 'merge or pr'. Runs full test suite, then presents structured integration options (merge to main / open PR / archive branch) and handles cleanup. Not when: user only wants to commit current changes (use /commit); user wants cross-phase finalization of a dev-guide (use /finalize)."
-allowed-tools: Bash(git:*) Bash(gh:*) Bash(npm:*) Bash(cargo:*) Bash(pytest:*) Bash(go:*) Bash(xcodebuild:*) Bash(ls:*)
+allowed-tools: Bash(git:*) Bash(gh:*) Bash(npm:*) Bash(cargo:*) Bash(pytest:*) Bash(go:*) Bash(xcodebuild:*) Bash(xcrun:*) Bash(ls:*)
 effort: medium
 ---
 
@@ -9,10 +9,17 @@ effort: medium
 
 ### Step 1: Verify Tests
 
-Run the project's test suite:
+Run the project's **full** test suite (this is the merge gate, so not diff-scoped):
 ```bash
-# Auto-detect: npm test / cargo test / pytest / go test ./... / xcodebuild test
+# Auto-detect: npm test / cargo test / pytest / go test ./...
 ```
+
+**Apple project** (`*.xcodeproj` / `*.xcworkspace` at the root) — never a bare `xcodebuild test`. Follow `dev-workflow:test-changes` Step 2A's invocation rules, minus its diff scoping:
+- Scheme: `xcodebuild -list -json` (test-changes A1).
+- Destination (test-changes A2.5 / A3): real device first (`xcrun xctrace list devices` → `-destination "platform=iOS,id=$DEVICE_UDID"`); else an already-booted simulator's UDID. Always `id=`, never `name=`; never `simctl boot` on your own. If >1 booted → `xcrun simctl shutdown all`, then treat as 0 booted. 0 booted and the user did not ask for a sim run → run `build-for-testing` only and report `⚠️ Tests not run — no device or booted simulator`; that is **not** a pass — stop and ask the user. macOS-only scheme → `-destination "platform=macOS"`.
+- Run: `xcodebuild test -scheme "$SCHEME" -destination "$DESTINATION" -resultBundlePath /tmp/finish-branch-$$.xcresult` (no `-only-testing`).
+- Pass/fail from the result bundle, not exit code or grep (test-changes A5.1): `totalTestCount == 0` is a **FAIL**.
+- Crash / hang recovery: test-changes A6 (retry once).
 
 - If tests fail: **Stop.** Cannot proceed until tests pass.
 - If tests pass: Continue to Step 2.

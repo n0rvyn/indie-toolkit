@@ -38,24 +38,36 @@ This classification determines how results are presented in Step 3.
 
 First, resolve the knowledge base path: run `echo $HOME/.claude/knowledge/` via Bash to get the absolute path. Use this expanded path for all subsequent Grep and Read calls.
 
-Run two parallel Grep searches over the resolved knowledge base path:
+Queries usually arrive as a bag of 5–15 keywords from another skill (brainstorm, write-plan, verify-plan), mixing Chinese and English. Literal search alone handles that badly: the full phrase matches nothing, and single words match dozens of files sharing a generic word (`SwiftUI`, `prompt`, `test`). Measured on 27 real calls (2026-08-07 → 09-24): 12 entries that applied to the task were never returned, 10 of them literally findable. So find candidates two ways, then confirm by reading.
 
-1. **Content search**: `Grep(pattern=<query>, path="~/.claude/knowledge/", output_mode="content", context=3)`
-2. **Keyword search**: `Grep(pattern=<query>, path="~/.claude/knowledge/", glob="*.md", output_mode="content", context=0)` targeting `keywords:` lines in frontmatter
+1. **Catalog pass (semantic).** Read the whole catalog in one call: `Grep(pattern="^(# |keywords:)", path=<KB path>, glob="*.md", output_mode="content")` — every entry's title and keywords, about 27k tokens for 300 entries (each line carries its path; measured 2026-09-26). Pick the entries whose title or keywords address **the query's technology and its problem**, in either language. Sharing a generic word is not enough.
+2. **Literal pass.** Pick the query's 2–4 most distinctive terms (API names, error codes, specific nouns — not `SwiftUI`, `app`, `test`, `prompt`). `Grep(pattern="<term1>|<term2>|…", path=<KB path>, glob="*.md", output_mode="files_with_matches")`. This catches entries where the term appears only in the body.
+3. **Confirm.** Union both passes, drop anything outside the category filter, and `Read(file, limit=40)` each candidate (at most 10). Keep an entry only if it would change what someone doing this task does. Candidates picked from titles alone are often wrong: in the 2026-09-26 measurement, 13 of 25 title-picked candidates did not hold up on reading.
 
-If the user specified a category filter, narrow the path to `~/.claude/knowledge/{category}/`.
+If the user specified a category filter, narrow every path above to `<KB path>/{category}/`.
 
-If the query has multiple words, also try each word individually as a secondary search if the full-phrase search returns zero results.
+The kept entries are the results. The matching lines shown under each result in Step 3 below come from this Confirm read.
+
+### Step 2.5: Resolve Validity
+
+An entry's age says nothing about whether it still holds; its frontmatter does. For every matched file, read the validity fields in one call: `Grep(pattern="^(status|superseded_by|supersedes|verified_on):", path=<file>, output_mode="content")`.
+
+1. **Superseded entries leave the result list.** For a file with `status: superseded`, find its `superseded_by:` filename with `Glob(pattern="**/{filename}", path=<resolved KB path>)`. If that successor is itself superseded, follow the chain (at most 3 hops). Put the final successor in the old entry's place in the results (once, if it is already there) and remember the pointer `{successor} ← {old filename}`.
+   - The old entry is not shown as a result of its own. It appears only as the pointer line under its successor. A query that matched only the old entry still returns the successor: the knowledge moved, it did not disappear.
+   - `superseded_by` missing or the file not found → keep the old entry as a result and mark it `⚠️ 标为已取代，但接替条目 {name} 找不到`. Never drop an entry whose successor cannot be shown.
+2. **Version check.** For a file with `verified_on:`, keep the value for display. If it names Claude Code (`Claude Code 2.1.x`), run `claude --version` once and compare: a different version marks the entry `⚠️ 版本已变`. Other platforms are displayed, not compared.
 
 ### Step 3: Present Results
 
-**Freshness indicator** (used by both modes): First, run `date +%Y-%m-%d` via Bash to get today's date. Then for each result file, extract the `date:` field from YAML frontmatter. Compare against today:
-- 🟢 Fresh: < 30 days old
-- 🟡 Aging: 30-90 days old
-- 🔴 Stale: > 90 days old
-- ⚪ Unknown: no `date:` field and no `YYYY-MM-DD-` filename prefix
+**Validity marker** (used by both modes), from Step 2.5:
+- `⚠️ 版本已变：验证于 {verified_on}，当前 {current}` — a Claude Code version mismatch
+- `ℹ️ 验证于 {verified_on}` — `verified_on` present, not comparable
+- `⚠️ 标为已取代，但接替条目 {name} 找不到` — broken chain
+- no marker — anything else
 
-If the frontmatter has no `date:` field, use the filename date prefix (`YYYY-MM-DD-*`) if present.
+Under each successor, list what it replaced: `↳ 取代了 {old filename}`.
+
+Show each entry's date (frontmatter `date:`, else the filename's `YYYY-MM-DD-` prefix). Age is shown, never used as a warning.
 
 ---
 
@@ -64,15 +76,16 @@ If the frontmatter has no `date:` field, use the filename date prefix (`YYYY-MM-
 Group results by file. For each file, show:
 
 ```
-[{rank}] {freshness_emoji} {file_path}
-Category: {category from directory name}  |  Date: {from frontmatter}  |  Freshness: {Fresh/Aging/Stale}
+[{rank}] {file_path}  {validity marker, if any}
+Category: {category from directory name}  |  Date: {date}
 Keywords: {from frontmatter keywords line}
+↳ 取代了 {old filename}        (one line per replaced entry, if any)
 
 {matching lines with context — up to 8 lines per file}
 ```
 
-If any results are 🔴 Stale (> 90 days), append after the results list:
-> ⚠️ {N} 条结果超过 90 天，信息可能过时。建议验证后再使用。
+If any result carries `⚠️ 版本已变`, append after the results list:
+> ⚠️ {N} 条结果验证于旧版本，使用前先在当前版本上复核。
 
 After presenting all results: "Read any of these in full? Specify the number(s)."
 
@@ -82,7 +95,7 @@ If the user names result(s): call `Read` with the file path and present the full
 
 #### Step 3B: Question Mode (Synthesis)
 
-1. **Rank results**: From the combined Grep results (Step 2), rank matched files by: keyword-line hit > content-only hit, then most recent date first. Take the top 5 files.
+1. **Rank results**: From the results after Step 2.5 (superseded entries already replaced by their successors), rank files by how directly they answer the question (judged from the Step 2 confirm read), then most recent date first. Take the top 5 files. Never read or cite a superseded entry as a source.
 
 2. **Read full content**: For each of the top 5 files, call `Read(file_path, limit=100)` to get the complete entry (capped at 100 lines to bound context usage).
 
@@ -95,10 +108,11 @@ If the user names result(s): call `Read` with the file path and present the full
 
 ## Sources
 
-[1] {freshness_emoji} {file_path}
+[1] {file_path}  {validity marker, if any}
     Category: {cat} | Date: {date} | Keywords: {kw}
+    ↳ 取代了 {old filename}   (if any)
 
-[2] {freshness_emoji} {file_path}
+[2] {file_path}  {validity marker, if any}
     Category: {cat} | Date: {date} | Keywords: {kw}
 
 ...
@@ -108,11 +122,11 @@ Need more detail on a source? Specify the number.
 
 4. **Confidence fallback**: If the read entries do not contain enough information to answer the question directly, fall back to browse mode output and prefix with: "Found related entries but can't confidently answer this question. Here are the relevant entries:"
 
-5. **Stale warning**: If any cited source is 🔴 Stale, append the stale warning after the Sources section.
+5. **Version warning**: If any cited source carries `⚠️ 版本已变`, say so in the Answer itself (the claim was observed on an older version) and append the version warning after the Sources section.
 
 ### Step 4: Zero Results
 
-If no results from either search:
+If Step 2 keeps no entry:
 
 ```
 No entries found for "{query}" in ~/.claude/knowledge/.

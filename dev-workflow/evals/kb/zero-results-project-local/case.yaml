@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: zero-results-project-local
+context:
+  scaffold_script: fixture.sh

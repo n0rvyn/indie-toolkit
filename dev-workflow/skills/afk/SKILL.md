@@ -79,7 +79,9 @@ Measured basis (30 days to 2026-09-04, this account's transcripts): pipeline den
 If it does, in this order:
 
 1. **Auto-lock off.** An idle device locks itself and `xcodebuild test` dies on `Unlock iPhone to Continue` → `code 74`. AFK *causes* this: the user walking away is the trigger. A probe cannot cover it — passing now says nothing about two hours from now, which is why this is first and why it is a request to the user rather than a check.
-2. **Wired, not `localNetwork`.** The wireless tunnel resets every ~18s and kills the long-lived UI-test driver while short unit tests survive.
+2. **Wired, not `localNetwork`.** What matters is where the CoreDevice tunnel was *established*. On a China-region iPhone, a tunnel established over Wi-Fi fails every UI test with `code 74`: the per-app "Wireless Data" setting denies Wi-Fi to all UITests-Runners, and the runner's traffic in a Wi-Fi-born tunnel counts as Wi-Fi. Unit tests are unaffected. A tunnel established while wired keeps working after the cable is unplugged.
+   - So plug in before the run, and ⛔ never restart CoreDeviceService / remoted while unplugged, since that rebuilds the tunnel on Wi-Fi.
+   - Evidence: `~/.claude/knowledge/platform-constraints/2026-09-26-iphone-xctest-code-74-wireless-data-shared-runner-uuid.md`.
 3. **One minimal real-device UI test as a probe**, to force out whatever on-device trust/automation dialog exists right now. Probe, do not consult a list of known dialogs — a list goes stale, a probe surfaces today's.
 4. ⛔ **Never reinstall the xctrunner as a remedy.** That reinstall re-triggers the very dialog it is meant to fix, and the loop is invisible from inside the run.
 

@@ -4,7 +4,7 @@
 **Branch:** `claude/blissful-heisenberg-hvqszs`
 **Status:** Complete; two skills waiting on a harness fix (see Pending)
 
-> Review note: this file collects three things that may belong elsewhere. Move §1 to the lessons KB, §2 to `~/.claude/knowledge/platform-constraints/2026-09-26-inline-skill-effort-ignored-on-auto-invoke.md` (next to the 2026-09-24 inline-`model:` note), and keep §3 here or in an issue.
+> KB copies: §1 → `~/.claude/knowledge/workflow/2026-09-26-test-a-rules-premise-before-obeying-or.md`; §2 → `~/.claude/knowledge/platform-constraints/2026-09-26-inline-skill-effort-pin-ignored-on-auto.md` (the 2026-07-09 `api-usage/2026-07-09-skillsubagent-effort-overrides-session-e.md` entry now carries dated corrections pointing here). §3 stays in this file.
 
 ---
 

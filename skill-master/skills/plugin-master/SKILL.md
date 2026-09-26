@@ -137,7 +137,7 @@ Before auto-review, classify the new artifact's dominant work and check its `mod
 
 5. Set `effort:` from cost-posture.md's levels table for the detected class (skip when `model: haiku`) and note "effort: {level} ({class})". A missing `effort:` is a finding, not a default.
 
-5. Note the cost posture decision in the **Completion (create)** summary at the end of this route, so the user has it on record.
+6. Note the cost posture decision in the **Completion (create)** summary at the end of this route, so the user has it on record.
 
 #### 2a.6: Auto-Review Gate
 

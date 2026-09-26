@@ -1,6 +1,7 @@
 ---
 name: write-plan
 description: "Use when the user says 'write a plan', 'plan this', 'break this into tasks', '写计划', '拆分任务', or has requirements/specs for a multi-step task before touching code. Also invoked by `fix-bug` for large fixes (multi-file, architectural, or replacing a design), which pass their diagnosis evidence into the plan's `**Bug diagnosis:**` field. Creates structured implementation plans with self-contained, verifiable tasks — each task lists files to touch, steps to take, and verification commands. Not when: trivial single-file change with no consumer fan-out (just do it), plan file already exists (use verify-plan), or requirements still unclear (use brainstorm). For phase-driven development, run-phase calls this internally."
+effort: medium
 ---
 
 ## Behavior Note

@@ -136,6 +136,8 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | dev-guide-verifier | opus | Glob, Grep, Read, Bash, Write | Dev-guide quality verification (coverage, dependencies, data flow, code overlap, terms, criteria, structure) |
 | feature-spec-writer | sonnet | Glob, Grep, Read, Write | Design-vs-implementation feature spec generation |
 | distill-discussion-reader | sonnet | Read, Glob, Grep | Discussion file classification and structured extraction (read-only) |
+| bug-diagnoser | inherit | Glob, Grep, Read, Bash | Read-only root-cause diagnosis (cause, same-cause sites, bug-vs-design verdict, or "need experiment X"). Dispatched by fix-bug when the cause is unconfirmed / at the Circling point, and by run-phase Step 7 per failure |
+| change-classifier | inherit | Glob, Grep, Read, Bash, Write | Pre-commit semantic review: classify changes, breaking-change detection (Lens C checklist), risk grading, report to `.claude/reviews/`. Dispatched by review-before-commit |
 
 ## Skills
 
@@ -149,7 +151,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | write-plan | interactive | Writes implementation plan with Impact Map and Task Contract |
 | write-dev-guide | interactive | Writes phased dev-guide for multi-unit work |
 | commit | fork (sonnet) | Conventional commit analysis and execution |
-| review-before-commit | interactive | Pre-commit semantic review: classify changes, detect breaking changes, interactive risk confirmation |
+| review-before-commit | interactive | Pre-commit semantic review via `change-classifier` agent, then interactive risk confirmation |
 | issue | interactive | GitHub Issue unified entry point |
 | finish-branch | interactive | Test, document, merge/PR/discard |
 

@@ -2,6 +2,7 @@
 name: swiftui-visual-audit
 compatibility: Requires macOS and Xcode
 description: "Systematically screenshot EVERY View / Sheet / Modal / sub-view of a SwiftUI app — macOS AND iOS (incl. iPad on the simulator or a real device) — in BOTH light and dark via a throwaway XCUITest harness, then score each render against a general UI rubric (pairs with the refactoring-ui skill) to produce a gap-by-View list + a gap-driven fix plan. Use when the user wants to: 'audit the whole UI with screenshots', 'screenshot every screen/View', 'screenshot every iOS screen in light/dark on device', 'force dark with -appearanceMode and audit', '截图审计每个界面', '逐 View 看图对标', '每个 View 都 XCTest 看图', 'iPad 真机逐屏 light/dark 截图', '用 -appearanceMode 强制外观做暗色审计'. Catches the bug class that BUILD-green + unit tests structurally CANNOT: untranslated raw localization keys, dead controls, layout truncation, and crashes in panes no test ever opens. NOT for design fidelity — it has no design contract and no reference image, so it cannot tell you whether a screen matches its design; for that, use apple-dev:design-parity-build with the design-detectors. NOT for: capturing/driving ONE window or screen (use mac-app-shot); the rubric/standard itself (use refactoring-ui); pure logic tests."
+effort: medium
 ---
 
 # SwiftUI Visual Audit — every View, light + dark (macOS + iOS)
@@ -23,8 +24,17 @@ The pipeline below is platform-agnostic; the **capture surface, appearance forci
 
 1. **Inventory** every `struct: View` (+ `.sheet`/`.popover`/`.alert`/sub-views). Group by the runtime STATE each needs (which content type/project, which mode/tab) — these groups become test "areas".
 2. **Throwaway XCUITest harness** (`AuditShotTests`) — one test method per area. For each View: navigate by accessibility id, take a screenshot via the **profile's capture call** (macOS = window element; iOS = `app.screenshot()`) → `XCTAttachment(.keepAlways)` with a descriptive name. Loop appearances.
-3. **Extract**: `xcrun xcresulttool export attachments --path <newest .xcresult> --output-path <dir>`; the `manifest.json` maps `suggestedHumanReadableName` → hashed file. Rename + **Read** the PNGs. (Same on both platforms.)
-4. **Score** each render against the rubric (refactoring-ui Part B: H/S/T/C/D/F). Record a gap list **ordered by View**, severity-tagged. For large sets (~60+ shots), dispatch reader sub-agents over batches to keep main context lean — then spot-verify any high-density finding yourself (agent claim ≠ fact).
+3. **Extract**: `xcrun xcresulttool export attachments --path <newest .xcresult> --output-path <dir>`; the `manifest.json` maps `suggestedHumanReadableName` → hashed file. Rename the PNGs to `<View>-<appearance>.png` — Step 4's agent reads them, so the main turn does not need to Read every shot. (Same on both platforms.)
+4. **Score** — dispatch **`apple-dev:render-auditor`** (Agent tool, `subagent_type: "apple-dev:render-auditor"`), one dispatch per batch of ~20 shots (batches may run in parallel; a set under ~20 is still one dispatch). The agent carries the rubric (refactoring-ui Part B: H/S/T/C/D/F) plus raw-key, truncation, dead-control and crash-log reads, and runs at `effort: high`. It does **not** see this conversation, so pass everything:
+   - `platform` (from Step 0) and absolute `project_root`;
+   - `shots`: absolute PNG path + View name + `light`/`dark` + the state/area it was captured in (from the Step 3 rename);
+   - `expected_controls` when the harness toggled a control before a shot (e.g. the Color-scheme picker) and what should have changed — without it the agent will not call a control dead;
+   - `crash_logs`: absolute paths to the stderr log (macOS) / pulled `.ips` files (iOS device) from this run, if any;
+   - `harness_notes`: skipped elements, failed navigations, areas that died mid-run.
+
+   **Use the return:** merge every batch's **Gaps by View** into one gap list **ordered by View**, severity-tagged; carry **Crashes** and **Run-level** to the top. Re-shoot or re-navigate every shot under **Could not judge** and re-dispatch it — those Views are *unaudited*, not clean. Then **spot-verify yourself**: Read the PNG behind any 🔴 and any View with a high density of findings before it enters the fix plan (agent claim ≠ fact).
+
+   **If a dispatch fails** (agent error, empty or malformed return): that batch was **not scored**. Retry it once; if it fails again, list its Views in the gap list as **unaudited — render audit did NOT run** and tell the user. Never read a failed batch as "no gaps", and never quietly substitute your own scoring for it.
 5. **Gap-driven fix plan**: when the audit finds most Views already compliant (common after a code pass), do **not** write one no-op phase per View — write **one phase per real gap cluster** + a final re-screenshot verify phase. (Don't manufacture empty phases; don't shrink scope either — every gap gets fixed.)
 
 ### Navigation primitives (both platforms)

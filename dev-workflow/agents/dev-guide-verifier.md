@@ -25,6 +25,7 @@ allowed-tools: Bash(mkdir*) Bash(date*) Write(*/.claude/reviews/*)
 maxTurns: 70
 color: yellow
 memory: project
+effort: high
 ---
 
 Think carefully and step-by-step before responding.

@@ -2,7 +2,9 @@
 name: disk-reclaim
 description: "排查 macOS 磁盘被什么占满并安全回收空间。先判定占用是不是目录问题（swap / 内存泄漏进程 / 本地快照常常才是大头），再按零风险-低风险-需确认三档逐项处理，删除前逐条征得确认。当用户说磁盘满了、空间不够、清理硬盘、startup disk full、看看什么占地方、为什么只剩几个 G 时使用。Use when the user reports a full or nearly full disk on macOS, asks what is eating space, or asks to clean up storage. Keywords: 磁盘满, 空间不足, 清理磁盘, 硬盘满了, 存储空间, disk full, startup disk, free up space, what is using my disk, reclaim storage."
 compatibility: Requires macOS
+effort: high
 ---
+<!-- ⏳ PENDING-HARNESS-FIX (2026-09-26): the effort pin applies only when the user types this skill; when Claude auto-invokes it the turn runs at session effort. Its high judgment is interleaved with live driving / main-thread cross-checks and cannot move to an agent. Reported to Anthropic via /bug. When fixed: re-run the probe in docs/09-lessons-learned/2026-09-26-effort-pins.md and delete this marker. -->
 
 # Disk Reclaim
 
@@ -16,7 +18,7 @@ mactools 里另外十个 skill 都是 fork + haiku 的薄脚本封装。这个�
 2. **`allowed-tools` 锁死脚本会挡住诊断命令。** 找根因用的是 `footprint -p` / `lsof +D` / `mount` / `F_LOG2PHYS_EXT`，"这次该用哪个"是判断，不是脚本分支。
 3. **`rm -rf` 没有回收站。** mactools 里最重的写操作（`notes delete` / `mail trash`）都可撤销，这个不行。
 
-Cost posture：Judgment 类 → inherit，不 pin `model`，不 pin `effort`（`skill-master/skills/plugin-master/cost-posture.md`）。
+Cost posture：Judgment 类 → inherit `model`，`effort` 按任务需要 pin（`skill-master/skills/plugin-master/cost-posture.md`）。
 
 ## 第一件事：占用不一定在目录里
 

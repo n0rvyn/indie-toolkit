@@ -21,6 +21,7 @@ tools: Glob, Grep, Read, Bash, Write
 allowed-tools: Bash(mkdir*) Bash(date*) Write(*/.claude/reviews/*)
 maxTurns: 30
 color: yellow
+effort: high
 ---
 
 <!-- Supersedes apple-dev/skills/design-review/ (removed 2026-05-25 in skills→agents migration; agent is now the canonical source — git history has prior skill versions) -->

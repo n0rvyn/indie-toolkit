@@ -164,6 +164,7 @@ for (const batch of (input.batches || [])) {
         label: `task:${taskId}`,
         phase: 'Execute Segment',
         model: 'sonnet',
+        effort: 'high', // runs the task's Verify and decides pass/fail
         agentType: 'dev-workflow:execute-plan',
         schema: RESULT_SCHEMA,
       })

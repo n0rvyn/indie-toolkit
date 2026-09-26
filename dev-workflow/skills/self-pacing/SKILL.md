@@ -2,6 +2,7 @@
 name: self-pacing
 description: "Moved: use /afk (dev-guide mode) to drive a verified dev-guide across phases; for one plan use /execute-plan. Triggers: '/self-pacing', 'self-pace', '跨阶段连跑', '不要每个阶段都停'."
 disable-model-invocation: true
+effort: low
 ---
 
 ## Moved

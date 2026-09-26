@@ -355,6 +355,9 @@ const thunks = reviewers.map(r => async () => {
   try {
     const opts = { label: r.label, phase: 'Dispatch Reviewers', agentType: r.agentType, schema: r.schema }
     if (r.model) opts.model = r.model
+    // Every dispatched item is a reviewer whose verdict gates the phase — pin
+    // effort to the task, not the session (cost-posture.md levels table).
+    opts.effort = 'high'
     const value = await agent(r.prompt, opts)
     if (value == null) {
       return { ok: false, message: 'agent returned null (user-skip)' }

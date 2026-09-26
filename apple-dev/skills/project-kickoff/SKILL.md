@@ -2,6 +2,7 @@
 name: project-kickoff
 description: "Manual /project-kickoff only; not model-invocable. Runs the project kickoff flow to clarify requirements, converge scope, and produce execution recommendations. When the product's core value rests on measurement/inference accuracy, an efficacy claim, a state-of-the-art algorithm, or an established standard instrument, it also runs a domain-literature check (papers/DOI, benchmark pages) that can halt the flow if the mechanism is contradicted, and surfaces reusable mechanism-level implementations. Use when starting a new project on any platform (distinct from /write-dev-guide, which plans phased development after design is approved); iOS/macOS projects additionally receive Apple-native initialization (DesignSystem/ASC/CI-CD)."
 disable-model-invocation: true
+effort: medium
 ---
 
 <!-- cost-posture: inherit (judgment/orchestration — 5 AskUserQuestion 检查点 + WebSearch 市场调研 + 2.5 领域研究检索（派 general-purpose，主线抽验一手来源）+ dispatch generate-design-prompt / generate-design-system / design-reviewer；多检查点编排，do-NOT-downgrade per project CLAUDE.md Skill Cost Posture 规则) -->

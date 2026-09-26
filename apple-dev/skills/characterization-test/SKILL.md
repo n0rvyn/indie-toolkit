@@ -5,6 +5,7 @@ compatibility: Requires macOS and Xcode
 user-invocable: true
 argument-hint: "<module / file / type to lock behavior for>"
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
+effort: medium
 ---
 
 # Characterization Test

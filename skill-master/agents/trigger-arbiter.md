@@ -28,6 +28,7 @@ tools: Glob, Grep, Read
 color: cyan
 maxTurns: 30
 disallowedTools: [Edit, Write, Bash, NotebookEdit]
+effort: high
 ---
 
 You are a cross-plugin trigger conflict detector. You analyze whether a target skill's description and trigger phrases overlap with skills from OTHER installed plugins, causing routing ambiguity.

@@ -2,7 +2,9 @@
 name: runtime-feature-verify
 compatibility: Requires macOS and Xcode
 description: "Use to verify a running app's FEATURES actually WORK end-to-end — drive each feature's real action and judge it by a REAL (non-mock) signal (clipboard / on-screen result / state change / persistence-after-reopen / real-LLM output / app log), then produce a feature→judge→evidence→verdict table. This is the BEHAVIOR/FUNCTION counterpart to swiftui-visual-audit (which is per-View RENDER). Use when the user wants: 'verify each feature actually works at runtime', 'real e2e, not mock', 'does the app actually do X', 'prove the features work end-to-end', 'verify it works for real not mock', '逐 feature 验一遍', '运行时验功能不是 mock', 'real runtime e2e 验证是否 work', '一个个功能验过去'. Catches the bug class that green tests + mocks structurally HIDE: silent network/entitlement failures, the wrong model/param sent to a provider, parse/encode that only breaks on real data, an accept that updates the count but not the view. NOT for: per-View look/render audit (use swiftui-visual-audit), capturing/driving ONE window (use mac-app-shot), code/diff review (dev-workflow reviewers), or pure logic unit tests."
+effort: xhigh
 ---
+<!-- ⏳ PENDING-HARNESS-FIX (2026-09-26): the effort pin applies only when the user types this skill; when Claude auto-invokes it the turn runs at session effort. Its high judgment is interleaved with live driving / main-thread cross-checks and cannot move to an agent. Reported to Anthropic via /bug. When fixed: re-run the probe in docs/09-lessons-learned/2026-09-26-effort-pins.md and delete this marker. -->
 
 # Runtime Feature Verify — does each feature actually WORK (not just render, not just mock)
 

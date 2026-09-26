@@ -6,6 +6,7 @@ model: sonnet
 context: fork
 argument-hint: "[days|window]"
 allowed-tools: Bash(bash:*), Bash(python3:*), Bash(open:*), Bash(date:*), Bash(mkdir:*), Read, Write
+effort: low
 ---
 
 # Audit Token Consumption

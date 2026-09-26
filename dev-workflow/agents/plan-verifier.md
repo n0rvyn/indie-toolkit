@@ -24,6 +24,7 @@ allowed-tools: Bash(mkdir*) Bash(date*) Bash(ls*) Bash(find*) Write(*/.claude/re
 maxTurns: 80
 color: yellow
 memory: project
+effort: high
 ---
 
 Think carefully and step-by-step before responding.

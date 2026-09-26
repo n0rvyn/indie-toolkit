@@ -24,7 +24,9 @@
 - [ ] Output correctly identifies review mode (full fill / privacy labels / pre-submit audit / specific section)
 - [ ] Output loads appropriate reference files based on mode
 - [ ] Mode A: Output walks through fields in order, confirming each major section before proceeding
-- [ ] Mode B: Output analyzes code imports/APIs and produces privacy label recommendation table with evidence
+- [ ] Mode B: Output dispatches `apple-dev:app-review-auditor` (mode=guidelines, scope=privacy-only) and renders its code-evidence table and produces privacy label recommendation table with evidence
+- [ ] Mode A Step 3.5: Output passes the description/promo text verbatim per locale to `apple-dev:app-review-auditor` (mode=claims) and lists every missing/stub/wrong_target claim as a blocker
+- [ ] If the auditor dispatch fails or returns blocked, Output says the check did not run — no privacy table / claims table fabricated inline, not reported as "no issues"
 - [ ] Mode C: Output answers specific questions with reference citations
 - [ ] Does NOT run code-compliance commands (those belong to /asc-submit-preview)
 

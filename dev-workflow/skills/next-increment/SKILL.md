@@ -1,6 +1,7 @@
 ---
 name: next-increment
 description: "Use when the user says 'next increment', 'next step', 'pick the next evolution step', '下一步做什么', '下一步', or asks what to build next on a mature codebase with established architecture docs. Generates 3-5 candidate increments grounded in the architecture, then writes a mini-spec for the chosen one. Not for greenfield projects (use write-dev-guide) or known tasks (use write-plan)."
+effort: medium
 ---
 
 ## Overview

@@ -1,6 +1,7 @@
 ---
 name: collect-lesson
 description: "Use after resolving a bug, completing a task with notable pitfalls, or discovering an important architecture constraint. Extracts a structured entry from the session and saves it to the knowledge base. Not when: settling pre-implementation design decisions before /write-plan — use crystallize instead."
+effort: medium
 ---
 
 ## Overview

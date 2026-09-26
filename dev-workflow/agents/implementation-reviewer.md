@@ -32,6 +32,7 @@ allowed-tools: Bash(git diff*) Bash(git log*) Bash(git status*) Bash(git show*) 
 maxTurns: 80
 color: yellow
 memory: project
+effort: high
 ---
 
 Think carefully and step-by-step before responding.

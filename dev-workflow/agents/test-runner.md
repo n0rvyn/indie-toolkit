@@ -17,6 +17,7 @@ model: sonnet
 maxTurns: 30
 tools: Glob, Grep, Read, Write, Bash
 color: yellow
+effort: high
 ---
 
 Execute the workflow mechanically; do not deliberate over mechanical steps.

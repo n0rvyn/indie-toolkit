@@ -1,7 +1,7 @@
 # App Review Guidelines Reference
 
 Structured reference for Apple App Store Review Guidelines sections 1–5.
-Used by `asc-submit-preview` skill as a supplementary reference file.
+Read by the `app-review-auditor` agent (dispatched by `asc-submit-preview` and `asc-listing`).
 
 ---
 

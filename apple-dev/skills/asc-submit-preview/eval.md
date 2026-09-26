@@ -21,6 +21,8 @@
 
 ## Output Assertions
 - [ ] Output checks app code against App Review Guidelines sections 1-5
+- [ ] The audit runs in `apple-dev:app-review-auditor` (mode=guidelines); every 🔴/🟡/✅ item in the report carries file:line from its return
+- [ ] If the auditor dispatch fails or returns blocked, Output says the audit did not run — no inline fallback, no empty "passed" report
 - [ ] Output distinguishes from asc-listing (store materials vs code) — explicitly states "for ASC backend material use /asc-listing"
 - [ ] Output flags common rejection reasons (permissions, private APIs, crashes, missing privacy strings)
 - [ ] Output verifies Info.plist usage description strings for sensitive APIs

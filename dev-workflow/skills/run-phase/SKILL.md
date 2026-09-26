@@ -6,7 +6,7 @@ effort: high
 
 ## Overview
 
-This skill orchestrates one iteration of the development cycle. Opus handles judgment-intensive steps (planning, fixing) in main context; Sonnet handles mechanical execution as a dispatched agent; Opus reviews in dispatched agents for unbiased assessment.
+This skill orchestrates one iteration of the development cycle. The main context handles orchestration, user gates, plan writing (at `write-plan`'s own pin) and applying fixes. Judgment that needs high effort runs in dispatched agents whose `effort:` pin always applies: plan verification, the reviewers, and root-cause diagnosis of execution and test failures (`dev-workflow:bug-diagnoser`, Step 7). Sonnet handles mechanical execution as a dispatched agent.
 
 ```
 Locate/Resume Phase
@@ -18,7 +18,7 @@ Locate/Resume Phase
   → test changes (dispatch sonnet agent — build/test/lint suite)
   → visual feedback loop (main context — render #Preview, diff vs design, fix ≤3x; skipped if non-UI or no design ref)
   → dispatch feature-spec + review agents in parallel (separate contexts)
-  → fix all issues (main context — opus: execution + test + review failures)
+  → diagnose execution + test failures (dispatch bug-diagnoser agents in parallel, read-only) → fix all issues (main context)
   → Phase done
 ```
 
@@ -518,8 +518,15 @@ If any of the following have issues: execution report (blocked/failed tasks), te
         > - {category}: {count}
         > 代码/UI 问题（{M} 个）：
         > - {summary}
-   b. Fix all issues (design + code), then re-run test-changes if it had failures. To re-review, call `review-execution` again with the same inputs — it re-dispatches only what the current diff routes to, so a narrowed fix naturally narrows the re-review; there is no per-agent re-run to assemble here.
-   c. **Design re-verification limit**: If design-reviewer still fails after 1 fix cycle,
+   b. **Diagnose execution and test failures before fixing.** For each failed/blocked task (2a) and each failing test or build error (2b), dispatch `Agent(subagent_type: "dev-workflow:bug-diagnoser")`. Send all of them in one message so they run in parallel, one agent per failure; group only failures that share an obvious single cause (e.g. one build error cascading into many test failures). Review gaps (2c) already carry file:line and skip this. Pass each agent:
+      - the absolute project root
+      - Symptom: the task id plus its failure/blocked reason from the execute-plan return, or the failing test name plus its assertion message (or the build/lint error text), verbatim
+      - Evidence paths: `docs/06-plans/execution-report.md` and/or the test report path (state `test_report`), the plan file (state `plan_file`), and the task's scope files
+      - "Read the reports; do not rerun tests or xcodebuild." The test report is the evidence. Apple builds must stay serialized in the main session.
+      Use each `## Diagnosis` return this way. `confirmed` / `probable`: fix at `Cause` and at every `Same-Cause Sites` entry, and check `Consumers`. `need-experiment`: run the experiment in the main context, then fix or re-dispatch. `Design Verdict: design`: don't patch it silently; present it to the user with the agent's evidence before changing the behavior. `unknown` / `insufficient-input`: list it as unresolved in the fix summary.
+      **If a dispatch fails** (error, timeout, no `## Diagnosis` block), say that diagnosis did NOT run for that failure. Don't count it as diagnosed. Don't read the failure as "no findings". Any fix you make for it anyway is marked "undiagnosed" in the fix summary.
+   c. Fix all issues (design + code), then re-run test-changes if it had failures. To re-review, call `review-execution` again with the same inputs — it re-dispatches only what the current diff routes to, so a narrowed fix naturally narrows the re-review; there is no per-agent re-run to assemble here.
+   d. **Design re-verification limit**: If design-reviewer still fails after 1 fix cycle,
       report remaining design issues and proceed — do not loop.
       Other reviewers (implementation, UI, feature) follow existing behavior.
 6. If skipping: note the known issues and proceed

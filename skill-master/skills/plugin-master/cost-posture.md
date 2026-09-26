@@ -41,7 +41,7 @@ The blog's workflow — implement at a lower effort, verify at `high` — maps o
 | Inline skill, user types `/skill` | high / medium | low / xhigh | low / xhigh | yes, both directions |
 | Inline skill, Claude auto-invokes via Skill tool | high / medium | low / xhigh | session value | **no** |
 
-Same shape as the inline `model:` finding: on the auto-invoke path the harness resolves the pin (`${CLAUDE_EFFORT}` in the skill body renders `low`) but the turn keeps the session effort. Keep the pin on inline skills anyway — it applies on typed invocation and records the task's size — but do not count on it when Claude routes to the skill itself. Work that must run at a fixed effort belongs in an agent or a forked skill. A Workflow script's `agent(prompt, {effort})` takes it per call. Haiku supports no effort level.
+Same shape as the inline `model:` finding: on the auto-invoke path the harness resolves the pin (`${CLAUDE_EFFORT}` in the skill body renders `low`) but the turn keeps the session effort. Keep the pin on inline skills anyway — it applies on typed invocation and records the task's size — but do not count on it when Claude routes to the skill itself. Work that must run at a fixed effort belongs in an agent or a forked skill. Never fork a skill that needs the conversation; instead keep the conversation inline and move the fixed-effort judgment into an agent the skill dispatches with explicit inputs (see the "Inline shell + pinned agent" row below). A Workflow script's `agent(prompt, {effort})` takes it per call. Haiku supports no effort level.
 
 **Anthropic's own guidance points the same way** ("What a task costs on Opus 5.5", 2026-09): "Raise effort before you change models"; "Move down to Sonnet or Haiku for lookups, not for writing code … Keep judgment calls on the main model."
 
@@ -78,7 +78,8 @@ A subagent a skill dispatches is classified on its own: `execute-plan` (skill) i
 | `test-runner` (agent) | Lookup (filter build/test output) | `model: sonnet` + `effort: high` (decides pass/fail) |
 | `verify-plan`, `write-plan`, `run-phase`, `fix-bug`, `review-execution` | Judgment / Synthesis / Orchestration | inherit |
 | `ui-reviewer`, `design-reviewer`, `feature-reviewer`, `judge` (agents) | Judgment | inherit — moved off `sonnet` on 2026-09-24; `effort: high` |
-| `afk`, `runtime-feature-verify`, `swiftui-visual-audit` | Autonomous end-to-end | inherit, `effort: xhigh` |
+| `afk`, `runtime-feature-verify` | Autonomous end-to-end | inherit, `effort: xhigh` (`afk` is `disable-model-invocation`, so its pin always applies) |
+| `fix-bug`, `asc-submit-preview`, `asc-listing`, `swiftui-visual-audit`, `design-parity-build`, `review-before-commit` | Inline shell + pinned agent | Skill `effort: medium`/`high` for its own inline work; the high judgment runs in `bug-diagnoser`, `app-review-auditor`, `render-auditor`, `design-parity-auditor`, `change-classifier` (all `effort: high`) so it holds even when Claude auto-invokes the skill |
 
 ## Anti-patterns to flag
 

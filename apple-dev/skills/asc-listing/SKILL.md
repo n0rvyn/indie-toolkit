@@ -1,8 +1,16 @@
 ---
 name: asc-listing
 description: "Everything on the App Store Connect backend: what to put in each box, and what the backend actually holds right now. Use when the user says 'ASC listing', 'asc 上架材料', 'ASC 填写', 'app store listing', 'privacy labels', or asks to read the live state — 'ASC 现在填的是什么', '关键词字段实际是什么', '我改的 ASC 字段存进去了吗', '提交出去了吗', 'read back ASC', 'check ASC state', 'is it actually submitted' — or after any ASC edit that must be confirmed. Covers item-by-item submission material guidance, authenticated read-back of live keywords / name / subtitle / description / promo / What's New / review notes / screenshot checksums, whether a version is really queued with Apple, and version-to-version diffing for post-rejection forensics. Keywords: ASC, App Store Connect, submission, privacy labels, screenshots, review, read-back, submission state. Not for 代码合规检查 — use /asc-submit-preview. Not for 关键词研究 / 商店搜索排名 / 商标能否进名称 — use /aso-research (this skill reads and fills the ASC boxes; that one decides what the text should be, from pulled ranking data)."
-effort: high
+effort: medium
 ---
+
+<!-- cost-posture: inherit, effort medium. The two read-only code audits in this skill (Mode B privacy
+  evidence, Step 3.5 claim-to-code anchoring) are judgment and run in the apple-dev:app-review-auditor
+  agent (effort: high), because an inline skill's `effort:` is ignored when Claude auto-invokes it
+  (probed 2026-09-26) while an agent's always applies. What stays inline: Mode A's per-section user
+  confirmation, Mode C answers, and Mode D read-back + post-rejection forensics (needs the rejection
+  message and live readback) — Mode D hypothesis-forming is residual high-judgment work held at medium,
+  kept honest by the diff-before-hypothesis rule. No inline `model:` pin. -->
 
 # App Store Connect 上架审查
 
@@ -43,7 +51,14 @@ effort: high
 
 **模式 A**：按 reference 中的字段顺序，逐项向用户解释并确认填写内容。每完成一个大部分（App Information / Privacy / Version），确认再进入下一部分。
 
-**模式 B**：读取项目代码（import 语句、网络请求、数据存储），帮用户判断每个数据类型是否需要声明。输出格式：
+**模式 B**：代码证据扫描交给 `apple-dev:app-review-auditor`（effort: high）。用 Agent tool 派发，`subagent_type: "apple-dev:app-review-auditor"`，传：
+
+- `mode: guidelines`，`scope: privacy-only`
+- 项目根目录绝对路径；已知的话附主 App target / Info.plist 路径
+- `docs/10-app-store-connect/privacy-policy.md` 的绝对路径（存在时；否则写 "none"）
+- 用户在对话里提到的第三方 SDK / 数据处理方（agent 看不到对话）
+
+从返回里取 **Privacy Evidence Table** 渲染成下表（`建议` 列由「是否收集 / 关联用户 / 用于追踪 / 目的」拼成）；**Privacy Policy Consistency** 有差异时一并列出，改文档前先给用户确认。Section 5 的 Findings 附在表后。
 
 ```
 [隐私标签审查]
@@ -52,6 +67,8 @@ effort: high
 | Health | ✅ | import HealthKit in ... | 声明，关联用户，App Functionality |
 | Location | ❌ | 无相关 import/API | 不声明 |
 ```
+
+⛔ 派发失败、返回 `status: blocked`、或返回里没有 Privacy Evidence Table 时：**隐私证据扫描没有跑**。照实说「隐私标签代码证据扫描未执行：{原因}」，不要在主上下文里自己凑一张表，更不能输出一张全 ❌ 的表当「不收集任何数据」。
 
 **模式 C**：直接回答用户问题，引用 reference 中的具体指引。
 
@@ -68,6 +85,13 @@ effort: high
 **这一步没有别人管。** `asc-submit-preview` 查代码 vs 审核指南，本 skill 查表单填没填全，`aso-research` 定文案写什么 —— **「描述里写的功能，二进制里到底有没有」落在三者的缝里**，而它是 2.3.1（描述与实际不符）整类拒审的来源。
 
 做法：把描述与推广文本里的**每一条功能句**拆出来，各找一个代码落点 —— 一个 View、一个 target、一个 entitlement、一个 framework import。找不到落点的，就是候选缺陷。
+
+**执行者是 `apple-dev:app-review-auditor`（effort: high），本 skill 只负责取文本、派发、渲染。**
+
+1. **取原文**：`python3 $SC show <app> --full` 拉每个 locale 的 description 与 promotional text（见「读回后端真实内容」）；拉不到（没凭据 / 新 App 尚未填）时请用户粘贴。**逐字传，不许摘要或改写** —— 审的是 Apple 看到的那段文字。
+2. **派发**：Agent tool，`subagent_type: "apple-dev:app-review-auditor"`，传 `mode: claims`、项目根目录绝对路径、按 locale 分段的原文（注明来源：`show --full` 或用户粘贴）。
+3. **用返回**：`Claims` 表按下面格式渲染；`blocker: yes` 的每一行进 Step 4 阻塞项；`Unclaimed Stubs` 附在表后；`Targets` 一段原样保留作为独立 target 判定的证据。
+4. ⛔ 派发失败、返回 `status: blocked`、或返回里没有 Claims 表：**功能句核对没有跑**。在报告里写「Step 3.5 未执行：{原因}」，并把它列为阻塞项 —— 不许自己在主上下文里草草对一遍后打 ✅，也不许当作「没有缺陷」。
 
 ```
 | 描述里的功能句 | 代码落点 | 判定 |

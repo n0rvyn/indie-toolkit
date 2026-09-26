@@ -4,7 +4,7 @@ description: "Use when the user reports an error with stack trace or screenshot,
 effort: high
 ---
 
-<!-- cost-posture: inherit (judgment — finding a root cause and deciding when a fix is a design question are diagnosis calls; do NOT downgrade, per project CLAUDE.md) -->
+<!-- cost-posture: inherit (judgment — finding a root cause and deciding when a fix is a design question are diagnosis calls; do NOT downgrade, per project CLAUDE.md). The skill's effort pin is not honored when Claude auto-invokes it, so the hardest diagnosis calls go to the `dev-workflow:bug-diagnoser` agent (effort: high, always honored); see "Diagnosis" below. -->
 
 # fix-bug
 
@@ -29,6 +29,35 @@ The block doubles as the readback. If the report can reasonably be read two ways
 - Two or more issues against a system with an end-to-end verification surface, where the user expects verification through that surface: follow `${CLAUDE_PLUGIN_ROOT}/references/multi-issue-loop.md`.
 - Swift / Apple project (`.swift`, `.xcodeproj`, `.xcworkspace`): load `apple-dev:apple-swift-context` before changing code.
 
+## Diagnosis
+
+Read the evidence yourself first. If that first read confirms the cause (you can point to the file:line that produces the wrong behavior and explain the evidence from it), go on without a dispatch. Otherwise, dispatch the read-only diagnosis agent. Don't dispatch it up front on every bug.
+
+**When to dispatch** `Agent(subagent_type: "dev-workflow:bug-diagnoser")`:
+- **Conditional:** after your first read of the evidence, the cause is not confirmed.
+- **Mandatory:** two hypotheses have failed (the Circling point below). Always dispatch here, even if you have a third idea.
+- **Mandatory:** you think the code is doing what it was designed to do and the design is the problem. The bug-vs-design verdict comes from the agent, not from the main turn.
+
+**What to pass.** The agent does not see the conversation, so pass it all:
+- the absolute project root
+- the Current / Expected block
+- the error text, stack trace and log excerpts, verbatim
+- the repro steps
+- file paths of any logs, screenshots or reports. An image pasted into chat can't be passed; describe it in text and say that it is a description.
+- the `gh issue view` body, including `### Prior Hypotheses`, if the work came from an issue
+- any KB hits
+- at the Circling point, every failed hypothesis with what was tried and what was observed
+
+If a call-chain trace would help, you may dispatch `dev-workflow:flow-tracer` in parallel. It is tuned for Swift and has no Bash. The diagnoser cannot dispatch it itself.
+
+**Using the return** (`## Diagnosis` block):
+- `confirmed` / `probable`: fix from `Cause`, and fix every `Same-Cause Sites` entry in the same pass. Check each entry under `Consumers`. Treat `Unverified Premises` as open until you check them.
+- `need-experiment`: run the `Next Experiment` in the main turn (instrumentation, a quick repro, the running app or device), then dispatch again with the result added as evidence.
+- `Design Verdict: design`: follow "Patching a design that should go" below, using the agent's evidence.
+- `unknown` / `insufficient-input`: gather what it names (ask the user in one message if it has to come from them), then dispatch again.
+
+**If the dispatch fails** (error, timeout, or a return with no `## Diagnosis` block), say in plain words that the root-cause diagnosis did NOT run. Don't treat that as "no findings". Don't present your own guess as the agent's verdict. For a mandatory dispatch, retry once. If it still fails, tell the user the check did not run and ask before making a design call or a third fix.
+
 ## What done means
 
 1. The reported symptom no longer occurs on the user's real path, and you saw it happen: an API call, the running app, a device. A green unit test is a starting signal, not the finish.
@@ -45,9 +74,9 @@ These are the recurring ways a fix goes wrong. Avoid them; they are not steps to
 - **Reading an error code as a diagnosis.** A code tells you the category of failure, not why it happened this time. Go to the real log.
 - **Blaming something external** before you have followed the call chain hop by hop and found where it actually breaks.
 - **Stacking workarounds.** If you are about to add a second layer to work around the same thing, the first explanation was wrong. Look at the logs on the side you have been working around.
-- **Circling.** After two failed hypotheses, change the frame, don't just try a third variant. If several candidate fixes all rest on one premise you never verified, test that premise.
+- **Circling.** After two failed hypotheses, change the frame, don't just try a third variant. If several candidate fixes all rest on one premise you never verified, test that premise. This is a mandatory `dev-workflow:bug-diagnoser` dispatch with both hypotheses listed (see "Diagnosis"). Its `Premise Check` is the reframe.
 - **Assuming a change took effect.** If a change made no difference and nothing errored, first make sure you are looking at the artifact you changed: a stale build, the wrong process, a server that compiled once.
-- **Patching a design that should go.** If the code is doing what it was designed to do and the design itself is the problem, say so with evidence (git blame, the superseded requirement) and ask before removing or replacing that behavior. If you do replace it, state what the old design was for, what the replacement newly costs, and under what condition the old path would come back.
+- **Patching a design that should go.** If the code is doing what it was designed to do and the design itself is the problem, say so with evidence (git blame, the superseded requirement), taken from the `Design Verdict` of a `dev-workflow:bug-diagnoser` return, and ask before removing or replacing that behavior. If you do replace it, state what the old design was for, what the replacement newly costs, and under what condition the old path would come back.
 - **A third failed fix.** After three fixes that didn't hold, stop and discuss the architecture with the user.
 
 Tools worth reaching for when they fit:
@@ -68,5 +97,6 @@ Tools worth reaching for when they fit:
 
 ## Completion Criteria
 
-- The cause is stated with code evidence (file:line).
+- The cause is stated with code evidence (file:line), taken from your own confirmed first read or from the `Cause` of a `dev-workflow:bug-diagnoser` return.
+- If a bug-diagnoser dispatch was required (Circling, or a design verdict) and did not run, the closing message says so.
 - Everything under "What done means" holds, or each unmet item is named with its reason and the steps for the user to verify it.

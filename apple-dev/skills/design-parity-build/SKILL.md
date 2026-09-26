@@ -2,10 +2,10 @@
 name: design-parity-build
 description: "Use when auditing a Claude Design (or similar handoff) against an iOS codebase, or the user says 'design parity', 'design 1:1', 'verify Claude Design', 'Claude Design audit', 'audit design implementation', '设计落地审计', 'Claude Design 对齐', '1:1 还原 Claude Design', or '/design-parity-build'. Writes audit doc to docs/06-plans/ for /write-dev-guide. Not for: per-View hardcoded-value scan (run /review-execution, which dispatches apple-dev:ui-reviewer), subjective review without an external design source (run /review-execution — it dispatches apple-dev:design-reviewer only when the diff ADDS a *View.swift, and apple-dev:ui-reviewer when one is merely modified), DS codegen (generate-design-system)."
 compatibility: Requires macOS and Xcode
-effort: high
+effort: medium
 ---
 
-<!-- cost-posture: inherit (judgment + synthesis + orchestration — gap severity classification, decision point grouping, audit doc synthesis, and bridge to /write-dev-guide are judgment calls; do NOT downgrade to sonnet/haiku per dev-workflow Skill Cost Posture rule) -->
+<!-- cost-posture: inherit (orchestration + user interaction — mode selection, Decision Point grouping with the user, audit doc synthesis, bridge to /write-dev-guide). The high-effort judgment (detector runs, gap classification) lives in apple-dev:design-parity-auditor, pinned effort: high, because an inline skill's effort pin is ignored on auto-invoke. Do NOT downgrade the model per dev-workflow Skill Cost Posture rule. -->
 
 # Design Parity Build
 
@@ -53,7 +53,12 @@ If the user cannot or will not provide a source, stop with:
 
 > ❌ 没有设计源即无审计基准。请先准备 Claude Design handoff 后重新触发。
 
-Record handoff content in conversation context for the rest of the session.
+Record handoff content in conversation context for the rest of the session, **and save it to files** — the auditor agent (Step 4) does not see the conversation:
+
+- Directory: `<project-root>/.claude/design-parity/{YYYY-MM-DD-HHmmss}/`.
+- `handoff.md`: pasted text / exported markdown / prompts, verbatim.
+- URLs: fetch what is readable and save each as its own `.md`; list unreadable URLs in `handoff.md` under `## Unreadable sources`.
+- Screenshots already on disk: list their absolute paths in `handoff.md`. Images pasted into chat only: transcribe the visible tokens and pages into `handoff-transcribed.md`, headed `transcribed from image by main turn` (or apply the screenshot Edge Case below).
 
 ### Step 3: Locate iOS Design System
 
@@ -79,30 +84,43 @@ Outcomes:
 
 Do NOT fail; record the situation in the audit doc's notes.
 
-### Step 4: Mode-Specific Audit
+Then resolve the inputs the auditor needs for Step 0 (it gets absolute paths only — `${CLAUDE_PLUGIN_ROOT}` is expanded here, not in the agent):
 
-Execute the audit subset per mode (see **Mode Behavior** section below). For each task in scope, follow the templates in `references/design-parity-templates.md` strictly — do not invent fields, do not omit required fields.
+- **Detector dir**: `${CLAUDE_PLUGIN_ROOT}/scripts/design-detectors` if it exists, else `<project-root>/scripts/design-gates`, else `not found`.
+- **Contract dir**: the design contract directory (DESIGN.md with `## Platform Mapping`, e.g. the `Path` from design-source.md), else `none`.
+- **Detector target(s)**: the app source directory(ies) to pass as `--arm`.
+- **Render / reference pair**: only if the user supplied a device screenshot + prototype render at the same resolution.
 
-**Reuse rules** (do not re-implement):
+### Step 4: Dispatch the Auditor (runs Step 0 + audit)
 
-- Token value comparison (color, spacing, typography): follow `${CLAUDE_PLUGIN_ROOT}/references/design-contract-schema.md` § 2 (per-channel max-delta ≤ 4 for color; exact for spacing; ±0.01 opacity for shadows) — that file is the authority and carries the exact one-liner.
-- Token field naming and `DESIGN.md → Swift` mapping: follow `apple-dev:project-kickoff` `references/doc-templates.md` section "DESIGN.md → Swift Token 映射" rules where applicable.
+Dispatch the Agent tool with `subagent_type: "apple-dev:design-parity-auditor"`. Pass, as absolute paths or literal values:
 
-For each implemented page, search the iOS codebase by:
+1. Mode, and scope pages (`single-page`).
+2. The handoff files saved in Step 2.
+3. Project root.
+4. DesignSystem.swift / AppFont.swift / design-source.md paths from Step 3 (or `missing`).
+5. Contract dir (or `none`), detector dir (or `not found`), detector target(s), render / reference pair if any.
+6. `${CLAUDE_PLUGIN_ROOT}/references/design-parity-templates.md`, `${CLAUDE_PLUGIN_ROOT}/references/design-contract-schema.md` and `${CLAUDE_PLUGIN_ROOT}/skills/project-kickoff/references/doc-templates.md`, expanded to absolute paths.
+7. Notes from Step 3 (e.g. "not an iOS UI project, user chose to continue", "no DS found, user chose to proceed").
 
-1. Page name → SwiftUI View name (`grep -rn "struct .*View: View" --include="*.swift"`)
-2. Navigation entry → `NavigationStack` / `NavigationLink` / `sheet(` / `fullScreenCover(` callsites
-3. Confirm a single primary file:line; if ambiguous, list candidates and mark `Cannot verify` until disambiguated.
+The agent runs Step 0 (below) first, then audits per `references/design-parity-templates.md` and the **Mode Behavior** table, using `design-contract-schema.md` § 2 for token deltas and `apple-dev:project-kickoff` `references/doc-templates.md` "DESIGN.md → Swift Token 映射" for naming. It returns a `## design-parity-auditor result` block: Detector Results, Detector Finding Mapping, Proposed Waivers, the five matrices (DS / Tokens Parity, Page Inventory, Coverage, Match Report, Gap List with all 11 fields and the aggregation rule applied), Decision Point Candidates, Open Questions, Suggested Phase Outline Inputs, Counts.
 
-### Step 5: Generate Outputs
+**Using the return:**
 
-Produce the matrix subset for the chosen mode, using templates from `references/design-parity-templates.md`:
+- `status: blocked (contract lint red)` → STOP. Show the user n4's output: the contract must be fixed before any audit. Do not write the audit doc.
+- `status: blocked (other)` → show the reason; fix the missing input and re-dispatch, or stop.
+- `status: partial` → continue, and list every un-audited page / DS item under Open Questions.
+- The five matrices go into audit doc sections 1–5 as returned. Do not re-classify gaps from memory of the handoff — if you disagree with a classification, raise it as a Decision Point in Step 6.
+- **Decision Point Candidates** and **Proposed Waivers** are NOT settled. Both go to Step 6 for the user.
 
-- **DS / Tokens Parity Matrix** — every DS item with status enum
-- **Designed Page Inventory** — every page from the design source
-- **Implementation Coverage Matrix** — every designed page + iOS implementation status
-- **Page-by-Page Match Report** — observable comparison per implemented page
-- **Gap List** — every gap with all 11 required fields
+**If the dispatch fails** (error, timeout, or no `## design-parity-auditor result` block): the audit and the detectors did **NOT** run. Never treat a failed dispatch as "no findings" or "no gaps". Tell the user, then either:
+
+- run Step 0 yourself (commands below) and report the outputs, or report `Step 0: NOT RUN (auditor dispatch failed)`; and
+- re-dispatch once, or — only with the user's explicit OK — perform the audit inline following `references/design-parity-templates.md`, stating in the audit doc notes `auditor dispatch failed; audit ran inline`. Otherwise stop without writing an audit doc.
+
+### Step 5: Review the Returned Outputs
+
+Check the return before Step 6: every gap has all 11 fields; every detector finding in Detector Results appears in Detector Finding Mapping; every detector is `ran` or `NOT RUN (reason)`. A gap is missing fields or a finding is unmapped → re-dispatch with the specific omission named, or record it under Open Questions. Do not fill fields yourself from the conversation.
 
 Each gap MUST classify:
 
@@ -118,7 +136,9 @@ Each gap MUST classify:
 
 ### Step 6: Decision Points (Grouped)
 
-Before writing the audit doc, resolve Decision Points (gaps where the design handoff is ambiguous, conflicting, or unverifiable from code).
+Before writing the audit doc, resolve Decision Points (gaps where the design handoff is ambiguous, conflicting, or unverifiable from code). The input is the auditor's **Decision Point Candidates** plus its **Proposed Waivers** — the agent proposes, the user decides.
+
+**Detector waivers** form their own group (`Detector waiver`), processed first with the same ≤ 4 per call rule. Pass 1: selected = waiver approved (record finding + reason in the audit doc as waived); unselected = the finding goes into the Gap List as a gap (default `Fix status: Decision Point` unless the user says Confirmed). No Pass 2 for this group. A waiver the user never saw is a suppressed finding.
 
 **Grouping policy**:
 
@@ -141,6 +161,8 @@ This 2-pass split is required because `AskUserQuestion`'s multiSelect surface on
 Path: `docs/06-plans/YYYY-MM-DD-design-parity-{mode}-design.md`.
 
 The filename **must end in `-design.md`** so `dev-workflow:write-dev-guide` Step 1 auto-discovers it via `docs/06-plans/*-design.md`.
+
+Append the auditor's **Detector Results** (command + verbatim output per detector, or `NOT RUN (reason)`) and the user-approved waivers as `## Appendix A. Step 0 Detector Output` after section 8. Zero-finding output is included verbatim.
 
 Structure (full skeleton in `references/design-parity-templates.md` Section 6):
 
@@ -252,6 +274,8 @@ After Step 8, the user has:
 The five matrices live inside the audit doc as sections 1–5; they are not separate files.
 
 ## Step 0 — Run the deterministic detectors first. They see what you cannot.
+
+**Who runs it:** normally `apple-dev:design-parity-auditor`, as its first action inside the Step 4 dispatch. The main turn runs these commands itself only when that dispatch failed (see Step 4) — otherwise it reports Step 0 as NOT RUN.
 
 Before reading a single line of the design doc, run these. They take seconds, they need no judgment, and each one catches a defect class that **renders pixel-identically to a correct build** — meaning no amount of careful looking, by you or by a human, will ever find it.
 

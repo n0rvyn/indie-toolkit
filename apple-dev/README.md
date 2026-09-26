@@ -56,7 +56,7 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | mac-app-shot | run-phase (visual step) | 单窗截图 + 驱动（CoreGraphics 点击/键盘） + edit→rebuild→relaunch 循环，sandboxed view ImageRenderer fallback |
 | runtime-feature-verify | run-phase (visual step) | 运行时 feature 真验（非 mock）：per-feature × real-judge-signal（剪贴板/持久化/真实 LLM/重渲），输出 feature→verdict 表 |
 
-## Agents (4)
+## Agents (7)
 
 | Agent | Description |
 |-------|-------------|
@@ -64,6 +64,9 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | ui-reviewer | UI + UX compliance review (fresh context) |
 | design-reviewer | Visual quality review (fresh context) |
 | feature-reviewer | Product completeness review (fresh context) |
+| app-review-auditor | App Store rejection-risk audit: `mode=guidelines` (1–5 + 5.1.x privacy table) for asc-submit-preview / asc-listing Mode B, `mode=claims` (store copy ↔ code anchors) for asc-listing Step 3.5 |
+| design-parity-auditor | Runs design detectors and audits a saved Claude Design handoff vs the iOS code; returns matrices, gap list, proposed waivers for the user (design-parity-build) |
+| render-auditor | Scores batches of captured PNGs against refactoring-ui Part B; returns severity-tagged gaps per View × appearance (swiftui-visual-audit Step 4) |
 
 ## Hooks
 

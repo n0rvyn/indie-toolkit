@@ -1,6 +1,6 @@
 {
   "name": "dev-workflow",
-  "version": "4.2.0",
+  "version": "4.3.0",
   "description": "Cross-stack development workflow: brainstorm, planning, phase orchestration, execution, review, debugging, design analysis, knowledge base, commits, and session management",
   "author": {
     "name": "Norvyn"

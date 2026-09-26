@@ -7,7 +7,7 @@ description: |
   (also: insights based on real usage to propose plugin improvements)
   Not when: user wants only atomic builder guidance for a component (skill / agent / hook / command structure) without eval cases or a review gate — use `/plugin-dev:skill-development` / `agent-development` / `hook-development` / `command-development` / `plugin-structure` directly. plugin-master orchestrates creation with eval cases and a review gate; plugin-dev provides the atomic builders.
   Not when: user wants an uncommitted DIFF reviewed for correctness / test coverage / breaking changes — use `/review-execution`. This skill audits plugin artifacts (trigger quality, dispatch wiring, eval coverage); that one reviews code changes. In a plugin monorepo both fire on the same words, so route on the question being asked, not on the file type.
-effort: high
+effort: medium
 ---
 
 # Plugin Lifecycle Management

@@ -2,7 +2,7 @@
 name: finalize
 description: "Use after all phases of a dev-guide are complete, or when the user says 'finalize', 'final check', 'cross-phase validation'. Runs full test suite, verifies acceptance criteria across all phases, audits cumulative test coverage, and produces a final validation report."
 allowed-tools: Bash(npm:*) Bash(cargo:*) Bash(pytest:*) Bash(go:*) Bash(xcodebuild:*) Bash(swift:*) Bash(git:*) Bash(mkdir:*) Bash(test:*) Bash(cat:*) Bash(ls:*) Bash(date:*) Bash(wc:*) Bash(find:*) Bash(python3:*)
-effort: high
+effort: medium
 ---
 
 ## Overview

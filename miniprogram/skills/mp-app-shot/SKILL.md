@@ -1,7 +1,7 @@
 ---
 name: mp-app-shot
 description: "Use when you need to VISUALLY verify a running WeChat mini program (微信小程序) from the CLI — headless, WITHOUT stealing focus or touching the devtools GUI: screenshot any route, read back the page's real `data`, measure element geometry, and drive unreachable branches by temporary code injection. Covers the edit → recompile-wait → screenshot → assert loop, plus the capsule-button (胶囊按钮) safe-area check that screenshots structurally cannot show. Triggers: '截图验证小程序', '看一下小程序界面', 'screenshot the mini program', '验证小程序渲染', '小程序 UI 对不对', '空态/骨架/降级分支长什么样', 'verify the mini program UI'. NOT for: macOS/iOS apps (use mac-app-shot / swiftui-visual-audit), web pages (use a browser tool), pre-submission config checks (use mp-submit-preview), or logic-only tests (they never show layout)."
-effort: high
+effort: medium
 ---
 
 ## What this is

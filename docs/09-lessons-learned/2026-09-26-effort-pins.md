@@ -42,6 +42,12 @@ Repro: `.claude/skills/probe-low/SKILL.md` with `effort: low` and body "Run `ech
 ## 3. Pending / known gaps
 
 - ⏳ **Waiting on harness fix** — `runtime-feature-verify` (xhigh) and `disk-reclaim` (high) keep high judgment inline; marked `PENDING-HARNESS-FIX`. When fixed: re-run the §2 probe, delete the markers and the paragraph in `cost-posture.md`.
-- **Not yet run for real:** `bug-diagnoser`, `app-review-auditor`, `design-parity-auditor`, `render-auditor` (wiring checked by grep; `change-classifier` passed a real auto-invoked run).
+- **Real runs 2026-09-26** (headless `claude -p --plugin-dir`, session effort medium, seeded fixtures in a scratch repo):
+  - `change-classifier` — auto-invoked review-before-commit dispatched it; caught a required-param signature break. ✅
+  - `app-review-auditor` — auto-invoked asc-submit-preview dispatched it; caught 3.1.1 external purchase link and missing `NSCameraUsageDescription`. ✅
+  - `design-parity-auditor` — auto-invoked design-parity-build dispatched it; caught accent #FF6A00 vs #0A84FF, radius 16 vs 8, missing Settings page and gear entry; detectors without inputs reported NOT RUN, not clean. ✅
+  - `bug-diagnoser` — typed `/fix-bug` with two failed hypotheses → mandatory dispatch fired; root cause `parse.py:7` (integer dollars returned as cents), not the symptom file. ✅
+  - `render-auditor` — dispatched directly (the skill's capture steps need Xcode); caught raw key 🔴, low-contrast secondary text, truncation, three equal-weight primary buttons. ⚠️ Missed: inconsistent corner radii (4/12/20) and off-grid padding (13/21) on the same screen — tighten the F2/S rows' screenshot wording if this recurs.
+  - ⚠️ Trigger gap: a natural-language bug report ("总额不对，帮我修好") did **not** invoke fix-bug; Claude fixed the bug directly, so its diagnosis dispatch never runs on that path.
 - **Drift guard:** `render-auditor` embeds refactoring-ui Part B; `apple-dev/skills/swiftui-visual-audit/scripts/test_rubric_sync.py` goes red when the rule IDs diverge (wording is still synced by hand).
 - **Stale refs:** `docs/12-retired/sync-design-md.md:36` (thresholds now only in `design-contract-schema.md` §2); run-phase flow diagram still labels some steps "opus".

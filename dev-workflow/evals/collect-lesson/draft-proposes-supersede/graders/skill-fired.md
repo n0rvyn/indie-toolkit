@@ -1,0 +1,6 @@
+---
+type: tool_used
+tool: Skill
+input_match: '"skill"\s*:\s*"(?:[\w-]+:)?collect-lesson"'
+min: 1
+---

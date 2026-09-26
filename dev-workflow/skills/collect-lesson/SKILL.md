@@ -28,14 +28,25 @@ Review the current conversation to identify:
 2. **Body** — Markdown content following the appropriate structure for the content type
 3. **Keywords** — 3-6 keywords for search (error type, component name, API name, pattern name)
 4. **Category** — Pick the most fitting slug: `api-usage`, `bug-postmortem`, `architecture`, `platform-constraints`, `stability-audit`, `data-research`, `workflow`, `reference`, or a new slug if none fit
+5. **Verified on** — required for `platform-constraints`: the platform and version the behavior was observed on (`Claude Code 2.1.283`, `iOS 26.1 / Xcode 26.1`, `claude-agent-sdk 0.2.141`). Take it from the session's own output; if the session never showed it, run the version command (`claude --version`, `xcodebuild -version`) or ask. A platform behavior without a version cannot later be told apart from the next version's behavior.
 
-### Step 2: Check for Near-Duplicates
+### Step 2: Check Existing Entries — Duplicate, Superseded, or Different Scope
 
-Search the central knowledge base for similar entries:
+Search the central knowledge base for entries on the same subject:
 
 1. `Grep(pattern="<keywords joined by |>", path="~/.claude/knowledge/", output_mode="files_with_matches")`
-2. For each matching file, read its frontmatter `keywords:` line and title
-3. If any file has significant keyword overlap (3+ shared keywords): present it to the user as "Similar entry already in knowledge base:" and ask whether to create a new entry, update the existing one, or skip
+2. For each matching file, read its frontmatter `keywords:` line and title. Skip files already marked `status: superseded`.
+3. For each file with 3+ shared keywords, read its body and give it exactly one verdict:
+
+| Verdict | When | Proposed action |
+|---|---|---|
+| **Duplicate** | Same claim, same conditions | Ask: create new, update the existing one, or skip |
+| **Superseded** | Same subject under the same conditions, and this session holds the fact that makes the old claim false: a newer version behaves differently, a measurement contradicts it, its root cause was wrong. The new entry must also carry everything the old one is still right about. | The new entry supersedes it |
+| **Partly wrong** | One part of the old entry is false, the rest still holds and the new entry does not restate it | Update the existing entry: correct the wrong part in place, with a dated line naming the evidence. Do not supersede. |
+| **Different scope** | Both claims hold, under different conditions (mode, version range, platform) | Scope note on both entries |
+| **Unrelated** | Shared keywords only | Nothing |
+
+⛔ Supersede only when you can name the fact that makes the old claim false. "The new one is more recent" is not such a fact. When unsure between Superseded and Different scope, choose Different scope: a scope note hides nothing, a wrong supersede hides a true entry from every future `/kb` search.
 
 If `~/.claude/knowledge/` does not exist yet, skip this step.
 
@@ -57,6 +68,9 @@ Draft knowledge entry:
 Title:     {suggested title}
 Category:  {category}
 Keywords:  {keyword1}, {keyword2}, ...
+Verified on: {platform + version}            (platform-constraints only)
+Supersedes:  {old filename} — {the fact that makes it false}   (one line each, if any)
+Scope note:  {old filename} — {the condition that separates them} (one line each, if any)
 Scope:     global (saves to ~/.claude/knowledge/{category}/)
            OR project (saves to docs/09-lessons-learned/)
 
@@ -70,7 +84,7 @@ Options:
 - Skip
 ```
 
-Wait for user response. Apply any edits before saving.
+Wait for user response. Apply any edits before saving. The user's answer covers the Supersedes and Scope note lines too: a line the user strikes is not applied in Step 5c.
 
 ### Step 4: Save Entry
 
@@ -91,6 +105,8 @@ Once the user confirms:
 category: {category}
 keywords: [{kw1}, {kw2}, ...]
 date: {YYYY-MM-DD}
+verified_on: {platform + version}          # platform-constraints only
+supersedes: [{old filename}, ...]          # only if Step 2 found any
 source_project: {current project name, optional}
 ---
 # {Title}
@@ -130,23 +146,31 @@ After processing all related entries, `Edit` the new entry's frontmatter to add 
 
 Related entries are referenced by filename only (e.g., `2026-04-07-some-slug.md`), not full paths, since category directories may differ.
 
-#### 5c. Contradiction Flag (best-effort)
+#### 5c. Apply the Step 2 Verdicts
 
-For each related entry with >=3 keyword overlaps:
+Apply the Supersedes and Scope note lines the user confirmed in Step 3. Nothing else is written here.
 
-1. Read both entries' body content (below the frontmatter)
-2. If the new entry's core claim or recommendation directly contradicts the related entry (e.g., "use X" vs "avoid X", conflicting root causes for the same symptom):
-   - Append to the new entry's body: `> ⚠️ Potential conflict with [[{related-filename}]] — review both entries.`
-   - Append the same note to the related entry's body (at the end)
-3. Only flag obvious, specific contradictions. Do not flag stylistic differences or different-scope advice.
+**Superseded** — edit the old entry:
+1. Frontmatter: add `status: superseded` and `superseded_by: {new filename}` after the `date:` line.
+2. Body: insert right under the title: `> ⛔ 已被取代（{YYYY-MM-DD}）：{the fact that makes it false}。现行结论见 [[{new filename}]]。`
+
+The file stays where it is: other tools point at knowledge-base files by path, and `/kb` hides a superseded entry by its `status`, not by its location.
+
+**Different scope** — append to the end of both entries: `> ↔ 适用范围不同：[[{other filename}]] — {the condition that separates them}`
+
+⛔ Never write "potential conflict — review both". A note that asks a future reader to adjudicate is never acted on; decide here, or leave both entries untouched and name the undecided pair in the report below.
+
+A related entry found in 5a that Step 2 did not judge (it shared only 2 keywords) gets no verdict.
 
 #### 5d. Report Ripple Results
 
 After the "Saved to {file_path}" message from Step 4, append:
 
 ```
-Cross-references: {N} related entries found, {M} mutual links added, {C} contradictions flagged
+Cross-references: {N} related entries found, {M} mutual links added, {S} superseded, {P} scope notes
 ```
+
+Name any pair left undecided: `未裁决：{filename} — {why}`.
 
 If no related entries: `Cross-references: no related entries (< 2 keyword overlap)`
 
@@ -178,4 +202,6 @@ Optional: Run `/generate-bases-views --target lessons` to update the Obsidian Ba
 - Entry saved to `~/.claude/knowledge/{category}/` or `docs/09-lessons-learned/` with correct frontmatter
 - User confirmed the draft before saving
 - Related entries (>=2 keyword overlap) have mutual `related:` cross-references in frontmatter
+- Every entry Step 2 judged Superseded carries `status: superseded` + `superseded_by:`, and the new entry lists it under `supersedes:`
+- `platform-constraints` entries carry `verified_on:`
 - Promotion check (Step 5.5) evaluated for global-scope saves — hint emitted, or conditions noted as unmet

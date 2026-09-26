@@ -4,6 +4,7 @@ description: "排查 macOS 磁盘被什么占满并安全回收空间。先判�
 compatibility: Requires macOS
 effort: high
 ---
+<!-- ⏳ PENDING-HARNESS-FIX (2026-09-26): the effort pin applies only when the user types this skill; when Claude auto-invokes it the turn runs at session effort. Its high judgment is interleaved with live driving / main-thread cross-checks and cannot move to an agent. Reported to Anthropic via /bug. When fixed: re-run the probe in docs/09-lessons-learned/2026-09-26-effort-pins.md and delete this marker. -->
 
 # Disk Reclaim
 

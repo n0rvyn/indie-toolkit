@@ -16,7 +16,7 @@ mactools 里另外十个 skill 都是 fork + haiku 的薄脚本封装。这个�
 2. **`allowed-tools` 锁死脚本会挡住诊断命令。** 找根因用的是 `footprint -p` / `lsof +D` / `mount` / `F_LOG2PHYS_EXT`，"这次该用哪个"是判断，不是脚本分支。
 3. **`rm -rf` 没有回收站。** mactools 里最重的写操作（`notes delete` / `mail trash`）都可撤销，这个不行。
 
-Cost posture：Judgment 类 → inherit，不 pin `model`，不 pin `effort`（`skill-master/skills/plugin-master/cost-posture.md`）。
+Cost posture：Judgment 类 → inherit `model`，`effort` 按任务需要 pin（`skill-master/skills/plugin-master/cost-posture.md`）。
 
 ## 第一件事：占用不一定在目录里
 

@@ -119,7 +119,7 @@ Before auto-review, classify the new artifact's dominant work and check its `mod
 
 2. Apply the classification to the newly created artifact:
    - Read the artifact's description and body
-   - Walk the decision questions (needs conversation history or AskUserQuestion / lookup with cheap-to-check output / writes, judges, designs or coordinates / visibly lazy or slow)
+   - Walk the decision questions (needs conversation history or AskUserQuestion / lookup with cheap-to-check output / writes, judges, designs or coordinates / which effort the task needs)
    - Determine the class: Lookup / Tool wrapper / Mechanical execution that writes / Judgment / Synthesis / Orchestration
 
 3. If the artifact already has `model:` or `context:` set: check it against the anti-patterns.
@@ -133,6 +133,8 @@ Before auto-review, classify the new artifact's dominant work and check its `mod
      - Reason: cite the relevant row from cost-posture.md
      - Options: "Apply recommendation" / "Keep inline on the main model" / "Custom"
    - Any other class → no question; note "cost posture: inherit ({class})". Never recommend an inline `model:` pin.
+
+5. Set `effort:` from cost-posture.md's levels table for the detected class (skip when `model: haiku`) and note "effort: {level} ({class})". A missing `effort:` is a finding, not a default.
 
 5. Note the cost posture decision in the **Completion (create)** summary at the end of this route, so the user has it on record.
 

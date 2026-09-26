@@ -234,7 +234,7 @@ This sub-dimension checks both directions: misconfigured fields AND missed optim
    - Check if skill body lacks an actionable task prompt (only guidelines/conventions). If yes → flag as Logic: "context: fork subagent will receive guidelines with no task and return empty"
    - Check if skill body contains `AskUserQuestion` calls, "Wait for user", "ask the user via", "user confirms", or "用户确认" patterns. If yes → flag as Bug: "context: fork only surfaces the subagent's final message to the main session; intermediate AskUserQuestion calls in the forked subagent cannot reach the user, which breaks the skill's interactive design. Remove `context: fork` or refactor to defer user interaction to the dispatcher."
 4. If `model:` set but `effort:` mismatched (e.g. `model: haiku, effort: high`): flag as Minor — Haiku supports no effort level, the field is silently ignored.
-5. Pinned `effort:` on judgment/review work, or below-default `effort:` on work with verification duty: flag as Bug (cost-posture.md anti-patterns 6–7).
+5. `effort:` missing (Minor), contradicting the class in cost-posture.md's levels table (Bug), or below `high` on work with verification duty (Bug) — cost-posture.md anti-patterns 6–7. Skip when `model: haiku`.
 
 **7.5.B — Missed isolation check (lookup work running inline):**
 

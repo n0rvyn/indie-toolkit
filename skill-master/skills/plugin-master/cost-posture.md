@@ -32,7 +32,16 @@ Reference doc consumed by `plugin-master` (Create route), `plugin-reviewer` (Dim
 
 The blog's workflow — implement at a lower effort, verify at `high` — maps onto this repo as implementer pins below reviewer pins.
 
-**The knob is real** (checked in the Claude Code 2.1.283 binary, 2026-09-26): `effort:` is parsed and validated in skill frontmatter, agent frontmatter and plugin agent frontmatter; a forked skill passes it to its subagent; a Workflow script's `agent(prompt, {effort})` takes it per call. Haiku supports no effort level.
+**Where the pin takes effect** (probed on Claude Code 2.1.283, 2026-09-26, headless `claude -p --effort <session>`, reading `$CLAUDE_EFFORT` from Bash inside the skill/agent):
+
+| Path | Session | Pin | Observed | Takes effect? |
+|---|---|---|---|---|
+| Agent (`effort:` in agent file) | high | low | low | yes |
+| Forked skill (`context: fork`) | high | low | low | yes |
+| Inline skill, user types `/skill` | high / medium | low / xhigh | low / xhigh | yes, both directions |
+| Inline skill, Claude auto-invokes via Skill tool | high / medium | low / xhigh | session value | **no** |
+
+Same shape as the inline `model:` finding: on the auto-invoke path the harness resolves the pin (`${CLAUDE_EFFORT}` in the skill body renders `low`) but the turn keeps the session effort. Keep the pin on inline skills anyway — it applies on typed invocation and records the task's size — but do not count on it when Claude routes to the skill itself. Work that must run at a fixed effort belongs in an agent or a forked skill. A Workflow script's `agent(prompt, {effort})` takes it per call. Haiku supports no effort level.
 
 **Anthropic's own guidance points the same way** ("What a task costs on Opus 5.5", 2026-09): "Raise effort before you change models"; "Move down to Sonnet or Haiku for lookups, not for writing code … Keep judgment calls on the main model."
 

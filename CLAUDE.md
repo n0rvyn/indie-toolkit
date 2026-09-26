@@ -24,7 +24,7 @@ When closing out a response with a "next step" suggestion or follow-up plan:
 
 1. Small models only for lookup work (search, read logs/output, CLI wrappers), and only through `context: fork` or an agent definition.
 2. Everything else — judgment, synthesis, orchestration, anything that writes code or files — stays on the main model: no `model:` pin.
-3. Every skill/agent pins `effort:` to what its task needs (low lookup · medium writing · high review/verify/bugfix · xhigh autonomous). The pin overrides session `/effort` in both directions on purpose. When quality or cost is off, change `effort` before changing the model.
+3. Every skill/agent pins `effort:` to what its task needs (low lookup · medium writing · high review/verify/bugfix · xhigh autonomous). The pin overrides session `/effort` in both directions on purpose. Probed 2026-09-26: agent / forked skill / typed `/skill` honor it; an inline skill auto-invoked by Claude does **not** (turn keeps session effort) — see cost-posture.md. When quality or cost is off, change `effort` before changing the model.
 
 **Never write an inline `model:` (without `context: fork`).** Probed on CC 2.1.281 (2026-09-24): it switches only when the user types `/skill`, never when Claude auto-invokes the skill; inline `haiku` did not switch at all. 16 such pins were removed on 2026-09-24. Evidence: `~/.claude/knowledge/platform-constraints/2026-09-24-inline-skill-model-switches-only-on-typed.md`.
 

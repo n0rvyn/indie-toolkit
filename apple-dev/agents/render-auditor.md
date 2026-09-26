@@ -63,6 +63,8 @@ If `shots` is empty or no path exists, return immediately with every shot under 
 
 ## Rubric (refactoring-ui Part B, screenshot form)
 
+Rule IDs are kept in sync with `dev-workflow/references/refactoring-ui.md` Part B by `apple-dev/skills/swiftui-visual-audit/scripts/test_rubric_sync.py` — add, rename or remove a rule in both places.
+
 Severity: 🔴 = broken/unusable or blocker (raw key, crash, dead control, unreadable text, invisible card holding content) · 🟡 = clear rubric violation a user notices · 🔵 = polish.
 
 **Hierarchy**

@@ -43,5 +43,5 @@ Repro: `.claude/skills/probe-low/SKILL.md` with `effort: low` and body "Run `ech
 
 - ⏳ **Waiting on harness fix** — `runtime-feature-verify` (xhigh) and `disk-reclaim` (high) keep high judgment inline; marked `PENDING-HARNESS-FIX`. When fixed: re-run the §2 probe, delete the markers and the paragraph in `cost-posture.md`.
 - **Not yet run for real:** `bug-diagnoser`, `app-review-auditor`, `design-parity-auditor`, `render-auditor` (wiring checked by grep; `change-classifier` passed a real auto-invoked run).
-- **Drift risk:** `render-auditor` embeds refactoring-ui Part B; edits to `dev-workflow/references/refactoring-ui.md` must be copied by hand.
+- **Drift guard:** `render-auditor` embeds refactoring-ui Part B; `apple-dev/skills/swiftui-visual-audit/scripts/test_rubric_sync.py` goes red when the rule IDs diverge (wording is still synced by hand).
 - **Stale refs:** `docs/12-retired/sync-design-md.md:36` (thresholds now only in `design-contract-schema.md` §2); run-phase flow diagram still labels some steps "opus".

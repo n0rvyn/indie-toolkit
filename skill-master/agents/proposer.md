@@ -5,6 +5,7 @@ model: sonnet
 color: blue
 tools:
   - Read
+effort: medium
 ---
 
 ## Role

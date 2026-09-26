@@ -1,6 +1,7 @@
 ---
 name: design-decision
 description: "Use when facing multiple design or product options, the user is stuck between approaches, or asks '选哪个', '怎么设计', 'how should I design this', 'which is better'. Analyzes trade-offs by separating essential from accidental complexity and presents a structured comparison. Not when: options are not yet identified — use brainstorm first to surface candidates."
+effort: medium
 ---
 
 ## Input

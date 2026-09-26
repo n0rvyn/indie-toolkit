@@ -1,6 +1,7 @@
 ---
 name: brainstorm
 description: "Use before any creative work — creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design through iterative one-question-at-a-time conversation before implementation. Not when: task is mechanical with clear specs (use write-plan) or the user has already locked the approach (just implement)."
+effort: low
 ---
 
 ## Hard Gate

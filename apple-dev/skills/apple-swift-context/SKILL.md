@@ -7,6 +7,7 @@ model: sonnet
 context: fork
 agent: Explore
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
+effort: low
 ---
 
 ## Purpose

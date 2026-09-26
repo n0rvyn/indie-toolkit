@@ -9,6 +9,7 @@ agent: Explore
 # result in the SAME turn (they phrase the next question from the retrieved lessons).
 # `background` defaults to true, which returns only the agent name.
 background: false
+effort: low
 ---
 
 ## Overview

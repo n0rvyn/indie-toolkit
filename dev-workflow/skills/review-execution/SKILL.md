@@ -3,6 +3,7 @@ name: review-execution
 description: "The single review dispatcher for this marketplace. Use when the user says 'review execution', 'parallel review', 'deep review', 'review my code', 'review after coding', 'execution review', '审查执行', '并行 review', '写完 review 一下', '代码 review 一下', '深度代码审查', '执行后审查', or wants a fresh-context multi-lens review of uncommitted changes BEFORE commit. Also the callee for run-phase Step 6, execute-plan's standalone finish, and an /afk terminal stop — it routes lenses from the diff's shape, so callers do not each keep their own reviewer list. Dispatches 5 always-on lenses (correctness, test-coverage, breaking-changes, root-cause-depth, secrets-and-transport), adds implementation-reviewer when a plan path is supplied, and adds Apple reviewers by what the diff actually touches. Not when: pre-commit semantic classification only — use review-before-commit (deliberately outside every pipeline, a manual double-check). Not when project is Apple-only and you want only ASC pre-submit review — use /asc-submit-preview. Not when auditing a plugin/skill/agent as an ARTIFACT (trigger quality, dispatch wiring, eval coverage) rather than reviewing a diff — use skill-master:plugin-master; in a plugin monorepo the diff IS plugin content, so say which question you are asking."
 user-invocable: true
 allowed-tools: Bash(git diff:*, git status:*, git log:*, git ls-files:*, find:*, grep:*, python3:*), Agent, Task, Workflow
+effort: medium
 ---
 
 ## Overview

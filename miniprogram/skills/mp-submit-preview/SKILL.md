@@ -2,6 +2,7 @@
 name: mp-submit-preview
 description: 微信小程序上线前自检 + 修配置。当用户说「小程序上线前检查」「上传前自检」「mp submit preview」「小程序体验评分」「代码质量」「要发布小程序」时使用。逐项核对 project.config.json 压缩/兼容配置、合法域名白名单、包体积、SafeArea、需真机验证项，给出 pass/fail + 一键修可修项。非 iOS ASC（那是 apple-dev:asc-submit-preview）。
 allowed-tools: Bash, Read, Grep, Glob, Edit
+effort: high
 ---
 
 # 小程序上线前自检（mp-submit-preview）

@@ -4,6 +4,7 @@ description: "Use when the user needs to generate SwiftUI Design System code fro
 compatibility: Requires macOS and Xcode
 user-invocable: false
 paths: ["**/*.swift", "**/Package.swift", "**/*.xcodeproj/**", "**/*.xcworkspace/**", "**/DESIGN.md"]
+effort: medium
 ---
 
 # Generate Design System Skill

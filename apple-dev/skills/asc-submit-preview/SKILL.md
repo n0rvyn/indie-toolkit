@@ -2,6 +2,7 @@
 name: asc-submit-preview
 description: "Use before submitting to App Store, or when the user says 'asc submit preview', 'asc pre-submit check', '上架前自检', 'will this pass review'. Checks app code against Apple's App Review Guidelines to catch common rejection reasons. Not for ASC 后台材料 (privacy labels / screenshots / store description) — use /asc-listing."
 compatibility: Requires macOS and Xcode
+effort: high
 ---
 
 <!-- cost-posture: inherit. An inline `model:` only switches on a typed /command, never when Claude

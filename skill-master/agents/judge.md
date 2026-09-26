@@ -5,6 +5,7 @@ color: blue
 tools:
   - Read
   - Bash(git log:*)
+effort: high
 ---
 
 ## Role

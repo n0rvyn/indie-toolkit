@@ -1,6 +1,7 @@
 ---
 name: execute-plan
 description: "Use when the user says 'execute the plan', 'run the plan', 'implement the plan', '执行计划', '跑计划', or has a verified plan file ready for execution. Executes plan tasks in segments via the Workflow tool, with explicit hard-stop checkpoint gates (batch 1 always; any batch with a dependency hub; any batch with an explicit `<!-- checkpoint -->` marker) — at each hard-stop the skill presents the segment summary and waits for the user to say 'continue'. Cross-session resume is authoritative via the on-disk checkpoint file `.claude/execute-plan-checkpoint.json` (`completed` map). Reports blocked/failed tasks for the user to fix — does not attempt fixes itself. Not when: plan has not been verified (run verify-plan first). Also invoked by run-phase at Step 4."
+effort: medium
 ---
 
 ## Overview

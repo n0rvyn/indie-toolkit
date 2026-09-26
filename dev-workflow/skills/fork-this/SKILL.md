@@ -6,6 +6,7 @@ context: fork
 model: sonnet
 argument-hint: "<one-line description of topic B>"
 allowed-tools: Read, Write
+effort: low
 ---
 
 # Fork This Topic

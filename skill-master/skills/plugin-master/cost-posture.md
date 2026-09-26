@@ -62,13 +62,14 @@ A subagent a skill dispatches is classified on its own: `execute-plan` (skill) i
 
 | Skill / agent | Class | Configured |
 |---|---|---|
-| `commit` | Tool wrapper (git classification) | `model: sonnet` + `context: fork` — moved off `haiku` after the haiku fork intermittently skipped the skill body |
-| `kb` | Lookup | `model: sonnet` + `context: fork` + `agent: Explore` |
-| `audit-tokens` | Tool wrapper (scripts do the analysis) | `model: sonnet` + `context: fork` |
-| `execute-plan` (skill) | Orchestration of a verified plan | inherit; its Workflow agents are pinned sonnet |
-| `test-runner` (agent) | Lookup (filter build/test output) | `model: sonnet` |
+| `commit` | Tool wrapper (git classification) | `model: sonnet` + `context: fork` + `effort: medium` (secrets gate) — moved off `haiku` after the haiku fork intermittently skipped the skill body |
+| `kb` | Lookup | `model: sonnet` + `context: fork` + `agent: Explore` + `effort: low` |
+| `audit-tokens` | Tool wrapper (scripts do the analysis) | `model: sonnet` + `context: fork` + `effort: low` |
+| `execute-plan` (skill) | Orchestration of a verified plan | inherit, `effort: medium`; its Workflow agents are pinned sonnet + `effort: 'high'` (they run Verify) |
+| `test-runner` (agent) | Lookup (filter build/test output) | `model: sonnet` + `effort: high` (decides pass/fail) |
 | `verify-plan`, `write-plan`, `run-phase`, `fix-bug`, `review-execution` | Judgment / Synthesis / Orchestration | inherit |
-| `ui-reviewer`, `design-reviewer`, `feature-reviewer`, `judge` (agents) | Judgment | inherit — moved off `sonnet` on 2026-09-24 |
+| `ui-reviewer`, `design-reviewer`, `feature-reviewer`, `judge` (agents) | Judgment | inherit — moved off `sonnet` on 2026-09-24; `effort: high` |
+| `afk`, `runtime-feature-verify`, `swiftui-visual-audit` | Autonomous end-to-end | inherit, `effort: xhigh` |
 
 ## Anti-patterns to flag
 

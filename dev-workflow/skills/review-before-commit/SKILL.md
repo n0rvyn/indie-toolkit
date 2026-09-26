@@ -4,6 +4,7 @@ description: "Use when the user says 'review changes', 'review-before-commit', '
 user-invocable: true
 argument-hint: "[path or empty — optional path scopes review to matching files]"
 allowed-tools: Bash(git diff:*, git status:*, git log:*, grep:*, wc:*, find:*, ls:*, mkdir:*, python3:*) AskUserQuestion
+effort: high
 ---
 
 <!-- cost-posture: inherit (judgment — semantic change classification into enhancement/fix/refactor/removal, breaking-change detection, and risk severity grading are judgment calls; pre-commit gate runs over a full uncommitted batch as a single audit pass, not in a tight loop, so Opus-level quality is preferred. do NOT downgrade to sonnet/haiku per dev-workflow Skill Cost Posture rule and per DP-002=A 2026-06-28) -->

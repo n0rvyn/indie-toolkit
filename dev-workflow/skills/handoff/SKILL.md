@@ -2,6 +2,7 @@
 name: handoff
 description: "Use when ending the current session and transferring ALL current work to a new session (next day, different person), the user says 'handoff', '交接'. Also invoked by dev-workflow:afk at every stop (its only handoff outlet), where it reads the run's disk artifacts instead of the conversation. End-of-session full transfer — not for mid-session orthogonal splits (use /fork-this for that), and not for the thin locator card afk dev-guide mode writes (`guide.py card` writes that itself)."
 disable-model-invocation: false
+effort: medium
 ---
 
 <!-- cost-posture: inherit — this is synthesis, not transcription: deciding what was reversed,

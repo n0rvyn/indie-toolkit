@@ -1,6 +1,7 @@
 ---
 name: fix-bug
 description: "Use when the user reports an error with stack trace or screenshot, describes unexpected behavior, build/test failures occur, OR provides a batch of issues to fix against a running system that exposes an end-to-end verification surface — API, CLI, REPL, chat agent, or mobile deeplink ('fix these N issues against the API', 'dogfood this batch', '修一批 issue 通过平台自验证'). Triggers: '修 bug', '报错', '不work', '为什么', 'fix this', stack trace pasted, multi-issue list, `#N` / `issue N` GitHub references. Single-bug input is diagnosed and fixed directly; multi-issue input WITH the verification surface present switches to multi-issue loop mode (multi-issue WITHOUT a verification surface is handled one issue at a time). Compound 'why does X behave + fix X' inputs stay here — answer the why from primary sources before guessing. Not when: user only wants an explanation of behavior with no reported defect (answer directly), or wants a feature added (use brainstorm or write-plan)."
+effort: high
 ---
 
 <!-- cost-posture: inherit (judgment — finding a root cause and deciding when a fix is a design question are diagnosis calls; do NOT downgrade, per project CLAUDE.md) -->

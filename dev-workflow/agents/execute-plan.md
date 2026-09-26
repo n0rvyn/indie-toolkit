@@ -24,6 +24,7 @@ model: sonnet
 maxTurns: 120
 tools: Glob, Grep, Read, Write, Edit, Bash, LSP
 color: green
+effort: high
 ---
 
 Execute the workflow mechanically; do not deliberate over mechanical steps.

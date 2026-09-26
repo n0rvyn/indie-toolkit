@@ -2,6 +2,7 @@
 name: design-parity-build
 description: "Use when auditing a Claude Design (or similar handoff) against an iOS codebase, or the user says 'design parity', 'design 1:1', 'verify Claude Design', 'Claude Design audit', 'audit design implementation', '设计落地审计', 'Claude Design 对齐', '1:1 还原 Claude Design', or '/design-parity-build'. Writes audit doc to docs/06-plans/ for /write-dev-guide. Not for: per-View hardcoded-value scan (run /review-execution, which dispatches apple-dev:ui-reviewer), subjective review without an external design source (run /review-execution — it dispatches apple-dev:design-reviewer only when the diff ADDS a *View.swift, and apple-dev:ui-reviewer when one is merely modified), DS codegen (generate-design-system)."
 compatibility: Requires macOS and Xcode
+effort: high
 ---
 
 <!-- cost-posture: inherit (judgment + synthesis + orchestration — gap severity classification, decision point grouping, audit doc synthesis, and bridge to /write-dev-guide are judgment calls; do NOT downgrade to sonnet/haiku per dev-workflow Skill Cost Posture rule) -->

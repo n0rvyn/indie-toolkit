@@ -1,6 +1,7 @@
 ---
 name: write-dev-guide
 description: "Use when starting a new project's development after design is approved, OR when scoping a multi-unit refactor/migration that spans multiple independent components (e.g., 'refactor 6 cards across 4 tabs', 'migrate auth across 4 layers'), or the user says 'write dev guide', 'break down this project into phases', or '写开发指南'. Creates a phased development guide that serves as the cornerstone document for all subsequent /write-plan and /run-phase cycles. Each phase represents one conceptual unit (one component, one layer, one migration step) — phase size is determined by review boundary, not workload. Produces: docs/04-dev-guide/dev-guide.md with a phased task tree, dependency graph, and acceptance criteria per phase. Not for single-feature plans (use write-plan) or design exploration (use brainstorm)."
+effort: medium
 ---
 
 ## Overview

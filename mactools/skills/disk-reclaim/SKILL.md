@@ -2,6 +2,7 @@
 name: disk-reclaim
 description: "排查 macOS 磁盘被什么占满并安全回收空间。先判定占用是不是目录问题（swap / 内存泄漏进程 / 本地快照常常才是大头），再按零风险-低风险-需确认三档逐项处理，删除前逐条征得确认。当用户说磁盘满了、空间不够、清理硬盘、startup disk full、看看什么占地方、为什么只剩几个 G 时使用。Use when the user reports a full or nearly full disk on macOS, asks what is eating space, or asks to clean up storage. Keywords: 磁盘满, 空间不足, 清理磁盘, 硬盘满了, 存储空间, disk full, startup disk, free up space, what is using my disk, reclaim storage."
 compatibility: Requires macOS
+effort: high
 ---
 
 # Disk Reclaim

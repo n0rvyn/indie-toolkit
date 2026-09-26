@@ -1,6 +1,7 @@
 ---
 name: asc-listing
 description: "Everything on the App Store Connect backend: what to put in each box, and what the backend actually holds right now. Use when the user says 'ASC listing', 'asc 上架材料', 'ASC 填写', 'app store listing', 'privacy labels', or asks to read the live state — 'ASC 现在填的是什么', '关键词字段实际是什么', '我改的 ASC 字段存进去了吗', '提交出去了吗', 'read back ASC', 'check ASC state', 'is it actually submitted' — or after any ASC edit that must be confirmed. Covers item-by-item submission material guidance, authenticated read-back of live keywords / name / subtitle / description / promo / What's New / review notes / screenshot checksums, whether a version is really queued with Apple, and version-to-version diffing for post-rejection forensics. Keywords: ASC, App Store Connect, submission, privacy labels, screenshots, review, read-back, submission state. Not for 代码合规检查 — use /asc-submit-preview. Not for 关键词研究 / 商店搜索排名 / 商标能否进名称 — use /aso-research (this skill reads and fills the ASC boxes; that one decides what the text should be, from pulled ranking data)."
+effort: high
 ---
 
 # App Store Connect 上架审查

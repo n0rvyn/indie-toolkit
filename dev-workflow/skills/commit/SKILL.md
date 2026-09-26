@@ -4,6 +4,7 @@ description: "Use when the user says 'commit' or wants to save progress after co
 context: fork
 model: sonnet
 allowed-tools: Bash(git add:*) Bash(git commit:*) Bash(git diff:*) Bash(git status:*) Bash(git log:*) Bash(wc:*)
+effort: medium
 ---
 
 ## Input

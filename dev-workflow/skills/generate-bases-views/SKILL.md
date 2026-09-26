@@ -4,6 +4,7 @@ description: "Generate Obsidian Bases (.base) views for structured querying of c
 user-invocable: true
 model: sonnet
 context: fork
+effort: low
 ---
 
 ## Overview

@@ -70,7 +70,7 @@
 - [ ] ⛔ Re-running the judge on an **unchanged** tree is explicitly NOT the red-twice stop — that is how `[分辨力]` is measured. An eval that treats a zero-change re-read as a stop condition FAILS
 - [ ] "Option A is faster so the experience is better" is explicitly NOT a user-judgment stop
 - [ ] "This is a good place to hand off" is explicitly not a terminal
-- [ ] Every stop invokes `dev-workflow:handoff` before the turn ends
+- [ ] Every stop invokes `dev-workflow:handoff` before the turn ends, with args naming it an `/afk` stop (handoff then skips its lesson screen and never calls `collect-lesson`)
 
 **Artifacts:**
 - [ ] Run log incrementally to `.claude/afk/<slug>.md`, same turn as each decision, never batched

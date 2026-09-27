@@ -144,7 +144,7 @@ Route is yours — tools, order, whether to use agents, when to refactor. These 
 
 **If none of these fires, keep going.** "This is a good place to hand off" is not a terminal — it is a self-assessment, unfalsifiable and always available.
 
-**Every stop writes the handoff first**: invoke `dev-workflow:handoff`, then end the turn. Handoff docs are the one artifact class that reliably gets read again, which is why the transfer goes there.
+**Every stop writes the handoff first**: invoke `dev-workflow:handoff` with args saying it is an `/afk` stop, then end the turn. Called this way, handoff always writes the doc and skips its lesson screen (nobody is there to confirm a draft, and a run stops many times). Handoff docs are the one artifact class that reliably gets read again, which is why the transfer goes there.
 
 **Log every self-made decision** to `.claude/afk/<slug>.md` in the turn it happens — a batched write at the end loses the log to a context reset. Anything decided, deferred, or worked around goes in it and in the final report. A silent auto-decision is what makes a finished run untrustworthy.
 
@@ -268,7 +268,7 @@ Before `guide.py goal-line` has run, the user is present and no goal is armed �
 Every STOP row above, and every cannot-proceed terminal, follows this order:
 
 1. Write the stop to the run log (`.claude/afk/<slug>.md`).
-2. Invoke `dev-workflow:handoff` (main session).
+2. Invoke `dev-workflow:handoff` (main session), with args saying it is an `/afk` stop so it skips its lesson screen.
 3. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/afk/scripts/guide.py card --slug S --stopped-at … --why … --next … --doc <handoff path>` — doc first, so the card can name it. The card's `Resume with` tells the user to type `/afk` and quotes the last goal line for reference.
 4. End the turn with the `## 终止：{row}` section, verbatim, plus that turn's raw output. This is what releases `/goal`. The same text is already in the run log from item 1.
 

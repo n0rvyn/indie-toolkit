@@ -25,7 +25,7 @@ Policy for this pass:
 - `issue`
 - `finish-branch`
 - `execute-plan` (also auto-invoked by `run-phase`; kept user-visible for direct re-runs after manual fixes)
-- `handoff` (moved from manual 2026-08-26, commit `1c70b5b`: model-invocation is load-bearing for the AFK path — "keep going, handoff if you hit a real block" with no `/afk` run governing has nothing governing it, so without description-match routing nothing fires at the block. Also invoked as a callee by `/afk` at every stop.)
+- `handoff` (moved from manual 2026-08-26, commit `1c70b5b`: model-invocation is load-bearing for the AFK path — "keep going, handoff if you hit a real block" with no `/afk` run governing has nothing governing it, so without description-match routing nothing fires at the block. Also invoked as a callee by `/afk` at every stop. Since 2026-09-27 it is also the session-end entry for 'handoff or done', which must route by description too.)
 
 `dev-workflow` manual entries:
 - `generate-design-prompt`

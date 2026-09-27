@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: "Use when ending the current session and transferring ALL current work to a new session (next day, different person), the user says 'handoff', '交接'. Also invoked by dev-workflow:afk at every stop (its only handoff outlet), where it reads the run's disk artifacts instead of the conversation. End-of-session full transfer — not for mid-session orthogonal splits (use /fork-this for that), and not for the thin locator card afk dev-guide mode writes (`guide.py card` writes that itself)."
+description: "Use when ending the current session: the user says 'handoff', '交接', 'handoff or done', or '收尾' to close the session. It decides between writing a full transfer doc for a new session (next day, different person) and closing with nothing to hand off, and in both cases screens the session for a lesson worth saving through dev-workflow:collect-lesson, defaulting to none. Also invoked by dev-workflow:afk at every stop (its only handoff outlet), where it reads the run's disk artifacts instead of the conversation and skips the lesson screen. Not for a bare 'done' mid-task ('done with step 2', 'ok done, next'), not for mid-session orthogonal splits (use /fork-this), and not for the thin locator card afk dev-guide mode writes (`guide.py card` writes that itself)."
 disable-model-invocation: false
 effort: medium
 ---
@@ -23,6 +23,49 @@ effort: medium
 
 - 任务未完成需要续接
 - 复杂问题需要跨会话追踪
+- 会话收尾：用户说「handoff or done」，由本 skill 判断要不要交接，并筛一遍有没有值得入库的教训
+
+## 入口：交接、收尾，还是被 afk 调起
+
+先定走哪一支，再动笔。
+
+| 进来的方式 | 交接文档 | 教训筛选 |
+|---|---|---|
+| `/afk` 在一次 stop 调起；或用户原话说了自己不在（「跑到 block 就 handoff」「我走了」） | 写 | ⛔ 跳过 |
+| 用户说 `handoff` / `交接` | 写 | 做 |
+| 用户说 `handoff or done` / `收尾` | 按下面的判据二选一 | 做 |
+
+**跳过筛选看的是「谁调起、人在不在」，不看磁盘上有没有 afk 产物。** `.claude/afk/<slug>.md` 可能是更早一次 run 留下的，用户此刻就坐在这里说「handoff or done」；按文件判断，筛选恰好在用户要它的时候不跑。跳过的原因：筛出来的候选要用户确认（collect-lesson Step 3），无人值守时没人确认；而且 afk 一次 run 会停很多次，每次都筛就成了噪音源。
+
+**`handoff or done` 的判据（机械的，不靠感觉）**，满足任一条走交接，否则走收尾：
+
+- `git status --porcelain` 非空（有没提交的改动）
+- 有任何一条会落进 §4「需用户裁决」、§5「未决 / 已报未修」或 §7「下一步」
+- 本次 session 有写过但没执行完的计划（`docs/06-plans/` 里本次新增的 plan、`.claude/execute-plan-checkpoint.json` 里没完成的任务）
+
+拿不准就走交接：多写一份交接的代价是一个文件，漏写一份的代价是下个会话丢掉进度。
+
+走收尾时不写交接文档、不碰 `CLAUDE.md`，只做教训筛选，然后用一句话结束：交接判据逐条为何不成立（例：「工作区干净、无待办、无待裁决」）+ 筛选结论。
+
+## 教训筛选（默认结论：没有）
+
+交接分支里，**交接文档落盘之后**再做这一步：文档先写下来，筛选中途停在用户确认上也不丢交接。
+
+候选只从本次 session 里**付过代价**的地方找：交接文档 §3「已推翻的」与自己犯的错；收尾分支里同样看本次失败、被推翻、返工的东西。⛔ 不从「做了什么」里找，做完的事不是教训。
+
+一条候选要**四条全满足**才往上报：
+
+1. **付过代价**：本次有东西失败、被推翻或返工，能指出是哪一轮。
+2. **推不出来**：代码、git log、`CLAUDE.md`、现有知识库里都没有。查知识库用 `Grep(pattern="<关键词|…>", path="~/.claude/knowledge/")`；已有同一结论的，不是候选。
+3. **换个场景也用得上**：换一个项目或任务，它会改变下一个会话的做法。只对这个任务有用的，留在交接文档 §3 / §8，不进知识库。
+4. **已经定论**：没有待确认的部分（collect-lesson Step 2.5 同一条）。
+
+分流：「用户希望我以后怎么干活」的纠正属于 auto-memory 的 feedback，按 memory 规则记，不进知识库；平台、工具、代码层面的事实才进知识库。
+
+输出：
+
+- **零条**（常态）→ 一行：`教训筛选：本次无值得入库的教训（{一句话：为什么，例如「只有常规改动，没有被推翻的结论」}）`。⛔ 不凑数。
+- **有候选**（最多 2 条）→ 每条一行：`{结论} — {四条各自的依据，含出处轮次}`。然后调用 `dev-workflow:collect-lesson`，args 写明**这一条**候选的结论和出处。collect-lesson 一次只收一条，并在 Step 3 停下等用户确认；第二条候选必须在同一条消息里列出，写明「确认完第一条后再收」，否则回合结束时它就丢了。
 
 ## 这份交接有两个读者，别只写给一个
 
@@ -193,6 +236,8 @@ ArtLens 的 `CLAUDE.md` 里 `HANDOFF` 出现 **22 次**，从第 70 行铺到第
 - 落盘的话，文件名带 `-HHMM` 了？`CLAUDE.md` 必读顺序里的 `HANDOFF-` 条目**恰好一条**？
 - 自主运行模式（afk 或旧 self-pacing 产物）下：§6 有没有 run-log / checkpoint 路径？dev-guide mode（或 legacy self-pacing）下有没有 stop card 路径？§5 是不是照抄了
   run log 里被延后的 `nice-to-have`，而不是自己重判的？
+- 入口选对了？afk 调起 / 用户不在 → 没做教训筛选；`handoff or done` → 按判据选的分支，并说了判据为何成立或不成立？
+- 教训筛选：零条时写了一行结论？有候选时每条四条依据齐全、第二条候选在同一条消息里列出了？
 
 ## ⚠️ 改这份 skill 之后
 

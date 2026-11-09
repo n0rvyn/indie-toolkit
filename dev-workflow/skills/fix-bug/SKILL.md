@@ -51,8 +51,8 @@ Read the evidence yourself first. If that first read confirms the cause (you can
 If a call-chain trace would help, you may dispatch `dev-workflow:flow-tracer` in parallel. It is tuned for Swift and has no Bash. The diagnoser cannot dispatch it itself.
 
 **Using the return** (`## Diagnosis` block):
-- `confirmed` / `probable`: fix from `Cause`, and fix every `Same-Cause Sites` entry in the same pass. Check each entry under `Consumers`. Treat `Unverified Premises` as open until you check them.
-- `need-experiment`: run the `Next Experiment` in the main turn (instrumentation, a quick repro, the running app or device), then dispatch again with the result added as evidence.
+- `confirmed`: check the decisive evidence and any `Unverified Premises` before fixing from `Cause`. Fix confirmed `Same-Cause Sites` in the same pass and check every entry under `Consumers`.
+- `probable` / `need-experiment`: run the supplied `Next Experiment` in the main turn before a cause-based fix or changes to suspected sibling sites. Record the observation and whether it confirms or rejects the proposed cause. If the result confirms the cause, follow the `confirmed` branch; otherwise continue diagnosis with that evidence. If the experiment is missing or cannot distinguish the candidates, obtain a discriminating check instead of treating `probable` as confirmed. An experiment that temporarily changes code remains a reversible experiment, not a verified repair.
 - `Design Verdict: design`: follow "Patching a design that should go" below, using the agent's evidence.
 - `unknown` / `insufficient-input`: gather what it names (ask the user in one message if it has to come from them), then dispatch again.
 
@@ -92,7 +92,7 @@ Tools worth reaching for when they fit:
   - A fix that spans many files, changes architecture, or replaces a design: write a plan with `dev-workflow:write-plan` and wait for approval. Make the literal line `Caller: dev-workflow:fix-bug` the first line of that prompt, followed by the diagnosis evidence: the confirmed cause with file:line, the other sites with the same cause, the affected consumers, and the replacement costs if a design is being replaced.
   - A small, local fix: just make it.
 - A subagent saying it wrote a file is a claim. Check the file is on disk before acting on it.
-- For work that came from issue `#N`, ask before running `gh issue close N`.
+- For work that came from issue `#N`, close it only when the user has explicitly authorized closure of that issue. Ask only if that authorization is missing; an instruction to fix or verify it is not closure authorization.
 - If the cause was non-obvious, suggest `/collect-lesson` at the end.
 
 ## Completion Criteria

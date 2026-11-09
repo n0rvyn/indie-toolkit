@@ -147,7 +147,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 |-------|------|-------------|
 | run-phase | orchestrator | Phase lifecycle: plan → verify → execute (segmented, checkpoint-gated) → test → review → fix → done. State + dev-guide parsing owned by `scripts/phase.py`, the sole writer of `.claude/dev-workflow-state.json` |
 | review-execution | dispatcher | **The single review dispatcher for this marketplace.** 5 always-on lenses (correctness / test-coverage / breaking-changes / root-cause-depth / secrets-and-transport) + `implementation-reviewer` when given a plan + Apple reviewers routed by what the diff touches. Inputs: `plan_path`, `scope_files`, `mode` (`gated` \| `advisory`). Callers pass inputs, not agent lists — `run-phase` Step 6, `execute-plan`'s standalone finish, `/afk` dev-guide mode's per-phase gate and `/afk`'s terminal stop all route through it |
-| fix-bug | interactive | Bug fixing by outcome: plain-language 现状/预期, verified on the user's real path, known dead ends ruled out |
+| fix-bug | interactive | Bug fixing by outcome: plain-language 现状/预期, probable causes tested before repair, unresolved issues retained, diagnosis preserved in plans, real-path verification; external actions follow explicit authorization |
 | write-plan | interactive | Writes implementation plan with Impact Map and Task Contract |
 | write-dev-guide | interactive | Writes phased dev-guide for multi-unit work |
 | commit | fork (sonnet) | Conventional commit analysis and execution |

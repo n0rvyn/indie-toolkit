@@ -40,6 +40,8 @@ This loop inverts the order: **define the surface-level reproducer and the user-
 
 8. **Side-effect isolation**. If the verification surface touches real channels (email/IM/webhook/push notification/payment), before running verifies swap delivery targets to test-only channels or enable dry-run. Restore after.
 
+9. **Authorization is preserved across modes.** Fixing and verifying a batch does not authorize creating or closing GitHub issues, committing or pushing changes, or restarting a service outside the existing authorization. Before each such action, check the user-authorized target and scope. Use existing explicit authorization without asking again; request only missing authorization, after the local result is concrete and reviewable. Continue independent diagnosis, fixes and verification while an external action waits.
+
 ## Process
 
 ### Step L0 — Surface the issue list
@@ -49,7 +51,7 @@ Receive the list of bugs to fix. Confirm with the user. For each, ensure there i
 - Reproducer pointer (cron name, API call, chat phrase, CLI command, deeplink)
 - Prior hypotheses (`### Prior Hypotheses` block — file them so a later `fix-bug #N` read picks them up)
 
-If issues are missing, file them now via `gh issue create` before continuing.
+If an issue is missing, keep a local issue record and continue. Create a GitHub issue only with explicit authorization for that action and target repository.
 
 ### Step L1 — Baseline reproduction
 
@@ -60,7 +62,7 @@ For each issue, drive the failure through the verification surface of the real r
 
 Write the baseline evidence to `.claude/multi-issue-loop/baseline/<issue-id>.md` so it is durable across context resets.
 
-**Stop condition**: if the baseline cannot be captured (surface doesn't expose the failure), the surface itself has a gap. Open a tracking issue and patch the surface first — that becomes Bundle 0.
+If the baseline cannot be captured, retain the reported issue as unresolved and establish what evidence is missing. A missing observation does not prove a missing verification surface. Use available safe alternatives first. If an in-scope surface gap is confirmed, record it locally and address it before dependent verification; creating an external tracking issue still follows the authorization rule. Continue independent issues.
 
 ### Step L1.5 — Disambiguate competing hypotheses
 
@@ -70,7 +72,7 @@ If any issue rests on a hypothesis that could be discharged by a cheap discrimin
 - "Path A behaves differently from path B" → diff the entry points; if they converge on a shared function, treat them as one path
 - "Feature F is broken" → confirm F is actually exercised by the failing scenario (not just present in the codebase)
 
-Capture the discriminating evidence to `.claude/multi-issue-loop/disambig/<issue-id>.md`. Issues whose hypothesis fails this check are demoted to "phantom" and dropped from the bundle list. Document the demotion so the same hypothesis doesn't resurface in a later cycle.
+Capture the discriminating evidence to `.claude/multi-issue-loop/disambig/<issue-id>.md`. Reject a disproved hypothesis, not the reported issue. Keep any reproduced or unresolved symptom in the issue list and continue diagnosis; an issue awaiting a confirmed cause stays out of a ready-to-fix bundle without disappearing from the remaining work. Remove an issue from active repair only when evidence establishes that its acceptance condition already holds or the user explicitly removes it from scope. Record that evidence or instruction and retain the issue's history. A failed hypothesis or an unsuccessful reproduction alone is insufficient to mark an issue "phantom" or resolved.
 
 **Why this exists**: Step L2 (bundling) implicitly assumes diagnoses are settled. Skipping disambiguation replaces the workflow's "false-negative verify" failure mode with a new one: bundles that pass verify because the unverified hypothesis was wrong-but-harmless, leaving the real cause in place.
 
@@ -107,7 +109,7 @@ For each bundle in dependency order:
 
 If the cause turns out to be a design doing what it was built to do, stop and ask the user before removing or replacing that behavior. Don't patch around it just to keep the bundle moving. Take that issue out of the bundle, carry the rest forward, and present the finding with its evidence alongside the bundle's plan.
 
-**L4.1 `/write-plan`** — write the implementation plan covering all issues in the bundle. The plan's verification commands must include the bundle reproducer from L2. The plan's Impact Map must incorporate the value-domain consumers and parallel paths found in L4.0.
+**L4.1 `/write-plan`** — invoke `dev-workflow:write-plan` for all issues in the bundle with the literal first non-empty line `Caller: dev-workflow:fix-bug`. Pass each issue's confirmed cause with file:line, same-cause sites, affected consumers, and any design replacement costs and come-back condition collected in L4.0. These must populate the plan's `**Bug diagnosis:**` field; it must not be `not applicable` for this flow. For multiple issues, retain each issue ID alongside its diagnosis so the verifier can check coverage per issue. The plan's verification commands must include the bundle reproducer from L2. Its Impact Map must incorporate the value-domain consumers and parallel paths found in L4.0.
 
 **L4.2 `/verify-plan`** — verify the plan. If the plan can pass without satisfying the bundle reproducer, the plan is wrong, not the reproducer — rewrite the plan.
 
@@ -136,7 +138,7 @@ If the cause turns out to be a design doing what it was built to do, stop and as
   - Implementation miss → back to L4.1 (rewrite plan)
 - Blind retry without postmortem is forbidden.
 
-**L4.9 On pass**: commit via conventional-commits (`fix(scope): <bundle outcome>`), close issues with `gh issue close #N --comment "<verify evidence link>"`, link to the evidence file. Move to next bundle.
+**L4.9 On pass**: record the verified local result and evidence links, then move to the next independent bundle. Commit via conventional-commits (`fix(scope): <bundle outcome>`) only when committing these changes is explicitly authorized. Close each issue with `gh issue close #N --comment "<verify evidence link>"` only when closure of that issue is explicitly authorized. Treat commit, push and issue closure as separate actions; authorization for one does not authorize the others. If authorization is missing, present the reviewable result and ask for that action without blocking remaining local work. Do not mark a verified issue closed until read-back confirms the external change.
 
 ### Step L5 — Restore side-effect targets
 
@@ -178,7 +180,7 @@ Write before starting each step so crash-resume works.
 ## Outputs
 
 After all bundles pass:
-- Closed issues with verify-evidence links
+- Verified issue outcomes with evidence links, remaining unresolved issues, and any external actions awaiting authorization; closed issues only where closure was authorized and read back
 - `.claude/multi-issue-loop/` directory containing baselines, bundle definitions, failure postmortems, final state
 - Regression-suite scripts that can be re-run later (`bundles/<X>/reproducer.sh`)
-- Conventional-commit history matching bundles 1:1
+- Conventional-commit history for bundles whose commits were authorized; otherwise the reviewed local changes remain available

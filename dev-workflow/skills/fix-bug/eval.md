@@ -1,39 +1,15 @@
 # fix-bug Eval
 
-Runnable cases live in `dev-workflow/evals/fix-bug/`. They grade outcomes (cause found, sibling site fixed, plain-language before/after), not steps, so they still apply after the 2026-09-23 rewrite. The suite is archived; see its `FINDINGS.md` before rerunning. Before/after baselines: `docs/99-references/fix-bug-baseline/`.
+Cases: `evals/fix-bug/` — historical cases 01–09 and current diagnosis/batch contract cases 10–12. For the scaffolded cases, native plugin eval needs `--scaffold --allow-tools Bash Write Edit`; use a zero-dollar load check first. See `evals/fix-bug/FINDINGS.md` for historical limits and current Codex CLI evidence. This file holds no assertions that the cases cover.
 
-## Trigger Tests
-
-**Single-bug mode:**
-- "I'm getting this error: [stack trace]"
-- "The app crashes when I tap save, here's a screenshot"
-- "Build fails with 'ambiguous reference' after my changes"
-
-**Multi-issue loop mode** (must route to `${CLAUDE_PLUGIN_ROOT}/references/multi-issue-loop.md`):
-- "Fix #12, #15, and #17 and verify each via the API"
-- "Dogfood this batch of 4 bugs against the running platform"
-- "修一批 issue 并通过平台自验证"
-
-## Negative Trigger Tests
-
-**Should NOT trigger fix-bug:**
-- "Add a new feature to export data" (feature, use brainstorm)
-- "Refactor this code to be cleaner" (refactor, use write-plan)
-
-**Should trigger single-bug handling, NOT loop mode:**
-- "Fix these 2 bugs in this pure-function library" (no end-to-end verification surface)
+The fixture and prompt files can also be exercised by Codex CLI against the current source skill. Codex execution receipts are distinct from native Claude tool-name grader results and from a with/without comparison. Case 12 uses only its local `bin/gh` replacement, which must be selected explicitly or placed first on PATH; it never requires real GitHub credentials.
 
 ## Output Assertions
-- [ ] The `**现状**:` / `**预期**:` block (or `**Current**:` / `**Expected**:`) appears before the first code edit, in user-visible terms
-- [ ] A clear bug report does not stop for confirmation; the flow stops only when the report has two readings that lead to different work
-- [ ] The fix is verified on the user's real path, or the unverified part is named with concrete steps
-- [ ] Other sites with the same cause are fixed in the same pass
-- [ ] The closing message states before / after / how verified in plain language
-- [ ] No dispatch of `readback:intent-echoer` and no `.claude/readback-state.json` writes (retired 2026-09-23)
-- [ ] A small local fix is made without invoking write-plan; a multi-file or design-replacing fix invokes `dev-workflow:write-plan` with the `Caller: dev-workflow:fix-bug` first line and waits for approval
+Not observable: interactive, cross-plugin
+- [ ] When a reported symptom has two materially different readings, the user resolves the ambiguity before a repair is chosen
+- [ ] A large, architectural or design-replacing repair waits for the user's plan approval; it does not treat merely touching multiple files as sufficient reason to plan
+- [ ] Swift/Apple repairs load apple-dev:apple-swift-context before source changes
 
-## Redundancy Risk
-Baseline comparison: on small, clear bugs the base model fixes as well (FINDINGS.md); the measured edge is the plain-language before/after statement
-Last tested model: Opus 5 (archived suite, pre-rewrite)
-Last tested date: 2026-09-12
-Verdict: marginal — kept for the before/after anchor and the known-trap list
+## Live integration
+Not observable: host-env, interactive
+- [ ] Real GitHub closure uses the authorized issue and repository, reads back its actual state, and requests only missing authorization; synthetic case 12 covers the local decision logic, not this authenticated integration

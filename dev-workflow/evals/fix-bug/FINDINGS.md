@@ -1,6 +1,6 @@
 # fix-bug 评测：存档记录
 
-**状态：2026-09-12 存档，不再继续。**
+**历史状态：2026-09-12 存档，适用于旧用例 01–09。** 新增通用诊断与批量流程用例 10–12 的 Codex CLI 验证记录见文末；没有重跑或改写下面的历史对比结论。
 
 ⚠️ 本目录的用例在试跑之后改过评分标准和部分题目（01、02、04 的题目，02、03、04、05、06、08、09 的评分），**新版一次都没跑过**。要重新启用，先按下面的命令用 `--runs 1` 试跑，逐条看判分，再正式跑。
 
@@ -56,3 +56,21 @@ claude plugin eval ./ --tag fix-bug --ablation with-without --judge-model sonnet
 - `dev-workflow/README.md` 与各 SKILL.md 有 5 处说法不一致（`user-invocable` 三处、两个 agent 的工具列表、Flow B 的审查维度数、test-changes 的派发方式）。
 
 原始结果在本机 `evals/results/`（已 gitignore，不随仓库保存）。
+
+## 2026-11-09：通用诊断与批量流程修复的 Codex CLI 验证
+
+三个新增用例针对流程契约，不针对特定服务或协议。读取当前仓库的源文件执行，未使用已安装缓存技能；没有修改模型、推理强度或认证设置。
+
+| 用例 | Codex CLI 实际行为 | 观察结果 |
+|---|---|---|
+| 10 probable-needs-experiment | 先执行返回的区分实验，再决定修复位置；同一夹具分别通过 fix-bug 和 run-phase 的诊断返回处理分支 | 实验在源文件仍为原始哈希时观察到内部结果 6、CLI 输出 3；否定系数假设，保留 FACTOR=2，只修复调用方的额外除法；两处实际 CLI 均变为 6 |
+| 11 batch-retains-diagnosis | 从已推翻旧假设的批量状态继续诊断、生成计划并 lint，按测试要求停在计划审阅处 | B21、B22 均保留；调用提示首行为 Caller: dev-workflow:fix-bug；计划 Bug diagnosis 字段保留两项原因、同类位置和消费者；lint 为 2 tasks / 0 errors / 0 warnings；应用仍输出原来的错误值，未提前执行计划 |
+| 12 authorized-batch-actions | 从已验证的本地批量结果继续收尾，使用有状态的本地 bin/gh 替身 | 仅关闭已授权的 #21 并读回 CLOSED；#22 保持 OPEN；Git HEAD 未变，未提交的改动保留，没有提交或推送 |
+
+运行入口为 `codex exec --ephemeral --json --sandbox workspace-write --skip-git-repo-check -C <fixture-root> -o <final-output> - < <prompt-file>`。普通沙箱启动在模型运行前因 app-server 初始化返回 Operation not permitted；经工具审批后运行同一命令，CLI 内部仍使用 workspace-write。共两次 CLI 调用，第一组包含用例 10 的两个入口，第二组包含用例 11、12。执行事件、最终输出及收据保留于本轮临时验证目录，名称前缀为 `fix-bug-codex-cli-`。
+
+机械回查确认了首次实验记录的原始源文件哈希、实际 CLI 输出、两个 issue ID 的保留、计划调用标记和诊断字段、唯一一次 #21 关闭及读回、未变的 Git 提交计数。13 项既有 review contract 检查通过；调用图保留两个消费者到 bug-diagnoser 的真实调用边。新增 case 的零美元加载检查没有加载错误，按费用上限退出 2。
+
+两次 CLI 合计报告 input_tokens=1222090（其中 cached_input_tokens=1116544），output_tokens=15880；未返回美元费用。没有执行额外付费判分，也没有做旧/新或有/无技能对比，不据此声称收益差值。
+
+验证边界：Codex CLI 按源指令实际操作合成项目，不是 Claude 原生 Skill/Agent 工具名 grader 的执行；run-phase 只验证诊断返回处理到局部修复的检查点，未启动或完成真实 dev-guide 阶段。用例 12 验证授权决策和本地状态读回，不代表真实 GitHub 集成通过。旧用例 01–09 和整套插件未重跑。

@@ -61,7 +61,7 @@ write-plan                               → docs/06-plans/YYYY-MM-DD-<name>-pla
 verify-plan                              → verification report (catches plan defects before execution)
 execute-plan                             → code changes + batch state file
 test-changes                             → build/test/lint report
-review-before-commit                     → semantic classification + breaking-change detection
+review-before-commit                     → semantic classification + breaking-change detection + risk evidence verification
 commit                                   → conventional commit
 ```
 
@@ -137,7 +137,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | feature-spec-writer | sonnet | Glob, Grep, Read, Write | Design-vs-implementation feature spec generation |
 | distill-discussion-reader | sonnet | Read, Glob, Grep | Discussion file classification and structured extraction (read-only) |
 | bug-diagnoser | inherit | Glob, Grep, Read, Bash | Read-only root-cause diagnosis (cause, same-cause sites, bug-vs-design verdict, or "need experiment X"). Dispatched by fix-bug when the cause is unconfirmed / at the Circling point, and by run-phase Step 7 per failure |
-| change-classifier | inherit | Glob, Grep, Read, Bash, Write | Pre-commit semantic review: classify changes, breaking-change detection (Lens C checklist), risk grading, report to `.claude/reviews/`. Dispatched by review-before-commit |
+| change-classifier | inherit | Glob, Grep, Read, Bash, Write | Pre-commit semantic review: classify changes, breaking-change detection (Lens C checklist), proposed risk grading with trigger/consequence/evidence, report to `.claude/reviews/`. Dispatched by review-before-commit; caller verifies decisive premises before disposition |
 
 ## Skills
 
@@ -151,7 +151,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | write-plan | interactive | Writes implementation plan with Impact Map and Task Contract |
 | write-dev-guide | interactive | Writes phased dev-guide for multi-unit work |
 | commit | fork (sonnet) | Conventional commit analysis and execution |
-| review-before-commit | interactive | Pre-commit semantic review via `change-classifier` agent, then interactive risk confirmation |
+| review-before-commit | interactive | Pre-commit semantic review via `change-classifier`, targeted verification against code and current official sources, then disposition of confirmed high/medium risks; incomplete checks stay visible |
 | issue | interactive | GitHub Issue unified entry point |
 | finish-branch | interactive | Test, document, merge/PR/discard |
 

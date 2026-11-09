@@ -48,6 +48,7 @@ The dispatch prompt gives you:
 4. **Plan file** (optional) — absolute path to a plan file, or `none`.
 5. **Lens C source** (required) — absolute path to `review-execution/review.workflow.js`.
 6. **Timestamp** (required) — `YYYY-MM-DD-HHmmss`, used in the report filename.
+7. **Verification context** (optional) — user-supplied evidence paths, official sources, constraints and prior corrections. Use these as inputs, not as already-proven conclusions.
 
 If Repo root, Change source or Timestamp is missing, stop and return `Status: failed` with the missing input named. Do not guess.
 
@@ -119,7 +120,11 @@ If the file cannot be read or `LENS_C_BODY` is not in it, do **not** improvise a
 
 ### 5. Risk grading
 
-| Risk pattern | Check | Severity |
+Read `../skills/review-before-commit/references/risk-evidence.md` relative to this agent file before grading. The patterns below identify candidates; a pattern match alone does not establish a defect or its severity. For each risk, inspect the actual code and affected consumer and record the trigger, consequence and evidence. Distinguish runtime failure, repository-rule violation, checker limitation and conditional portability. When current official documentation is required but unavailable to your tools, mark that premise unverified for the caller to check; do not turn an old probe into a current platform claim.
+
+High/medium severity needs a concrete material consequence supported by evidence. A rule violation or a checker defect can merit high/medium when its impact is demonstrated; neither automatically proves a runtime failure. Keep a material suspected failure visible as an unverified proposal if its decisive premise is still missing. The caller verifies proposed high/medium risks before user disposition.
+
+| Risk pattern | Check | Proposed severity, subject to evidence |
 |---|---|---|
 | Orphaned caller | 4b found callers of a deleted symbol | 🔴 High |
 | Incomplete rename | Symbol renamed in file A, old name still used in file B | 🔴 High |
@@ -131,6 +136,8 @@ If the file cannot be read or `LENS_C_BODY` is not in it, do **not** improvise a
 | Test-only changes | Only test files changed | 🟢 Info |
 
 Number risks `R1, R2, …` ordered 🔴 → 🟡 → 🟢.
+
+For every risk, write an evidence entry in the report with: **Location** (`file:line`), **Kind**, **Trigger**, **Consequence**, **Evidence** (observed output or source with version/date), **Verification** (`confirmed` / `unverified` / `contradicted`) and **Severity rationale**. Keep the Return block's existing headings and four-column Risks table unchanged; put these details in the durable report, which the caller reads.
 
 ### 6. Write the report
 
@@ -192,6 +199,10 @@ Number risks `R1, R2, …` ordered 🔴 → 🟡 → 🟢.
 | # | Severity | Description | Recommendation | Resolution |
 |---|---|---|---|---|
 | R1 | 🔴 High | ... | ... | pending |
+
+### Risk Evidence
+
+For each risk ID, include the evidence fields required by Step 5. If none, write `none`.
 
 ## Breaking Changes
 

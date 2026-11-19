@@ -5,27 +5,35 @@
 ### 必须准备的素材
 
 - [ ] App 图标（1024×1024 PNG，无透明度，无圆角）
-- [ ] iPhone 截图（至少 6.5" 或 6.7" 尺寸）
+- [ ] 当前 Apple 规格要求的真实设备截图（按平台/设备/locale；macOS 不要求 iPhone 截图）
 - [ ] iPad 截图（如支持 iPad）
 - [ ] Support URL（支持页面链接）
-- [ ] 隐私政策 URL（收集用户数据时必需）
+- [ ] 隐私政策 URL（iOS/macOS 必需，不因不收集数据而省略）
 
 ### 必须填写的文本
 
 - [ ] App Name（30 字符内）
 - [ ] Subtitle（30 字符内）
 - [ ] Description（4000 字符内）
-- [ ] Keywords（100 字符内）
+- [ ] Keywords（100 UTF-8 字节内）
 - [ ] Copyright
 - [ ] 审核联系人信息
 
 ### 必须完成的选择
 
-- [ ] Category 分类
+- [ ] Primary Category（必需；macOS 与最终构建类别一致）
+- [ ] Secondary Category（可选；空值不是阻塞）
 - [ ] Age Rating 年龄分级问卷
 - [ ] Content Rights 内容权利声明
 - [ ] 加密声明（Info.plist 或上传文档）
-- [ ] App Privacy 隐私标签（逐项数据类型声明）
+- [ ] App Privacy 已保存的收集回答（与隐私政策 URL 分开）
+- [ ] App Privacy 已 Publish 状态（未实查不得标已发布）
+- [ ] Pricing：明确价格计划，包括免费；基准地区不足以证明价格
+- [ ] Availability：实际选定地区，分页完整；中国选定与合规适用性分开
+- [ ] 选定 build / 版本 / processingState / 加密信息
+- [ ] reviewSubmissions 状态、submittedDate 和版本 releaseType
+
+完整状态表和能力边界见 [asc-completeness.md](asc-completeness.md)。只完成 metadata/screenshots 范围，不得报告全量上架材料已完成。
 
 ---
 

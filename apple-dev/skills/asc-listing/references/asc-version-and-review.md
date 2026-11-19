@@ -110,7 +110,7 @@ ASC API 的截图**挂在 localization 层，不在 version 层**：
 | 字段 | 格式 | 示例 |
 |------|------|------|
 | **Version** | 与 Xcode 一致 | `1.0`, `1.0.1` |
-| **Copyright** | © 年份 名称 | `© 2024 Your Name` |
+| **Copyright** | 必需：取得权利的年份 + 实际独占权利人；Apple 自动添加 © | `2024 Example, Inc.` |
 
 ## 7. Build
 

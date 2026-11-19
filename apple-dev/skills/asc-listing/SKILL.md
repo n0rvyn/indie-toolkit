@@ -1,6 +1,6 @@
 ---
 name: asc-listing
-description: "Everything on the App Store Connect backend: what to put in each box, and what the backend actually holds right now. Use when the user says 'ASC listing', 'asc 上架材料', 'ASC 填写', 'app store listing', 'privacy labels', or asks to read the live state — 'ASC 现在填的是什么', '关键词字段实际是什么', '我改的 ASC 字段存进去了吗', '提交出去了吗', 'read back ASC', 'check ASC state', 'is it actually submitted' — or after any ASC edit that must be confirmed. Covers item-by-item submission material guidance, authenticated read-back of live keywords / name / subtitle / description / promo / What's New / review notes / screenshot checksums, whether a version is really queued with Apple, and version-to-version diffing for post-rejection forensics. Keywords: ASC, App Store Connect, submission, privacy labels, screenshots, review, read-back, submission state. Not for 代码合规检查 — use /asc-submit-preview. Not for 关键词研究 / 商店搜索排名 / 商标能否进名称 — use /aso-research (this skill reads and fills the ASC boxes; that one decides what the text should be, from pulled ranking data)."
+description: "Read or directly update App Store Connect listing metadata/localizations/screenshots, verify readback, and prepare App Review correspondence through the signed-in browser. Everything on the App Store Connect backend: what to put in each box, and what the backend actually holds right now. Use when the user says 'ASC listing', 'asc 上架材料', 'ASC 填写', 'app store listing', 'privacy labels', or asks to read the live state — 'ASC 现在填的是什么', '关键词字段实际是什么', '我改的 ASC 字段存进去了吗', '提交出去了吗', 'read back ASC', 'check ASC state', 'is it actually submitted' — or after any ASC edit that must be confirmed. Covers item-by-item submission material guidance, authenticated read-back of live keywords / name / subtitle / description / promo / What's New / review notes / screenshot checksums, whether a version is really queued with Apple, and version-to-version diffing for post-rejection forensics. Keywords: ASC, App Store Connect, submission, privacy labels, screenshots, review, read-back, submission state. Not for 代码合规检查 — use /asc-submit-preview. Not for 关键词研究 / 商店搜索排名 / 商标能否进名称 — use /aso-research (this skill reads and fills the ASC boxes; that one decides what the text should be, from pulled ranking data)."
 effort: medium
 ---
 
@@ -18,7 +18,17 @@ effort: medium
 
 参考资料在 `asc-listing/references/` 目录中（相对于 skills 目录），按需加载。
 
+## Shared Apple App lifecycle check
+
+For app release-preparation work with a selected source project, invoke `apple-dev:app-support-entries` at intake and closeout. It reads the canonical checklist and reconciles the app's implementation record/evidence. Report unresolved entries separately; an authorized metadata write can proceed without expanding UI scope. A pure ASC readback without source context must not invent a passed implementation check. Do not infer runtime enforcement from this instruction.
+
 ## Process
+
+### Direct updates and App Review correspondence
+
+When the user requests direct updates/upload, use explicit read → prepare → authorized apply → readback from [references/asc-updates.md](references/asc-updates.md). Existing authorization persists; guidance-mode section confirmations do not override a direct-update request. Metadata permission does not authorize submission/release, privacy declarations or sending correspondence. Read that reference for individual-key authentication, scoped manifests, screenshots and partial-failure recovery.
+
+For Apple submission messages, use the documented signed-in browser fallback; distinguish these from customer reviews and reviewer notes. Do not claim an API reply capability merely because a library contains resolution-center models.
 
 ### Step 1: 确定审查模式
 
@@ -113,6 +123,10 @@ effort: medium
 
 ⛔ **报告里写 `✅ 已填 / 已通过` 的每一格，必须有你自己刚取到的观测撑着。** 用户口述「都填了」、上一轮的记忆、项目文档里的记录，都不算 —— 一份写着 `✅` 而实际没查过的提交清单比不写更糟，它会让人跳过检查。查不到的（ASC API 不暴露的字段）标 `⚠️ 需后台确认`，不要留空白也不要打勾。
 
+## Completeness ledger for full preparation and direct-update closeout
+
+Read [references/asc-completeness.md](references/asc-completeness.md) before reporting readiness. Full preparation must report every required field, optional field and unverified browser-only state. Scoped metadata/screenshot success is not whole-app submission readiness. For each row record observed value, source/time, required or optional, remaining decision, and one of verified / pending decision / not checked / API unavailable / observed permission denial. Missing values, HTTP404 and helper whitelist exclusions are not evidence of insufficient individual-key permission. Preserve owner changes; never expand write authority to declarations, pricing, build selection or submission. App Privacy answers saved and App Privacy published are separate rows.
+
 ## 读回后端真实内容（模式 D，其它模式也先跑一遍）
 
 **开工前先拉一遍现状。** 很多字段创建 App 时就设好了，照着 reference 从头问一遍，会问出一堆 API 一次就能答的问题。
@@ -137,9 +151,9 @@ python3 $SC assert <app> --locale zh-Hans --field keywords --present 记账
 
 `<app>` 接受 bundle id、数字 app id、或不区分大小写的名称子串。
 
-**凭据**：需要一个 App Store Connect API 密钥（`AuthKey_XXXXXXXX.p8`，App Manager 或 Developer 权限）与 `python3 -m pip install cryptography`。查找顺序：① `ASC_KEY_PATH` + `ASC_KEY_ID` + `ASC_ISSUER_ID` ② `ASC_KEY_PATH` 加同目录 `key.info`（含 `Key ID:` 与 `Issuer ID:` 两行，Apple 界面里写的是 `Issue ID`，两种拼法都认）③ 扫 `~/private_keys`、`~/.appstoreconnect/private_keys`、以及 `ASC_KEY_DIRS`（冒号分隔）下的第一个 `AuthKey_*.p8` 加同目录 `key.info`。
+**凭据**：Individual key: set explicit `ASC_KEY_TYPE=individual`, `ASC_KEY_PATH` and `ASC_KEY_ID`; issuer is omitted (`sub=user`). Team-key discovery below remains supported; see [direct-update authentication](references/asc-updates.md). 需要一个 App Store Connect API 密钥（`AuthKey_XXXXXXXX.p8`，App Manager 或 Developer 权限）与 `python3 -m pip install cryptography`。查找顺序：① `ASC_KEY_PATH` + `ASC_KEY_ID` + `ASC_ISSUER_ID` ② `ASC_KEY_PATH` 加同目录 `key.info`（含 `Key ID:` 与 `Issuer ID:` 两行，Apple 界面里写的是 `Issue ID`，两种拼法都认）③ 扫 `~/private_keys`、`~/.appstoreconnect/private_keys`、以及 `ASC_KEY_DIRS`（冒号分隔）下的第一个 `AuthKey_*.p8` 加同目录 `key.info`。
 
-一次性配好的做法：把 `.p8` 与 `key.info` **软链**进 `~/private_keys/`，此后任何项目都不用再指路，也不用环境变量。⛔ 密钥、Key ID、Issuer ID 一个字都不许写进会进仓库的文件。
+Prefer process-local explicit credential references. Persistent credential setup requires separate authorization; never copy keys or identifiers into repository files.
 
 ### `state` —— 判据是提交单的 state，不是条目的 state
 
@@ -187,7 +201,7 @@ python3 $SC assert <app> --locale zh-Hans --field keywords --present 记账 \
 - 商店元数据按 **locale** 组织，不按国家/地区。没有「只改某国」的关键词字段，所以针对单一国家的合规要求，要么改全局文案，要么下架该商店。
 - 单次读可能撞上传播延迟。判断状态变化时，隔几分钟读两次再下结论。
 - 版本顺序 Apple 不保证：`appStoreVersions` 与 `reviewSubmissions` 都没有 `sort` 参数、也没承诺默认顺序（2026-08-28 对着 Apple 文档核过）。脚本按 `createdDate` / `submittedDate` 在本地排序并打印时间戳——看时间戳，别信位置。`diff` 与 `assert --version` 显式锁版本，完全不依赖顺序。
-- 只读。写元数据是**故意不做**的：一次错误的 PATCH 打到线上 listing，撤回不便宜。把确切字符串交给用户去粘，然后 `assert`。
+- `asc_readback.py` remains GET-only. Direct authorized draft writes use `asc_manage.py` with the reviewed diff and exact readback described in [asc-updates.md](references/asc-updates.md). Do not force copy/paste when the user has authorized a supported direct workflow.
 
 **读不到的（别浪费探针去找）**：
 

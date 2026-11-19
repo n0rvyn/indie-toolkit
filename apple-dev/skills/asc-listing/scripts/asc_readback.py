@@ -47,7 +47,12 @@ def _parse_key_info(p: Path) -> tuple[str | None, str | None]:
     return (kid.group(1) if kid else None), (iss.group(1) if iss else None)
 
 
-def _find_key() -> tuple[Path, str, str]:
+def _find_key() -> tuple[Path, str, str | None]:
+    key_type = os.environ.get("ASC_KEY_TYPE", "team")
+    if key_type not in ("team", "individual"):
+        sys.exit("ASC_KEY_TYPE must be team or individual")
+    if key_type == "individual" and not all(os.environ.get(name) for name in ("ASC_KEY_PATH", "ASC_KEY_ID")):
+        sys.exit("Individual keys require explicit ASC_KEY_PATH and ASC_KEY_ID")
     key_path = os.environ.get("ASC_KEY_PATH")
     candidates: list[Path] = [Path(key_path)] if key_path else []
     if not candidates:
@@ -62,21 +67,27 @@ def _find_key() -> tuple[Path, str, str]:
             continue
         kid = os.environ.get("ASC_KEY_ID")
         iss = os.environ.get("ASC_ISSUER_ID")
-        fkid, fiss = _parse_key_info(c.parent / "key.info")
+        fkid, fiss = (None, None) if key_type == "individual" else _parse_key_info(c.parent / "key.info")
         kid, iss = kid or fkid, iss or fiss
         # Apple names the file AuthKey_<KEYID>.p8
         if not kid:
             m = re.match(r"AuthKey_(.+)\.p8$", c.name)
             kid = m.group(1) if m else None
-        if kid and iss:
-            return c, kid, iss
+        if kid and (iss or key_type == "individual"):
+            return c, kid, None if key_type == "individual" else iss
     sys.exit(
         "No usable ASC credentials.\n"
         "  Set ASC_KEY_PATH (to AuthKey_XXX.p8) plus ASC_KEY_ID and ASC_ISSUER_ID,\n"
         "  or put the .p8 next to a key.info containing 'Key ID:' and 'Issuer ID:',\n"
         "  or set ASC_KEY_DIRS=/path/to/keys.\n"
-        f"  Looked at: {[str(c) for c in candidates] or 'nothing'}"
+        "  For individual keys set ASC_KEY_TYPE=individual; issuer is omitted."
     )
+
+
+def token_claims(issuer: str | None, now: int) -> dict:
+    claims = {"iat": now, "exp": now + 1200, "aud": "appstoreconnect-v1"}
+    claims.update({"iss": issuer} if issuer else {"sub": "user"})
+    return claims
 
 
 def _token() -> str:
@@ -91,7 +102,7 @@ def _token() -> str:
     b = lambda x: base64.urlsafe_b64encode(x).rstrip(b"=")
     now = int(time.time())
     head = {"alg": "ES256", "kid": kid, "typ": "JWT"}
-    body = {"iss": iss, "iat": now, "exp": now + 1200, "aud": "appstoreconnect-v1"}
+    body = token_claims(iss, now)
     si = (b(json.dumps(head, separators=(",", ":")).encode()) + b"."
           + b(json.dumps(body, separators=(",", ":")).encode()))
     r, s = au.decode_dss_signature(key.sign(si, ec.ECDSA(hashes.SHA256())))

@@ -20,10 +20,10 @@ claude plugin uninstall apple-skills@apple-skills
 
 | Skill | Trigger | Description |
 |-------|---------|-------------|
-| project-kickoff | `/project-kickoff` | New project feasibility + requirements (any platform; iOS/macOS also gets full Apple-native init). Mechanism-dependent ideas also get a domain-literature check that can halt the flow |
+| project-kickoff | New Apple app requests or `/project-kickoff` | New project feasibility + requirements (any platform; iOS/macOS also gets full Apple-native init). Mechanism-dependent ideas also get a domain-literature check that can halt the flow |
 | design-parity-build | `/design-parity-build` | Audit Claude Design ↔ iOS parity, produce classified Gap List, hand off to /write-dev-guide |
 | asc-submit-preview | `/asc-submit-preview` | App Review Guidelines pre-check |
-| asc-listing | `/asc-listing` | ASC backend: submission material guidance + authenticated read-back (live keywords, did my edit save, is it really submitted) |
+| asc-listing | `/asc-listing` | ASC listing guidance, scoped metadata/screenshot updates, individual/team-key readback and browser App Review correspondence |
 | aso-research | `/aso-research` | Data-driven App Store search optimization from Apple's own endpoints |
 
 ## Called by dev-workflow
@@ -34,6 +34,7 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 
 | Skill | Preferred caller | Description |
 |-------|------------------|-------------|
+| app-support-entries | New/feature/fix/release Apple app work | Shared checklist intake/closeout; kickoff-generated instruction reference |
 | apple-swift-context | Swift/iOS/macOS work (invoked by another skill) | Loads platform-specific rules from reference docs |
 | render-preview | run-phase visual step | 渲染 SwiftUI #Preview 成 PNG（RenderPreview 主 + axe/swiftui-render 无头 fallback） |
 
@@ -46,11 +47,11 @@ These capabilities are usually called by dev-workflow after a plan, phase, or ch
 | apple-swift-context | Called by fix-bug (NOT auto — see note) | Loads platform-specific rules from reference docs |
 | characterization-test | internal route | Behavior-locking tests before refactoring |
 | asc-submit-preview | `/asc-submit-preview` | App Review Guidelines pre-check |
-| asc-listing | `/asc-listing` | ASC backend: submission material guidance + authenticated read-back (live keywords, did my edit save, is it really submitted) |
+| asc-listing | `/asc-listing` | ASC listing guidance, scoped metadata/screenshot updates, individual/team-key readback and browser App Review correspondence |
 | aso-research | `/aso-research` | Data-driven App Store search optimization from Apple's own endpoints |
 | generate-design-system | internal route | Generate SwiftUI design system from tokens |
 | design-parity-build | `/design-parity-build` | Audit Claude Design ↔ iOS parity, produce classified Gap List, hand off to /write-dev-guide |
-| project-kickoff | `/project-kickoff` | New project feasibility + requirements (any platform; iOS/macOS also gets full Apple-native init). Mechanism-dependent ideas also get a domain-literature check that can halt the flow |
+| project-kickoff | New Apple app requests or `/project-kickoff` | New project feasibility + requirements (any platform; iOS/macOS also gets full Apple-native init). Mechanism-dependent ideas also get a domain-literature check that can halt the flow |
 | render-preview | run-phase (visual step) | 渲染 SwiftUI #Preview 成 PNG（RenderPreview 主 + axe/swiftui-render 无头 fallback） |
 | swiftui-visual-audit | run-phase (visual step) | 逐 View 截图审计（light + dark，macOS + iOS），按 refactoring-ui rubric 评分输出 gap-by-View 列表 |
 | mac-app-shot | run-phase (visual step) | 单窗截图 + 驱动（CoreGraphics 点击/键盘） + edit→rebuild→relaunch 循环，sandboxed view ImageRenderer fallback |

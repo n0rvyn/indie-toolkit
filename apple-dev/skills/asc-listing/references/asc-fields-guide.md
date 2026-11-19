@@ -25,7 +25,7 @@
 - `Yes, this app has the necessary rights to its third-party content` — 如果 App 包含第三方内容（图片、数据库、API 数据、字体等）
 - `No, it doesn't contain, show, or access third-party content` — 完全自己创作的内容
 
-**常见需要选 Yes 的情况**：使用第三方 API、图标库、字体、数据库、SDK
+按实际包含、展示或访问的第三方内容及权利判断；第三方代码许可另行核实，不能仅因有 SDK 就自动作出声明。No 不构成中国大陆 ICP 备案豁免。
 
 ### 4. License Agreement（许可协议）
 
@@ -39,7 +39,7 @@ App Store 列表的默认语言。用户所在区域无本地化版本时显示�
 
 ### 6. Category（类别）
 
-选择最符合 App 核心功能的类别。可选一个主类别和一个次类别。
+选择最符合 App 核心功能的主类别（必需）；次类别可选。macOS 主类别应与最终构建的 LSApplicationCategoryType 一致。
 
 **常用类别**：
 - Health & Fitness（健康与健身）
@@ -124,7 +124,7 @@ App Store Connect 中独立的隐私信息页面。用户在 App Store 看到的
 
 1. 选择 App 收集的所有数据类型
 2. 对每个数据类型回答三个问题：是否用于追踪、是否关联用户身份、收集目的
-3. 发布后立即生效；移除数据类型也会立即更新
+3. 保存回答后，单独点击 Publish 才发布；核验已发布状态，不能把保存或隐私政策 URL 当作已发布证据。Publish 需要明确授权。
 
 ### 数据类型完整清单
 

@@ -18,6 +18,10 @@ The **behavior/function** sibling of `swiftui-visual-audit`. Two orthogonal axes
 
 **Why it earns its keep:** `BUILD SUCCEEDED` + green unit tests + a clean screenshot can ALL pass while a feature is silently broken — because the mock replaces the exact thing that fails. Real cases this caught (one app, one run): a sandbox missing a network entitlement so EVERY real provider call failed silently (mock-only tests stayed green); a Settings "Test connection" button hard-coding the wrong model so it 400'd on every non-default provider; an "Accept AI draft" that updated the word count but never re-rendered the editor. A screenshot can't judge any of these — you must **drive the real action and check a real RESULT**.
 
+## Physical XCTest cleanup
+
+When using physical iOS/iPadOS XCTest, read `../../references/xc-ui-test-guide.md` section 0 before launch or orientation changes. Capture/restore meaningful prior state, explicit portrait fallback when unknown, and verify supported post-recovery cleanup after interruption before closeout. Do not change rotation lock/permissions or claim a hard-killed teardown ran.
+
 ## The core move: per feature, pick a JUDGE SIGNAL a screenshot can't fake
 
 A render audit asks "does it look right?" — eyeball the pixels. A behavior audit asks "did it DO the right thing?" — and for most features the answer lives in a signal the screenshot can't show. Before driving anything, map each feature to its judge:

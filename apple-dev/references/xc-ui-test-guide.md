@@ -5,6 +5,17 @@
 
 XCUITest 高级用法，涵盖多屏幕用户旅程、网络层 Stub、测试数据工厂、Snapshot 测试、无障碍测试和 CI 集成。
 
+<!-- section: 0. Physical XCTest state restoration keywords: physical device, orientation, landscape, portrait, cleanup, tearDown, crash, interruption -->
+## 0. Physical XCTest state restoration
+
+Before launching the tested app or changing orientation/state, capture meaningful prior device state. If the Runner already changed orientation before the capture, do not present that as the owner’s original state: record the baseline as unknown and apply the explicit fallback when recovery permits. For orientation, portrait, portraitUpsideDown, landscapeLeft and landscapeRight are meaningful; unknown/faceUp/faceDown cannot establish screen orientation. Restore the captured meaningful orientation on normal completion and assertion failure; use portrait as the explicit fallback only when prior orientation cannot be established.
+
+Register cleanup before making the change (`addTeardownBlock` / appropriate teardown), not only at the last successful line. Restore only test-induced, owned state; close owned temporary sheets/windows and stop owned transient interaction where appropriate. Preserve user data and unrelated apps. Do not toggle OS rotation lock, permissions, trust, system volume or other settings silently; none is a cleanup shortcut.
+
+Hard process termination, device disconnect and interruption can prevent XCTest teardown. Never promise teardown always ran. Record cleanup pending if interrupted, and after supported test/device recovery perform and verify the remaining cleanup through the already-authorized channel before closing the task. If recovery/cleanup is unavailable, report the concrete unresolved state rather than a false success; this rule does not authorize bypassing a user stop or starting a new device session without its existing authority.
+
+Closeout evidence: prior meaningful state or explicit unknown, test-induced change, restored/fallback state and verification, cleanup status. Distinguish “registered cleanup” from observed restoration. The portrait fallback is an engineering recovery policy, not permission to change rotation lock or an approval gate.
+
 <!-- section: 1. 多屏幕用户旅程 keywords: user journey, flow test, multi-screen, navigation test, flow object, deep link -->
 ## 1. 多屏幕用户旅程
 

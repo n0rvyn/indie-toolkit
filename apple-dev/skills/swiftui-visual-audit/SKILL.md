@@ -94,11 +94,22 @@ macOS gotchas:
 
 ### iOS
 
+Before physical XCTest, read `../../references/xc-ui-test-guide.md` section 0. Capture/restore meaningful prior state; interruption requires verified supported recovery cleanup. Never toggle rotation lock/permissions silently.
+
 Hard-won on iPad real-device (works on simulator too). Harness shape:
 ```swift
+import XCTest
+import UIKit
+
 final class AuditShotTests: XCTestCase {
     let appearances = ["dark", "light"]
-    func launch(_ mode: String) -> XCUIApplication {
+    @MainActor func launch(_ mode: String) -> XCUIApplication {
+        let prior = XCUIDevice.shared.orientation  // before launch or orientation change
+        let meaningful: [UIDeviceOrientation] = [.portrait, .portraitUpsideDown, .landscapeLeft, .landscapeRight]
+        let restore = meaningful.contains(prior) ? prior : .portrait
+        addTeardownBlock {
+            await MainActor.run { XCUIDevice.shared.orientation = restore }
+        } // normal/assertion-failure cleanup; hard termination still needs post-recovery verification
         let app = XCUIApplication()
         app.launchEnvironment = ["UITEST_MODE": "1" /* + app's seed/userId env */]
         app.launchArguments = ["-appearanceMode", mode,            // app's @AppStorage appearance key
@@ -107,7 +118,7 @@ final class AuditShotTests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait                  // iPad defaults landscape → else screenshots rotate 90°
         return app
     }
-    func shoot(_ app: XCUIApplication, _ name: String) {
+    @MainActor func shoot(_ app: XCUIApplication, _ name: String) {
         let a = XCTAttachment(screenshot: app.screenshot())        // WHOLE SCREEN (single window), not a window element
         a.name = name; a.lifetime = .keepAlways; add(a)
     }

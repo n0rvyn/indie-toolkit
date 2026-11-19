@@ -7,6 +7,8 @@ iOS/Swift 测试最佳实践，涵盖 Unit Test、UI Test、Mock 模式和 TDD �
 
 > ⚠️ 本文 unit test 示例使用 Swift Testing（`@Test` / `#expect` / `#require`，见 apple-swift-rules.md「测试框架与文件放置」）；组织原则（Given-When-Then、Mock 模式、命名）与框架无关。XCUITest 章节例外——UI 自动化没有 Swift Testing 等价物，保留 `XCTestCase`。
 
+Physical-device XCUITest must first read [XCUITest Guide §0: state restoration](xc-ui-test-guide.md#0-physical-xctest-state-restoration); orientation/owned-state cleanup is part of completion, including supported post-recovery cleanup after interruption.
+
 <!-- section: 1. Unit Test 组织 keywords: unit test, Given-When-Then, @Suite, @Test, init, deinit, naming -->
 ## 1. Unit Test 组织
 

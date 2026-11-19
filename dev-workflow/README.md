@@ -150,7 +150,7 @@ This pattern applies to "understand X" / "explore Y" dispatches. Verification ag
 | fix-bug | interactive | Bug fixing by outcome: plain-language 现状/预期, probable causes tested before repair, unresolved issues retained, diagnosis preserved in plans, real-path verification; external actions follow explicit authorization |
 | write-plan | interactive | Writes implementation plan with Impact Map and Task Contract |
 | write-dev-guide | interactive | Writes phased dev-guide for multi-unit work |
-| commit | fork (sonnet) | Conventional commit analysis and execution |
+| commit | main session (inherit) | Groups changes into conventional commits, applies scoped ignore rules, and cleans up verified disposable artifacts when authorized |
 | review-before-commit | interactive | Pre-commit semantic review via `change-classifier`, targeted verification against code and current official sources, then disposition of confirmed high/medium risks; incomplete checks stay visible |
 | issue | interactive | GitHub Issue unified entry point |
 | finish-branch | interactive | Test, document, merge/PR/discard |

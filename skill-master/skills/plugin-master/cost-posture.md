@@ -73,7 +73,7 @@ A subagent a skill dispatches is classified on its own: `execute-plan` (skill) i
 
 | Skill / agent | Class | Configured |
 |---|---|---|
-| `commit` | Tool wrapper (git classification) | `model: sonnet` + `context: fork` + `effort: medium` (secrets gate) — moved off `haiku` after the haiku fork intermittently skipped the skill body |
+| `commit` | Judgment and Git writes | Main session, `effort: medium`. The procedure uses conversation history to establish file ownership and cleanup authorization. |
 | `kb` | Lookup | `model: sonnet` + `context: fork` + `agent: Explore` + `effort: low` |
 | `audit-tokens` | Tool wrapper (scripts do the analysis) | `model: sonnet` + `context: fork` + `effort: low` |
 | `execute-plan` (skill) | Orchestration of a verified plan | inherit, `effort: medium`; its Workflow agents are pinned sonnet + `effort: 'high'` (they run Verify) |

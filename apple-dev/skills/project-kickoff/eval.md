@@ -1,31 +1,9 @@
 # project-kickoff Eval
 
-## Trigger Tests
-<!-- Skill has disable-model-invocation: true — ONLY slash invocations should trigger (auto-routing + instructed dispatch are both off) -->
-- "/project-kickoff"
-- "/project-kickoff 做一个记账 App"  <!-- 2.5 negative control: no mechanism dependency, gate must SKIP -->
-- "/project-kickoff 一个手写笔记识别 App"  <!-- 2.5 positive control: accuracy-ceiling dependency, gate must FIRE -->
-- "/project-kickoff a habit-formation app that promises users a lasting routine"  <!-- 2.5 positive control: efficacy claim, gate must FIRE -->
-- "/project-kickoff 一个按学习风格（视觉型/听觉型）自动匹配课件形式的 App"  <!-- 2.5 core-❌ control: the learning-styles matching hypothesis is a known negative in the literature AND is this product's core mechanism. Expected: 2.5.7 ① halts the flow with the literature quote + source. CP1 is never rendered, so do NOT assert a CP1 verdict here. -->
-- "/project-kickoff 一个记账 App，自动把消费短信归类到预算科目"  <!-- 2.5 non-core-❌ control: auto-categorisation accuracy is falsifiable in the literature but is NOT the product's core (manual entry still works). Expected: flow continues, CP1 verdict written in the qualified form, and the entry lands in 6.7's 机制风险 table. -->
-- "/project-kickoff a Web expense tracker"
-- "/project-kickoff a CLI script runner"
-
-## Negative Trigger Tests
-<!-- These read like kickoff requests, but auto-routing is disabled — they must NOT fire; only the /project-kickoff slash invokes this skill -->
-- "I want to build a fitness tracking app"
-- "Kickoff a new project for expense tracking"
-- "新项目开题：做一个 AI 记账助手"
-- "Help me validate this app idea"
-- "Run a project kickoff flow"
-- "新项目开题：做一个 Web 记账工具"
-- "Kickoff a new project for a CLI script runner"
-- "New project: a cross-platform note-taking app"
-- "Write a plan for this feature"
-- "Fix this bug"
-- "Review my code"
+Cases: `evals/project-kickoff/` — run with `claude plugin eval <plugin-dir> --tag project-kickoff --no-publish`. Bundled generator checks: `scripts/test_project_instruction_reference.py`.
 
 ## Output Assertions
+Not observable: interactive, cross-plugin, host-env
 <!-- What must be true in the skill's output -->
 - [ ] Output clarifies requirements through iterative questions (problem, users, angle)
 - [ ] Output performs "AI era check" before market research (can existing AI tools solve this?)
@@ -44,3 +22,10 @@ Baseline comparison: Base model can discuss ideas but lacks structured AI-era fe
 Last tested model: Opus 4.6
 Last tested date: 2026-03-08
 Verdict: essential
+
+## Generated support reference
+Not observable: interactive, host-env
+- [ ] New Apple app intake invokes shared lifecycle skill; no recursive kickoff call.
+- [ ] Existing CLAUDE.md/AGENTS.md contents preserved; installer and check execute after generation.
+- [ ] Missing or edited managed reference cannot be reported as successful generation.
+- [ ] No per-app manual indexing/global config/cache mutation; non-Apple init skips reference.

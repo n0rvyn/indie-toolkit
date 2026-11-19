@@ -473,6 +473,9 @@ macOS 特有交互：
 <!-- section: 测试框架与文件放置 keywords: Swift Testing, XCTest, @Test, #expect, XCUITest, synchronized folders, pbxproj -->
 ## 测试框架与文件放置
 
+Physical XCTest: read [xc-ui-test-guide.md §0](xc-ui-test-guide.md#0-physical-xctest-state-restoration) before launch/state changes; capture/restore meaningful prior orientation, portrait fallback only if unknown, verify post-recovery cleanup after crash/interruption. Never silently toggle OS rotation lock/permissions. This is engineering cleanup, not an approval gate.
+
+
 - 测试一律用 Swift Testing（`@Test`、`#expect`、`#require`），不使用 XCTest。例外：项目已有 XCTest 且不在本次重构范围；XCUITest（UI 自动化）没有 Swift Testing 等价物，仍用 `XCTestCase`
 - Xcode 16+ 项目默认自动同步文件夹内的 Swift 文件：新文件放到对应目录即可生效。禁止写「需要手动编辑 pbxproj」或「需要拖进 Xcode」
 
@@ -579,3 +582,8 @@ _Inline attribution: 改编自 vabole/apple-skills:ios-dev Topic Router，全部
 | Photos | — | `external/photosui/` |
 | App Store metadata | `aso-guide.md` | — |
 | Simulator commands | `external/simulator-cheatsheet.md` | — |
+
+<!-- section: App 反馈与关于入口 keywords: about, feedback, review, 更多作品, 关于, 反馈, release -->
+## App 反馈与关于入口
+
+本人 iOS / macOS App 开发或 issue 修复，按 [App 反馈与关于入口](app-support-entries.md) 检查既有记录、登记缺项并随发布处理；检查不自动扩展当前 UI 改动授权。

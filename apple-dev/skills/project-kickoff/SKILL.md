@@ -1,7 +1,6 @@
 ---
 name: project-kickoff
-description: "Manual /project-kickoff only; not model-invocable. Runs the project kickoff flow to clarify requirements, converge scope, and produce execution recommendations. When the product's core value rests on measurement/inference accuracy, an efficacy claim, a state-of-the-art algorithm, or an established standard instrument, it also runs a domain-literature check (papers/DOI, benchmark pages) that can halt the flow if the mechanism is contradicted, and surfaces reusable mechanism-level implementations. Use when starting a new project on any platform (distinct from /write-dev-guide, which plans phased development after design is approved); iOS/macOS projects additionally receive Apple-native initialization (DesignSystem/ASC/CI-CD)."
-disable-model-invocation: true
+description: "Use when starting, creating or initializing a new iOS/macOS/Apple app project, including ordinary app-idea requests without a slash command. Also supports explicit /project-kickoff for other platforms. Clarifies requirements and feasibility, then generates the project skeleton; Apple initialization includes a verified shared About/Feedback checklist reference. Not for a feature or bug fix in an existing app, or release-only work (use app-support-entries for that lifecycle check)."
 effort: medium
 ---
 
@@ -16,6 +15,10 @@ effort: medium
 用户描述项目想法。可以是模糊概念，如"做一个记账 App"。
 
 ## 流程
+
+### 0. Apple App intake discovery
+
+For a new Apple app, invoke `apple-dev:app-support-entries` at intake. It reads the single canonical reference `../../references/app-support-entries.md` through the Apple Dev package. Do not add a second checklist. This reports support-entry requirements without pre-authorizing UI or release actions. Ordinary new iOS/macOS requests should select this kickoff skill without requiring the owner to remember a slash command. Non-Apple kickoff remains available explicitly. Existing-app feature/fix/release work uses the shared lifecycle entry, not a full kickoff restart.
 
 ### 1. 需求澄清
 
@@ -823,7 +826,7 @@ WebSearch 搜到的每一条，要进 project-brief 的结论，**必须先用 W
 |-----------|------|
 | `docs/01-discovery/project-brief.md` | 项目概要（含调研、定位、功能规划） |
 | `docs/` 目录结构 | 10 个标准子目录 |
-| `CLAUDE.md` | AI 助手项目规则（需先运行 /init） |
+| `CLAUDE.md` / `AGENTS.md` | Existing client/project instruction convention; preserve generated contents |
 | `docs/00-AI-CONTEXT.md` | AI 上下文入口文档 |
 | `docs/02-architecture/README.md` | 架构文档骨架 |
 | `docs/05-features/README.md` | 功能文档模板 |
@@ -837,6 +840,7 @@ WebSearch 搜到的每一条，要进 project-brief 的结论，**必须先用 W
 | `[项目名]/DesignSystem/DesignSystem.swift` | Design System 代码 |
 | `docs/10-app-store-connect/` | ASC 文档模板（4 个文件） |
 | CLAUDE.md `## Build Environment` 段 | xcodebuild 元数据表（step 9.2.2） |
+| Project instruction shared support reference | Automatic append + post-generation check (9.2.3) |
 
 **[Expectation Recap]**
 
@@ -873,11 +877,11 @@ Read `references/doc-templates.md` 的「project-brief.md 模板」段，按模�
 
 Read `references/project-init-templates.md` 的「docs 目录结构」段，按模板创建 10 个标准子目录。
 
-#### 9.2 创建 CLAUDE.md
+#### 9.2 创建项目指令文件（CLAUDE.md / AGENTS.md）
 
-**步骤 A**：提示用户运行 `/init` 生成基础 CLAUDE.md，等待完成。
+**步骤 A**：沿用项目/客户端的基础指令生成惯例（支持 `/init` 时使用它）。已有 `CLAUDE.md` / `AGENTS.md` 不重新初始化或替换；Codex 使用 AGENTS.md 的项目沿用该文件。下面的原有追加模板内容保持不变，仅使用实际指令文件名。
 
-**步骤 B**：Read `references/project-init-templates.md` 的「CLAUDE.md 追加模板」段，在 /init 生成的 CLAUDE.md 末尾追加项目特定内容（不替换 /init 生成的部分）。根据项目实际信息填充模板中的占位符。
+**步骤 B**：Read `references/project-init-templates.md` 的「CLAUDE.md 追加模板」段，在实际的 CLAUDE.md / AGENTS.md 末尾追加项目特定内容，不替换已有生成部分、不另建第二套文件。根据项目实际信息填充模板中的占位符。
 
 **平台门控**（标记本身是 prose 指令，**不写入**生成的 CLAUDE.md）：
 - `platform==apple`：写完整追加模板——含 `## Swift 6 并发（本项目）` 段、`编码规范` 下的 Swift Design System token 表（间距/布局/圆角/颜色/阴影）、`项目特定约束` 的 `必须：[由 9.2.1 生成的平台 API 规则]` 占位行。iOS 路径 = 现状（字节级不变）。
@@ -932,6 +936,14 @@ project=$(find . -maxdepth 2 -name "*.xcodeproj" -not -path "*/DerivedData/*" | 
 **错误处理**：
 - `xcodebuild` 命令失败（返回非零）：跳过本步，不写入 Build Environment 段。不中断 kickoff 流程。
 - 某个字段为空：该行写 `(not set)`。
+
+#### 9.2.3 Shared support reference — generate and verify
+
+Only `platform==apple`. After the existing instruction content is generated/appended, run bundled `scripts/project_instruction_reference.py install --project <root> --platform apple`, then `check` with the same scope. Resolve the helper from this skill's actual package directory, not an assumed environment variable or installed-cache path. Existing AGENTS.md only → append there; existing CLAUDE.md only → append there; both → preserve/append both; newly bootstrapped Codex convention → pass `--instruction-file AGENTS.md`. With neither present, the legacy default is CLAUDE.md. No extra owner indexing step.
+
+The helper appends only a managed, stable `apple-dev:app-support-entries` / `apple-dev/references/app-support-entries.md` pointer, preserves all original content, is idempotent, and checks the written postcondition. A missing/edited reference or helper failure means **instruction generation incomplete**; preserve the original file and fix/report the actual error before claiming completion. This is an executable generation check, not runtime auto-enforcement of all future tasks. Do not retrofit unrelated projects or change global config/hooks.
+
+At kickoff closeout invoke `apple-dev:app-support-entries` again, retain the implementation/evidence record, and report outstanding items. Record helper output in the kickoff result.
 
 #### 9.3 创建 docs/00-AI-CONTEXT.md
 

@@ -18,6 +18,10 @@ effort: medium
 
 Run both before submission. They don't overlap.
 
+## Shared Apple App lifecycle check
+
+For app release-preparation work with a selected source project, invoke `apple-dev:app-support-entries` at intake and closeout. It reads the canonical checklist and reconciles the app's implementation record/evidence. Report unresolved entries separately; an authorized metadata write can proceed without expanding UI scope. A pure ASC readback without source context must not invent a passed implementation check. Do not infer runtime enforcement from this instruction.
+
 ## Process
 
 ### Step 1: Dispatch the audit

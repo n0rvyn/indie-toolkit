@@ -25,6 +25,8 @@ mkdir -p docs/{01-discovery,02-architecture,03-decisions,04-implementation,05-fe
 
 ## CLAUDE.md 追加模板
 
+For Apple kickoff, preserve this existing template and the project instruction-file convention. After appending it, run project-kickoff Step 9.2.3's bundled installer/checker to add the stable shared support-entry reference. Do not duplicate the canonical checklist here or embed installed-cache paths. Non-Apple projects skip that append.
+
 在 /init 生成的 CLAUDE.md 末尾追加以下内容（不替换 /init 生成的部分）：
 
 > **平台门控（标记本身是 prose 指令，不写入生成的 CLAUDE.md）**：

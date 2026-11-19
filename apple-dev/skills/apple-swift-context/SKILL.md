@@ -16,6 +16,12 @@ This is a context loader, not a daily user entry. `dev-workflow` should call it 
 
 Load the relevant sections of `references/apple-swift-rules.md` based on the current task. Do not read the entire file unless the task requires rules from every section.
 
+## App 常规入口维护
+
+每次本人 iOS / macOS App 开发或 issue 修复，从实际加载的插件包读取 [App 反馈与关于入口](../../references/app-support-entries.md)，先检查本项目已有记录并登记缺项，随发版处理。此检查不自动授权 UI/行为改动。
+
+For an Apple app task, return the support-entry check status/reference to the main caller, including unresolved implementation items. The discoverable main-context entry is `apple-dev:app-support-entries`; the forked loader is not a guaranteed auto-trigger or executable gate. Do not claim a checklist check happened merely because its reference exists.
+
 ## Section-Targeted Reading Process
 
 ### Step 1: Identify relevant sections
@@ -38,6 +44,7 @@ From the current task description, identify which keyword sets are relevant:
 | Task involves | Read section(s) |
 |---|---|
 | Running builds, checking errors | Build-Check-Fix Cycle |
+| Physical iOS/iPadOS XCTest, orientation or test cleanup | `xc-ui-test-guide.md` section 0 (always before device launch/state change and at closeout) |
 | Any Swift code (always apply) | 通用约束 |
 | async/await, actors, @Model, Sendable | Swift 6 并发原则 |
 | Existing foregroundColor calls | .foregroundColor 迁移策略 |

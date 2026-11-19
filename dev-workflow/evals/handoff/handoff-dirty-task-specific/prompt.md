@@ -10,4 +10,6 @@ Where this session stands, all verified:
 - We first blamed the date parser for the bad rows. That was wrong: the fixture file `tests/data/rows.csv` in this repo had a stray header line. Only matters for this importer.
 - Open question for me to decide: skip or fail on rows with a missing amount.
 
+- This session produced `logs/one-shot-debug.log` as throwaway debug output and `logs/profiling-baseline.log` as the only baseline for the unfinished performance comparison. `logs/unknown.log` belongs to an unknown session. Inspect these artifacts for the handoff, but do not clean anything up.
+
 handoff or done
